@@ -35,6 +35,7 @@ const AnimatedNumber = ({ value }) => {
 export default function AdminPortal({ user, onLogout }) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard_overview');
+  console.log("Admin Portal mounted with activeTab:", activeTab);
   
   // Data States
   const [stats, setStats] = useState(null);
@@ -58,6 +59,18 @@ export default function AdminPortal({ user, onLogout }) {
   const [promoteInstructorEmail, setPromoteInstructorEmail] = useState('');
   const [promoteInstructorStatus, setPromoteInstructorStatus] = useState({ type: '', msg: '' });
   const [promotingInstructor, setPromotingInstructor] = useState(false);
+
+  // Promote Super Admin State
+  const [promoteSuperAdminEmail, setPromoteSuperAdminEmail] = useState('');
+  const [promoteSuperAdminStatus, setPromoteSuperAdminStatus] = useState({ type: '', msg: '' });
+  const [promotingSuperAdmin, setPromotingSuperAdmin] = useState(false);
+
+  // Sidebar Dropdown State
+  const [expandedGroup, setExpandedGroup] = useState('Dashboard');
+
+  const toggleGroup = (title) => {
+    setExpandedGroup(prev => prev === title ? null : title);
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -154,6 +167,10 @@ export default function AdminPortal({ user, onLogout }) {
       setPromoteStatus({ type: 'success', msg: `Successfully promoted ${promoteEmail} to admin!` });
       setPromoteEmail('');
       if (activeTab.startsWith('users')) fetchUsers(searchQuery);
+      
+      setTimeout(() => {
+        setPromoteStatus({ type: '', msg: '' });
+      }, 3000);
     } catch (err) {
       setPromoteStatus({ type: 'error', msg: err.response?.data?.message || 'Failed to promote user' });
     } finally {
@@ -172,10 +189,36 @@ export default function AdminPortal({ user, onLogout }) {
       setPromoteInstructorStatus({ type: 'success', msg: `Successfully promoted ${promoteInstructorEmail} to instructor!` });
       setPromoteInstructorEmail('');
       if (activeTab.startsWith('users')) fetchUsers(searchQuery);
+      
+      setTimeout(() => {
+        setPromoteInstructorStatus({ type: '', msg: '' });
+      }, 3000);
     } catch (err) {
       setPromoteInstructorStatus({ type: 'error', msg: err.response?.data?.message || 'Failed to promote user to instructor' });
     } finally {
       setPromotingInstructor(false);
+    }
+  };
+
+  const handlePromoteSuperAdmin = async (e) => {
+    e.preventDefault();
+    if (!promoteSuperAdminEmail) return;
+    setPromotingSuperAdmin(true);
+    setPromoteSuperAdminStatus({ type: '', msg: '' });
+    
+    try {
+      await api.patch('/auth/promote-superadmin', { email: promoteSuperAdminEmail });
+      setPromoteSuperAdminStatus({ type: 'success', msg: `Successfully promoted ${promoteSuperAdminEmail} to superadmin!` });
+      setPromoteSuperAdminEmail('');
+      if (activeTab.startsWith('users')) fetchUsers(searchQuery);
+      
+      setTimeout(() => {
+        setPromoteSuperAdminStatus({ type: '', msg: '' });
+      }, 3000);
+    } catch (err) {
+      setPromoteSuperAdminStatus({ type: 'error', msg: err.response?.data?.message || 'Failed to promote user to superadmin' });
+    } finally {
+      setPromotingSuperAdmin(false);
     }
   };
 
@@ -332,9 +375,24 @@ export default function AdminPortal({ user, onLogout }) {
         <div className="nav-logo">
           <h1 style={{ fontSize: '1.2rem', margin: '0' }}>{user?.role === 'superadmin' ? 'Super Admin Portal' : 'Admin Portal'}</h1>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-           <span style={{ color: 'var(--text-h)', fontWeight: '500' }}>{user?.name} ({user?.role})</span>
-           <button onClick={onLogout} className="glass-btn auth-submit-btn" style={{ padding: '6px 16px', fontSize: '0.9rem', width: 'auto', margin: 0, minHeight: 'auto', borderRadius: '20px' }}>Logout</button>
+        <div className="nav-controls">
+          <div className="profile-wrapper">
+            <div className="nav-avatar">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                <circle cx="12" cy="8" r="4"></circle>
+                <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"></path>
+              </svg>
+            </div>
+            <div className="profile-tooltip">
+              <div className="tooltip-name">{user?.name}</div>
+              <hr className="tooltip-divider" />
+              <div style={{ padding: '0 12px 8px', fontSize: '0.8rem', color: 'var(--c-sub)' }}>Role: {user?.role}</div>
+              <a href="#" className="tooltip-link">Profile</a>
+              <a href="#" className="tooltip-link">Settings</a>
+              <hr className="tooltip-divider" />
+              <a href="#" onClick={(e) => { e.preventDefault(); onLogout(); }} className="tooltip-link logout-link">Log out</a>
+            </div>
+          </div>
         </div>
       </nav>
 
@@ -343,21 +401,80 @@ export default function AdminPortal({ user, onLogout }) {
         <div className="glass-card" style={{ width: '280px', borderRadius: 0, borderTop: 'none', borderBottom: 'none', borderLeft: 'none', borderRight:'1px solid rgba(255, 255, 255, 0.15)', display: 'flex', flexDirection: 'column', padding: '24px 16px', gap: '24px', overflowY: 'auto' }}>
           {menuGroups.map((group, idx) => (
             <div key={idx}>
-              <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--c-sub)', fontWeight: 'bold', letterSpacing: '1px', marginBottom: '8px', paddingLeft: '8px' }}>
+              <div 
+                onClick={() => toggleGroup(group.title)}
+                style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  fontSize: '0.75rem', 
+                  textTransform: 'uppercase', 
+                  color: 'var(--c-sub)', 
+                  fontWeight: 'bold', 
+                  letterSpacing: '1px', 
+                  marginBottom: '8px', 
+                  padding: '8px', 
+                  cursor: 'pointer',
+                  borderRadius: '4px',
+                  background: 'rgba(255, 255, 255, 0.02)'
+                }}
+                className="hover-glow"
+              >
                 {group.title}
+                <svg 
+                  width="14" 
+                  height="14" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2"
+                  style={{ 
+                    transform: expandedGroup === group.title ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.2s ease'
+                  }}
+                >
+                  <path d="M6 9l6 6 6-6"/>
+                </svg>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                {group.items.map(tab => (
+              
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateRows: expandedGroup === group.title ? '1fr' : '0fr',
+                opacity: expandedGroup === group.title ? 1 : 0,
+                transition: 'grid-template-rows 0.3s ease, opacity 0.3s ease'
+              }}>
+                <div style={{ position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  {group.items.some(t => t.id === activeTab) && (
+                    <div style={{
+                      position: 'absolute',
+                      left: 0,
+                      right: 0,
+                      height: '42px',
+                      top: `${group.items.findIndex(t => t.id === activeTab) * 46}px`,
+                      background: 'var(--c-input-bg)',
+                      border: 'var(--c-border)',
+                      borderTop: 'var(--c-border-top)',
+                      borderLeft: 'var(--c-border-left)',
+                      borderRadius: '12px',
+                      transition: 'top 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      pointerEvents: 'none',
+                      zIndex: 0
+                    }} />
+                  )}
+                  {group.items.map(tab => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={activeTab === tab.id ? 'glass-card' : 'hover-glow'}
+                    className="hover-glow"
                     style={{
-                      padding: '10px 16px',
+                      position: 'relative',
+                      zIndex: 1,
+                      height: '42px',
+                      padding: '0 16px',
                       textAlign: 'left',
-                      background: activeTab === tab.id ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
-                      border: activeTab === tab.id ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid transparent',
-                      borderRadius: '8px',
+                      background: 'transparent',
+                      border: '1px solid transparent',
+                      borderRadius: '12px',
                       color: activeTab === tab.id ? '#fff' : 'var(--c-sub)',
                       cursor: 'pointer',
                       fontWeight: activeTab === tab.id ? '600' : '500',
@@ -376,6 +493,7 @@ export default function AdminPortal({ user, onLogout }) {
                     )}
                   </button>
                 ))}
+                </div>
               </div>
             </div>
           ))}
@@ -430,7 +548,7 @@ export default function AdminPortal({ user, onLogout }) {
                   <h2 style={{ fontSize: '1.8rem', margin: 0 }}>User Management</h2>
                 </div>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: user?.role === 'superadmin' ? 'repeat(3, 1fr)' : '1fr 1fr', gap: '24px' }}>
                   <div className="glass-card" style={{ padding: '24px' }}>
                     <h2 style={{ fontSize: '1.2rem', margin: '0 0 16px 0' }}>Assign an Admin</h2>
                     <form onSubmit={handlePromote} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -480,6 +598,33 @@ export default function AdminPortal({ user, onLogout }) {
                       </button>
                     </form>
                   </div>
+
+                  {user?.role === 'superadmin' && (
+                    <div className="glass-card" style={{ padding: '24px' }}>
+                      <h2 style={{ fontSize: '1.2rem', margin: '0 0 16px 0' }}>Assign a Super Admin</h2>
+                      <form onSubmit={handlePromoteSuperAdmin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <div>
+                          <div className="input-group">
+                            <input 
+                              type="email" 
+                              placeholder="User's email address" 
+                              value={promoteSuperAdminEmail}
+                              onChange={(e) => setPromoteSuperAdminEmail(e.target.value)}
+                              required
+                            />
+                          </div>
+                          {promoteSuperAdminStatus.msg && (
+                            <div style={{ marginTop: '8px', fontSize: '0.9rem', color: promoteSuperAdminStatus.type === 'success' ? '#10B981' : '#ef4444' }}>
+                              {promoteSuperAdminStatus.msg}
+                            </div>
+                          )}
+                        </div>
+                        <button type="submit" disabled={promotingSuperAdmin} className="glass-btn auth-submit-btn" style={{ background: 'var(--c-orange)', boxShadow: '0 4px 15px rgba(251, 146, 60, 0.4)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', width: '100%', margin: 0 }}>
+                          {promotingSuperAdmin ? 'Assigning...' : 'Assign Super Admin'}
+                        </button>
+                      </form>
+                    </div>
+                  )}
                 </div>
 
                 <div className="input-group">
@@ -516,8 +661,8 @@ export default function AdminPortal({ user, onLogout }) {
                             <td style={{ padding: '16px' }}>
                               <span style={{ 
                                 padding: '4px 8px', borderRadius: '12px', fontSize: '0.8rem',
-                                background: u.role === 'admin' ? 'rgba(139, 92, 246, 0.2)' : u.role === 'instructor' ? 'rgba(251, 146, 60, 0.2)' : 'rgba(255, 255, 255, 0.1)',
-                                color: u.role === 'admin' ? '#a78bfa' : u.role === 'instructor' ? '#fb923c' : 'var(--c-sub)'
+                                background: u.role === 'superadmin' ? 'rgba(239, 68, 68, 0.2)' : u.role === 'admin' ? 'rgba(139, 92, 246, 0.2)' : u.role === 'instructor' ? 'rgba(251, 146, 60, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+                                color: u.role === 'superadmin' ? '#ef4444' : u.role === 'admin' ? '#a78bfa' : u.role === 'instructor' ? '#fb923c' : 'var(--c-sub)'
                               }}>
                                 {u.role}
                               </span>
