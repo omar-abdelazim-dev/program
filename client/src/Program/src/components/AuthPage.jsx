@@ -1,0 +1,507 @@
+import { useState, useEffect, useRef } from 'react';
+import logoDark from '../assets/logo-dark.png';
+import logoLight from '../assets/logo-light.png';
+import api from '../api/axios';
+
+const CustomSelect = ({ options, value, onChange, placeholder, icon }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(o => o.value === value);
+
+  return (
+    <div className="custom-select-wrapper" ref={wrapperRef}>
+      <div 
+        className={`icon-input-wrapper custom-select-trigger ${isOpen ? 'focus' : ''}`}
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        {icon}
+        <div className={`custom-select-value ${!selectedOption ? 'placeholder' : ''}`}>
+          {selectedOption ? selectedOption.label : placeholder}
+        </div>
+        <svg className={`custom-select-chevron ${isOpen ? 'open' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </div>
+      
+      {isOpen && (
+        <div className="custom-select-dropdown animate-entrance">
+          <div className="custom-select-options">
+            <div className="custom-select-option disabled">{placeholder}</div>
+            {options.map(opt => (
+              <div 
+                key={opt.value}
+                className={`custom-select-option ${value === opt.value ? 'selected' : ''}`}
+                onClick={() => { onChange(opt.value); setIsOpen(false); }}
+              >
+                {opt.label}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
+  const [isLogin, setIsLogin] = useState(true);
+  
+  // Multi-step Registration State
+  const [registerStep, setRegisterStep] = useState(1);
+  const [stepDirection, setStepDirection] = useState('forward');
+  
+  // Step 1 Fields
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  
+  // Step 2 Fields
+  const [university, setUniversity] = useState('');
+  const [otherUniversity, setOtherUniversity] = useState('');
+  const [year, setYear] = useState('');
+  
+  // Step 3 Fields
+  const [goalsText, setGoalsText] = useState('');
+  const [selectedPills, setSelectedPills] = useState([]);
+  
+  // Loading State
+  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+  const [isOtpVerifying, setIsOtpVerifying] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [authError, setAuthError] = useState('');
+
+  const EGYPTIAN_UNIVERSITIES = [
+    "Ain Shams University", "Alexandria University", "Arish University", "Assiut University",
+    "Aswan University", "Banha University", "Beni Suef University", "Cairo University",
+    "Damanhour University", "Damietta University", "Fayoum University", "Helwan University",
+    "Kafrelsheikh University", "Luxor University", "Mansoura University", "Matrouh University",
+    "Menoufia University", "Minya University", "New Valley University", "Port Said University",
+    "Sohag University", "South Valley University", "Suez Canal University", "Suez University",
+    "Zagazig University"
+  ];
+
+  const calculateStrength = (pass) => {
+    if (!pass) return 0;
+    let strength = 0;
+    if (pass.length >= 8) strength += 1;
+    if (/[A-Za-z]/.test(pass) && /[0-9]/.test(pass)) strength += 1;
+    if (/[^A-Za-z0-9]/.test(pass)) strength += 1;
+    return strength;
+  };
+  const passStrength = calculateStrength(password);
+
+  const PILLS = [
+    { id: 'job', label: 'Get a job', icon: <><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></>, color: '#f87171' },
+    { id: 'projects', label: 'Build projects', icon: <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>, color: '#9ca3af' },
+    { id: 'skills', label: 'Learn skills', icon: <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>, color: '#fb923c' },
+    { id: 'freelance', label: 'Freelance', icon: <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>, color: '#facc15' },
+    { id: 'grad', label: 'Grad project', icon: <><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></>, color: '#a78bfa' },
+    { id: 'cert', label: 'Get certified', icon: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>, color: '#fcd34d' },
+  ];
+
+  const togglePill = (label) => {
+    let newPills;
+    if (selectedPills.includes(label)) {
+      newPills = selectedPills.filter(p => p !== label);
+    } else {
+      newPills = [...selectedPills, label];
+    }
+    setSelectedPills(newPills);
+    setGoalsText(newPills.join(', '));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    if (isLogin) {
+      setIsCreatingAccount(true);
+      try {
+        const response = await api.post('/auth/login', { email, password });
+        onLoginSuccess(response.data.user);
+      } catch (err) {
+        setAuthError(err.response?.data?.message || 'Failed to login');
+        setIsCreatingAccount(false);
+      }
+    } else {
+      if (registerStep < 3) {
+        setStepDirection('forward');
+        setRegisterStep(registerStep + 1);
+      } else {
+        setIsOtpVerifying(true);
+      }
+    }
+  };
+
+  const handleOtpSubmit = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    setIsCreatingAccount(true);
+    try {
+      const response = await api.post('/auth/register', { name, email, password });
+      onLoginSuccess(response.data.user);
+    } catch (err) {
+      setAuthError(err.response?.data?.message || 'Registration failed');
+      setIsCreatingAccount(false);
+      setIsOtpVerifying(false);
+    }
+  };
+
+  const renderStepIcon = (num, label, icon) => {
+    const isCompleted = registerStep > num;
+    const isActive = registerStep === num;
+    return (
+      <div className={`step ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}>
+        <div className="step-icon">
+          {isCompleted ? (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          ) : icon}
+        </div>
+        <span className="step-label">{label}</span>
+      </div>
+    );
+  };
+
+  return (
+    <div className="auth-wrapper animate-entrance">
+      {/* Theme Toggle Button */}
+      <button 
+        onClick={toggleTheme} 
+        className="nav-icon-btn-auth"
+        title="Toggle Theme"
+        style={{ position: 'fixed', top: '24px', left: '24px', zIndex: 100 }}
+      >
+        {isLightMode ? (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        ) : (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        )}
+      </button>
+
+      <div className="auth-split-grid">
+        
+        {/* Left Side: Branding / Marketing Copy */}
+        <div className="auth-left">
+          <div className="auth-header">
+            <img 
+              src={isLightMode ? `${logoLight}?v=3` : `${logoDark}?v=3`} 
+              alt="Program Logo" 
+              className="auth-logo"
+            />
+          </div>
+          
+          <h1>
+            Learn from <span className="highlight">real courses.</span><br/>
+            <span className="highlight">track real progress.</span>
+          </h1>
+          
+          <p>
+            Program connects students with instructor-built courses — browse, enroll, watch lessons, and track your progress in one place.
+          </p>
+        </div>
+
+        {/* Right Side: Auth Card */}
+        <div className="auth-right">
+          <div className="auth-card glass-card">
+            
+            <div className="auth-header">
+              <h2>{isLogin ? 'Welcome back' : 'Create your account'}</h2>
+              <p>{isLogin ? 'Sign in to continue your learning journey' : 'Join Program and start your journey today'}</p>
+            </div>
+
+            {/* Segmented Control */}
+            <div className="auth-tabs">
+              <div className={`tab-slider ${!isLogin ? 'slide-right' : ''}`}></div>
+              <button 
+                className={`auth-tab ${isLogin ? 'active' : ''}`}
+                onClick={() => { setIsLogin(true); setRegisterStep(1); setStepDirection('forward'); }}
+                type="button"
+              >
+                Sign In
+              </button>
+              <button 
+                className={`auth-tab ${!isLogin ? 'active' : ''}`}
+                onClick={() => { setIsLogin(false); setStepDirection('forward'); }}
+                type="button"
+              >
+                Register
+              </button>
+            </div>
+
+            {isOtpVerifying ? (
+              <form className="auth-form animate-entrance" onSubmit={handleOtpSubmit}>
+                <div className="otp-header-wrapper">
+                  <h3 className="otp-title">Verify your account</h3>
+                  <p className="otp-subtitle">
+                    We've sent a 6-digit verification code to your email/phone.
+                  </p>
+                  
+                  <div className="input-group">
+                    <label>Verification Code</label>
+                    <div className="icon-input-wrapper">
+                      <svg className="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                      <input 
+                        type="text" 
+                        placeholder="------" 
+                        maxLength="6"
+                        value={otpCode}
+                        onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, ''))}
+                        required 
+                        className="otp-input"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="auth-actions">
+                    <button type="button" className="glass-btn hover-glow auth-back-btn" onClick={() => setIsOtpVerifying(false)} disabled={isCreatingAccount}>
+                      Back
+                    </button>
+                    <button type="submit" className="glass-btn auth-submit-btn" disabled={isCreatingAccount || otpCode.length !== 6}>
+                      {isCreatingAccount ? (
+                        <span className="spinner-wrapper">
+                          <svg className="spinner" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+                          Verifying...
+                        </span>
+                      ) : 'Verify & Continue'}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            ) : (
+              <form className="auth-form" onSubmit={handleSubmit}>
+              
+              <div className={`expandable-section ${!isLogin ? 'expanded' : ''}`}>
+                <div className="expandable-content">
+                  {/* Visual Step Indicator for Registration */}
+                  <div className={`step-indicator ${stepDirection}`}>
+                    <div className="step-line">
+                      <div className="step-progress" style={{ width: registerStep === 1 ? '0%' : registerStep === 2 ? '50%' : '100%' }}></div>
+                    </div>
+                    
+                    {renderStepIcon(1, 'Account', <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>)}
+                    {renderStepIcon(2, 'Academic', <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>)}
+                    {renderStepIcon(3, 'Vision', <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>)}
+                  </div>
+
+                  {/* Step 1: Account */}
+                  {(!isLogin && registerStep === 1) && (
+                    <div className="step-content animate-entrance">
+                      <div className="input-row">
+                        <div className="input-group">
+                          <label>Full Name *</label>
+                          <input type="text" placeholder="Ahmed Al-Rashidi" required={!isLogin} value={name} onChange={(e) => setName(e.target.value)} />
+                        </div>
+                        <div className="input-group">
+                          <label>Phone Number *</label>
+                          <input type="tel" placeholder="+20 100 000 0000" required={!isLogin} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Step 2: Academic */}
+                  {registerStep === 2 && (
+                    <div className="step-content animate-entrance">
+                      <div className="input-group">
+                        <label>University *</label>
+                        <div className="custom-select-container">
+                          <CustomSelect 
+                            options={[
+                              ...EGYPTIAN_UNIVERSITIES.map(u => ({ value: u, label: u })),
+                              { value: 'Other', label: 'Other' }
+                            ]}
+                            value={university}
+                            onChange={setUniversity}
+                            placeholder="e.g. Cairo University, Ain Shams"
+                            icon={<svg className="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>}
+                          />
+                        </div>
+                      </div>
+                      
+                      {university === 'Other' && (
+                        <div className="input-group animate-entrance">
+                          <input type="text" placeholder="Type your university name..." value={otherUniversity} onChange={(e) => setOtherUniversity(e.target.value)} required />
+                        </div>
+                      )}
+
+                      <div className="input-row">
+                        <div className="input-group">
+                          <label>College / Faculty *</label>
+                          <div className="icon-input-wrapper">
+                            <svg className="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                            <input type="text" placeholder="e.g. Engineering" required />
+                          </div>
+                        </div>
+                        <div className="input-group">
+                          <label>Year / Level *</label>
+                          <CustomSelect 
+                            options={[
+                              { value: '1', label: '1st Year' },
+                              { value: '2', label: '2nd Year' },
+                              { value: '3', label: '3rd Year' },
+                              { value: '4', label: '4th Year' },
+                              { value: '5', label: '5th Year' },
+                              { value: 'Graduated', label: 'Graduated' }
+                            ]}
+                            value={year}
+                            onChange={setYear}
+                            placeholder="Select year"
+                            icon={<svg className="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="input-group">
+                        <label>Track / Specialization *</label>
+                        <div className="icon-input-wrapper">
+                          <svg className="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                          <input type="text" placeholder="e.g. Computer Science, AI, Full-Stack" required />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Step 3: Vision */}
+                  {registerStep === 3 && (
+                    <div className="step-content animate-entrance">
+                      <div className="vision-header">
+                        <div className="vision-icon">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        </div>
+                        <div>
+                          <h3 className="vision-title">Your goal <span className="badge-optional">OPTIONAL</span></h3>
+                          <p className="vision-subtitle">What do you hope to achieve with Program?</p>
+                        </div>
+                      </div>
+                      
+                      <div className="goal-pills">
+                        {PILLS.map((pill) => (
+                          <button
+                            key={pill.id}
+                            type="button"
+                            className={`goal-pill ${selectedPills.includes(pill.label) ? 'selected' : ''}`}
+                            onClick={() => togglePill(pill.label)}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={pill.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              {pill.icon}
+                            </svg>
+                            {pill.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="smart-textarea-wrapper">
+                        <textarea 
+                          placeholder="Tell us more about your goals..."
+                          value={goalsText}
+                          onChange={(e) => setGoalsText(e.target.value)}
+                          maxLength={400}
+                        ></textarea>
+                        <div className="char-count">{goalsText.length} / 400</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Core Auth Fields (Always visible for Login, visible in Step 1 for Register) */}
+              {(isLogin || registerStep === 1) && (
+                <div className="step-content animate-entrance">
+                  {authError && <div className="auth-error-message" style={{ color: '#ef4444', marginBottom: '1rem', padding: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '6px', fontSize: '0.9rem' }}>{authError}</div>}
+                  <div className="input-group">
+                    <label>Email Address *</label>
+                    <input type="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                  </div>
+                  
+                  <div className="input-group">
+                    <label>Password *</label>
+                    <div className="password-input-wrapper">
+                      <input 
+                        type={showPassword ? "text" : "password"} 
+                        placeholder={isLogin ? '••••••••' : 'Min 8 characters'} 
+                        required 
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                      />
+                      <button 
+                        type="button" 
+                        className="password-toggle"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                        ) : (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        )}
+                      </button>
+                    </div>
+                    {!isLogin && (
+                      <div className="password-strength-container">
+                        <div className="strength-bars">
+                          <div className={`strength-bar ${passStrength >= 1 ? 'weak' : ''}`}></div>
+                          <div className={`strength-bar ${passStrength >= 2 ? 'medium' : ''}`}></div>
+                          <div className={`strength-bar ${passStrength >= 3 ? 'strong' : ''}`}></div>
+                        </div>
+                        <span className="strength-text">
+                          {passStrength === 0 ? 'Password strength' : passStrength === 1 ? 'Weak' : passStrength === 2 ? 'Medium' : 'Strong'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {isLogin && (
+                <a className="forgot-password">Forgot password?</a>
+              )}
+
+              <div className="auth-actions">
+                {!isLogin && registerStep > 1 && (
+                  <button 
+                    type="button" 
+                    className="glass-btn hover-glow auth-back-btn" 
+                    onClick={() => {
+                        setStepDirection('backward');
+                        setRegisterStep(registerStep - 1);
+                    }}
+                    disabled={isCreatingAccount}
+                  >
+                    Back
+                  </button>
+                )}
+                
+                <button type="submit" className="glass-btn auth-submit-btn" disabled={isCreatingAccount}>
+                  {isCreatingAccount ? (
+                    <span className="spinner-wrapper">
+                      <svg className="spinner" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+                      Creating account...
+                    </span>
+                  ) : (
+                    isLogin ? (
+                      <>Sign In <svg className="btn-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></>
+                    ) : (
+                      registerStep === 3 ? 'Create Account 🎉' : (
+                        <>Continue <svg className="btn-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></>
+                      )
+                    )
+                  )}
+                </button>
+              </div>
+              </form>
+            )}
+
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
