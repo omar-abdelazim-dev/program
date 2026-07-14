@@ -146,9 +146,16 @@ export default function App() {
     );
   }
 
+  // Admin/superadmin accounts don't have student features (enrollments,
+  // dashboard) — keep them out of the student area rather than letting them
+  // land on a tab that just 403s.
+  if ((user?.role === 'admin' || user?.role === 'superadmin') && location.pathname.startsWith('/student')) {
+    return <Navigate to="/admin" replace />;
+  }
+
   // Redirect authenticated users away from auth pages
   if (location.pathname.startsWith('/auth')) {
-    if (user?.role === 'admin') return <Navigate to="/admin" replace />;
+    if (user?.role === 'admin' || user?.role === 'superadmin') return <Navigate to="/admin" replace />;
     if (user?.role === 'instructor') return <Navigate to="/instructor" replace />;
     return <Navigate to="/student" replace />;
   }

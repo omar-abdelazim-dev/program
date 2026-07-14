@@ -148,32 +148,36 @@ export default function TopNav({ user, activeTab, setActiveTab, toggleTheme, isL
         >
           Explore
         </button>
-        <button 
-          ref={dashboardRef}
-          className={`nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`} 
-          onClick={() => setActiveTab('dashboard')}
-        >
-          Dashboard
-        </button>
-        
+        {user?.role === 'student' && (
+          <button
+            ref={dashboardRef}
+            className={`nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
+            onClick={() => setActiveTab('dashboard')}
+          >
+            Dashboard
+          </button>
+        )}
+
         {user?.role === 'instructor' && (
           <Link to="/instructor" className="nav-tab" style={{ textDecoration: 'none' }}>
             Instructor Portal
           </Link>
         )}
-        
-        {user?.role === 'admin' && (
+
+        {(user?.role === 'admin' || user?.role === 'superadmin') && (
           <Link to="/admin" className="nav-tab" style={{ textDecoration: 'none' }}>
             Admin Portal
           </Link>
         )}
 
-        <button
-          className={`nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
-          onClick={() => setActiveTab('dashboard')}
-        >
-          My Courses
-        </button>
+        {user?.role === 'student' && (
+          <button
+            className={`nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
+            onClick={() => setActiveTab('dashboard')}
+          >
+            My Courses
+          </button>
+        )}
         <button className="nav-tab" disabled>
           Certificates <span className="badge-soon">Coming soon</span>
         </button>
