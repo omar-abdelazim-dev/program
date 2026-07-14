@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Program — Sign In</title>
+    <link rel="stylesheet" href="./styles/auth.css">
+        <script src="./scripts/auth.js"></script>
+
+</head>
+
+<body>
+
+    <!-- Theme Toggle (fixed top-right) -->
+    <button class="auth-theme-toggle" id="authThemeToggle" aria-label="Toggle theme">
+        <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="19" height="19" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor" stroke-width="1.8">
+            <circle cx="12" cy="12" r="4" />
+            <line x1="12" y1="2" x2="12" y2="4" />
+            <line x1="12" y1="20" x2="12" y2="22" />
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+            <line x1="2" y1="12" x2="4" y2="12" />
+            <line x1="20" y1="12" x2="22" y2="12" />
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+        </svg>
+        <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="19" height="19" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor" stroke-width="1.8">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+        </svg>
+    </button>
+
+    <!-- Animated Background -->
+    <div class="bg-scene">
+        <div class="orb orb-orange"></div>
+        <div class="orb orb-purple"></div>
+        <div class="orb orb-pink"></div>
+        <div class="grid-overlay"></div>
+    </div>
+
+    <!-- Main split container -->
+    <div class="auth-split-container">
+
+        <!-- Left Side: Form Container -->
+        <div class="auth-left-panel">
+            <div class="auth-wrapper">
+
+                <!-- Mobile Logo Header (Visible on smaller screens only) -->
+                <div class="mobile-logo-header">
+                    <img src="../image/program-logo-full.png" class="mobile-logo auth-logo-dark" alt="Program">
+                    <img src="../image/program-logo-full-dark.png" class="mobile-logo auth-logo-light" alt="Program">
+                </div>
+
+                <div class="auth-card">
+                    <h1 class="auth-title" id="authTitle">Welcome back</h1>
+                    <p class="auth-subtitle" id="authSubtitle">Sign in to continue your learning journey</p>
+
+                    <!-- Tab switcher -->
+                    <div class="auth-tabs">
+                        <button class="tab-btn active" id="loginTab" onclick="switchTab('login')">Sign In</button>
+                        <button class="tab-btn" id="signupTab" onclick="switchTab('signup')">Register</button>
+                        <div class="tab-slider" id="tabSlider"></div>
+                    </div>
+
+                    <!-- ═══════════════════════════════
+                         LOGIN FORM
+                    ═══════════════════════════════ -->
+                    <form class="auth-form" id="loginForm" onsubmit="handleLogin(event)">
+
+                        <div class="field-group">
+                            <label class="field-label">University Email</label>
+                            <div class="input-wrap" id="loginEmailWrap">
+                                <span class="input-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path
+                                            d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                                        <polyline points="22,6 12,13 2,6" />
+                                    </svg>
+                                </span>
+                                <input type="email" id="loginEmail" placeholder="your@university.edu"
+                                    autocomplete="email">
+                            </div>
+                            <span class="error-msg" id="loginEmailErr"></span>
+                        </div>
+
+                        <div class="field-group">
+                            <label class="field-label">Password</label>
+                            <div class="input-wrap" id="loginPwWrap">
+                                <span class="input-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" />
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                    </svg>
+                                </span>
+                                <input type="password" id="loginPassword" placeholder="••••••••"
+                                    autocomplete="current-password">
+                                <button type="button" class="toggle-pw" onclick="togglePassword('loginPassword', this)">
+                                    <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" width="17" height="17"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                        <circle cx="12" cy="12" r="3" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <span class="error-msg" id="loginPwErr"></span>
+                        </div>
+
+                        <a href="#" class="forgot-link">Forgot password?</a>
+
+                        <button type="submit" class="auth-submit-btn" id="loginSubmitBtn">
+                            Sign In
+                            <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                                <polyline points="12 5 19 12 12 19" />
+                            </svg>
+                        </button>
+
+                    </form>
+
+                    <!-- ═══════════════════════════════
+                         SIGNUP FORM (multi-step)
+                    ═══════════════════════════════ -->
+                    <form class="auth-form hidden" id="signupForm" onsubmit="handleSignup(event)">
+
+                        <!-- Step progress bar -->
+                        <div class="steps-bar">
+                            <div class="step active" data-step="1">
+                                <div class="step-dot" id="dot1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                        <circle cx="12" cy="7" r="4" />
+                                    </svg>
+                                </div>
+                                <span>Account</span>
+                            </div>
+                            <div class="step-line" id="line1"></div>
+                            <div class="step" data-step="2">
+                                <div class="step-dot" id="dot2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                                    </svg>
+                                </div>
+                                <span>Academic</span>
+                            </div>
+                            <div class="step-line" id="line2"></div>
+                            <div class="step" data-step="3">
+                                <div class="step-dot" id="dot3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                </div>
+                                <span>Vision</span>
+                            </div>
+                        </div>
+
+                        <!-- STEP 1: Account Info -->
+                        <div class="form-step active" id="step1">
+
+                            <div class="field-row">
+                                <div class="field-group">
+                                    <label class="field-label">Full Name *</label>
+                                    <div class="input-wrap" id="fullNameWrap">
+                                        <span class="input-icon">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                                <circle cx="12" cy="7" r="4" />
+                                            </svg>
+                                        </span>
+                                        <input type="text" id="fullName" placeholder="Ahmed Al-Rashidi"
+                                            autocomplete="name">
+                                    </div>
+                                    <span class="error-msg" id="fullNameErr"></span>
+                                </div>
+                                <div class="field-group">
+                                    <label class="field-label">Phone Number *</label>
+                                    <div class="input-wrap" id="phoneWrap">
+                                        <span class="input-icon">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                <path
+                                                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.6 4.38 2 2 0 0 1 3.58 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                                            </svg>
+                                        </span>
+                                        <input type="tel" id="phone" placeholder="+20 100 000 0000" autocomplete="tel">
+                                    </div>
+                                    <span class="error-msg" id="phoneErr"></span>
+                                </div>
+                            </div>
+
+                            <div class="field-group">
+                                <label class="field-label">University Email *</label>
+                                <div class="input-wrap" id="signupEmailWrap">
+                                    <span class="input-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path
+                                                d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                                            <polyline points="22,6 12,13 2,6" />
+                                        </svg>
+                                    </span>
+                                    <input type="email" id="signupEmail" placeholder="your@university.edu"
+                                        autocomplete="email" oninput="checkUniversityEmail(this.value)">
+                                    <span class="email-status" id="emailStatus" style="display:none"></span>
+                                </div>
+                                <p class="field-hint">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10" />
+                                        <line x1="12" y1="8" x2="12" y2="12" />
+                                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                                    </svg>
+                                    Use your university email to verify student status
+                                </p>
+                                <span class="error-msg" id="signupEmailErr"></span>
+                            </div>
+
+                            <div class="field-group">
+                                <label class="field-label">Password *</label>
+                                <div class="input-wrap" id="signupPwWrap">
+                                    <span class="input-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <rect x="3" y="11" width="18" height="11" rx="2" />
+                                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                        </svg>
+                                    </span>
+                                    <input type="password" id="signupPassword" placeholder="Min 8 characters"
+                                        autocomplete="new-password" oninput="checkPasswordStrength(this.value)">
+                                    <button type="button" class="toggle-pw"
+                                        onclick="togglePassword('signupPassword', this)">
+                                        <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" width="17" height="17"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                            <circle cx="12" cy="12" r="3" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="pw-strength">
+                                    <div class="pw-bar" id="bar1"></div>
+                                    <div class="pw-bar" id="bar2"></div>
+                                    <div class="pw-bar" id="bar3"></div>
+                                    <div class="pw-bar" id="bar4"></div>
+                                </div>
+                                <span class="error-msg" id="signupPwErr"></span>
+                            </div>
+
+                        </div>
+
+                        <!-- STEP 2: Academic Info -->
+                        <div class="form-step" id="step2">
+
+                            <div class="field-group">
+                                <label class="field-label">University *</label>
+                                <div class="input-wrap" id="uniWrap">
+                                    <span class="input-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                                            <polyline points="9 22 9 12 15 12 15 22" />
+                                        </svg>
+                                    </span>
+                                    <input type="text" id="university" placeholder="e.g. Cairo University, Ain Shams">
+                                </div>
+                                <span class="error-msg" id="uniErr"></span>
+                            </div>
+
+                            <div class="field-row">
+                                <div class="field-group">
+                                    <label class="field-label">College / Faculty *</label>
+                                    <div class="input-wrap" id="collegeWrap">
+                                        <span class="input-icon">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                                                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                                            </svg>
+                                        </span>
+                                        <input type="text" id="college" placeholder="e.g. Engineering">
+                                    </div>
+                                    <span class="error-msg" id="collegeErr"></span>
+                                </div>
+                                <div class="field-group">
+                                    <label class="field-label">Year / Level *</label>
+                                    <div class="input-wrap" id="yearWrap">
+                                        <span class="input-icon">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                <rect x="3" y="4" width="18" height="18" rx="2" />
+                                                <line x1="16" y1="2" x2="16" y2="6" />
+                                                <line x1="8" y1="2" x2="8" y2="6" />
+                                                <line x1="3" y1="10" x2="21" y2="10" />
+                                            </svg>
+                                        </span>
+                                        <select id="year">
+                                            <option value="" disabled selected>Select year</option>
+                                            <option value="1">1st Year</option>
+                                            <option value="2">2nd Year</option>
+                                            <option value="3">3rd Year</option>
+                                            <option value="4">4th Year</option>
+                                            <option value="5">5th Year</option>
+                                            <option value="grad">Graduate</option>
+                                        </select>
+                                    </div>
+                                    <span class="error-msg" id="yearErr"></span>
+                                </div>
+                            </div>
+
+                            <div class="field-group">
+                                <label class="field-label">Track / Specialization *</label>
+                                <div class="input-wrap" id="trackWrap">
+                                    <span class="input-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                                        </svg>
+                                    </span>
+                                    <input type="text" id="track" placeholder="e.g. Computer Science, AI, Full-Stack">
+                                </div>
+                                <span class="error-msg" id="trackErr"></span>
+                            </div>
+
+                        </div>
+
+                        <!-- STEP 3: Vision (optional) -->
+                        <div class="form-step" id="step3">
+
+                            <div class="vision-header">
+                                <div class="vision-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="none"
+                                        viewBox="0 0 24 24" stroke-width="1.5">
+                                        <defs>
+                                            <linearGradient id="vGrad" x1="0" y1="0" x2="1" y2="1">
+                                                <stop offset="0%" stop-color="#A855F7" />
+                                                <stop offset="100%" stop-color="#EC4899" />
+                                            </linearGradient>
+                                        </defs>
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+                                            stroke="url(#vGrad)" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="vision-title">Your goal <span class="optional-badge">Optional</span></p>
+                                    <p class="vision-desc">What do you hope to achieve with Program?</p>
+                                </div>
+                            </div>
+
+                            <div class="chips">
+                                <button type="button" class="chip" onclick="selectChip(this)">🎯 Get a job</button>
+                                <button type="button" class="chip" onclick="selectChip(this)">🛠 Build projects</button>
+                                <button type="button" class="chip" onclick="selectChip(this)">⚡ Learn skills</button>
+                                <button type="button" class="chip" onclick="selectChip(this)">💰 Freelance</button>
+                                <button type="button" class="chip" onclick="selectChip(this)">🎓 Grad project</button>
+                                <button type="button" class="chip" onclick="selectChip(this)">📜 Get certified</button>
+                            </div>
+
+                            <div class="vision-wrap">
+                                <textarea id="vision" placeholder="Tell us more about your goals..." maxlength="400"
+                                    oninput="updateCharCount(this)"></textarea>
+                                <span class="char-count" id="charCount">0 / 400</span>
+                            </div>
+
+                        </div>
+
+                        <!-- Step navigation -->
+                        <div class="step-nav">
+                            <button type="button" id="prevBtn" class="nav-btn" onclick="prevStep()"
+                                style="display:none">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="15 18 9 12 15 6" />
+                                </svg>
+                                Back
+                            </button>
+                            <button type="button" id="nextBtn" class="nav-btn primary" onclick="nextStep()">
+                                Continue
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="9 18 15 12 9 6" />
+                                </svg>
+                            </button>
+                            <button type="submit" id="submitBtn" class="auth-submit-btn" style="display:none">
+                                Create Account
+                                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Elegant Branding Panel -->
+        <div class="auth-right-panel">
+            <div class="branding-showcase">
+                <div class="glowing-orb-backdrop"></div>
+
+                <div class="showcase-logo-wrap" style="flex-direction: column; gap: 32px; text-align: center;">
+
+                    <!-- 1. Your Image Logos -->
+                    <div>
+                        <img src="../image/program-logo-full.png" class="showcase-logo auth-logo-dark"
+                            alt="Program Logo" style="width: 320px; margin: 0 auto;">
+                        <img src="../image/program-logo-full-dark.png" class="showcase-logo auth-logo-light"
+                            alt="Program Logo" style="width: 320px; margin: 0 auto;">
+                    </div>
+
+                    <!-- 2. The Marketing Text (Light Mode Compatible!) -->
+                    <div class="showcase-marketing-text" style="max-width: 500px; margin: 0 auto;">
+                        <h3 class="auth-title"
+                            style="font-size: 2.4rem; font-weight: 800; line-height: 1.2; margin-bottom: 16px; letter-spacing: -0.5px;">
+                            Learn from real courses.<br>
+                            <span style="color: var(--c-orange);">track real progress.</span>
+                        </h3>
+                        <p class="auth-subtitle"
+                            style="font-size: 1.05rem; line-height: 1.6; font-weight: 500; max-width: 440px; margin: 0 auto;">
+                            Program connects students with instructor-built courses — browse, enroll, watch lessons, and
+                            track your progress in one place.
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+
+</html>

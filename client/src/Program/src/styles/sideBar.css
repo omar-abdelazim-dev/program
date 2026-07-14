@@ -1,0 +1,376 @@
+:root {
+    --bg-body: #111B27;
+    --bg-sidebar: #1F2937;
+    --bg-active: #2D3748;
+    --bg-hover: #253347;
+    --accent: #FB923C;
+    --text-primary: #F9FAFB;
+    --text-muted: #9CA3AF;
+    --border-color: #3F465A;
+    --sidebar-w: 240px;
+    --sidebar-cw: 68px;
+    --radius: 14px;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    display: flex;
+    min-height: 100vh;
+    background: var(--bg-body);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    transition: background .3s;
+}
+
+/* ── SIDEBAR ── */
+.sideBar {
+    width: var(--sidebar-w);
+    min-height: 100vh;
+    background: var(--bg-sidebar);
+    display: flex;
+    flex-direction: column;
+    padding: 20px 14px 20px;
+    flex-shrink: 0;
+    overflow: hidden;
+    transition: width .3s ease;
+    border-right: 1px solid var(--border-color);
+}
+
+/* ── LOGO ─────────────────────────────────────────────
+   Both wrappers stay IN the flex flow at all times.
+   Only max-width + opacity animate — no position switch
+   → no jump.
+──────────────────────────────────────────────────── */
+.name {
+    display: flex;
+    align-items: center;
+    height: 52px;
+    margin-bottom: 20px;
+    padding-left: 4px;
+    transition: padding-left .3s ease;
+}
+
+/* Full wordmark — visible when expanded */
+.logo-full-wrap {
+    overflow: hidden;
+    max-width: 160px;
+    /* matches the logo width below */
+    opacity: 1;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    transition: max-width .3s ease, opacity .25s ease;
+}
+
+.logo-full {
+    width: 160px;
+    /* fixed width as requested */
+    height: auto;
+    object-fit: contain;
+    display: block;
+}
+
+/* PM icon — hidden when expanded */
+.logo-pm-wrap {
+    overflow: hidden;
+    max-width: 0;
+    opacity: 0;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    transition: max-width .3s ease, opacity .25s ease;
+}
+
+.logo-pm {
+    width: 52px;
+    height: 52px;
+    object-fit: contain;
+    display: block;
+}
+
+/* ── BUTTONS ── */
+.sideBarButton {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    width: 100%;
+    padding: 11px 14px;
+    margin-bottom: 2px;
+    border: none;
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: .93rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background .18s, color .18s, padding .3s;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.sideBarButton svg {
+    flex-shrink: 0;
+    stroke: currentColor;
+}
+
+.btn-label {
+    display: inline-block;
+    overflow: hidden;
+    max-width: 200px;
+    opacity: 1;
+    margin-left: 0;
+    transition: opacity .3s, max-width .3s, margin-left .3s;
+}
+
+.sideBarButton:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.sideBarButton.active {
+    background: var(--bg-active);
+    color: var(--accent);
+    box-shadow: var(--shadow);
+}
+
+/* Settings pushed to bottom */
+.settings.sideBarButton {
+    margin-top: auto;
+    border-top: 1px solid var(--border-color);
+    padding-top: 18px;
+}
+
+/* ── PROFILE CARD ── */
+.profile-card {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 14px 10px;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    margin-top: 8px;
+    margin-bottom: 8px;
+    overflow: hidden;
+}
+
+.avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #2D3748;
+    border: 2px solid #3F465A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--text-muted);
+    overflow: hidden;
+    transition: width .3s, height .3s;
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow: hidden;
+    max-width: 200px;
+    opacity: 1;
+    margin-left: 0;
+    transition: opacity .3s, max-width .3s, margin-left .3s;
+}
+
+.profile-name {
+    font-size: .85rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+.profile-badge {
+    font-size: .65rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    color: var(--accent);
+    background: rgba(251, 146, 60, .15);
+    padding: 2px 8px;
+    border-radius: 20px;
+    width: fit-content;
+}
+
+/* ── COLLAPSE BUTTON ── */
+.collapse-btn.sideBarButton {
+    justify-content: center;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+}
+
+.collapse-icon {
+    transition: transform .3s ease;
+}
+
+/* ══════════════════════════════════
+   COLLAPSED STATE
+══════════════════════════════════ */
+.sideBar.collapsed {
+    width: var(--sidebar-cw);
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+/* Nudge to center the 38px PM icon in 40px content area */
+.sideBar.collapsed .name {
+    padding-left: 0;
+}
+
+/* Hide full logo */
+.sideBar.collapsed .logo-full-wrap {
+    max-width: 0;
+    opacity: 0;
+}
+
+/* Show PM icon — stays in flow, just grows */
+.sideBar.collapsed .logo-pm-wrap {
+    max-width: 54px;
+    opacity: 1;
+}
+
+.sideBar.collapsed .sideBarButton {
+    padding: 11px 10px;
+}
+
+.sideBar.collapsed .settings.sideBarButton {
+    padding: 18px 10px 11px;
+}
+
+.sideBar.collapsed .collapse-btn.sideBarButton {
+    padding: 10px;
+}
+
+.sideBar.collapsed .collapse-icon {
+    transform: rotate(180deg);
+}
+
+.sideBar.collapsed .btn-label {
+    opacity: 0;
+    max-width: 0;
+    margin-left: -13px;
+}
+
+.sideBar.collapsed .profile-card {
+    justify-content: center;
+    padding: 14px 2px;
+}
+
+.sideBar.collapsed .avatar {
+    width: 36px;
+    height: 36px;
+}
+
+.sideBar.collapsed .profile-info {
+    opacity: 0;
+    max-width: 0;
+    margin-left: -11px;
+}
+
+/* Tooltips */
+.sideBar.collapsed .sideBarButton {
+    position: relative;
+}
+
+.sideBar.collapsed .sideBarButton::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: calc(100% + 12px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: #2D3748;
+    color: var(--text-primary);
+    font-size: .8rem;
+    padding: 5px 10px;
+    border-radius: 8px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .15s;
+    z-index: 999;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow);
+}
+
+.sideBar.collapsed .sideBarButton:hover::after {
+    opacity: 1;
+}
+
+/* ── LIGHT MODE ── */
+body.light-mode {
+    background: #f0f4f8;
+}
+
+body.light-mode .sideBar {
+    background: #fff;
+    border-right-color: #e2e8f0;
+}
+
+body.light-mode .sideBarButton {
+    color: #64748b;
+}
+
+body.light-mode .sideBarButton:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+body.light-mode .sideBarButton.active {
+    background: #fff7ed;
+    color: var(--accent);
+    box-shadow: var(--shadow);
+}
+
+body.light-mode .profile-name {
+    color: #1e293b;
+}
+
+body.light-mode .avatar {
+    background: #fff7ed;
+    border-color: #fed7aa;
+}
+
+body.light-mode .profile-card {
+    border-color: #e2e8f0;
+}
+
+body.light-mode .settings.sideBarButton {
+    border-color: #e2e8f0;
+}
+
+body.light-mode .collapse-btn.sideBarButton {
+    border-color: #e2e8f0;
+}
+
+body.light-mode .sideBarButton::after {
+    background: #fff;
+    color: #1e293b;
+    border-color: #e2e8f0;
+}
+
+/* ── CONTENT ── */
+.content {
+    flex: 1;
+    padding-top: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-primary);
+}
+
+body.light-mode .content {
+    color: #1e293b;
+}
+
