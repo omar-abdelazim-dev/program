@@ -1,4 +1,5 @@
 # Program
+<img width="1600" height="1187" alt="Program Logo" src="https://github.com/user-attachments/assets/83ba4853-3f7d-45c8-bc92-02878d3a34bc" />
 
 A MERN-stack e-learning platform where university students discover courses, watch video lessons, and track progress — instructors create courses, admins approve them before they go live.
 
