@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { learningPaths, topInstructors, topTopics, trending } from '../data';
 import api from '../api/axios';
 
 export default function ExploreTab({ user }) {
@@ -62,21 +61,7 @@ export default function ExploreTab({ user }) {
       </div>
 
       <div className="dashboard-grid">
-        <div className="main-column">
-
-          {/* Learning Paths */}
-          <section className="dashboard-section animate-entrance" style={{ animationDelay: '0.2s' }}>
-            <h2>Curated Learning Paths</h2>
-            <div className="paths-row">
-              {learningPaths.map((path, idx) => (
-                <div key={idx} className="path-card glass-card animate-entrance" style={{ animationDelay: `${0.3 + (idx * 0.1)}s`, background: path.color }}>
-                  <h3>{path.title}</h3>
-                  <p>{path.courses} Courses • {path.duration}</p>
-                  <button type="button" className="path-btn">Start Path</button>
-                </div>
-              ))}
-            </div>
-          </section>
+        <div className="main-column" style={{ width: '100%' }}>
 
           {/* Suggested Courses with Filters */}
           <section className="dashboard-section animate-entrance" style={{ animationDelay: '0.4s' }}>
@@ -131,47 +116,6 @@ export default function ExploreTab({ user }) {
                 </div>
               )) : <p style={{ color: 'var(--c-sub)' }}>No courses found in this category.</p>}
             </div>
-          </section>
-
-          {/* Top Instructors */}
-          <section className="dashboard-section animate-entrance" style={{ animationDelay: '0.5s' }}>
-            <h2>Top Instructors</h2>
-            <div className="instructors-row">
-              {topInstructors.map((inst, idx) => (
-                <div key={idx} className="instructor-card glass-card animate-entrance" style={{ animationDelay: `${0.6 + (idx * 0.1)}s` }}>
-                  <img className="inst-avatar" src={inst.image} alt={inst.name} style={{ objectFit: 'cover' }} />
-                  <h3>{inst.name}</h3>
-                  <p>{inst.role}</p>
-                  <button type="button" className="follow-btn glass-btn">Follow</button>
-                </div>
-              ))}
-            </div>
-          </section>
-        </div>
-
-        <div className="side-column">
-          {/* Top Topics */}
-          <section className="dashboard-section side-card glass-card animate-entrance" style={{ animationDelay: '0.4s' }}>
-            <h2>Top Topics</h2>
-            <div className="topics-pills">
-              {topTopics.map((topic, idx) => (
-                <span key={idx} className="topic-pill glass-card hover-glow animate-entrance" style={{ animationDelay: `${0.5 + (idx * 0.05)}s` }}>
-                  {topic}
-                </span>
-              ))}
-            </div>
-          </section>
-
-          {/* Trending */}
-          <section className="dashboard-section side-card glass-card animate-entrance" style={{ animationDelay: '0.6s' }}>
-            <h2>Trending This Week <span className="fire-emoji">🔥</span></h2>
-            <ul className="trending-list">
-              {trending.map((trend, i) => (
-                <li key={i} className="glass-card hover-glow animate-entrance" style={{ animationDelay: `${0.7 + (i * 0.1)}s` }}>
-                  <span className="trend-num">{i + 1}</span> {trend}
-                </li>
-              ))}
-            </ul>
           </section>
         </div>
       </div>

@@ -11,21 +11,6 @@ export const suggestedCourses = [
   { id: 4, title: "Business Marketing", category: "Business", instructor: "Dr. Khaled", rating: "4.7", students: "10k", price: "1,200 EGP", image: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=600&auto=format&fit=crop", color: "linear-gradient(135deg, #F59E0B, #EF4444)" },
 ];
 
-export const learningPaths = [
-  { title: "Become a Full-Stack Web Developer", courses: 8, duration: "6 Months", color: "linear-gradient(135deg, #8B5CF6, #3B82F6)" },
-  { title: "Data Scientist Career Path", courses: 6, duration: "4 Months", color: "linear-gradient(135deg, #10B981, #F59E0B)" },
-];
-
-export const topInstructors = [
-  { name: "Dr. Khaled", role: "AI Researcher", image: "https://i.pravatar.cc/150?u=drkhaled" },
-  { name: "Dr. Sarah", role: "Frontend Lead", image: "https://i.pravatar.cc/150?u=drsarah" },
-  { name: "Prof. Layla", role: "Design Director", image: "https://i.pravatar.cc/150?u=proflayla" },
-  { name: "Dr. Omar", role: "Data Scientist", image: "https://i.pravatar.cc/150?u=dromar" }
-];
-
-export const topTopics = ["Web Development", "Artificial Intelligence", "Data Science", "UI/UX Design", "Cybersecurity", "Cloud Computing"];
-export const trending = ["Next.js App Router", "Deep Learning Fundamentals", "Figma Advanced Prototyping", "Docker & Kubernetes"];
-
 export const enrolledCourses = [
   { title: "Full-Stack Web Development", instructor: "Dr. Sarah", progress: 65, lastLesson: "Understanding React Hooks", image: "linear-gradient(135deg, #3B82F6, #8B5CF6)" },
   { title: "Data Structures & Algorithms", instructor: "Dr. Omar", progress: 30, lastLesson: "Big O Notation", image: "linear-gradient(135deg, #10B981, #3B82F6)" },

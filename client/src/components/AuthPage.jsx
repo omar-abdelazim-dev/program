@@ -83,8 +83,6 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
   
   // Loading State
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
-  const [isOtpVerifying, setIsOtpVerifying] = useState(false);
-  const [otpCode, setOtpCode] = useState('');
   const [authError, setAuthError] = useState('');
 
   const EGYPTIAN_UNIVERSITIES = [
@@ -158,34 +156,27 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
           setRegisterStep(registerStep + 1);
         }
       } else {
-        setIsOtpVerifying(true);
+        setIsCreatingAccount(true);
+        try {
+          const payload = {
+            name, email, password, role, phone,
+            university: university === 'Other' ? otherUniversity : university,
+            year,
+            college,
+            track,
+            providedCourses,
+            linkedinUrl,
+            socialUrl,
+            goalsText,
+            selectedPills
+          };
+          const response = await api.post('/auth/register', payload);
+          onLoginSuccess(response.data.user);
+        } catch (err) {
+          setAuthError(err.response?.data?.message || 'Registration failed');
+          setIsCreatingAccount(false);
+        }
       }
-    }
-  };
-
-  const handleOtpSubmit = async (e) => {
-    e.preventDefault();
-    setAuthError('');
-    setIsCreatingAccount(true);
-    try {
-      const payload = {
-        name, email, password, role, phone,
-        university: university === 'Other' ? otherUniversity : university,
-        year,
-        college,
-        track,
-        providedCourses,
-        linkedinUrl,
-        socialUrl,
-        goalsText,
-        selectedPills
-      };
-      const response = await api.post('/auth/register', payload);
-      onLoginSuccess(response.data.user);
-    } catch (err) {
-      setAuthError(err.response?.data?.message || 'Registration failed');
-      setIsCreatingAccount(false);
-      setIsOtpVerifying(false);
     }
   };
 
@@ -270,48 +261,8 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
               </button>
             </div>
 
-            {isOtpVerifying ? (
-              <form className="auth-form animate-entrance" onSubmit={handleOtpSubmit}>
-                <div className="otp-header-wrapper">
-                  <h3 className="otp-title">Verify your account</h3>
-                  <p className="otp-subtitle">
-                    We've sent a 6-digit verification code to your email/phone.
-                  </p>
-                  
-                  <div className="input-group">
-                    <label>Verification Code</label>
-                    <div className="icon-input-wrapper">
-                      <svg className="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                      <input 
-                        type="text" 
-                        placeholder="------" 
-                        maxLength="6"
-                        value={otpCode}
-                        onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, ''))}
-                        required 
-                        className="otp-input"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="auth-actions">
-                    <button type="button" className="glass-btn hover-glow auth-back-btn" onClick={() => setIsOtpVerifying(false)} disabled={isCreatingAccount}>
-                      Back
-                    </button>
-                    <button type="submit" className="glass-btn auth-submit-btn" disabled={isCreatingAccount || otpCode.length !== 6}>
-                      {isCreatingAccount ? (
-                        <span className="spinner-wrapper">
-                          <svg className="spinner" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
-                          Verifying...
-                        </span>
-                      ) : 'Verify & Continue'}
-                    </button>
-                  </div>
-                </div>
-              </form>
-            ) : (
-              <form className="auth-form" onSubmit={handleSubmit}>
-              
+            <form className="auth-form" onSubmit={handleSubmit}>
+
               <div className={`expandable-section ${!isLogin ? 'expanded' : ''}`}>
                 <div className="expandable-content">
                   {/* Visual Step Indicator for Registration */}
@@ -576,8 +527,7 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
                   )}
                 </button>
               </div>
-              </form>
-            )}
+            </form>
 
           </div>
         </div>

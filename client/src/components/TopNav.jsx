@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { currentUser } from '../data';
 import logoDark from '../assets/logo-dark.png';
 import logoLight from '../assets/logo-light.png';
 
@@ -136,7 +135,7 @@ export default function TopNav({ user, activeTab, setActiveTab, toggleTheme, isL
               </svg>
             </div>
             <div className="profile-tooltip">
-              <div className="tooltip-name">{user?.name || currentUser.name}</div>
+              <div className="tooltip-name">{user?.name || 'Student'}</div>
               <hr className="tooltip-divider" />
               <div style={{ padding: '0 12px 8px', fontSize: '0.8rem', color: 'var(--c-sub)' }}>Role: {user?.role || 'student'}</div>
               <a href="#" className="tooltip-link">Profile</a>
