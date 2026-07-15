@@ -109,6 +109,10 @@ body::after {
     align-items: center;
 }
 
+.nav-logo a:hover {
+    background-color: transparent !important;
+}
+
 .nav-brand {
     font-size: 1.5rem;
     font-weight: 800;
@@ -171,8 +175,10 @@ body::after {
 }
 
 .nav-icon-btn {
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-top: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.1), 0 2px 4px rgba(0, 0, 0, 0.1);
     color: var(--c-sub);
     width: 40px;
     height: 40px;
@@ -181,13 +187,15 @@ body::after {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
 }
 
 .nav-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.3);
     color: var(--c-light);
-    border-color: var(--c-orange);
-    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-2px);
+    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.2), 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .nav-bell {
@@ -312,7 +320,7 @@ body::after {
     display: flex;
     align-items: center;
     gap: 8px;
-    transition: color 0.2s;
+    transition: none;
     font-family: inherit;
 }
 
@@ -334,7 +342,7 @@ body::after {
     height: 3px;
     background: linear-gradient(90deg, var(--c-orange), var(--c-yellow));
     border-radius: 3px 3px 0 0;
-    transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    transition: none;
     pointer-events: none; /* so it doesn't block clicks */
 }
 
@@ -432,8 +440,17 @@ body.light-mode .progress-bar-container {
     }
 }
 
+body.light-mode .nav-icon-btn {
+    background: rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
 body.light-mode .nav-icon-btn:hover {
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(0, 0, 0, 0.08);
+    border-color: rgba(0, 0, 0, 0.2);
+    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.9), 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 /* Make the ambient orbs pop more in light mode */

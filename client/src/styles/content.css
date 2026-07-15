@@ -125,7 +125,7 @@ body.light-mode .glass-card {
 
 .stat-card:hover {
     transform: translateY(-5px);
-    border-color: var(--c-orange);
+    border-color: var(--hover-color, var(--c-orange));
     box-shadow: var(--shadow);
 }
 
@@ -455,13 +455,16 @@ body.light-mode .glass-card {
 
 .filter-indicator {
     position: absolute;
-    top: 27px; /* matches button margin-top */
-    bottom: 35px; /* accounts for button margin-bottom and padding-bottom */
-    height: calc(100% - 62px); /* Fallback */
+    top: 27px;
+    /* matches button margin-top */
+    bottom: 35px;
+    /* accounts for button margin-bottom and padding-bottom */
+    height: calc(100% - 62px);
+    /* Fallback */
     background: linear-gradient(135deg, var(--c-orange), var(--c-yellow));
     border-radius: 20px;
     z-index: 0;
-    transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    transition: none;
     box-shadow: var(--c-glow);
     pointer-events: none;
 }
@@ -479,7 +482,7 @@ body.light-mode .glass-card {
     white-space: nowrap;
     position: relative;
     z-index: 1;
-    transition: all 0.3s;
+    transition: none;
     margin-top: 27px;
     margin-left: 37px;
     margin-bottom: 27px;
@@ -1172,7 +1175,7 @@ body.light-mode .strength-bar.strong {
 .smart-textarea-wrapper textarea {
     background: var(--code-bg);
     border: 1px solid var(--border);
-    color: var(--text-h);
+    color: var(--c-light);
     padding: 12px;
     border-radius: 8px;
     outline: none;
@@ -1217,7 +1220,7 @@ body.light-mode .strength-bar.strong {
 
 .custom-select-trigger {
     cursor: pointer;
-    color: var(--text-h);
+    color: var(--c-light);
     padding: 12px;
     padding-left: 42px;
     padding-right: 36px;
@@ -1421,13 +1424,30 @@ body.light-mode .custom-select-dropdown {
     border-top: var(--c-border-top);
     border-left: var(--c-border-left);
     border-radius: 12px;
-    color: var(--text-h);
+    color: var(--c-light);
     font-size: 0.95rem;
     box-sizing: border-box;
     transition: all 0.3s;
 }
 
-.input-group input:focus {
+input::placeholder,
+textarea::placeholder {
+    color: var(--c-sub);
+}
+
+/* Fix browser autofill styling */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px var(--c-input-bg) inset !important;
+    -webkit-text-fill-color: var(--c-light) !important;
+    transition: background-color 5000s ease-in-out 0s;
+    border-radius: 8px;
+}
+
+input:focus,
+textarea:focus {
     border-color: var(--c-orange);
     background: var(--code-bg);
     box-shadow: var(--shadow);

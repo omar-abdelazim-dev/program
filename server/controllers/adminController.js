@@ -8,6 +8,8 @@ export const getStats = async (req, res) => {
   try {
     const totalStudents = await User.countDocuments({ role: 'student' });
     const totalInstructors = await User.countDocuments({ role: 'instructor' });
+    const totalAdmins = await User.countDocuments({ role: 'admin' });
+    const totalSuperAdmins = await User.countDocuments({ role: 'superadmin' });
 
     // Calculate total revenue and enrollments by category
     const enrollments = await Enrollment.find().populate('course');
@@ -22,10 +24,17 @@ export const getStats = async (req, res) => {
       }
     });
 
+    // TODO: Company revenue share is not decided yet. Using 30% (0.3) as a placeholder.
+    const COMPANY_SHARE_PERCENTAGE = 0.3;
+    const companyRevenue = totalRevenue * COMPANY_SHARE_PERCENTAGE;
+
     res.status(200).json({
       totalStudents,
       totalInstructors,
+      totalAdmins,
+      totalSuperAdmins,
       totalRevenue,
+      companyRevenue,
       categoryCounts
     });
   } catch (error) {
@@ -58,6 +67,8 @@ export const getUsers = async (req, res) => {
   }
 };
 
+const roleLevels = { student: 0, instructor: 1, admin: 2, superadmin: 3 };
+
 // @route   PATCH /api/admin/users/:id/block
 // @access  Private (Admin)
 export const toggleBlockUser = async (req, res) => {
@@ -72,6 +83,12 @@ export const toggleBlockUser = async (req, res) => {
     // Don't let an admin block themselves easily
     if (user._id.toString() === req.user.id) {
       return res.status(400).json({ message: 'Cannot block yourself' });
+    }
+
+    const reqUserLevel = roleLevels[req.user.role] || 0;
+    const targetUserLevel = roleLevels[user.role] || 0;
+    if (reqUserLevel <= targetUserLevel) {
+      return res.status(403).json({ message: 'You do not have permission to modify a user with an equal or higher role' });
     }
 
     user.isBlocked = !user.isBlocked;
@@ -96,6 +113,16 @@ export const demoteUser = async (req, res) => {
 
     if (user._id.toString() === req.user.id) {
       return res.status(400).json({ message: 'Cannot demote yourself' });
+    }
+
+    if (req.user.role === 'superadmin' && user.role === 'instructor') {
+      return res.status(403).json({ message: 'Superadmins cannot demote instructors' });
+    }
+
+    const reqUserLevel = roleLevels[req.user.role] || 0;
+    const targetUserLevel = roleLevels[user.role] || 0;
+    if (reqUserLevel <= targetUserLevel) {
+      return res.status(403).json({ message: 'You do not have permission to demote a user with an equal or higher role' });
     }
 
     user.role = 'student';

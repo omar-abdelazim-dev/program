@@ -119,8 +119,10 @@ export const getMe = async (req, res) => {
   res.status(200).json({ user: req.user });
 };
 
+const roleLevels = { student: 0, instructor: 1, admin: 2, superadmin: 3 };
+
 // @route   PATCH /api/auth/promote
-// @access  Private (Admin only)
+// @access  Private (Superadmin only)
 export const promoteToAdmin = async (req, res) => {
   try {
     const { email } = req.body;
@@ -133,33 +135,24 @@ export const promoteToAdmin = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    const reqUserLevel = roleLevels[req.user.role] || 0;
+    const targetUserLevel = roleLevels[user.role] || 0;
+    if (reqUserLevel <= targetUserLevel) {
+      return res.status(403).json({ message: 'You do not have permission to modify a user with an equal or higher role' });
+    }
+    // Only superadmin can promote to admin
+    if (req.user.role !== 'superadmin') {
+      return res.status(403).json({ message: 'Only superadmins can promote to admin' });
+    }
+
+    if (req.user.role === 'superadmin' && user.role === 'instructor') {
+      return res.status(403).json({ message: 'Superadmins cannot promote instructors' });
+    }
+
     user.role = 'admin';
     await user.save();
 
     res.status(200).json({ message: 'User promoted to admin successfully', user });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error promoting user', error: error.message });
-  }
-};
-
-// @route   PATCH /api/auth/promote-instructor
-// @access  Private (Admin only)
-export const promoteToInstructor = async (req, res) => {
-  try {
-    const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ message: 'Email is required' });
-    }
-
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    user.role = 'instructor';
-    await user.save();
-
-    res.status(200).json({ message: 'User promoted to instructor successfully', user });
   } catch (error) {
     res.status(500).json({ message: 'Server error promoting user', error: error.message });
   }
@@ -177,6 +170,20 @@ export const promoteToSuperAdmin = async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
+    }
+
+    const reqUserLevel = roleLevels[req.user.role] || 0;
+    const targetUserLevel = roleLevels[user.role] || 0;
+    if (reqUserLevel <= targetUserLevel) {
+      return res.status(403).json({ message: 'You do not have permission to modify a user with an equal or higher role' });
+    }
+    // Only superadmin can promote to superadmin
+    if (req.user.role !== 'superadmin') {
+      return res.status(403).json({ message: 'Only superadmins can promote to superadmin' });
+    }
+
+    if (req.user.role === 'superadmin' && user.role === 'instructor') {
+      return res.status(403).json({ message: 'Superadmins cannot promote instructors' });
     }
 
     user.role = 'superadmin';

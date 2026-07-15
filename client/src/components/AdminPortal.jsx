@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import api from '../api/axios';
+import logoLight from '../assets/logo-light.png';
+import logoDark from '../assets/logo-dark.png';
 
 const AnimatedNumber = ({ value }) => {
   const [displayValue, setDisplayValue] = useState(0);
@@ -32,7 +34,10 @@ const AnimatedNumber = ({ value }) => {
   return <span>{displayValue}</span>;
 };
 
-export default function AdminPortal({ user, onLogout }) {
+const roleLevels = { student: 0, instructor: 1, admin: 2, superadmin: 3 };
+const canManage = (currentRole, targetRole) => (roleLevels[currentRole] || 0) > (roleLevels[targetRole] || 0);
+
+export default function AdminPortal({ user, onLogout, toggleTheme, isLightMode }) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard_overview');
   console.log("Admin Portal mounted with activeTab:", activeTab);
@@ -50,20 +55,8 @@ export default function AdminPortal({ user, onLogout }) {
   // Search
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Promote Admin State
-  const [promoteEmail, setPromoteEmail] = useState('');
-  const [promoteStatus, setPromoteStatus] = useState({ type: '', msg: '' });
-  const [promoting, setPromoting] = useState(false);
-
-  // Promote Instructor State
-  const [promoteInstructorEmail, setPromoteInstructorEmail] = useState('');
-  const [promoteInstructorStatus, setPromoteInstructorStatus] = useState({ type: '', msg: '' });
-  const [promotingInstructor, setPromotingInstructor] = useState(false);
-
-  // Promote Super Admin State
-  const [promoteSuperAdminEmail, setPromoteSuperAdminEmail] = useState('');
-  const [promoteSuperAdminStatus, setPromoteSuperAdminStatus] = useState({ type: '', msg: '' });
-  const [promotingSuperAdmin, setPromotingSuperAdmin] = useState(false);
+  // Dropdown state
+  const [openDropdownId, setOpenDropdownId] = useState(null);
 
   // Sidebar Dropdown State
   const [expandedGroup, setExpandedGroup] = useState('Dashboard');
@@ -123,14 +116,15 @@ export default function AdminPortal({ user, onLogout }) {
     }
   }, [user, navigate, activeTab]);
 
-  // Debounced Search
+  // Live Debounced Search
   useEffect(() => {
-    if (activeTab !== 'users') return;
+    if (!activeTab.startsWith('users')) return;
     const delay = setTimeout(() => {
       fetchUsers(searchQuery);
-    }, 400);
+    }, 300);
     return () => clearTimeout(delay);
   }, [searchQuery, activeTab]);
+
 
   const handleApprove = async (id) => {
     setProcessingId(id);
@@ -156,69 +150,18 @@ export default function AdminPortal({ user, onLogout }) {
     }
   };
 
-  const handlePromote = async (e) => {
-    e.preventDefault();
-    if (!promoteEmail) return;
-    setPromoting(true);
-    setPromoteStatus({ type: '', msg: '' });
-    
+  const handleInlinePromote = async (email, targetRole) => {
     try {
-      await api.patch('/auth/promote', { email: promoteEmail });
-      setPromoteStatus({ type: 'success', msg: `Successfully promoted ${promoteEmail} to admin!` });
-      setPromoteEmail('');
-      if (activeTab.startsWith('users')) fetchUsers(searchQuery);
+      let endpoint = '';
+      if (targetRole === 'admin') endpoint = '/auth/promote';
+      else if (targetRole === 'superadmin') endpoint = '/auth/promote-superadmin';
+      else throw new Error('Invalid promotion target');
       
-      setTimeout(() => {
-        setPromoteStatus({ type: '', msg: '' });
-      }, 3000);
-    } catch (err) {
-      setPromoteStatus({ type: 'error', msg: err.response?.data?.message || 'Failed to promote user' });
-    } finally {
-      setPromoting(false);
-    }
-  };
-
-  const handlePromoteInstructor = async (e) => {
-    e.preventDefault();
-    if (!promoteInstructorEmail) return;
-    setPromotingInstructor(true);
-    setPromoteInstructorStatus({ type: '', msg: '' });
-    
-    try {
-      await api.patch('/auth/promote-instructor', { email: promoteInstructorEmail });
-      setPromoteInstructorStatus({ type: 'success', msg: `Successfully promoted ${promoteInstructorEmail} to instructor!` });
-      setPromoteInstructorEmail('');
+      await api.patch(endpoint, { email });
       if (activeTab.startsWith('users')) fetchUsers(searchQuery);
-      
-      setTimeout(() => {
-        setPromoteInstructorStatus({ type: '', msg: '' });
-      }, 3000);
     } catch (err) {
-      setPromoteInstructorStatus({ type: 'error', msg: err.response?.data?.message || 'Failed to promote user to instructor' });
-    } finally {
-      setPromotingInstructor(false);
-    }
-  };
-
-  const handlePromoteSuperAdmin = async (e) => {
-    e.preventDefault();
-    if (!promoteSuperAdminEmail) return;
-    setPromotingSuperAdmin(true);
-    setPromoteSuperAdminStatus({ type: '', msg: '' });
-    
-    try {
-      await api.patch('/auth/promote-superadmin', { email: promoteSuperAdminEmail });
-      setPromoteSuperAdminStatus({ type: 'success', msg: `Successfully promoted ${promoteSuperAdminEmail} to superadmin!` });
-      setPromoteSuperAdminEmail('');
-      if (activeTab.startsWith('users')) fetchUsers(searchQuery);
-      
-      setTimeout(() => {
-        setPromoteSuperAdminStatus({ type: '', msg: '' });
-      }, 3000);
-    } catch (err) {
-      setPromoteSuperAdminStatus({ type: 'error', msg: err.response?.data?.message || 'Failed to promote user to superadmin' });
-    } finally {
-      setPromotingSuperAdmin(false);
+      console.error('Failed to promote user', err);
+      alert(err.response?.data?.message || 'Failed to promote user');
     }
   };
 
@@ -232,7 +175,6 @@ export default function AdminPortal({ user, onLogout }) {
   };
 
   const handleDemote = async (id) => {
-    if(!window.confirm('Are you sure you want to demote this user to student?')) return;
     try {
       await api.patch(`/admin/users/${id}/demote`);
       fetchUsers(searchQuery);
@@ -366,16 +308,38 @@ export default function AdminPortal({ user, onLogout }) {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       {/* Top Navbar using top-nav styling */}
       <nav className="top-nav" style={{ position: 'relative', borderBottom:'1px solid rgba(255, 255, 255, 0.15)', zIndex: 10, display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: '0 24px', height: '70px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <button onClick={() => navigate('/student')} className="nav-icon-btn" style={{ borderLeft:'1px solid rgba(255, 255, 255, 0.15)' , borderTop:'1px solid rgba(255, 255, 255, 0.15)', width: 'auto', padding: '0 12px', display: 'flex', gap: '8px', alignItems: 'center', borderRadius: '8px'}}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-            <span>Back to Student View</span>
-          </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', minWidth: '40px' }}>
+          <Link to="/">
+            <img 
+              src={isLightMode ? `${logoLight}?v=3` : `${logoDark}?v=3`} 
+              alt="Program Logo" 
+              style={{ height: '32px', width: 'auto', objectFit: 'contain' }}
+            />
+          </Link>
         </div>
         <div className="nav-logo">
           <h1 style={{ fontSize: '1.2rem', margin: '0' }}>{user?.role === 'superadmin' ? 'Super Admin Portal' : 'Admin Portal'}</h1>
         </div>
-        <div className="nav-controls">
+        <div className="nav-controls" style={{ display: 'flex', alignItems: 'center' }}>
+          <button className="nav-icon-btn" onClick={toggleTheme} style={{ marginRight: '16px' }}>
+            {isLightMode ? (
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="4"></circle>
+                <line x1="12" y1="2" x2="12" y2="4"></line>
+                <line x1="12" y1="20" x2="12" y2="22"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="2" y1="12" x2="4" y2="12"></line>
+                <line x1="20" y1="12" x2="22" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+            )}
+          </button>
           <div className="profile-wrapper">
             <div className="nav-avatar">
               <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
@@ -386,7 +350,6 @@ export default function AdminPortal({ user, onLogout }) {
             <div className="profile-tooltip">
               <div className="tooltip-name">{user?.name}</div>
               <hr className="tooltip-divider" />
-              <div style={{ padding: '0 12px 8px', fontSize: '0.8rem', color: 'var(--c-sub)' }}>Role: {user?.role}</div>
               <a href="#" className="tooltip-link">Profile</a>
               <a href="#" className="tooltip-link">Settings</a>
               <hr className="tooltip-divider" />
@@ -500,28 +463,45 @@ export default function AdminPortal({ user, onLogout }) {
         </div>
 
         {/* Main Content Area */}
-        <div style={{ flex: 1, padding: '32px 48px', overflowY: 'auto' }}>
-          <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+        <div style={{ flex: 1, padding: '32px 48px', overflowY: 'auto', minWidth: 0 }}>
+          <div style={{ maxWidth: '100%', margin: '0 auto' }}>
             
             {activeTab === 'dashboard_overview' && stats && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
                 <h2 style={{ fontSize: '1.8rem', margin: 0 }}>Overview</h2>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px' }}>
-                  <div className="glass-card stat-card">
-                    <div className="stat-label">Total Revenue</div>
-                    <div className="stat-value" style={{ color: '#10B981', background: 'none', WebkitTextFillColor: 'initial' }}>
-                      EGP <AnimatedNumber value={stats.totalRevenue} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                  {/* First Row: Revenue, Students, Instructors */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px' }}>
+                    <div className="glass-card stat-card" style={{ '--hover-color': '#10B981' }}>
+                      <div className="stat-label">Revenue (Company Share)</div>
+                      <div className="stat-value" style={{ color: '#10B981', background: 'none', WebkitTextFillColor: 'initial' }}>
+                        EGP <AnimatedNumber value={stats.companyRevenue} />
+                      </div>
+                    </div>
+                    <div className="glass-card stat-card" style={{ '--hover-color': 'var(--c-sub)' }}>
+                      <div className="stat-label">Students</div>
+                      <div className="stat-value" style={{ color: 'var(--hover-color)', background: 'none', WebkitTextFillColor: 'initial' }}><AnimatedNumber value={stats.totalStudents} /></div>
+                    </div>
+                    <div className="glass-card stat-card" style={{ '--hover-color': 'var(--c-orange)' }}>
+                      <div className="stat-label">Instructors</div>
+                      <div className="stat-value" style={{ color: 'var(--hover-color)', background: 'none', WebkitTextFillColor: 'initial' }}><AnimatedNumber value={stats.totalInstructors} /></div>
                     </div>
                   </div>
-                  <div className="glass-card stat-card">
-                    <div className="stat-label">Total Students</div>
-                    <div className="stat-value"><AnimatedNumber value={stats.totalStudents} /></div>
-                  </div>
-                  <div className="glass-card stat-card">
-                    <div className="stat-label">Total Instructors</div>
-                    <div className="stat-value"><AnimatedNumber value={stats.totalInstructors} /></div>
-                  </div>
+
+                  {/* Second Row: Super Admins, Admins */}
+                  {user?.role === 'superadmin' && (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px' }}>
+                      <div className="glass-card stat-card" style={{ '--hover-color': '#ef4444' }}>
+                        <div className="stat-label">Super Admins</div>
+                        <div className="stat-value" style={{ color: 'var(--hover-color)', background: 'none', WebkitTextFillColor: 'initial' }}><AnimatedNumber value={stats.totalSuperAdmins || 0} /></div>
+                      </div>
+                      <div className="glass-card stat-card" style={{ '--hover-color': 'var(--c-purple)' }}>
+                        <div className="stat-label">Admins</div>
+                        <div className="stat-value" style={{ color: 'var(--hover-color)', background: 'none', WebkitTextFillColor: 'initial' }}><AnimatedNumber value={stats.totalAdmins || 0} /></div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="glass-card" style={{ padding: '24px' }}>
@@ -544,100 +524,33 @@ export default function AdminPortal({ user, onLogout }) {
 
             {activeTab.startsWith('users') && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                   <h2 style={{ fontSize: '1.8rem', margin: 0 }}>User Management</h2>
-                </div>
-                
-                <div style={{ display: 'grid', gridTemplateColumns: user?.role === 'superadmin' ? 'repeat(3, 1fr)' : '1fr 1fr', gap: '24px' }}>
-                  <div className="glass-card" style={{ padding: '24px' }}>
-                    <h2 style={{ fontSize: '1.2rem', margin: '0 0 16px 0' }}>Assign an Admin</h2>
-                    <form onSubmit={handlePromote} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                      <div>
-                        <div className="input-group">
-                          <input 
-                            type="email" 
-                            placeholder="User's email address" 
-                            value={promoteEmail}
-                            onChange={(e) => setPromoteEmail(e.target.value)}
-                            required
-                          />
-                        </div>
-                        {promoteStatus.msg && (
-                          <div style={{ marginTop: '8px', fontSize: '0.9rem', color: promoteStatus.type === 'success' ? '#10B981' : '#ef4444' }}>
-                            {promoteStatus.msg}
-                          </div>
-                        )}
-                      </div>
-                      <button type="submit" disabled={promoting} className="glass-btn auth-submit-btn" style={{ width: '100%', margin: 0 }}>
-                        {promoting ? 'Promoting...' : 'Promote'}
-                      </button>
-                    </form>
+                  <div style={{ position: 'relative', width: '350px' }}>
+                    <svg style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--c-sub)' }} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><path d="M21 21l-4.35-4.35"></path></svg>
+                    <input 
+                      type="text" 
+                      placeholder="Search users by name, email, or phone..." 
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      style={{ width: '100%', background: isLightMode ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.04)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--c-border-active)', padding: '12px 16px 12px 42px', borderRadius: '12px', color: 'var(--c-text)', outline: 'none', transition: 'all 0.3s', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05), 0 2px 8px rgba(0,0,0,0.02)' }}
+                      onMouseEnter={(e) => { e.target.style.background = isLightMode ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.06)' }}
+                      onMouseLeave={(e) => { if(document.activeElement !== e.target) e.target.style.background = isLightMode ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.04)' }}
+                      onFocus={(e) => {
+                        e.target.style.borderColor = 'var(--c-orange)';
+                        e.target.style.background = isLightMode ? 'rgba(255, 255, 255, 0.6)' : 'rgba(15, 17, 23, 0.8)';
+                        e.target.style.boxShadow = '0 0 0 3px rgba(251, 146, 60, 0.2)';
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.borderColor = 'var(--c-border-active)';
+                        e.target.style.background = isLightMode ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.04)';
+                        e.target.style.boxShadow = 'inset 0 2px 4px rgba(0,0,0,0.05), 0 2px 8px rgba(0,0,0,0.02)';
+                      }}
+                    />
                   </div>
-
-                  <div className="glass-card" style={{ padding: '24px' }}>
-                    <h2 style={{ fontSize: '1.2rem', margin: '0 0 16px 0' }}>Assign an Instructor</h2>
-                    <form onSubmit={handlePromoteInstructor} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                      <div>
-                        <div className="input-group">
-                          <input 
-                            type="email" 
-                            placeholder="User's email address" 
-                            value={promoteInstructorEmail}
-                            onChange={(e) => setPromoteInstructorEmail(e.target.value)}
-                            required
-                          />
-                        </div>
-                        {promoteInstructorStatus.msg && (
-                          <div style={{ marginTop: '8px', fontSize: '0.9rem', color: promoteInstructorStatus.type === 'success' ? '#10B981' : '#ef4444' }}>
-                            {promoteInstructorStatus.msg}
-                          </div>
-                        )}
-                      </div>
-                      <button type="submit" disabled={promotingInstructor} className="glass-btn auth-submit-btn" style={{ background: 'linear-gradient(135deg, var(--c-yellow), var(--c-orange))', width: '100%', margin: 0 }}>
-                        {promotingInstructor ? 'Assigning...' : 'Assign'}
-                      </button>
-                    </form>
-                  </div>
-
-                  {user?.role === 'superadmin' && (
-                    <div className="glass-card" style={{ padding: '24px' }}>
-                      <h2 style={{ fontSize: '1.2rem', margin: '0 0 16px 0' }}>Assign a Super Admin</h2>
-                      <form onSubmit={handlePromoteSuperAdmin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                        <div>
-                          <div className="input-group">
-                            <input 
-                              type="email" 
-                              placeholder="User's email address" 
-                              value={promoteSuperAdminEmail}
-                              onChange={(e) => setPromoteSuperAdminEmail(e.target.value)}
-                              required
-                            />
-                          </div>
-                          {promoteSuperAdminStatus.msg && (
-                            <div style={{ marginTop: '8px', fontSize: '0.9rem', color: promoteSuperAdminStatus.type === 'success' ? '#10B981' : '#ef4444' }}>
-                              {promoteSuperAdminStatus.msg}
-                            </div>
-                          )}
-                        </div>
-                        <button type="submit" disabled={promotingSuperAdmin} className="glass-btn auth-submit-btn" style={{ background: 'var(--c-orange)', boxShadow: '0 4px 15px rgba(251, 146, 60, 0.4)', color: '#fff', border: '1px solid var(--c-border-active)', width: '100%', margin: 0 }}>
-                          {promotingSuperAdmin ? 'Assigning...' : 'Assign Super Admin'}
-                        </button>
-                      </form>
-                    </div>
-                  )}
                 </div>
 
-                <div className="input-group">
-                  <input 
-                    type="text" 
-                    placeholder="Search users by name, email, or phone..." 
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    style={{ background: 'var(--c-card)' }}
-                  />
-                </div>
-
-                <div className="glass-card" style={{ overflow: 'hidden' }}>
+                <div className="glass-card" style={{ overflow: 'visible' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                     <thead style={{ background: 'var(--c-border-subtle)' }}>
                       <tr>
@@ -650,13 +563,23 @@ export default function AdminPortal({ user, onLogout }) {
                       </tr>
                     </thead>
                     <tbody>
-                      {users.length === 0 ? (
+                      {users.filter(u => {
+                        if (activeTab === 'users_students') return u.role === 'student';
+                        if (activeTab === 'users_instructors') return u.role === 'instructor';
+                        if (activeTab === 'users_admins') return u.role === 'admin' || u.role === 'superadmin';
+                        return true;
+                      }).length === 0 ? (
                         <tr><td colSpan="6" style={{ padding: '24px', textAlign: 'center', color: 'var(--c-sub)' }}>No users found</td></tr>
                       ) : (
-                        users.map(u => (
+                        users.filter(u => {
+                          if (activeTab === 'users_students') return u.role === 'student';
+                          if (activeTab === 'users_instructors') return u.role === 'instructor';
+                          if (activeTab === 'users_admins') return u.role === 'admin' || u.role === 'superadmin';
+                          return true;
+                        }).map(u => (
                           <tr key={u._id} style={{ borderTop: '1px solid var(--c-border-subtle)' }}>
-                            <td style={{ padding: '16px' }}>{u.name}</td>
-                            <td style={{ padding: '16px', color: 'var(--c-sub)' }}>{u.email}</td>
+                            <td style={{ padding: '16px', whiteSpace: 'nowrap' }}>{u.name}</td>
+                            <td style={{ padding: '16px', color: 'var(--c-sub)', whiteSpace: 'nowrap' }}>{u.email}</td>
                             <td style={{ padding: '16px', color: 'var(--c-sub)' }}>{u.phone || '-'}</td>
                             <td style={{ padding: '16px' }}>
                               <span style={{ 
@@ -672,23 +595,69 @@ export default function AdminPortal({ user, onLogout }) {
                                 {u.isBlocked ? 'Blocked' : 'Active'}
                               </span>
                             </td>
-                            <td style={{ padding: '16px', textAlign: 'right', display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                              {u._id !== user.id && (
-                                <>
-                                  {u.role !== 'student' && (
+                            <td style={{ padding: '16px', textAlign: 'right', whiteSpace: 'nowrap', position: 'relative', zIndex: openDropdownId === u._id ? 50 : 'auto' }}>
+                              <div style={{ display: 'inline-flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center', position: 'relative', zIndex: openDropdownId === u._id ? 50 : 'auto' }}>
+                                {u._id !== user.id && canManage(user?.role, u.role) && (
+                                  <>
+                                    {user?.role === 'superadmin' && u.role !== 'instructor' && (
+                                      <div 
+                                        tabIndex={-1}
+                                        onBlur={(e) => {
+                                          if (!e.currentTarget.contains(e.relatedTarget)) {
+                                            setOpenDropdownId(null);
+                                          }
+                                        }}
+                                        style={{ display: 'inline-block', position: 'relative', zIndex: openDropdownId === u._id ? 50 : 'auto' }}
+                                      >
+                                        <button 
+                                          onClick={() => setOpenDropdownId(openDropdownId === u._id ? null : u._id)}
+                                          style={{ background: isLightMode ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.05)', border: '1px solid var(--c-border-active)', padding: '0 12px', borderRadius: '6px', color: 'var(--c-light)', cursor: 'pointer', height: '34px', outline: 'none', display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap', width: '100%', transition: 'all 0.2s' }}
+                                          onMouseEnter={(e) => { e.currentTarget.style.background = isLightMode ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)'; }}
+                                          onMouseLeave={(e) => { e.currentTarget.style.background = isLightMode ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.05)'; }}
+                                        >
+                                          Assign Role
+                                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
+                                        </button>
+                                        <div className="profile-tooltip" style={{ 
+                                          right: 0, 
+                                          top: '100%', 
+                                          marginTop: '4px', 
+                                          width: '100%', 
+                                          zIndex: 10, 
+                                          textAlign: 'left',
+                                          opacity: openDropdownId === u._id ? 1 : 0,
+                                          visibility: openDropdownId === u._id ? 'visible' : 'hidden',
+                                          transform: openDropdownId === u._id ? 'translateY(0)' : 'translateY(10px)',
+                                          pointerEvents: openDropdownId === u._id ? 'auto' : 'none',
+                                          transition: 'all 0.15s ease-out',
+                                          background: isLightMode ? '#ffffff' : '#0f1117',
+                                          backdropFilter: 'none',
+                                          WebkitBackdropFilter: 'none'
+                                        }}>
+                                          {user?.role === 'superadmin' && u.role !== 'admin' && <a href="#" onClick={(e) => { e.preventDefault(); handleInlinePromote(u.email, 'admin'); setOpenDropdownId(null); }} className="tooltip-link">Admin</a>}
+                                          {user?.role === 'superadmin' && u.role !== 'superadmin' && <a href="#" onClick={(e) => { e.preventDefault(); handleInlinePromote(u.email, 'superadmin'); setOpenDropdownId(null); }} className="tooltip-link">Super Admin</a>}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {u.role !== 'student' && !(user?.role === 'superadmin' && u.role === 'instructor') && (
+                                      <button 
+                                        onClick={() => handleDemote(u._id)}
+                                        style={{ background: isLightMode ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.05)', border: '1px solid var(--c-border-active)', padding: '6px 12px', borderRadius: '6px', color: 'var(--c-light)', cursor: 'pointer', height: '34px', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}
+                                        onMouseEnter={(e) => { e.currentTarget.style.background = isLightMode ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)'; }}
+                                        onMouseLeave={(e) => { e.currentTarget.style.background = isLightMode ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.05)'; }}
+                                      >Demote</button>
+                                    )}
                                     <button 
-                                      onClick={() => handleDemote(u._id)}
-                                      style={{ background: 'transparent', border: '1px solid var(--c-border-active)', padding: '6px 12px', borderRadius: '6px', color: 'var(--c-light)', cursor: 'pointer' }}
-                                    >Demote</button>
-                                  )}
-                                  <button 
-                                    onClick={() => handleToggleBlock(u._id)}
-                                    style={{ background: u.isBlocked ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', border: `1px solid ${u.isBlocked ? '#10B981' : '#ef4444'}`, padding: '6px 12px', borderRadius: '6px', color: u.isBlocked ? '#10B981' : '#ef4444', cursor: 'pointer' }}
-                                  >
-                                    {u.isBlocked ? 'Unblock' : 'Block'}
-                                  </button>
-                                </>
-                              )}
+                                      onClick={() => handleToggleBlock(u._id)}
+                                      style={{ background: u.isBlocked ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', border: `1px solid ${u.isBlocked ? '#10B981' : '#ef4444'}`, padding: '6px 12px', borderRadius: '6px', color: u.isBlocked ? '#10B981' : '#ef4444', cursor: 'pointer', height: '34px', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}
+                                      onMouseEnter={(e) => { e.currentTarget.style.background = u.isBlocked ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'; }}
+                                      onMouseLeave={(e) => { e.currentTarget.style.background = u.isBlocked ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'; }}
+                                    >
+                                      {u.isBlocked ? 'Unblock' : 'Block'}
+                                    </button>
+                                  </>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         ))
@@ -702,7 +671,7 @@ export default function AdminPortal({ user, onLogout }) {
             {activeTab === 'enrollment' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                 <h2 style={{ fontSize: '1.8rem', margin: 0 }}>Financial Transactions</h2>
-                <div className="glass-card" style={{ overflow: 'hidden' }}>
+                <div className="glass-card" style={{ overflow: 'visible' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                     <thead style={{ background: 'var(--c-border-subtle)' }}>
                       <tr>
