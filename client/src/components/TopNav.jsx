@@ -8,9 +8,17 @@ export default function TopNav({ user, activeTab, setActiveTab, toggleTheme, isL
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
   const exploreRef = useRef(null);
   const dashboardRef = useRef(null);
+  const myCoursesRef = useRef(null);
+
+  const getActiveRef = () => {
+    if (activeTab === 'explore') return exploreRef;
+    if (activeTab === 'dashboard') return dashboardRef;
+    if (activeTab === 'mycourses') return myCoursesRef;
+    return { current: null };
+  };
 
   useEffect(() => {
-    const activeRef = activeTab === 'explore' ? exploreRef : dashboardRef;
+    const activeRef = getActiveRef();
     if (activeRef.current) {
       setIndicatorStyle({
         left: activeRef.current.offsetLeft,
@@ -21,7 +29,7 @@ export default function TopNav({ user, activeTab, setActiveTab, toggleTheme, isL
 
   useEffect(() => {
     const handleResize = () => {
-      const activeRef = activeTab === 'explore' ? exploreRef : dashboardRef;
+      const activeRef = getActiveRef();
       if (activeRef.current) {
         setIndicatorStyle({
           left: activeRef.current.offsetLeft,
@@ -172,8 +180,9 @@ export default function TopNav({ user, activeTab, setActiveTab, toggleTheme, isL
 
         {user?.role === 'student' && (
           <button
-            className={`nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
-            onClick={() => setActiveTab('dashboard')}
+            ref={myCoursesRef}
+            className={`nav-tab ${activeTab === 'mycourses' ? 'active' : ''}`}
+            onClick={() => setActiveTab('mycourses')}
           >
             My Courses
           </button>

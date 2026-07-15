@@ -16,6 +16,7 @@ export default function LearningPortal() {
   const [loading, setLoading] = useState(true);
   const [videoLoading, setVideoLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isCourseContentOpen, setIsCourseContentOpen] = useState(true);
 
   useEffect(() => {
     const fetchPortalData = async () => {
@@ -75,90 +76,311 @@ export default function LearningPortal() {
   if (error) return <div style={{ padding: '100px', textAlign: 'center', color: 'red' }}>{error}</div>;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--c-bg)' }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       {/* Top Navbar specifically for Learning Portal */}
-      <div style={{ padding: '16px 24px', background: 'var(--c-card)', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <button onClick={() => navigate(`/course/${id}`)} style={{ background: 'transparent', border: 'none', color: 'var(--c-sub)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      <div
+        className="learning-glass"
+        style={{
+          padding: "16px 24px",
+          borderBottom: "1px solid rgba(255,255,255,0.05)",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <button
+            className="back-arrow-btn"
+            onClick={() => navigate(`/course/${id}`)}
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "var(--c-sub)",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
           </button>
           <div>
-            <h1 style={{ fontSize: '1.2rem', margin: '0 0 4px 0' }}>{course?.title}</h1>
-            <div style={{ color: 'var(--c-sub)', fontSize: '0.9rem' }}>{progressPercent}% Complete</div>
+            <h1 style={{ fontSize: "1.2rem", margin: "0 0 4px 0" }}>
+              {course?.title}
+            </h1>
+            <div style={{ color: "var(--c-sub)", fontSize: "0.9rem" }}>
+              {progressPercent}% Complete
+            </div>
           </div>
         </div>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ color: 'var(--c-light)', fontSize: '0.95rem', fontWeight: '500' }}>{progressPercent}%</div>
-          <div style={{ width: '200px', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
-            <div style={{ width: `${progressPercent}%`, height: '100%', background: 'linear-gradient(90deg, var(--c-orange), var(--c-yellow))', transition: 'width 0.3s' }}></div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <div
+            style={{
+              color: "var(--c-light)",
+              fontSize: "0.95rem",
+              fontWeight: "500",
+            }}
+          >
+            {progressPercent}%
           </div>
-          <button className="glass-btn auth-submit-btn" style={{ padding: '8px 16px', fontSize: '0.9rem', width: 'auto', borderRadius: '8px' }}>Get Certificate</button>
+          <div
+            style={{
+              width: "200px",
+              height: "6px",
+              background: "rgba(255,255,255,0.1)",
+              borderRadius: "3px",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                width: `${progressPercent}%`,
+                height: "100%",
+                background:
+                  "linear-gradient(90deg, var(--c-orange), var(--c-yellow))",
+                transition: "width 0.3s",
+              }}
+            ></div>
+          </div>
+          <button
+            className="glass-btn auth-submit-btn"
+            style={{
+              padding: "8px 16px",
+              fontSize: "0.9rem",
+              width: "auto",
+              borderRadius: "8px",
+            }}
+          >
+            Get Certificate
+          </button>
         </div>
       </div>
 
       {/* Main Layout */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        
+      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
         {/* Video Area */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-          <div style={{ width: '100%', background: '#000', aspectRatio: '16/9', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            overflowY: "auto",
+          }}
+        >
+          <div
+            style={{
+              width: "100%",
+              background: "#000",
+              aspectRatio: "16/9",
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
             {videoLoading ? (
-              <div className="spinner-wrapper" style={{ color: 'white' }}>
-                <svg className="spinner" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 1s linear infinite' }}><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+              <div className="spinner-wrapper" style={{ color: "white" }}>
+                <svg
+                  className="spinner"
+                  width="32"
+                  height="32"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{ animation: "spin 1s linear infinite" }}
+                >
+                  <line x1="12" y1="2" x2="12" y2="6"></line>
+                  <line x1="12" y1="18" x2="12" y2="22"></line>
+                  <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+                  <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                  <line x1="2" y1="12" x2="6" y2="12"></line>
+                  <line x1="18" y1="12" x2="22" y2="12"></line>
+                  <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+                  <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+                </svg>
               </div>
             ) : activeVideoUrl ? (
-              <video 
-                src={activeVideoUrl} 
-                controls 
-                autoPlay 
-                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              <video
+                src={activeVideoUrl}
+                controls
+                autoPlay
+                style={{ width: "100%", height: "100%", objectFit: "contain" }}
               />
             ) : (
-              <div style={{ color: 'white' }}>Video not available</div>
+              <div style={{ color: "white" }}>Video not available</div>
             )}
           </div>
 
-          <div style={{ padding: '32px', maxWidth: '900px', margin: '0 auto', width: '100%' }}>
-            <h2 style={{ fontSize: '2rem', marginBottom: '16px' }}>{activeLesson?.title}</h2>
-            <div style={{ display: 'flex', gap: '24px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '24px', marginBottom: '24px' }}>
-              <button className={`nav-tab ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')} style={{ padding: 0, paddingBottom: '8px' }}>Overview</button>
-              <button className={`nav-tab ${activeTab === 'qa' ? 'active' : ''}`} onClick={() => setActiveTab('qa')} style={{ padding: 0, paddingBottom: '8px' }}>Q&A</button>
-              <button className={`nav-tab ${activeTab === 'notes' ? 'active' : ''}`} onClick={() => setActiveTab('notes')} style={{ padding: 0, paddingBottom: '8px' }}>Notes</button>
+          <div
+            style={{
+              padding: "32px",
+              maxWidth: "900px",
+              margin: "0 auto",
+              width: "100%",
+            }}
+          >
+            <h2 style={{ fontSize: "2rem", marginBottom: "16px" }}>
+              {activeLesson?.title}
+            </h2>
+            <div
+              style={{
+                display: "flex",
+                gap: "24px",
+                borderBottom: "1px solid rgba(255,255,255,0.1)",
+                paddingBottom: "24px",
+                marginBottom: "24px",
+              }}
+            >
+              <button
+                className={`nav-tab ${activeTab === "overview" ? "active" : ""}`}
+                onClick={() => setActiveTab("overview")}
+                style={{ padding: 0, paddingBottom: "8px" }}
+              >
+                Overview
+              </button>
+              <button
+                className={`nav-tab ${activeTab === "qa" ? "active" : ""}`}
+                onClick={() => setActiveTab("qa")}
+                style={{ padding: 0, paddingBottom: "8px" }}
+              >
+                Q&A
+              </button>
+              <button
+                className={`nav-tab ${activeTab === "notes" ? "active" : ""}`}
+                onClick={() => setActiveTab("notes")}
+                style={{ padding: 0, paddingBottom: "8px" }}
+              >
+                Notes
+              </button>
             </div>
 
-            {activeTab === 'overview' && (
+            {activeTab === "overview" && (
               <div>
-                <p style={{ color: 'var(--c-sub)', lineHeight: '1.6', marginBottom: '32px' }}>
-                  In this lesson, we will dive deep into the core concepts of Enterprise Architecture. You will learn how to structure large-scale applications so that they are maintainable, scalable, and easy for new developers to onboard onto. Make sure to download the attached cheat sheet before proceeding!
+                <p
+                  style={{
+                    color: "var(--c-sub)",
+                    lineHeight: "1.6",
+                    marginBottom: "32px",
+                  }}
+                >
+                  In this lesson, we will dive deep into the core concepts of
+                  Enterprise Architecture. You will learn how to structure
+                  large-scale applications so that they are maintainable,
+                  scalable, and easy for new developers to onboard onto. Make
+                  sure to download the attached cheat sheet before proceeding!
                 </p>
 
-                <h3 style={{ fontSize: '1.2rem', marginBottom: '16px' }}>Resources</h3>
-                <div className="glass-card hover-glow" style={{ padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', maxWidth: '400px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                <h3 style={{ fontSize: "1.2rem", marginBottom: "16px" }}>
+                  Resources
+                </h3>
+                <div
+                  className="glass-card hover-glow"
+                  style={{
+                    padding: "16px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    cursor: "pointer",
+                    maxWidth: "400px",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "12px",
+                    }}
+                  >
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#F59E0B"
+                      strokeWidth="2"
+                    >
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                      <polyline points="14 2 14 8 20 8"></polyline>
+                      <line x1="16" y1="13" x2="8" y2="13"></line>
+                      <line x1="16" y1="17" x2="8" y2="17"></line>
+                      <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
                     <div>
-                      <div style={{ fontWeight: '600' }}>Architecture_Cheat_Sheet.pdf</div>
-                      <div style={{ fontSize: '0.85rem', color: 'var(--c-sub)' }}>2.4 MB PDF</div>
+                      <div style={{ fontWeight: "600" }}>
+                        Architecture_Cheat_Sheet.pdf
+                      </div>
+                      <div
+                        style={{ fontSize: "0.85rem", color: "var(--c-sub)" }}
+                      >
+                        2.4 MB PDF
+                      </div>
                     </div>
                   </div>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
                 </div>
               </div>
             )}
-            
-            {activeTab === 'qa' && (
+
+            {activeTab === "qa" && (
               <div>
-                <p style={{ color: 'var(--c-sub)' }}>No questions have been asked yet. Be the first to start a discussion!</p>
-                <button className="glass-btn" style={{ marginTop: '16px', padding: '8px 16px', fontSize: '0.9rem' }}>Ask a Question</button>
+                <p style={{ color: "var(--c-sub)" }}>
+                  No questions have been asked yet. Be the first to start a
+                  discussion!
+                </p>
+                <button
+                  className="glass-btn"
+                  style={{
+                    marginTop: "16px",
+                    padding: "8px 16px",
+                    fontSize: "0.9rem",
+                  }}
+                >
+                  Ask a Question
+                </button>
               </div>
             )}
-            
-            {activeTab === 'notes' && (
+
+            {activeTab === "notes" && (
               <div>
-                <textarea 
-                  placeholder="Type your notes here... They will be saved automatically." 
-                  style={{ width: '100%', height: '150px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '16px', color: '#fff', fontSize: '1rem', resize: 'vertical' }}
+                <textarea
+                  placeholder="Type your notes here... They will be saved automatically."
+                  style={{
+                    border: "var(--c-border)",
+                    borderTop: "var(--c-border-top)",
+                    borderLeft: "var(--c-border-left)",
+                    width: "100%",
+                    height: "150px",
+                    background: "rgba(15, 17, 23, 0.7)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: "8px",
+                    padding: "16px",
+                    color: "#fff",
+                    fontSize: "1rem",
+                    resize: "vertical",
+                  }}
                 ></textarea>
               </div>
             )}
@@ -166,53 +388,166 @@ export default function LearningPortal() {
         </div>
 
         {/* Sidebar */}
-        <div style={{ width: '400px', background: 'var(--c-card)', borderLeft: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '24px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-            <h3 style={{ margin: 0, fontSize: '1.2rem' }}>Course Content</h3>
-          </div>
-          
-          <div style={{ flex: 1, overflowY: 'auto' }}>
-            <div style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-              <div style={{ padding: '16px 24px', background: 'rgba(255,255,255,0.02)', fontWeight: '600', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div
+          className="learning-glass"
+          style={{
+            width: "400px",
+            borderLeft: "1px solid rgba(255,255,255,0.05)",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <div style={{ flex: 1, overflowY: "auto" }}>
+            <div style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+              <div
+                onClick={() => setIsCourseContentOpen(!isCourseContentOpen)}
+                style={{
+                  padding: "16px 24px",
+                  background: "rgba(255,255,255,0.02)",
+                  fontWeight: "600",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  cursor: "pointer",
+                }}
+              >
                 Course Content
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  style={{ transform: isCourseContentOpen ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform 0.3s" }}
+                >
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
               </div>
-              
-              <div>
-                {lessons.map(lesson => {
+
+              <div style={{ display: 'grid', gridTemplateRows: isCourseContentOpen ? '1fr' : '0fr', transition: 'grid-template-rows 0.3s ease-out' }}>
+                <div style={{ overflow: 'hidden' }}>
+                  <div style={{ position: "relative" }}>
+                {/* The sliding indicator */}
+                {activeLesson &&
+                  lessons.some((l) => l._id === activeLesson._id) && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: `${lessons.findIndex((l) => l._id === activeLesson._id) * 72}px`,
+                        left: 0,
+                        width: "100%",
+                        height: "72px",
+                        background: "rgba(245,158,11,0.1)",
+                        borderLeft: "3px solid var(--c-orange)",
+                        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                        zIndex: 0,
+                      }}
+                    />
+                  )}
+
+                {lessons.map((lesson) => {
                   const isCompleted = completedLessons.includes(lesson._id);
                   const isActive = activeLesson?._id === lesson._id;
-                  
+
                   return (
-                    <div 
-                      key={lesson._id} 
-                      onClick={() => handleSelectLesson(lesson._id, lesson.title)}
-                      style={{ padding: '16px 24px', display: 'flex', gap: '16px', cursor: 'pointer', background: isActive ? 'rgba(245,158,11,0.1)' : 'transparent', borderLeft: isActive ? '3px solid var(--c-orange)' : '3px solid transparent', transition: 'all 0.2s' }}
+                    <div
+                      key={lesson._id}
+                      onClick={() =>
+                        handleSelectLesson(lesson._id, lesson.title)
+                      }
+                      style={{
+                        height: "72px",
+                        boxSizing: "border-box",
+                        padding: "16px 24px",
+                        display: "flex",
+                        gap: "16px",
+                        cursor: "pointer",
+                        position: "relative",
+                        zIndex: 1,
+                        borderLeft: "3px solid transparent",
+                      }}
                     >
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); toggleComplete(lesson._id); }}
-                        style={{ width: '24px', height: '24px', borderRadius: '50%', border: isCompleted ? 'none' : '2px solid rgba(255,255,255,0.2)', background: isCompleted ? '#10B981' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleComplete(lesson._id);
+                        }}
+                        style={{
+                          width: "24px",
+                          height: "24px",
+                          borderRadius: "50%",
+                          border: isCompleted
+                            ? "none"
+                            : "2px solid rgba(255,255,255,0.2)",
+                          background: isCompleted ? "#10B981" : "transparent",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          cursor: "pointer",
+                          flexShrink: 0,
+                        }}
                       >
-                        {isCompleted && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>}
+                        {isCompleted && (
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="#fff"
+                            strokeWidth="3"
+                          >
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                        )}
                       </button>
-                      
-                      <div>
-                        <div style={{ fontWeight: isActive ? '600' : '400', color: isActive ? 'var(--c-light)' : 'var(--c-sub)', marginBottom: '4px' }}>
+
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div
+                          style={{
+                            fontWeight: isActive ? "600" : "400",
+                            color: isActive ? "var(--c-light)" : "var(--c-sub)",
+                            marginBottom: "4px",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
                           {lesson.order}. {lesson.title}
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: 'var(--c-sub)' }}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            fontSize: "0.85rem",
+                            color: "var(--c-sub)",
+                          }}
+                        >
+                          <svg
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                          </svg>
                           Video
                         </div>
                       </div>
                     </div>
-                  )
+                  );
                 })}
               </div>
             </div>
           </div>
         </div>
       </div>
+      </div>
     </div>
+  </div>
   );
 }

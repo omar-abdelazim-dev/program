@@ -372,6 +372,15 @@ body.light-mode .glass-card {
     animation: slideUpFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+.back-arrow-btn {
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.back-arrow-btn:hover {
+    transform: translateX(-4px);
+    color: var(--c-light) !important;
+}
+
 /* 2. 3D Hover Lifts for Cards */
 .course-card,
 .instructor-card {
@@ -428,6 +437,21 @@ body.light-mode .glass-card {
     margin-bottom: 24px;
     overflow-x: auto;
     padding-bottom: 8px;
+    position: relative;
+    z-index: 1;
+}
+
+.filter-indicator {
+    position: absolute;
+    top: 27px; /* matches button margin-top */
+    bottom: 35px; /* accounts for button margin-bottom and padding-bottom */
+    height: calc(100% - 62px); /* Fallback */
+    background: linear-gradient(135deg, var(--c-orange), var(--c-yellow));
+    border-radius: 20px;
+    z-index: 0;
+    transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    box-shadow: var(--c-glow);
+    pointer-events: none;
 }
 
 .filter-btn {
@@ -441,6 +465,8 @@ body.light-mode .glass-card {
     font-weight: 600;
     cursor: pointer;
     white-space: nowrap;
+    position: relative;
+    z-index: 1;
     transition: all 0.3s;
     margin-top: 27px;
     margin-left: 37px;
@@ -455,10 +481,9 @@ body.light-mode .glass-card {
 .filter-btn.active,
 .filter-btn.active:hover {
     border-color: transparent;
-    background: linear-gradient(135deg, var(--c-orange), var(--c-yellow));
-    /* Stops the background from painting under the border */
+    background: transparent !important;
     color: #fff !important;
-    box-shadow: var(--c-glow);
+    box-shadow: none;
 }
 
 body.light-mode .filter-btn {
@@ -467,7 +492,7 @@ body.light-mode .filter-btn {
 }
 
 body.light-mode .filter-btn.active {
-    background: linear-gradient(135deg, var(--c-orange), var(--c-yellow)) !important;
+    background: transparent !important;
     color: #fff !important;
 }
 

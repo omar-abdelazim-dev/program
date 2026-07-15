@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { learningPaths, topInstructors, topTopics, trending } from '../data';
 import api from '../api/axios';
@@ -8,6 +8,8 @@ export default function ExploreTab({ user }) {
   const firstName = user?.name ? user.name.split(" ")[0] : "Student";
   const categories = ["All", "Development", "Design", "Data", "Business"];
   const [currentCategory, setCurrentCategory] = useState("All");
+  const categoryContainerRef = useRef(null);
+  const [filterIndicatorStyle, setFilterIndicatorStyle] = useState({ left: 0, width: 0, opacity: 0 });
   
   const [courses, setCourses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -25,6 +27,24 @@ export default function ExploreTab({ user }) {
     };
     fetchCourses();
   }, []);
+
+  useEffect(() => {
+    // Small delay to ensure buttons are rendered and have dimensions
+    const timer = setTimeout(() => {
+      if (categoryContainerRef.current) {
+        // Find the active button within the container
+        const activeBtn = categoryContainerRef.current.querySelector('.filter-btn.active');
+        if (activeBtn) {
+          setFilterIndicatorStyle({
+            left: activeBtn.offsetLeft,
+            width: activeBtn.offsetWidth,
+            opacity: 1
+          });
+        }
+      }
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [currentCategory, categories]);
 
   const filteredCourses = currentCategory === "All" 
     ? courses 
@@ -65,7 +85,15 @@ export default function ExploreTab({ user }) {
               <a href="#" className="view-all">View all</a>
             </div>
             
-            <div className="category-filters">
+            <div className="category-filters" style={{ position: 'relative' }} ref={categoryContainerRef}>
+              <div 
+                className="filter-indicator" 
+                style={{ 
+                  left: `${filterIndicatorStyle.left}px`, 
+                  width: `${filterIndicatorStyle.width}px`, 
+                  opacity: filterIndicatorStyle.opacity 
+                }} 
+              />
               {categories.map(cat => (
                 <button 
                   key={cat}

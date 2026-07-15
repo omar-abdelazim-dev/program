@@ -89,6 +89,12 @@ body::after {
     box-sizing: border-box;
 }
 
+.learning-glass {
+    background-color: rgba(15, 17, 23, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
 /* Magic happens here: pushes everything left, leaves gaps */
 .nav-row-top {
     display: flex;
@@ -315,7 +321,9 @@ body::after {
 }
 
 .nav-tab.active {
-    color: var(--c-orange);
+    background: linear-gradient(90deg, var(--c-orange), var(--c-yellow));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 /* The Sliding Indicator! */
@@ -379,9 +387,10 @@ body.light-mode .nav-search input:focus {
     box-shadow: var(--shadow);
 }
 
-body.light-mode .top-nav {
-    background-color: rgba(229, 231, 235, 0.6);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+body.light-mode .top-nav,
+body.light-mode .learning-glass {
+    background-color: rgba(255, 255, 255, 0.7);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     box-shadow: var(--shadow);
 }
 
