@@ -29,7 +29,8 @@ export const uploadVideo = async (req, res) => {
 
     res.status(200).json({ url: result.secure_url });
   } catch (error) {
-    res.status(500).json({ message: 'Video upload failed', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Video upload failed' });
   }
 };
 
@@ -49,6 +50,7 @@ export const uploadImage = async (req, res) => {
 
     res.status(200).json({ url: result.secure_url });
   } catch (error) {
-    res.status(500).json({ message: 'Image upload failed', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Image upload failed' });
   }
 };

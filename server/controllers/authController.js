@@ -15,7 +15,8 @@ export const checkEmail = async (req, res) => {
     }
     res.status(200).json({ message: 'Email is available' });
   } catch (error) {
-    res.status(500).json({ message: 'Server error checking email', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error checking email' });
   }
 };
 
@@ -55,7 +56,8 @@ export const register = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error during registration', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error during registration' });
   }
 };
 
@@ -96,7 +98,8 @@ export const login = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error during login', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error during login' });
   }
 };
 
@@ -138,7 +141,8 @@ export const promoteToAdmin = async (req, res) => {
 
     res.status(200).json({ message: 'User promoted to admin successfully', user });
   } catch (error) {
-    res.status(500).json({ message: 'Server error promoting user', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error promoting user' });
   }
 };
 
@@ -161,7 +165,8 @@ export const promoteToInstructor = async (req, res) => {
 
     res.status(200).json({ message: 'User promoted to instructor successfully', user });
   } catch (error) {
-    res.status(500).json({ message: 'Server error promoting user', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error promoting user' });
   }
 };
 
@@ -184,6 +189,7 @@ export const promoteToSuperAdmin = async (req, res) => {
 
     res.status(200).json({ message: 'User promoted to super admin successfully', user });
   } catch (error) {
-    res.status(500).json({ message: 'Server error promoting user', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error promoting user' });
   }
 };

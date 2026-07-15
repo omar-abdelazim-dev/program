@@ -1,5 +1,6 @@
 import Course from '../models/Course.js';
 import Lesson from '../models/Lesson.js';
+import { escapeRegex } from '../utils/escapeRegex.js';
 
 // @route   POST /api/courses
 // @access  Private (instructor only)
@@ -23,7 +24,8 @@ export const createCourse = async (req, res) => {
 
     res.status(201).json({ course });
   } catch (error) {
-    res.status(500).json({ message: 'Server error creating course', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error creating course' });
   }
 };
 
@@ -35,7 +37,8 @@ export const getMyCourses = async (req, res) => {
     const courses = await Course.find({ instructor: req.user.id }).sort({ createdAt: -1 });
     res.status(200).json({ courses });
   } catch (error) {
-    res.status(500).json({ message: 'Server error fetching your courses', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error fetching your courses' });
   }
 };
 
@@ -48,7 +51,7 @@ export const getApprovedCourses = async (req, res) => {
 
     const filter = { status: 'approved' };
     if (category) filter.category = category;
-    if (search) filter.title = { $regex: search, $options: 'i' }; // simple case-insensitive title search
+    if (search) filter.title = { $regex: escapeRegex(search), $options: 'i' }; // simple case-insensitive title search
 
     const courses = await Course.find(filter)
       .populate('instructor', 'name') // include instructor's name, nothing more sensitive
@@ -56,7 +59,8 @@ export const getApprovedCourses = async (req, res) => {
 
     res.status(200).json({ courses });
   } catch (error) {
-    res.status(500).json({ message: 'Server error fetching courses', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error fetching courses' });
   }
 };
 
@@ -84,7 +88,8 @@ export const getCourseById = async (req, res) => {
 
     res.status(200).json({ course, lessons });
   } catch (error) {
-    res.status(500).json({ message: 'Server error fetching course', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error fetching course' });
   }
 };
 
@@ -98,7 +103,8 @@ export const getPendingCourses = async (req, res) => {
 
     res.status(200).json({ courses });
   } catch (error) {
-    res.status(500).json({ message: 'Server error fetching pending courses', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error fetching pending courses' });
   }
 };
 
@@ -118,7 +124,8 @@ export const approveCourse = async (req, res) => {
 
     res.status(200).json({ course });
   } catch (error) {
-    res.status(500).json({ message: 'Server error approving course', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error approving course' });
   }
 };
 
@@ -138,6 +145,7 @@ export const rejectCourse = async (req, res) => {
 
     res.status(200).json({ course });
   } catch (error) {
-    res.status(500).json({ message: 'Server error rejecting course', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error rejecting course' });
   }
 };

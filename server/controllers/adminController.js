@@ -1,6 +1,7 @@
 import User from '../models/User.js';
 import Course from '../models/Course.js';
 import Enrollment from '../models/Enrollment.js';
+import { escapeRegex } from '../utils/escapeRegex.js';
 
 // @route   GET /api/admin/stats
 // @access  Private (Admin)
@@ -29,7 +30,8 @@ export const getStats = async (req, res) => {
       categoryCounts
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error fetching stats', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error fetching stats' });
   }
 };
 
@@ -41,7 +43,7 @@ export const getUsers = async (req, res) => {
     let query = {};
     
     if (search) {
-      const searchRegex = new RegExp(search, 'i');
+      const searchRegex = new RegExp(escapeRegex(search), 'i');
       query = {
         $or: [
           { name: searchRegex },
@@ -54,7 +56,8 @@ export const getUsers = async (req, res) => {
     const users = await User.find(query).sort({ createdAt: -1 });
     res.status(200).json({ users });
   } catch (error) {
-    res.status(500).json({ message: 'Server error fetching users', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error fetching users' });
   }
 };
 
@@ -79,7 +82,8 @@ export const toggleBlockUser = async (req, res) => {
 
     res.status(200).json({ message: `User ${user.isBlocked ? 'blocked' : 'unblocked'}`, user });
   } catch (error) {
-    res.status(500).json({ message: 'Server error blocking user', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error blocking user' });
   }
 };
 
@@ -103,7 +107,8 @@ export const demoteUser = async (req, res) => {
 
     res.status(200).json({ message: 'User demoted to student', user });
   } catch (error) {
-    res.status(500).json({ message: 'Server error demoting user', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error demoting user' });
   }
 };
 
@@ -118,6 +123,7 @@ export const getTransactions = async (req, res) => {
 
     res.status(200).json({ transactions: enrollments });
   } catch (error) {
-    res.status(500).json({ message: 'Server error fetching transactions', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error fetching transactions' });
   }
 };

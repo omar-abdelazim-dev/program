@@ -33,7 +33,8 @@ export const enroll = async (req, res) => {
     if (error.code === 11000) {
       return res.status(409).json({ message: 'You are already enrolled in this course' });
     }
-    res.status(500).json({ message: 'Server error enrolling in course', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error enrolling in course' });
   }
 };
 
@@ -58,7 +59,8 @@ export const getMyEnrollments = async (req, res) => {
 
     res.status(200).json({ enrollments: withProgress });
   } catch (error) {
-    res.status(500).json({ message: 'Server error fetching your enrollments', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error fetching your enrollments' });
   }
 };
 
@@ -85,7 +87,8 @@ export const getEnrollmentStatus = async (req, res) => {
       progressPercent,
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error checking enrollment', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error checking enrollment' });
   }
 };
 
@@ -122,6 +125,7 @@ export const markLessonComplete = async (req, res) => {
       progressPercent,
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error marking lesson complete', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error marking lesson complete' });
   }
 };

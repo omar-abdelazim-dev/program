@@ -37,7 +37,8 @@ export const addLesson = async (req, res) => {
 
     res.status(201).json({ lesson });
   } catch (error) {
-    res.status(500).json({ message: 'Server error adding lesson', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error adding lesson' });
   }
 };
 
@@ -72,6 +73,7 @@ export const getLessonContent = async (req, res) => {
 
     res.status(200).json({ lesson });
   } catch (error) {
-    res.status(500).json({ message: 'Server error fetching lesson', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error fetching lesson' });
   }
 };

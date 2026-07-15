@@ -25,10 +25,11 @@ const run = async () => {
     role: 'instructor',
   });
   assert(res.status === 201, `Instructor register failed: ${JSON.stringify(res.body)}`);
+  const instructorCsrf = getCsrfToken(res);
   console.log('✓ Instructor registered');
 
   // 2. Instructor creates a course -> should default to pending
-  res = await agentInstructor.post('/api/courses').send({
+  res = await agentInstructor.post('/api/courses').set('X-CSRF-Token', instructorCsrf).send({
     title: 'Intro to Algorithms',
     description: 'Learn the fundamentals of algorithmic thinking.',
     price: 49,
@@ -40,7 +41,7 @@ const run = async () => {
   console.log('✓ Instructor created course (status: pending)');
 
   // 3. Instructor adds a lesson to their own course
-  res = await agentInstructor.post(`/api/courses/${courseId}/lessons`).send({
+  res = await agentInstructor.post(`/api/courses/${courseId}/lessons`).set('X-CSRF-Token', instructorCsrf).send({
     title: 'Lesson 1: Big-O Notation',
     videoUrl: 'https://res.cloudinary.com/demo/video/upload/sample.mp4',
   });
@@ -67,6 +68,7 @@ const run = async () => {
     password: 'adminpass123',
   });
   assert(res.status === 200, `Admin login failed: ${JSON.stringify(res.body)}`);
+  const adminCsrf = getCsrfToken(res);
   console.log('✓ Admin logged in');
 
   // 6. A non-admin (instructor) should be blocked from the pending-courses list
@@ -81,7 +83,7 @@ const run = async () => {
   console.log('✓ Admin sees pending course');
 
   // 8. Admin approves it
-  res = await agentAdmin.patch(`/api/courses/${courseId}/approve`);
+  res = await agentAdmin.patch(`/api/courses/${courseId}/approve`).set('X-CSRF-Token', adminCsrf);
   assert(res.status === 200, `Approve failed: ${JSON.stringify(res.body)}`);
   assert(res.body.course.status === 'approved', 'Course should now be approved');
   console.log('✓ Admin approved course');
@@ -110,6 +112,7 @@ const run = async () => {
     role: 'student',
   });
   assert(res.status === 201, `Student register failed: ${JSON.stringify(res.body)}`);
+  const studentCsrf = getCsrfToken(res);
   console.log('✓ Student registered');
 
   // 12. Student tries to watch the lesson BEFORE enrolling -> should be blocked
@@ -118,12 +121,12 @@ const run = async () => {
   console.log('✓ Un-enrolled student correctly blocked from lesson video (403)');
 
   // 13. Student enrolls
-  res = await agentStudent.post(`/api/enrollments/${courseId}`);
+  res = await agentStudent.post(`/api/enrollments/${courseId}`).set('X-CSRF-Token', studentCsrf);
   assert(res.status === 201, `Enroll failed: ${JSON.stringify(res.body)}`);
   console.log('✓ Student enrolled in course');
 
   // 14. Double-enroll should be rejected
-  res = await agentStudent.post(`/api/enrollments/${courseId}`);
+  res = await agentStudent.post(`/api/enrollments/${courseId}`).set('X-CSRF-Token', studentCsrf);
   assert(res.status === 409, 'Duplicate enrollment should be rejected with 409');
   console.log('✓ Duplicate enrollment correctly rejected (409)');
 
@@ -140,13 +143,13 @@ const run = async () => {
   console.log('✓ Initial progress is 0%');
 
   // 17. Mark the lesson complete
-  res = await agentStudent.patch(`/api/enrollments/${courseId}/lessons/${lessonId}/complete`);
+  res = await agentStudent.patch(`/api/enrollments/${courseId}/lessons/${lessonId}/complete`).set('X-CSRF-Token', studentCsrf);
   assert(res.status === 200, `Mark complete failed: ${JSON.stringify(res.body)}`);
   assert(res.body.progressPercent === 100, 'Progress should be 100% after completing the only lesson');
   console.log('✓ Marking lesson complete updates progress to 100%');
 
   // 18. Marking the same lesson complete twice should NOT create a duplicate
-  res = await agentStudent.patch(`/api/enrollments/${courseId}/lessons/${lessonId}/complete`);
+  res = await agentStudent.patch(`/api/enrollments/${courseId}/lessons/${lessonId}/complete`).set('X-CSRF-Token', studentCsrf);
   assert(res.body.completedLessonIds.length === 1, 'Completed lessons should not contain duplicates');
   console.log('✓ Marking complete twice does not duplicate progress');
 
@@ -163,6 +166,15 @@ const run = async () => {
 
 function assert(condition, message) {
   if (!condition) throw new Error('FAILED: ' + message);
+}
+
+// supertest's agent() persists cookies automatically but never echoes them
+// back as headers the way a browser + our axios interceptor does — so the
+// CSRF double-submit check needs the csrfToken cookie pulled out manually.
+function getCsrfToken(res) {
+  const cookies = res.headers['set-cookie'] || [];
+  const csrfCookie = cookies.find((c) => c.startsWith('csrfToken='));
+  return csrfCookie ? csrfCookie.split(';')[0].split('=')[1] : null;
 }
 
 run().catch((err) => {

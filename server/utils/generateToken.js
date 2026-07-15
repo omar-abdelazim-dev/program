@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 
 // Creates a signed JWT and sets it as an HTTP-only cookie on the response.
 //
@@ -19,6 +20,20 @@ const generateTokenAndSetCookie = (res, userId) => {
     secure: process.env.NODE_ENV === 'production', // HTTPS-only in production
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' needed cross-site (Vercel <-> Render)
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days, in milliseconds
+  });
+
+  // Double-submit CSRF cookie: sameSite:'none' in production means the browser
+  // will happily attach the auth cookie to a cross-site request, so the cookie
+  // alone can no longer prove the request came from our frontend. This second
+  // cookie must be readable by frontend JS (httpOnly: false) so it can be echoed
+  // back as a header — a third-party page can trigger the request but can't
+  // read this cookie's value to forge the header.
+  const csrfToken = crypto.randomBytes(32).toString('hex');
+  res.cookie('csrfToken', csrfToken, {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
   return token;

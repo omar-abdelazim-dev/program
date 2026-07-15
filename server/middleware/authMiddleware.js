@@ -1,6 +1,8 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
+const CSRF_PROTECTED_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
+
 // Verifies the JWT stored in the 'token' cookie and attaches the user to
 // req.user. Any route that needs "must be logged in" uses this first.
 export const protect = async (req, res, next) => {
@@ -9,6 +11,18 @@ export const protect = async (req, res, next) => {
 
     if (!token) {
       return res.status(401).json({ message: 'Not authenticated. Please log in.' });
+    }
+
+    // Double-submit CSRF check: since the auth cookie can be sent cross-site
+    // (sameSite:'none' in production), a mutating request must also prove it
+    // came from our frontend by echoing the non-httpOnly csrfToken cookie back
+    // as a header — something a third-party page can't read to forge.
+    if (CSRF_PROTECTED_METHODS.includes(req.method)) {
+      const csrfCookie = req.cookies.csrfToken;
+      const csrfHeader = req.get('X-CSRF-Token');
+      if (!csrfCookie || !csrfHeader || csrfCookie !== csrfHeader) {
+        return res.status(403).json({ message: 'Invalid or missing CSRF token' });
+      }
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
