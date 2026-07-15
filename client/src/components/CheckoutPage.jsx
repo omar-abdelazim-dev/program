@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { suggestedCourses, currentUser } from '../data';
+import api from '../api/axios';
 import logoDark from '../assets/logo-dark.png';
 import logoLight from '../assets/logo-light.png';
 
@@ -10,6 +11,8 @@ export default function CheckoutPage({ cart = [], setCart, setNotifications, isC
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [singleCourseData, setSingleCourseData] = useState(null);
   
   // Read theme from localStorage to match the rest of the app
   const [isLightMode, setIsLightMode] = useState(() => {
@@ -24,51 +27,153 @@ export default function CheckoutPage({ cart = [], setCart, setNotifications, isC
 
   // Determine items to checkout
   let checkoutItems = [];
+
+  // If cart checkout, use cart as source of truth
   if (isCartCheckout) {
-    checkoutItems = cart;
+    checkoutItems = cart || [];
   } else {
-    const singleCourse = suggestedCourses.find(c => c.id === parseInt(id));
-    if (singleCourse) checkoutItems = [singleCourse];
+    // For direct checkout, try to fetch real course data from backend so we use canonical fields
+    // Fallback to suggestedCourses only if API fails (keeps backward compatibility with demo data)
+    if (id) {
+      if (!singleCourseData) {
+        // fetch course data
+      } else {
+        checkoutItems = [singleCourseData];
+      }
+    }
   }
 
-  // Calculate total price
-  const parsePrice = (priceStr) => {
-    if (!priceStr) return 0;
-    return parseInt(priceStr.replace(/[^0-9]/g, ''), 10) || 0;
+  // When visiting /checkout/:id, fetch the real course from API
+  useEffect(() => {
+    const loadCourse = async () => {
+      if (isCartCheckout) return;
+      if (!id) return;
+      try {
+        const { data } = await api.get(`/courses/${id}`);
+        if (data && data.course) {
+          setSingleCourseData(data.course);
+        } else {
+          // Fallback to local suggestedCourses if backend doesn't return expected shape
+          const local = suggestedCourses.find(c => String(c.id) === String(id));
+          if (local) setSingleCourseData(local);
+        }
+      } catch (err) {
+        // Fallback to local demo data
+        const local = suggestedCourses.find(c => String(c.id) === String(id));
+        if (local) setSingleCourseData(local);
+      }
+    };
+    loadCourse();
+  }, [id, isCartCheckout]);
+
+  // Calculate total price using numeric price when available
+  const getPriceNumber = (item) => {
+    if (item == null) return 0;
+    if (typeof item.price === 'number') return item.price;
+    // If price is a string (demo data), try to extract digits as a fallback but do not rely on it
+    if (typeof item.price === 'string') {
+      const digits = parseInt(item.price.replace(/[^0-9]/g, ''), 10);
+      return Number.isNaN(digits) ? 0 : digits;
+    }
+    return 0;
   };
 
-  const totalPrice = checkoutItems.reduce((sum, item) => sum + parsePrice(item.price), 0);
+  const totalPrice = (isCartCheckout ? (cart || []).reduce((s, it) => s + getPriceNumber(it), 0) : (singleCourseData ? getPriceNumber(singleCourseData) : 0));
   const formattedTotal = `${totalPrice.toLocaleString()} EGP`;
 
-  const handleCheckout = () => {
+  // Enrollment handler: uses the same API call as CoursePage to avoid duplicating logic
+  const handleCheckout = async () => {
+    setErrorMessage('');
     setIsProcessing(true);
-    
-    // Simulate payment processing
-    setTimeout(() => {
-      setIsProcessing(false);
-      setIsSuccess(true);
-      
-      // Clear cart if this was a cart checkout
-      if (isCartCheckout && setCart) {
-        setCart([]);
+
+    try {
+      if (!isCartCheckout) {
+        // Single-course checkout (direct enrollment path)
+        const course = singleCourseData;
+        if (!course) throw new Error('No course selected for checkout');
+
+        const courseId = course._id || course.id;
+        if (!courseId) throw new Error('Invalid course identifier');
+
+        try {
+          await api.post(`/enrollments/${courseId}`);
+          // enrollment created — notify and navigate to learning page
+          if (setNotifications) {
+            const title = course.title || course.name || 'Course';
+            const text = `Enrolled in: ${title}`;
+            setNotifications(prev => [...prev, { id: Date.now(), text, timestamp: Date.now() }]);
+          }
+          navigate(`/learn/${courseId}`);
+          return;
+        } catch (err) {
+          if (err.response?.status === 409) {
+            // already enrolled — notify and go to learning page
+            if (setNotifications) {
+              const title = course.title || course.name || 'Course';
+              const text = `Already enrolled: ${title}`;
+              setNotifications(prev => [...prev, { id: Date.now(), text, timestamp: Date.now() }]);
+            }
+            navigate(`/learn/${courseId}`);
+            return;
+          }
+          // Other errors
+          setErrorMessage(err.response?.data?.message || 'Failed to enroll in course');
+          return;
+        }
       }
-      
-      // Generate a single notification for the purchase
-      if (setNotifications) {
-        const itemNames = checkoutItems.map(i => i.title).join(', ');
-        const text = `Successfully purchased: ${itemNames}`;
+
+      // Cart checkout: enroll each course in sequence, collect results
+      const successes = [];
+      const failures = [];
+
+      for (const item of cart || []) {
+        const courseId = item._id || item.id;
+        if (!courseId) {
+          failures.push({ item, error: 'Invalid course id' });
+          continue;
+        }
+
+        try {
+          await api.post(`/enrollments/${courseId}`);
+          successes.push(courseId);
+        } catch (err) {
+          if (err.response?.status === 409) {
+            // already enrolled — treat as success and remove from cart
+            successes.push(courseId);
+          } else {
+            failures.push({ item, error: err.response?.data?.message || 'Enrollment failed' });
+          }
+        }
+      }
+
+      // Remove successful items from cart
+      if (setCart && successes.length > 0) {
+        const remaining = (cart || []).filter(i => {
+          const cid = i._id || i.id;
+          return !successes.includes(cid);
+        });
+        setCart(remaining);
+      }
+
+      // Notifications and navigation
+      if (setNotifications && successes.length > 0) {
+        // Build list of successful course titles
+        const successfulTitles = (cart || []).filter(i => successes.includes(i._id || i.id)).map(i => i.title || i.name || 'Course');
+        const text = successfulTitles.length === 1 ? `Enrolled in: ${successfulTitles[0]}` : `Enrolled in: ${successfulTitles.join(', ')}`;
         setNotifications(prev => [...prev, { id: Date.now(), text, timestamp: Date.now() }]);
       }
-      
-      console.log(`[MOCK EMAIL] Sending purchase receipt for ${checkoutItems.length} items to ${currentUser.name} at ${currentUser.email}`);
-      
-      // Wait for success animation then redirect
-      setTimeout(() => {
-        setIsSuccess(false);
-        // Redirect to My Courses (dashboard)
+
+      if (failures.length === 0) {
+        // All succeeded
         navigate('/student/dashboard');
-      }, 1800);
-    }, 1500);
+      } else {
+        // Some failed — surface error
+        setErrorMessage(`Failed to enroll in ${failures.length} course(s). Please try again.`);
+      }
+
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const paymentOptions = [
@@ -186,7 +291,7 @@ export default function CheckoutPage({ cart = [], setCart, setNotifications, isC
             <div style={{ flex: 1 }}></div>
 
             {/* Personal Information */}
-            <div className="glass-card" style={{ padding: '20px', marginBottom: '32px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div className="glass-card" style={{ padding: '20px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '16px' }}>
               <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--c-purple), var(--c-yellow))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
               </div>
@@ -197,6 +302,8 @@ export default function CheckoutPage({ cart = [], setCart, setNotifications, isC
                 </div>
               </div>
             </div>
+
+            {errorMessage && <div style={{ color: '#ef4444', margin: '8px 0 12px' }}>{errorMessage}</div>}
 
             <button 
               onClick={handleCheckout} 
@@ -227,8 +334,8 @@ export default function CheckoutPage({ cart = [], setCart, setNotifications, isC
             <h2 style={{ margin: '0 0 32px 0', fontSize: '1.5rem', fontWeight: '600' }}>Order Summary</h2>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginBottom: '40px' }}>
-              {checkoutItems.map((item, idx) => (
-                <div key={idx} className="glass-card" style={{ display: 'flex', gap: '16px', padding: '16px' }}>
+              {checkoutItems.map((item) => (
+                              <div key={item._id || item.id} className="glass-card" style={{ display: 'flex', gap: '16px', padding: '16px' }}>
                   <img 
                     src={item.image || "https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=600&auto=format&fit=crop"} 
                     alt={item.title} 
@@ -236,7 +343,7 @@ export default function CheckoutPage({ cart = [], setCart, setNotifications, isC
                   />
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                     <div style={{ fontWeight: '600', fontSize: '1rem', marginBottom: '4px' }}>{item.title}</div>
-                    <div style={{ color: 'var(--c-sub)', fontSize: '0.85rem' }}>By {item.instructor}</div>
+                    <div style={{ color: 'var(--c-sub)', fontSize: '0.85rem' }}>By {item.instructor?.name || item.instructor || 'Instructor'}</div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: '8px' }}>
                     <div style={{ fontWeight: '700', fontSize: '1.05rem', color: 'var(--c-orange)' }}>
@@ -244,7 +351,7 @@ export default function CheckoutPage({ cart = [], setCart, setNotifications, isC
                     </div>
                     {isCartCheckout && setCart && (
                       <button 
-                        onClick={() => setCart(cart.filter(c => c.id !== item.id))}
+                        onClick={() => setCart(cart.filter(c => (c._id || c.id) !== (item._id || item.id)))}
                         style={{ background: 'transparent', border: 'none', color: '#ef4444', fontSize: '0.85rem', cursor: 'pointer', padding: '4px 0', display: 'flex', alignItems: 'center', gap: '4px' }}
                       >
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>

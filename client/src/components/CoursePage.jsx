@@ -140,23 +140,25 @@ export default function CoursePage({ cart = [], setCart }) {
                 Go to Course
               </button>
             ) : (
-              <button onClick={handleEnroll} disabled={isEnrolling} className="glass-btn auth-submit-btn" style={{ width: '100%', padding: '14px', fontSize: '1.1rem', cursor: isEnrolling ? 'not-allowed' : 'pointer', marginBottom: '12px' }}>
+                          <button onClick={() => navigate(`/checkout/${course._id}`)} disabled={isEnrolling} className="glass-btn auth-submit-btn" style={{ width: '100%', padding: '14px', fontSize: '1.1rem', cursor: isEnrolling ? 'not-allowed' : 'pointer', marginBottom: '12px' }}>
                 {isEnrolling ? 'Enrolling...' : 'Enroll Now'}
               </button>
             )}
 
-            <button
-              onClick={() => {
-                if (setCart && !cart.find(c => c._id === course._id)) {
-                  setCart([...cart, course]);
-                }
-              }}
-              className="glass-card hover-glow"
-              style={{ width: '100%', padding: '14px', fontSize: '1.1rem', cursor: 'pointer', color: 'var(--text-h)' }}
-              disabled={!!cart.find(c => c._id === course._id)}
-            >
-              {cart.find(c => c._id === course._id) ? 'Added to Cart ✓' : 'Add to Cart'}
-            </button>
+            {!isEnrolled && (
+              <button
+                onClick={() => {
+                  if (setCart && !cart.find(c => c._id === course._id)) {
+                    setCart([...cart, course]);
+                  }
+                }}
+                className="glass-card hover-glow"
+                style={{ width: '100%', padding: '14px', fontSize: '1.1rem', cursor: 'pointer', color: 'var(--text-h)' }}
+                disabled={!!cart.find(c => c._id === course._id)}
+              >
+                {cart.find(c => c._id === course._id) ? 'Added to Cart ✓' : 'Add to Cart'}
+              </button>
+            )}
           </div>
         </div>
 
