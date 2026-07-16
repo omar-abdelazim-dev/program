@@ -7,7 +7,12 @@ if (!process.env.JWT_SECRET) {
   process.exit(1);
 }
 
-connectDB();
+const startServer = async () => {
+  // Wait for the database connection before starting the HTTP server
+  await connectDB();
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+};
+
+startServer();
