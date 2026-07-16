@@ -38,6 +38,12 @@ const courseSchema = new mongoose.Schema(
       enum: ['pending', 'approved', 'rejected'],
       default: 'pending',
     },
+    // Feedback shown to the instructor when an admin rejects the course.
+    // Cleared out if the course is later approved.
+    rejectionReason: {
+      type: String,
+      default: '',
+    },
     thumbnailUrl: {
       type: String,
       default: '',

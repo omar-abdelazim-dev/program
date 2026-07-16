@@ -114,7 +114,7 @@ export const approveCourse = async (req, res) => {
   try {
     const course = await Course.findByIdAndUpdate(
       req.params.id,
-      { status: 'approved' },
+      { status: 'approved', rejectionReason: '' },
       { new: true } // return the updated document, not the pre-update one
     );
 
@@ -133,9 +133,11 @@ export const approveCourse = async (req, res) => {
 // @access  Private (admin only)
 export const rejectCourse = async (req, res) => {
   try {
+    const { reason } = req.body;
+
     const course = await Course.findByIdAndUpdate(
       req.params.id,
-      { status: 'rejected' },
+      { status: 'rejected', rejectionReason: reason || '' },
       { new: true }
     );
 

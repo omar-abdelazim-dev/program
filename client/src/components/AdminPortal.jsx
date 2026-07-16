@@ -124,6 +124,11 @@ export default function AdminPortal({ user, onLogout, toggleTheme, isLightMode }
   // Change Role State
   const [roleMenuUserId, setRoleMenuUserId] = useState(null);
   const roleButtonRefs = useRef({});
+
+  // Reject-course-with-reason modal state
+  const [pendingReject, setPendingReject] = useState(null); // { id, title } | null
+  const [rejectReason, setRejectReason] = useState('');
+  const [rejectReasonError, setRejectReasonError] = useState('');
   const [pendingRoleChange, setPendingRoleChange] = useState(null); // { id, name, newRole } | null
   const [changingRole, setChangingRole] = useState(false);
   const [roleChangeError, setRoleChangeError] = useState('');
@@ -207,13 +212,33 @@ export default function AdminPortal({ user, onLogout, toggleTheme, isLightMode }
     }
   };
 
-  const handleReject = async (id) => {
-    setProcessingId(id);
+  // Opens the reason modal — rejection doesn't actually happen until confirmed.
+  const requestReject = (course) => {
+    setRejectReasonError('');
+    setRejectReason('');
+    setPendingReject({ id: course._id, title: course.title });
+  };
+
+  const cancelReject = () => {
+    setPendingReject(null);
+    setRejectReason('');
+    setRejectReasonError('');
+  };
+
+  const confirmReject = async () => {
+    if (!pendingReject) return;
+    if (!rejectReason.trim()) {
+      setRejectReasonError('Let the instructor know why, so they can fix and resubmit.');
+      return;
+    }
+    setProcessingId(pendingReject.id);
     try {
-      await api.patch(`/courses/${id}/reject`);
+      await api.patch(`/courses/${pendingReject.id}/reject`, { reason: rejectReason.trim() });
+      setPendingReject(null);
+      setRejectReason('');
       fetchDashboardData();
     } catch (err) {
-      console.error('Failed to reject course', err);
+      setRejectReasonError(err.response?.data?.message || 'Failed to reject course');
     } finally {
       setProcessingId(null);
     }
@@ -759,10 +784,10 @@ export default function AdminPortal({ user, onLogout, toggleTheme, isLightMode }
                         </div>
                         
                         <div style={{ display: 'flex', gap: '12px' }}>
-                          <button 
-                            onClick={() => handleReject(course._id)}
+                          <button
+                            onClick={() => requestReject(course)}
                             disabled={processingId === course._id}
-                            className="glass-btn hover-glow" 
+                            className="glass-btn hover-glow"
                             style={{ padding: '8px 16px', fontSize: '0.95rem', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)' }}
                           >
                             Reject
@@ -803,6 +828,36 @@ export default function AdminPortal({ user, onLogout, toggleTheme, isLightMode }
               </button>
               <button type="button" onClick={confirmRoleChange} disabled={changingRole} className="glass-btn auth-submit-btn" style={{ flex: 1 }}>
                 {changingRole ? 'Changing...' : 'Confirm'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reject course confirmation modal — requires a reason the instructor will see */}
+      {pendingReject && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+          <div className="glass-card animate-entrance" style={{ width: '100%', maxWidth: '480px', padding: '32px' }}>
+            <h2 style={{ margin: '0 0 12px 0', fontSize: '1.3rem' }}>Reject course?</h2>
+            <p style={{ color: 'var(--c-sub)', margin: '0 0 16px 0' }}>
+              Rejecting <strong style={{ color: 'var(--c-light)' }}>{pendingReject.title}</strong>. This reason is shown to the instructor so they can fix and resubmit.
+            </p>
+            <div className="input-group">
+              <label>Reason for rejection *</label>
+              <textarea
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="e.g. Description is too short, thumbnail is missing, pricing seems off..."
+                style={{ minHeight: '100px', width: '100%', padding: '10px 14px', background: 'var(--c-input-bg)', border: 'var(--c-border)', borderRadius: '12px', color: 'var(--text-h)', fontFamily: 'inherit', fontSize: '0.95rem', boxSizing: 'border-box', resize: 'vertical' }}
+              />
+            </div>
+            {rejectReasonError && <div style={{ color: '#ef4444', margin: '8px 0 0 0', fontSize: '0.9rem' }}>{rejectReasonError}</div>}
+            <div style={{ display: 'flex', gap: '16px', marginTop: '24px' }}>
+              <button type="button" onClick={cancelReject} disabled={processingId === pendingReject.id} className="glass-btn hover-glow" style={{ flex: 1 }}>
+                Cancel
+              </button>
+              <button type="button" onClick={confirmReject} disabled={processingId === pendingReject.id} className="glass-btn auth-submit-btn" style={{ flex: 1 }}>
+                {processingId === pendingReject.id ? 'Rejecting...' : 'Reject Course'}
               </button>
             </div>
           </div>
