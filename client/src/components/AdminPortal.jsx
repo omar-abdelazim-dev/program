@@ -290,6 +290,14 @@ export default function AdminPortal({ user, onLogout, toggleTheme, isLightMode }
     return true;
   };
 
+  // Only a superadmin can block/unblock another admin or superadmin —
+  // mirrors the backend check in adminController.toggleBlockUser.
+  const canToggleBlock = (u) => {
+    if (u._id === user.id) return false;
+    if ((u.role === 'admin' || u.role === 'superadmin') && user.role !== 'superadmin') return false;
+    return true;
+  };
+
   if (loading && !stats && !users.length && !transactions.length) {
     return <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>Loading Admin Portal...</div>;
   }
@@ -702,12 +710,14 @@ export default function AdminPortal({ user, onLogout, toggleTheme, isLightMode }
                                         )}
                                       </div>
                                     )}
-                                    <button
-                                      onClick={() => handleToggleBlock(u._id)}
-                                      style={{ background: u.isBlocked ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', border: `1px solid ${u.isBlocked ? '#10B981' : '#ef4444'}`, padding: '6px 12px', borderRadius: '6px', color: u.isBlocked ? '#10B981' : '#ef4444', cursor: 'pointer' }}
-                                    >
-                                      {u.isBlocked ? 'Unblock' : 'Block'}
-                                    </button>
+                                    {canToggleBlock(u) && (
+                                      <button
+                                        onClick={() => handleToggleBlock(u._id)}
+                                        style={{ background: u.isBlocked ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', border: `1px solid ${u.isBlocked ? '#10B981' : '#ef4444'}`, padding: '6px 12px', borderRadius: '6px', color: u.isBlocked ? '#10B981' : '#ef4444', cursor: 'pointer' }}
+                                      >
+                                        {u.isBlocked ? 'Unblock' : 'Block'}
+                                      </button>
+                                    )}
                                   </>
                                 )}
                               </div>
