@@ -6,6 +6,17 @@ import logoDark from "../assets/logo-dark.png";
 import logoLight from "../assets/logo-light.png";
 
 const ROLE_OPTIONS = ["student", "instructor", "admin"];
+const SIDEBAR_TAB_STEP = 44;
+
+const isSidebarTabActive = (tabId, currentTab) => {
+  if (tabId === "users") {
+    return currentTab === "users" || currentTab.startsWith("users_");
+  }
+  return currentTab === tabId;
+};
+
+const resolveSidebarTabId = (tabId) =>
+  tabId === "users" ? "users_students" : tabId;
 
 // Renders its content into document.body and positions it with `fixed`
 // coordinates measured from the trigger element. This is required because the
@@ -118,7 +129,6 @@ export default function AdminPortal({
 }) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("dashboard_overview");
-  console.log("Admin Portal mounted with activeTab:", activeTab);
 
   // Data States
   const [stats, setStats] = useState(null);
@@ -147,9 +157,15 @@ export default function AdminPortal({
 
   // Sidebar Dropdown State
   const [expandedGroup, setExpandedGroup] = useState("Dashboard");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const toggleGroup = (title) => {
     setExpandedGroup((prev) => (prev === title ? null : title));
+  };
+
+  const handleSidebarTabClick = (tabId, groupTitle) => {
+    setActiveTab(resolveSidebarTabId(tabId));
+    setExpandedGroup(groupTitle);
   };
 
   const fetchDashboardData = async () => {
@@ -356,11 +372,10 @@ export default function AdminPortal({
           {
             title: "User Management",
             items: [
-              { id: "users_students", label: "Students" },
-              { id: "users_instructors", label: "Instructors" },
-              { id: "users_admins", label: "Admins" },
+              { id: "users", label: "Users" },
             ],
           },
+
           {
             title: "Course Management",
             items: [
@@ -582,163 +597,125 @@ export default function AdminPortal({
 
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
         {/* Sidebar */}
-        <div
-          className="glass-card"
-          style={{
-            width: "280px",
-            minWidth: "280px",
-            borderRadius: 0,
-            borderTop: "none",
-            borderBottom: "none",
-            borderLeft: "none",
-            borderRight: "1px solid rgba(255, 255, 255, 0.15)",
-            display: "flex",
-            flexDirection: "column",
-            padding: "20px 12px",
-            gap: "16px",
-            overflowY: "auto",
-            overflowX: "hidden",
-          }}
+        <aside
+          className={`glass-card admin-sidebar${sidebarCollapsed ? " collapsed" : ""}`}
         >
-          {menuGroups.map((group, idx) => (
-            <div key={idx}>
-              <div
-                onClick={() => toggleGroup(group.title)}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  fontSize: "0.75rem",
-                  textTransform: "uppercase",
-                  color: "var(--c-sub)",
-                  fontWeight: "bold",
-                  letterSpacing: "1px",
-                  marginBottom: "8px",
-                  padding: "8px",
-                  cursor: "pointer",
-                  borderRadius: "4px",
-                  background: "rgba(255, 255, 255, 0.02)",
-                }}
-                className="hover-glow"
+          <div className="admin-sidebar-header">
+            {/* <button
+              type="button"
+              className="admin-sidebar-collapse-btn"
+              onClick={() => setSidebarCollapsed((prev) => !prev)}
+              aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
               >
-                {group.title}
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  style={{
-                    transform:
-                      expandedGroup === group.title
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </button> */}
+          </div>
+
+          {menuGroups.map((group, idx) => {
+            const isGroupExpanded = expandedGroup === group.title;
+            const activeIndex = group.items.findIndex((t) =>
+              isSidebarTabActive(t.id, activeTab),
+            );
+
+            return (
+              <div key={idx} className="admin-sidebar-group">
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(group.title)}
+                  className="admin-sidebar-group-title hover-glow"
+                >
+                  <span className="admin-sidebar-group-icon" aria-hidden="true">
+                    {group.title.charAt(0)}
+                  </span>
+                  <span className="admin-sidebar-group-label">{group.title}</span>
+                  <svg
+                    className="admin-sidebar-chevron"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    style={{
+                      transform: isGroupExpanded
                         ? "rotate(180deg)"
                         : "rotate(0deg)",
-                    transition: "transform 0.2s ease",
-                  }}
-                >
-                  <path d="M6 9l6 6 6-6" />
-                </svg>
-              </div>
+                    }}
+                  >
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </button>
 
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateRows:
-                    expandedGroup === group.title ? "1fr" : "0fr",
-                  opacity: expandedGroup === group.title ? 1 : 0,
-                  transition: "grid-template-rows 0.3s ease, opacity 0.3s ease",
-                }}
-              >
                 <div
-                  style={{
-                    position: "relative",
-                    overflow: "hidden",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "4px",
-                  }}
+                  className={`admin-sidebar-items${
+                    isGroupExpanded ? " expanded-group" : " collapsed-group"
+                  }`}
                 >
-                  {group.items.some((t) => t.id === activeTab) && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        left: 0,
-                        right: 0,
-                        height: "40px",
-                        top: `${group.items.findIndex((t) => t.id === activeTab) * 44}px`,
-                        background:
-                          "linear-gradient(135deg, rgba(255,255,255,0.16), rgba(255,255,255,0.08))",
-                        border: "1px solid rgba(255, 255, 255, 0.14)",
-                        borderRadius: "999px",
-                        transition: "top 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                        pointerEvents: "none",
-                        zIndex: 0,
-                        backdropFilter: "blur(10px)",
-                        WebkitBackdropFilter: "blur(10px)",
-                      }}
-                    />
-                  )}
-                  {group.items.map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className="hover-glow"
-                      style={{
-                        position: "relative",
-                        zIndex: 1,
-                        height: "40px",
-                        padding: "0 14px",
-                        textAlign: "left",
-                        background:
-                          activeTab === tab.id
-                            ? "rgba(255,255,255,0.06)"
-                            : "transparent",
-                        border:
-                          activeTab === tab.id
-                            ? "1px solid rgba(255,255,255,0.14)"
-                            : "1px solid transparent",
-                        borderRadius: "999px",
-                        color: activeTab === tab.id ? "#fff" : "var(--c-sub)",
-                        cursor: "pointer",
-                        fontWeight: activeTab === tab.id ? "600" : "500",
-                        transition: "all 0.2s",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        fontSize: "0.9rem",
-                        backdropFilter:
-                          activeTab === tab.id ? "blur(10px)" : "none",
-                        WebkitBackdropFilter:
-                          activeTab === tab.id ? "blur(10px)" : "none",
-                      }}
-                    >
-                      {tab.label}
-                      {tab.id === "courses_all" &&
-                        pendingCourses.length > 0 && (
-                          <span
-                            style={{
-                              background: "var(--c-orange)",
-                              color: "#fff",
-                              fontSize: "0.7rem",
-                              padding: "2px 6px",
-                              borderRadius: "12px",
-                            }}
-                          >
-                            {pendingCourses.length}
+                  <div className="admin-sidebar-items-inner">
+                    {activeIndex >= 0 && (
+                      <div
+                        className="admin-sidebar-indicator"
+                        style={{ top: `${activeIndex * SIDEBAR_TAB_STEP}px` }}
+                      />
+                    )}
+                    {group.items.map((tab) => {
+                      const isActive = isSidebarTabActive(tab.id, activeTab);
+
+                      return (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          onClick={() =>
+                            handleSidebarTabClick(tab.id, group.title)
+                          }
+                          className={`admin-sidebar-tab ${
+                            isActive ? " active" : ""
+                          }`}
+                          data-tooltip={tab.label}
+                          title={sidebarCollapsed ? tab.label : undefined}
+                        >
+                          <span className="admin-sidebar-tab-short">
+                            {tab.label.charAt(0)}
                           </span>
-                        )}
-                    </button>
-                  ))}
+                          <span className="admin-sidebar-tab-label">
+                            {tab.label}
+                          </span>
+                          {tab.id === "courses_all" &&
+                            pendingCourses.length > 0 && (
+                              <span
+                                className="admin-sidebar-badge"
+                                aria-label={`${pendingCourses.length} pending courses`}
+                              >
+                                {pendingCourses.length}
+                              </span>
+                            )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            );
+          })}
+        </aside>
 
         {/* Main Content Area */}
         <div style={{ flex: 1, padding: "32px 48px", overflowY: "auto" }}>
-          <div style={{ maxWidth: "100%", margin: "0 auto" }}>
+          <div
+            key={activeTab}
+            className="admin-content-panel"
+            style={{ maxWidth: "100%", margin: "40px auto" }}
+          >
             {activeTab === "dashboard_overview" && stats && (
               <div
                 style={{
@@ -926,7 +903,7 @@ export default function AdminPortal({
                     ))}
                 </div>
 
-                <div className="glass-card" style={{ overflow: "hidden" }}>
+                <div className="glass-card user-management-table-card">
                   <table
                     style={{
                       width: "100%",
@@ -941,6 +918,7 @@ export default function AdminPortal({
                             padding: "16px",
                             fontWeight: "600",
                             color: "var(--c-sub)",
+                            borderTopLeftRadius: "15px",
                           }}
                         >
                           Name
@@ -987,6 +965,7 @@ export default function AdminPortal({
                             fontWeight: "600",
                             color: "var(--c-sub)",
                             textAlign: "right",
+                            borderTopRightRadius: "15px",
                           }}
                         >
                           Actions
@@ -1055,7 +1034,7 @@ export default function AdminPortal({
                                   <>
                                     {canChangeRole(u) && (
                                       <div>
-                                        <button
+                                        <button className="changeRole"
                                           ref={(el) => {
                                             roleButtonRefs.current[u._id] = el;
                                           }}

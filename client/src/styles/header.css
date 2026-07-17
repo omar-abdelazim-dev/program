@@ -130,10 +130,9 @@ body::after {
 }
 
 /* Magic happens here: margin-right: auto pushes controls far right */
-.nav-search,
-.search-bar-glass {
+.nav-search {
     flex: 1;
-    max-width: 520px;
+    max-width: 500px;
     position: relative;
     margin-right: auto;
 }
@@ -143,51 +142,37 @@ body::after {
     left: 14px;
     top: 50%;
     transform: translateY(-50%);
-    color: rgba(255, 255, 255, 0.7);
-    pointer-events: none;
+    color: var(--c-sub);
 }
 
 .nav-search input,
-.user-search-input,
-.search-bar-glass input {
+.user-search-input {
     width: 100%;
-    padding: 11px 16px 11px 42px;
-    background: rgba(255, 255, 255, 0.06);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-top: 1px solid rgba(255, 255, 255, 0.16);
-    border-left: 1px solid rgba(255, 255, 255, 0.16);
-    border-radius: 999px;
+    padding: 10px 14px 10px 42px;
+
+    /* 1. Frosted glass transparent background */
+    background: rgba(255, 255, 255, 0.03);
+
+    /* 2. The blur effect */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+
+    /* 3. Glass edges catching the light */
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    border-left: 1px solid rgba(255, 255, 255, 0.15);
+
+    border-radius: 20px;
     color: var(--c-light);
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     box-sizing: border-box;
-    transition: all 0.25s ease;
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+    transition: all 0.3s;
+    box-shadow: var(--shadow);
 }
 
-.nav-search input::placeholder,
-.user-search-input::placeholder,
-.search-bar-glass input::placeholder {
-    color: rgba(255, 255, 255, 0.58);
-}
-
-.nav-search input:hover,
-.user-search-input:hover,
-.search-bar-glass input:hover {
-    background: rgba(255, 255, 255, 0.09);
-    border-color: rgba(255, 255, 255, 0.18);
-    transform: translateY(-1px);
-}
-
-.nav-search input:focus,
-.user-search-input:focus,
-.search-bar-glass input:focus {
-    outline: none;
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.25);
-    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.16);
-    transform: translateY(-1px);
+.nav-search input:focus {
+    box-shadow: 0 8px 20px rgba(79, 70, 229, 0.12);
+    border-color: transparent;
 }
 
 .nav-controls {
@@ -198,27 +183,23 @@ body::after {
 }
 
 .nav-icon-btn {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: var(--c-sub);
     width: 40px;
     height: 40px;
-    border-radius: 999px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s ease;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
+    transition: all 0.2s;
 }
 
 .nav-icon-btn:hover {
     color: var(--c-light);
-    border-color: rgba(255, 255, 255, 0.18);
-    background: rgba(255, 255, 255, 0.1);
-    transform: translateY(-1px);
+    border-color: var(--c-orange);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .nav-bell {
@@ -408,29 +389,20 @@ body.light-mode .profile-tooltip {
     box-shadow: var(--shadow);
 }
 
-body.light-mode .nav-search input,
-body.light-mode .user-search-input,
-body.light-mode .search-bar-glass input {
-    background: rgba(255, 255, 255, 0.55);
-    border: 1px solid rgba(255, 255, 255, 0.9);
+body.light-mode .nav-search input {
+    background: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.8);
     border-top: 1px solid rgba(255, 255, 255, 1);
     border-left: 1px solid rgba(255, 255, 255, 1);
     box-shadow: var(--shadow);
-    color: var(--c-light);
+    color: var(--c-bg);
+    /* Dark text for light mode */
 }
 
-body.light-mode .nav-search input::placeholder,
-body.light-mode .user-search-input::placeholder,
-body.light-mode .search-bar-glass input::placeholder {
-    color: rgba(31, 41, 55, 0.6);
-}
-
-body.light-mode .nav-search input:focus,
-body.light-mode .user-search-input:focus,
-body.light-mode .search-bar-glass input:focus {
-    background: rgba(255, 255, 255, 0.75);
+body.light-mode .nav-search input:focus {
+    background: rgba(255, 255, 255, 0.6);
     border-color: var(--c-orange);
-    box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.16);
+    box-shadow: var(--shadow);
 }
 
 body.light-mode .top-nav,
