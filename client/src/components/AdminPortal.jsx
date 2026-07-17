@@ -738,7 +738,7 @@ export default function AdminPortal({
 
         {/* Main Content Area */}
         <div style={{ flex: 1, padding: "32px 48px", overflowY: "auto" }}>
-          <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+          <div style={{ maxWidth: "100%", margin: "0 auto" }}>
             {activeTab === "dashboard_overview" && stats && (
               <div
                 style={{
@@ -786,6 +786,7 @@ export default function AdminPortal({
                   <div className="overview-row second-row">
                     {user?.role === "superadmin" && (
                       <div
+                        style={{ width: "100%" }}
                         className="glass-card stat-card"
                         data-role="superadmin"
                       >
@@ -1073,7 +1074,29 @@ export default function AdminPortal({
                                             borderRadius: "6px",
                                             color: "var(--c-light)",
                                             cursor: "pointer",
+                                            background: "rgba(15, 17, 23, 0.7)",
+                                            backdropFilter: "blur(20px)",
+                                            // -webkitBackdropFilter: "blur(20px)",
+                                            border: "var(--c-border)",
+                                            borderTop:
+                                              "1px solid rgba(255, 255, 255, 0.15)",
+                                            borderLeft:
+                                              "1px solid rgba(255, 255, 255, 0.15)",
+                                            borderRadius: "16px",
+                                            boxShadow: "var(--shadow)",
                                           }}
+                                          /*
+                                          
+                                              background: rgba(15, 17, 23, 0.7);
+                                              backdrop-filter: blur(20px);
+                                              -webkit-backdrop-filter: blur(20px);
+                                              border: var(--c-border);
+                                              border-top: 1px solid rgba(255, 255, 255, 0.15);
+                                              border-left: 1px solid rgba(255, 255, 255, 0.15);
+                                              border-radius: 16px;
+                                              box-shadow: var(--shadow);
+
+                                          */
                                         >
                                           Change Role
                                         </button>
@@ -1106,6 +1129,7 @@ export default function AdminPortal({
                                                   cursor: "pointer",
                                                   textAlign: "left",
                                                   textTransform: "capitalize",
+                                                  borderRadius: "11px",
                                                 }}
                                               >
                                                 {r}
@@ -1121,13 +1145,17 @@ export default function AdminPortal({
                                         background: u.isBlocked
                                           ? "rgba(16, 185, 129, 0.1)"
                                           : "rgba(239, 68, 68, 0.1)",
-                                        border: `1px solid ${u.isBlocked ? "#10B981" : "#ef4444"}`,
+                                        border: `1px solid ${u.isBlocked ? "rgb(16, 185, 129)" : "rgb(239, 68, 68)"}`,
+                                        borderTop: `1px solid ${u.isBlocked ? "rgba(16, 185, 129, 0.15)" : "rgb(239, 68, 68, 0.15)"}`,
+                                        borderLeft: `1px solid ${u.isBlocked ? "rgba(16, 185, 129, 0.15)" : "rgb(239, 68, 68),0.15"}`,
                                         padding: "6px 12px",
-                                        borderRadius: "6px",
+                                        borderRadius: "16px",
                                         color: u.isBlocked
                                           ? "#10B981"
                                           : "#ef4444",
                                         cursor: "pointer",
+                                        backdropFilter: "blur(20px)",
+                                        boxShadow: "var(--shadow)",
                                       }}
                                     >
                                       {u.isBlocked ? "Unblock" : "Block"}
