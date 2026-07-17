@@ -101,6 +101,13 @@ export const toggleBlockUser = async (req, res) => {
       return res.status(400).json({ message: 'Cannot block yourself' });
     }
 
+    // Only a superadmin can block/unblock another admin or superadmin —
+    // otherwise any admin could lock every other admin/superadmin out of
+    // the platform (blocked users are rejected on every subsequent request).
+    if ((user.role === 'admin' || user.role === 'superadmin') && req.user.role !== 'superadmin') {
+      return res.status(403).json({ message: 'Only a superadmin can block or unblock an admin or superadmin' });
+    }
+
     user.isBlocked = !user.isBlocked;
     await user.save();
 

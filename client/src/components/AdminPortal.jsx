@@ -342,6 +342,14 @@ export default function AdminPortal({
     return true;
   };
 
+  // Only a superadmin can block/unblock another admin or superadmin —
+  // mirrors the backend check in adminController.toggleBlockUser.
+  const canToggleBlock = (u) => {
+    if (u._id === user.id) return false;
+    if ((u.role === 'admin' || u.role === 'superadmin') && user.role !== 'superadmin') return false;
+    return true;
+  };
+
   if (loading && !stats && !users.length && !transactions.length) {
     return (
       <div
@@ -1118,27 +1126,29 @@ export default function AdminPortal({
                                         )}
                                       </div>
                                     )}
-                                    <button
-                                      onClick={() => handleToggleBlock(u._id)}
-                                      style={{
-                                        background: u.isBlocked
-                                          ? "rgba(16, 185, 129, 0.1)"
-                                          : "rgba(239, 68, 68, 0.1)",
-                                        border: `1px solid ${u.isBlocked ? "rgb(16, 185, 129)" : "rgb(239, 68, 68)"}`,
-                                        borderTop: `1px solid ${u.isBlocked ? "rgba(16, 185, 129, 0.15)" : "rgb(239, 68, 68, 0.15)"}`,
-                                        borderLeft: `1px solid ${u.isBlocked ? "rgba(16, 185, 129, 0.15)" : "rgb(239, 68, 68),0.15"}`,
-                                        padding: "6px 12px",
-                                        borderRadius: "16px",
-                                        color: u.isBlocked
-                                          ? "#10B981"
-                                          : "#ef4444",
-                                        cursor: "pointer",
-                                        backdropFilter: "blur(20px)",
-                                        boxShadow: "var(--shadow)",
-                                      }}
-                                    >
-                                      {u.isBlocked ? "Unblock" : "Block"}
-                                    </button>
+                                    {canToggleBlock(u) && (
+                                      <button
+                                        onClick={() => handleToggleBlock(u._id)}
+                                        style={{
+                                          background: u.isBlocked
+                                            ? "rgba(16, 185, 129, 0.1)"
+                                            : "rgba(239, 68, 68, 0.1)",
+                                          border: `1px solid ${u.isBlocked ? "rgb(16, 185, 129)" : "rgb(239, 68, 68)"}`,
+                                          borderTop: `1px solid ${u.isBlocked ? "rgba(16, 185, 129, 0.15)" : "rgb(239, 68, 68, 0.15)"}`,
+                                          borderLeft: `1px solid ${u.isBlocked ? "rgba(16, 185, 129, 0.15)" : "rgb(239, 68, 68),0.15"}`,
+                                          padding: "6px 12px",
+                                          borderRadius: "16px",
+                                          color: u.isBlocked
+                                            ? "#10B981"
+                                            : "#ef4444",
+                                          cursor: "pointer",
+                                          backdropFilter: "blur(20px)",
+                                          boxShadow: "var(--shadow)",
+                                        }}
+                                      >
+                                        {u.isBlocked ? "Unblock" : "Block"}
+                                      </button>
+                                    )}
                                   </>
                                 )}
                               </div>
