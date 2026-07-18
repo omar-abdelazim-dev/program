@@ -154,6 +154,7 @@ export default function AdminPortal({
   const [pendingRoleChange, setPendingRoleChange] = useState(null); // { id, name, newRole } | null
   const [changingRole, setChangingRole] = useState(false);
   const [roleChangeError, setRoleChangeError] = useState("");
+  const [blockError, setBlockError] = useState("");
 
   // Sidebar Dropdown State
   const [expandedGroup, setExpandedGroup] = useState("Dashboard");
@@ -293,11 +294,12 @@ export default function AdminPortal({
   };
 
   const handleToggleBlock = async (id) => {
+    setBlockError("");
     try {
       await api.patch(`/admin/users/${id}/block`);
       fetchUsers(searchQuery);
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to toggle block");
+      setBlockError(err.response?.data?.message || "Failed to toggle block");
     }
   };
 
@@ -349,6 +351,12 @@ export default function AdminPortal({
     if ((u.role === 'admin' || u.role === 'superadmin') && user.role !== 'superadmin') return false;
     return true;
   };
+
+  // Guard the real UI render, not just the redirect effect above — otherwise
+  // a wrong-role user briefly sees the full portal before the effect fires.
+  if (user?.role !== 'admin' && user?.role !== 'superadmin') {
+    return <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>Redirecting...</div>;
+  }
 
   if (loading && !stats && !users.length && !transactions.length) {
     return (
@@ -869,6 +877,12 @@ export default function AdminPortal({
                     </div>
                   </div>
                 </div>
+
+                {blockError && (
+                  <div style={{ color: "#ef4444", fontSize: "0.9rem" }}>
+                    {blockError}
+                  </div>
+                )}
 
                 {/* Role Tabs */}
                 <div className="role-tabs" style={{ marginTop: "4px" }}>

@@ -1,19 +1,21 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
-import { suggestedCourses, currentUser } from '../data';
+import { useNavigate, Link } from 'react-router-dom';
+import { currentUser } from '../data';
 import api from '../api/axios';
 import logoDark from '../assets/logo-dark.png';
 import logoLight from '../assets/logo-light.png';
 
+// isCartCheckout is always true now — the only route that renders this page
+// is /checkout/cart. The single-course /checkout/:id route was unreachable
+// from any link and has been removed; the prop stays so this component's
+// signature doesn't need touching everywhere it's referenced.
 export default function CheckoutPage({ cart = [], setCart, setNotifications, isCartCheckout = false }) {
   const navigate = useNavigate();
-  const { id } = useParams();
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [singleCourseData, setSingleCourseData] = useState(null);
-  
+
   // Read theme from localStorage to match the rest of the app
   const [isLightMode, setIsLightMode] = useState(() => {
     return localStorage.getItem('isLightMode') === 'true';
@@ -25,43 +27,7 @@ export default function CheckoutPage({ cart = [], setCart, setNotifications, isC
     return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
-  // Determine items to checkout
-  let checkoutItems = [];
-
-  // If cart checkout, use cart as source of truth
-  if (isCartCheckout) {
-    checkoutItems = cart || [];
-  } else {
-    // For direct checkout, we fetch real course data from the backend (see the
-    // effect below) so we use canonical fields — fall back to suggestedCourses
-    // only if that fetch fails (keeps backward compatibility with demo data).
-    if (id && singleCourseData) {
-      checkoutItems = [singleCourseData];
-    }
-  }
-
-  // When visiting /checkout/:id, fetch the real course from API
-  useEffect(() => {
-    const loadCourse = async () => {
-      if (isCartCheckout) return;
-      if (!id) return;
-      try {
-        const { data } = await api.get(`/courses/${id}`);
-        if (data && data.course) {
-          setSingleCourseData(data.course);
-        } else {
-          // Fallback to local suggestedCourses if backend doesn't return expected shape
-          const local = suggestedCourses.find(c => String(c.id) === String(id));
-          if (local) setSingleCourseData(local);
-        }
-      } catch (err) {
-        // Fallback to local demo data
-        const local = suggestedCourses.find(c => String(c.id) === String(id));
-        if (local) setSingleCourseData(local);
-      }
-    };
-    loadCourse();
-  }, [id, isCartCheckout]);
+  const checkoutItems = cart || [];
 
   // Calculate total price using numeric price when available
   const getPriceNumber = (item) => {
@@ -75,7 +41,7 @@ export default function CheckoutPage({ cart = [], setCart, setNotifications, isC
     return 0;
   };
 
-  const totalPrice = (isCartCheckout ? (cart || []).reduce((s, it) => s + getPriceNumber(it), 0) : (singleCourseData ? getPriceNumber(singleCourseData) : 0));
+  const totalPrice = (cart || []).reduce((s, it) => s + getPriceNumber(it), 0);
   const formattedTotal = `${totalPrice.toLocaleString()} EGP`;
 
   // Enrollment handler: uses the same API call as CoursePage to avoid duplicating logic
@@ -84,41 +50,6 @@ export default function CheckoutPage({ cart = [], setCart, setNotifications, isC
     setIsProcessing(true);
 
     try {
-      if (!isCartCheckout) {
-        // Single-course checkout (direct enrollment path)
-        const course = singleCourseData;
-        if (!course) throw new Error('No course selected for checkout');
-
-        const courseId = course._id || course.id;
-        if (!courseId) throw new Error('Invalid course identifier');
-
-        try {
-          await api.post(`/enrollments/${courseId}`);
-          // enrollment created — notify and navigate to learning page
-          if (setNotifications) {
-            const title = course.title || course.name || 'Course';
-            const text = `Enrolled in: ${title}`;
-            setNotifications(prev => [...prev, { id: Date.now(), text, timestamp: Date.now() }]);
-          }
-          navigate(`/learn/${courseId}`);
-          return;
-        } catch (err) {
-          if (err.response?.status === 409) {
-            // already enrolled — notify and go to learning page
-            if (setNotifications) {
-              const title = course.title || course.name || 'Course';
-              const text = `Already enrolled: ${title}`;
-              setNotifications(prev => [...prev, { id: Date.now(), text, timestamp: Date.now() }]);
-            }
-            navigate(`/learn/${courseId}`);
-            return;
-          }
-          // Other errors
-          setErrorMessage(err.response?.data?.message || 'Failed to enroll in course');
-          return;
-        }
-      }
-
       // Cart checkout: enroll each course in sequence, collect results
       const successes = [];
       const failures = [];
