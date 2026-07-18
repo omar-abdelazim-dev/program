@@ -12,17 +12,39 @@ export const getStats = async (req, res) => {
     const totalAdmins = await User.countDocuments({ role: 'admin' });
     const totalSuperAdmins = await User.countDocuments({ role: 'superadmin' });
 
-    // Calculate total revenue and enrollments by category
-    const enrollments = await Enrollment.find().populate('course');
-    let totalRevenue = 0;
-    const categoryCounts = {};
+    // Revenue total + per-category enrollment counts, computed in Mongo
+    // instead of pulling every enrollment (with its populated course) into
+    // app memory and looping in JS. $facet runs both aggregations in a
+    // single round trip.
+    const [statsAgg] = await Enrollment.aggregate([
+      {
+        $lookup: {
+          from: 'courses',
+          localField: 'course',
+          foreignField: '_id',
+          as: 'course',
+        },
+      },
+      // preserveNullAndEmptyArrays: a course can be missing (e.g. deleted)
+      // — revenue still counts that enrollment, categoryCounts must not.
+      { $unwind: { path: '$course', preserveNullAndEmptyArrays: true } },
+      {
+        $facet: {
+          revenue: [
+            { $group: { _id: null, total: { $sum: { $ifNull: ['$amountPaid', 0] } } } },
+          ],
+          byCategory: [
+            { $match: { 'course.category': { $exists: true, $ne: '' } } },
+            { $group: { _id: '$course.category', count: { $sum: 1 } } },
+          ],
+        },
+      },
+    ]);
 
-    enrollments.forEach(enr => {
-      totalRevenue += enr.amountPaid || 0;
-      if (enr.course && enr.course.category) {
-        const cat = enr.course.category;
-        categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
-      }
+    const totalRevenue = statsAgg.revenue[0]?.total || 0;
+    const categoryCounts = {};
+    statsAgg.byCategory.forEach((c) => {
+      categoryCounts[c._id] = c.count;
     });
 
     res.status(200).json({
