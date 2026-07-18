@@ -1,25 +1,26 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 
 export default function DashboardTab() {
-  const navigate = useNavigate();
   const [enrollments, setEnrollments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchEnrollments = async () => {
       try {
-        const { data } = await api.get('/enrollments/mine');
+        const { data } = await api.get('/enrollments/mine', { signal: controller.signal });
         setEnrollments(data.enrollments || []);
       } catch (err) {
+        if (err.code === 'ERR_CANCELED') return;
         setError(err.response?.data?.message || 'Failed to load your courses');
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     };
     fetchEnrollments();
+    return () => controller.abort();
   }, []);
 
   if (loading) return <p style={{ color: 'var(--c-sub)' }}>Loading your courses...</p>;

@@ -124,6 +124,12 @@ export default function InstructorPortal({ user, onLogout, toggleTheme, isLightM
     }
   };
 
+  // Guard the real UI render, not just the redirect effect above — otherwise
+  // a wrong-role user briefly sees the full portal before the effect fires.
+  if (user?.role !== 'instructor') {
+    return <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>Redirecting...</div>;
+  }
+
   if (loading) return <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>Loading Instructor Portal...</div>;
 
   return (

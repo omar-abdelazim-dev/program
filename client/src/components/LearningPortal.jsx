@@ -19,14 +19,16 @@ export default function LearningPortal() {
   const [isCourseContentOpen, setIsCourseContentOpen] = useState(true);
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchPortalData = async () => {
       try {
-        const courseRes = await api.get(`/courses/${id}`);
+        const courseRes = await api.get(`/courses/${id}`, { signal: controller.signal });
+        if (controller.signal.aborted) return;
         setCourse(courseRes.data.course);
         setLessons(courseRes.data.lessons);
-        
+
         try {
-          const enrollRes = await api.get(`/enrollments/${id}`);
+          const enrollRes = await api.get(`/enrollments/${id}`, { signal: controller.signal });
           if (enrollRes.data && enrollRes.data.enrolled) {
             setCompletedLessons(enrollRes.data.completedLessonIds || []);
             setProgressPercent(enrollRes.data.progressPercent || 0);
@@ -35,16 +37,18 @@ export default function LearningPortal() {
           // If not enrolled or error, just continue
         }
 
-        if (courseRes.data.lessons.length > 0) {
+        if (courseRes.data.lessons.length > 0 && !controller.signal.aborted) {
           handleSelectLesson(courseRes.data.lessons[0]._id, courseRes.data.lessons[0].title);
         }
       } catch(err) {
+        if (err.code === 'ERR_CANCELED') return;
         setError('Failed to load learning portal.');
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     };
     fetchPortalData();
+    return () => controller.abort();
   }, [id]);
 
   const handleSelectLesson = async (lessonId, lessonTitle) => {

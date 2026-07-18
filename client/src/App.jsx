@@ -71,10 +71,6 @@ export default function App() {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    localStorage.setItem('isAuthenticated', isAuthenticated);
-  }, [isAuthenticated]);
-
-  useEffect(() => {
     localStorage.setItem('isLightMode', isLightMode);
   }, [isLightMode]);
 
@@ -146,7 +142,6 @@ export default function App() {
     return (
       <Routes>
         <Route path="/learn/:id" element={<LearningPortal />} />
-        <Route path="/checkout/:id" element={<CheckoutPage cart={cart} setCart={setCart} setNotifications={setNotifications} />} />
         <Route path="/checkout/cart" element={<CheckoutPage cart={cart} setCart={setCart} setNotifications={setNotifications} isCartCheckout={true} />} />
         <Route path="/instructor" element={<InstructorPortal user={user} onLogout={handleLogout} toggleTheme={toggleTheme} isLightMode={isLightMode} />} />
         <Route path="/admin" element={<AdminPortal user={user} onLogout={handleLogout} toggleTheme={toggleTheme} isLightMode={isLightMode} />} />
