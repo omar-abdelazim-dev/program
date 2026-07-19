@@ -121,6 +121,32 @@ const AnimatedNumber = ({ value }) => {
   return <span>{displayValue}</span>;
 };
 
+// 30-day signup growth badge, e.g. "+12.5% this month".
+const GrowthBadge = ({ growth }) => {
+  if (growth == null) return null;
+  const positive = growth >= 0;
+  return (
+    <div
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        padding: "3px 10px",
+        borderRadius: "99px",
+        background: positive ? "rgba(16,185,129,0.12)" : "rgba(239,68,68,0.12)",
+        border: `1px solid ${positive ? "rgba(16,185,129,0.3)" : "rgba(239,68,68,0.3)"}`,
+        fontSize: "0.78rem",
+        fontWeight: 700,
+        color: positive ? "#10B981" : "#ef4444",
+        marginTop: "10px",
+        width: "fit-content",
+      }}
+    >
+      {positive ? "+" : ""}
+      {growth}% this month
+    </div>
+  );
+};
+
 export default function AdminPortal({
   user,
   onLogout,
@@ -135,13 +161,17 @@ export default function AdminPortal({
   const [users, setUsers] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [pendingCourses, setPendingCourses] = useState([]);
+  const [activity, setActivity] = useState([]);
+  const [activityLoading, setActivityLoading] = useState(true);
 
   // Loading & Processing States
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState(null);
+  const [userActionError, setUserActionError] = useState("");
 
   // Search
   const [searchQuery, setSearchQuery] = useState("");
+  const [showDeletedUsers, setShowDeletedUsers] = useState(false);
 
   // Change Role State
   const [roleMenuUserId, setRoleMenuUserId] = useState(null);
@@ -184,11 +214,11 @@ export default function AdminPortal({
     }
   };
 
-  const fetchUsers = async (query = "") => {
+  const fetchUsers = async (query = "", includeDeleted = showDeletedUsers) => {
     try {
-      const res = await api.get(
-        `/admin/users?search=${encodeURIComponent(query)}`,
-      );
+      const params = new URLSearchParams({ search: query });
+      if (includeDeleted) params.set("includeDeleted", "true");
+      const res = await api.get(`/admin/users?${params.toString()}`);
       setUsers(res.data.users || []);
     } catch (err) {
       console.error(err);
@@ -201,6 +231,18 @@ export default function AdminPortal({
       setTransactions(res.data.transactions || []);
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const fetchActivity = async () => {
+    setActivityLoading(true);
+    try {
+      const res = await api.get("/admin/activity");
+      setActivity(res.data.activities || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setActivityLoading(false);
     }
   };
 
@@ -220,6 +262,10 @@ export default function AdminPortal({
     } else {
       setLoading(false);
     }
+
+    if (activeTab === "dashboard_activity") {
+      fetchActivity();
+    }
   }, [user, navigate, activeTab]);
 
   // Debounced Search — trigger only for users tabs
@@ -229,7 +275,7 @@ export default function AdminPortal({
       fetchUsers(searchQuery);
     }, 400);
     return () => clearTimeout(delay);
-  }, [searchQuery, activeTab]);
+  }, [searchQuery, activeTab, showDeletedUsers]);
 
   // Compute visibleUsers based on the active users tab so each tab only shows its role
   const roleMap = {
@@ -303,6 +349,29 @@ export default function AdminPortal({
     }
   };
 
+  const handleSoftDelete = async (id) => {
+    if (!window.confirm("Delete this user? They'll be hidden from lists and unable to log in — this can be reversed with Restore.")) {
+      return;
+    }
+    setUserActionError("");
+    try {
+      await api.delete(`/admin/users/${id}/soft-delete`);
+      fetchUsers(searchQuery);
+    } catch (err) {
+      setUserActionError(err.response?.data?.message || "Failed to delete user");
+    }
+  };
+
+  const handleRestore = async (id) => {
+    setUserActionError("");
+    try {
+      await api.patch(`/admin/users/${id}/restore`);
+      fetchUsers(searchQuery);
+    } catch (err) {
+      setUserActionError(err.response?.data?.message || "Failed to restore user");
+    }
+  };
+
   // Opens the confirm modal — no request is sent until the user confirms.
   const requestRoleChange = (u, newRole) => {
     setRoleMenuUserId(null);
@@ -349,6 +418,14 @@ export default function AdminPortal({
   const canToggleBlock = (u) => {
     if (u._id === user.id) return false;
     if ((u.role === 'admin' || u.role === 'superadmin') && user.role !== 'superadmin') return false;
+    return true;
+  };
+
+  // Mirrors the backend's canModerate guard for soft-delete/restore.
+  const canDelete = (u) => {
+    if (u._id === user.id) return false;
+    if (u.role === 'superadmin') return false;
+    if (u.role === 'admin' && user.role !== 'superadmin') return false;
     return true;
   };
 
@@ -763,6 +840,7 @@ export default function AdminPortal({
                       <div className="stat-value role-text">
                         <AnimatedNumber value={stats.totalStudents} />
                       </div>
+                      <GrowthBadge growth={stats.growth?.students} />
                     </div>
 
                     <div
@@ -773,6 +851,7 @@ export default function AdminPortal({
                       <div className="stat-value role-text">
                         <AnimatedNumber value={stats.totalInstructors} />
                       </div>
+                      <GrowthBadge growth={stats.growth?.instructors} />
                     </div>
                   </div>
 
@@ -790,6 +869,7 @@ export default function AdminPortal({
                         >
                           <AnimatedNumber value={stats.totalSuperAdmins} />
                         </div>
+                        <GrowthBadge growth={stats.growth?.superAdmins} />
                       </div>
                     )}
 
@@ -798,6 +878,7 @@ export default function AdminPortal({
                       <div className="stat-value role-text">
                         <AnimatedNumber value={stats.totalAdmins} />
                       </div>
+                      <GrowthBadge growth={stats.growth?.admins} />
                     </div>
                   </div>
                 </div>
@@ -846,6 +927,75 @@ export default function AdminPortal({
               </div>
             )}
 
+            {activeTab === "dashboard_activity" && (
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: "24px" }}
+              >
+                <h2 style={{ fontSize: "1.8rem", margin: 0 }}>Recent Activity</h2>
+
+                <div className="glass-card" style={{ padding: "24px" }}>
+                  {activityLoading ? (
+                    <p style={{ color: "var(--c-sub)" }}>Loading activity...</p>
+                  ) : activity.length === 0 ? (
+                    <p style={{ color: "var(--c-sub)" }}>
+                      No recent activity to display.
+                    </p>
+                  ) : (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "14px",
+                      }}
+                    >
+                      {activity.map((item) => (
+                        <div
+                          key={item.id}
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "baseline",
+                            gap: "16px",
+                            padding: "12px",
+                            background: "var(--c-input-bg)",
+                            borderRadius: "8px",
+                          }}
+                        >
+                          <div>
+                            <div style={{ fontWeight: 600 }}>{item.title}</div>
+                            <div
+                              style={{
+                                color: "var(--c-sub)",
+                                fontSize: "0.88rem",
+                                marginTop: "2px",
+                              }}
+                            >
+                              {item.description}
+                            </div>
+                          </div>
+                          <div
+                            style={{
+                              color: "var(--c-sub)",
+                              fontSize: "0.8rem",
+                              whiteSpace: "nowrap",
+                              flexShrink: 0,
+                            }}
+                          >
+                            {new Date(item.date).toLocaleString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {activeTab.startsWith("users") && (
               <div
                 style={{
@@ -865,8 +1015,33 @@ export default function AdminPortal({
                     User Management
                   </h2>
 
-                  <div style={{ marginLeft: "16px", flex: "0 0 420px" }}>
-                    <div className="search-bar-glass">
+                  <div
+                    style={{
+                      marginLeft: "16px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "16px",
+                    }}
+                  >
+                    <label
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        fontSize: "0.85rem",
+                        color: "var(--c-sub)",
+                        whiteSpace: "nowrap",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={showDeletedUsers}
+                        onChange={(e) => setShowDeletedUsers(e.target.checked)}
+                      />
+                      Show deleted
+                    </label>
+                    <div className="search-bar-glass" style={{ width: "420px" }}>
                       <input
                         type="text"
                         placeholder="Search users by name, email, or phone..."
@@ -881,6 +1056,11 @@ export default function AdminPortal({
                 {blockError && (
                   <div style={{ color: "#ef4444", fontSize: "0.9rem" }}>
                     {blockError}
+                  </div>
+                )}
+                {userActionError && (
+                  <div style={{ color: "#ef4444", fontSize: "0.9rem" }}>
+                    {userActionError}
                   </div>
                 )}
 
@@ -1036,11 +1216,19 @@ export default function AdminPortal({
                             <td style={{ padding: "16px" }}>
                               <span
                                 style={{
-                                  color: u.isBlocked ? "#ef4444" : "#10B981",
+                                  color: u.isDeleted
+                                    ? "var(--c-sub)"
+                                    : u.isBlocked
+                                      ? "#ef4444"
+                                      : "#10B981",
                                   fontSize: "0.9rem",
                                 }}
                               >
-                                {u.isBlocked ? "Blocked" : "Active"}
+                                {u.isDeleted
+                                  ? "Deleted"
+                                  : u.isBlocked
+                                    ? "Blocked"
+                                    : "Active"}
                               </span>
                             </td>
                             <td style={{ padding: "16px", textAlign: "right" }}>
@@ -1140,7 +1328,7 @@ export default function AdminPortal({
                                         )}
                                       </div>
                                     )}
-                                    {canToggleBlock(u) && (
+                                    {!u.isDeleted && canToggleBlock(u) && (
                                       <button
                                         onClick={() => handleToggleBlock(u._id)}
                                         style={{
@@ -1161,6 +1349,27 @@ export default function AdminPortal({
                                         }}
                                       >
                                         {u.isBlocked ? "Unblock" : "Block"}
+                                      </button>
+                                    )}
+                                    {canDelete(u) && (
+                                      <button
+                                        onClick={() =>
+                                          u.isDeleted
+                                            ? handleRestore(u._id)
+                                            : handleSoftDelete(u._id)
+                                        }
+                                        style={{
+                                          background: "rgba(148, 163, 184, 0.1)",
+                                          border: "1px solid var(--c-sub)",
+                                          padding: "6px 12px",
+                                          borderRadius: "16px",
+                                          color: "var(--c-sub)",
+                                          cursor: "pointer",
+                                          backdropFilter: "blur(20px)",
+                                          boxShadow: "var(--shadow)",
+                                        }}
+                                      >
+                                        {u.isDeleted ? "Restore" : "Delete"}
                                       </button>
                                     )}
                                   </>

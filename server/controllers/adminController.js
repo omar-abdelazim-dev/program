@@ -47,13 +47,36 @@ export const getStats = async (req, res) => {
       categoryCounts[c._id] = c.count;
     });
 
+    // 30-day-over-30-day signup growth per role, for the trend badges on the
+    // overview cards.
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const sixtyDaysAgo = new Date();
+    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+
+    const getGrowth = async (role) => {
+      const currentPeriod = await User.countDocuments({ role, createdAt: { $gte: thirtyDaysAgo } });
+      const previousPeriod = await User.countDocuments({ role, createdAt: { $gte: sixtyDaysAgo, $lt: thirtyDaysAgo } });
+
+      if (previousPeriod === 0) return currentPeriod > 0 ? 100 : 0;
+      return Number((((currentPeriod - previousPeriod) / previousPeriod) * 100).toFixed(1));
+    };
+
+    const growth = {
+      students: await getGrowth('student'),
+      instructors: await getGrowth('instructor'),
+      admins: await getGrowth('admin'),
+      superAdmins: await getGrowth('superadmin'),
+    };
+
     res.status(200).json({
       totalStudents,
       totalInstructors,
       totalAdmins,
       totalSuperAdmins,
       totalRevenue,
-      categoryCounts
+      categoryCounts,
+      growth
     });
   } catch (error) {
     console.error(error);
@@ -61,22 +84,88 @@ export const getStats = async (req, res) => {
   }
 };
 
+// @route   GET /api/admin/activity
+// @access  Private (Admin)
+// Merges the most recent signups (admin/superadmin only), enrollments, and
+// course submissions into a single reverse-chronological feed for the
+// dashboard's "Recent Activity" tab.
+export const getRecentActivity = async (req, res) => {
+  try {
+    const recentUsers = await User.find({ role: { $in: ['admin', 'superadmin'] } })
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    const recentEnrollments = await Enrollment.find()
+      .populate('student', 'name email')
+      .populate('course', 'title')
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    const recentCourses = await Course.find()
+      .populate('instructor', 'name')
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    const activities = [];
+
+    recentUsers.forEach((u) => {
+      activities.push({
+        id: `usr_${u._id}`,
+        type: 'user',
+        title: `New ${u.role === 'superadmin' ? 'Super Admin' : 'Admin'} Added`,
+        description: `Account created for ${u.name} (${u.email}).`,
+        date: u.createdAt,
+      });
+    });
+
+    recentEnrollments.forEach((e) => {
+      activities.push({
+        id: `enr_${e._id}`,
+        type: 'enrollment',
+        title: 'New Student Enrollment',
+        description: `${e.student?.name || 'A student'} enrolled in '${e.course?.title || 'a course'}'.`,
+        date: e.createdAt,
+      });
+    });
+
+    recentCourses.forEach((c) => {
+      activities.push({
+        id: `crs_${c._id}`,
+        type: 'course',
+        title: c.status === 'approved' ? 'Course Approved' : 'Course Submitted',
+        description: `'${c.title}' was ${c.status === 'approved' ? 'approved' : 'submitted'} by ${c.instructor?.name || 'an instructor'}.`,
+        date: c.createdAt,
+      });
+    });
+
+    activities.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    res.status(200).json({ activities: activities.slice(0, 10) });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error fetching activity' });
+  }
+};
+
 // @route   GET /api/admin/users
 // @access  Private (Admin)
 export const getUsers = async (req, res) => {
   try {
-    const { search, page, limit } = req.query;
+    const { search, page, limit, includeDeleted } = req.query;
     let query = {};
-    
+
+    // By default, hide soft-deleted users from admin lists.
+    if (includeDeleted !== 'true') {
+      query.isDeleted = { $ne: true };
+    }
+
     if (search) {
       const searchRegex = new RegExp(escapeRegex(search), 'i');
-      query = {
-        $or: [
-          { name: searchRegex },
-          { email: searchRegex },
-          { phone: searchRegex }
-        ]
-      };
+      query.$or = [
+        { name: searchRegex },
+        { email: searchRegex },
+        { phone: searchRegex }
+      ];
     }
 
     // If neither page nor limit provided, keep existing behavior (return all results)
@@ -181,6 +270,55 @@ export const changeUserRole = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error changing user role' });
+  }
+};
+
+// A user can't be suspended/deleted by anyone but a superadmin if they're an
+// admin/superadmin themselves, and never by (or targeting) themselves —
+// mirrors the existing toggleBlockUser / changeUserRole guards above.
+const canModerate = (req, targetUser) => {
+  if (!targetUser) return 'User not found';
+  if (targetUser._id.toString() === req.user.id.toString()) return 'Cannot act on your own account';
+  if (targetUser.role === 'superadmin') return 'Cannot act on a superadmin';
+  if (targetUser.role === 'admin' && req.user.role !== 'superadmin') return 'Only a superadmin can act on an admin';
+  return null;
+};
+
+// @route   DELETE /api/admin/users/:id/soft-delete
+// @access  Private (Admin)
+// Soft delete only — the record stays intact (Enrollment/Course references
+// aren't touched) but the user is hidden from admin lists and can't log in.
+export const softDeleteUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    const err = canModerate(req, user);
+    if (err) return res.status(user ? 400 : 404).json({ message: err });
+
+    user.isDeleted = true;
+    user.isBlocked = true;
+    await user.save();
+    res.status(200).json({ message: 'User deleted', user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error deleting user' });
+  }
+};
+
+// @route   PATCH /api/admin/users/:id/restore
+// @access  Private (Admin)
+export const restoreUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findById(id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    user.isDeleted = false;
+    user.isBlocked = false;
+    await user.save();
+    res.status(200).json({ message: 'User restored', user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error restoring user' });
   }
 };
 

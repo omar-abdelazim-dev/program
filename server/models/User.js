@@ -35,6 +35,12 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // Soft-delete flag — deleted users are hidden from admin lists by default
+    // but the record (and any FK references from Enrollment/Course) is preserved.
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
     university: { type: String, default: '' },
     college: { type: String, default: '' },
     year: { type: String, default: '' },
