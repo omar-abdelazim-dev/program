@@ -173,7 +173,7 @@ export default function App() {
         cartCount={cart.length}
         notifications={notifications}
       />
-      <main className="content">
+      <main className="content student-content">
         <Routes>
           <Route path="/" element={<Navigate to="/student" replace />} />
           <Route path="/student" element={<ExploreTab user={user} />} />

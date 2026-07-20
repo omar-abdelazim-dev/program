@@ -468,6 +468,18 @@ body.light-mode::after {
     opacity: 0.25;
 }
 
+/* Student interface light mode: opaque white background, no ambient
+   orb blur bleeding through. Scoped with :has() rather than editing the
+   rules above, since those are shared by admin/instructor/auth too. */
+body.light-mode:has(.student-content)::before,
+body.light-mode:has(.student-content)::after {
+    display: none;
+}
+
+body.light-mode .student-content {
+    background: #ffffff;
+}
+
 /* Fix Hover States in Light Mode */
 body.light-mode .course-card:hover,
 body.light-mode .instructor-card:hover,
