@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import logoDark from '../assets/logo-dark.png';
 import logoLight from '../assets/logo-light.png';
 
-export default function TopNav({ user, activeTab, setActiveTab, toggleTheme, isLightMode, onLogout, cartCount, notifications }) {
+export default function TopNav({ user, activeTab, setActiveTab, toggleTheme, isLightMode, onLogout, cartCount, notifications, searchQuery, onSearchChange }) {
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
   const exploreRef = useRef(null);
   const dashboardRef = useRef(null);
@@ -56,7 +56,12 @@ export default function TopNav({ user, activeTab, setActiveTab, toggleTheme, isL
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
-          <input type="text" placeholder="Search courses, lessons, topics..." />
+          <input
+            type="text"
+            placeholder="Search courses, lessons, topics..."
+            value={searchQuery ?? ''}
+            onChange={(e) => onSearchChange?.(e.target.value)}
+          />
         </div>
 
         <div className="nav-controls">

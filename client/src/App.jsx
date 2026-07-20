@@ -62,6 +62,8 @@ export default function App() {
     }
   });
 
+  const [searchQuery, setSearchQuery] = useState('');
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -163,20 +165,22 @@ export default function App() {
 
   return (
     <>
-      <TopNav 
+      <TopNav
         user={user}
-        activeTab={activeTab} 
-        setActiveTab={(tab) => navigate(tab === 'explore' ? '/student' : `/student/${tab}`)} 
-        toggleTheme={toggleTheme} 
+        activeTab={activeTab}
+        setActiveTab={(tab) => navigate(tab === 'explore' ? '/student' : `/student/${tab}`)}
+        toggleTheme={toggleTheme}
         isLightMode={isLightMode}
         onLogout={handleLogout}
         cartCount={cart.length}
         notifications={notifications}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
       />
       <main className="content student-content">
         <Routes>
           <Route path="/" element={<Navigate to="/student" replace />} />
-          <Route path="/student" element={<ExploreTab user={user} />} />
+          <Route path="/student" element={<ExploreTab user={user} searchQuery={searchQuery} />} />
           <Route path="/student/dashboard" element={<DashboardTab />} />
           <Route path="/course/:id" element={<CoursePage cart={cart} setCart={setCart} />} />
         </Routes>

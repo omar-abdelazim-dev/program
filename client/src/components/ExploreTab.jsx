@@ -2,33 +2,44 @@ import { useState, useEffect, useRef } from 'react';
 import api from '../api/axios';
 import CourseCard from './CourseCard';
 
-export default function ExploreTab({ user }) {
+const SEARCH_DEBOUNCE_MS = 300;
+
+export default function ExploreTab({ user, searchQuery = '' }) {
   const firstName = user?.name ? user.name.split(' ')[0] : 'Student';
   const categories = ['All', 'Development', 'Design', 'Data', 'Business'];
   const [currentCategory, setCurrentCategory] = useState('All');
   const categoryContainerRef = useRef(null);
   const [courses, setCourses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [debouncedSearch, setDebouncedSearch] = useState(searchQuery.trim());
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery.trim());
+    }, SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const controller = new AbortController();
     const fetchCourses = async () => {
+      setIsLoading(true);
       try {
-        const res = await api.get('/courses');
+        const params = {};
+        if (debouncedSearch) params.search = debouncedSearch;
+        if (currentCategory !== 'All') params.category = currentCategory;
+        const res = await api.get('/courses', { params, signal: controller.signal });
         setCourses(res.data.data || res.data.courses || []);
       } catch (err) {
+        if (err.code === 'ERR_CANCELED') return;
         console.error('Failed to fetch courses', err);
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted) setIsLoading(false);
       }
     };
     fetchCourses();
-  }, []);
-
-
-  const filteredCourses =
-    currentCategory === 'All'
-      ? courses
-      : courses.filter((c) => c.category === currentCategory);
+    return () => controller.abort();
+  }, [debouncedSearch, currentCategory]);
 
   return (
     <>
@@ -78,15 +89,17 @@ export default function ExploreTab({ user }) {
                   <div key={i} className="cc-skeleton glass-card" />
                 ))}
               </div>
-            ) : filteredCourses.length > 0 ? (
+            ) : courses.length > 0 ? (
               <div className="cc-grid">
-                {filteredCourses.map((course, idx) => (
+                {courses.map((course, idx) => (
                   <CourseCard key={course._id || idx} course={course} idx={idx} />
                 ))}
               </div>
             ) : (
               <p style={{ color: 'var(--c-sub)', padding: '32px 0' }}>
-                No courses found in this category.
+                {debouncedSearch
+                  ? `No courses found for "${debouncedSearch}"${currentCategory !== 'All' ? ` in ${currentCategory}` : ''}.`
+                  : 'No courses found in this category.'}
               </p>
             )}
           </section>
