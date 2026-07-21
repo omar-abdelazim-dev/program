@@ -1,6 +1,7 @@
 import Enrollment from '../models/Enrollment.js';
 import Course from '../models/Course.js';
 import Lesson from '../models/Lesson.js';
+import Transaction from '../models/Transaction.js';
 import Section from '../models/Section.js';
 import { getInternalConfig } from '../utils/configFetcher.js';
 
@@ -36,6 +37,20 @@ export const enroll = async (req, res) => {
       platformCommission,
       instructorShare
     });
+
+    // Generate 70% revenue split transaction for the instructor
+    if (course.price > 0 && course.instructor) {
+      const instructorCut = course.price * 0.7;
+      await Transaction.create({
+        instructor: course.instructor,
+        amount: instructorCut,
+        type: 'course_sale',
+        status: 'cleared',
+        description: `Course Sale - ${course.title}`,
+        course: course._id
+      });
+    }
+
     res.status(201).json({ enrollment });
   } catch (error) {
     // A duplicate-key error (code 11000) means the unique index caught a
@@ -53,17 +68,36 @@ export const enroll = async (req, res) => {
 export const getMyEnrollments = async (req, res) => {
   try {
     const enrollments = await Enrollment.find({ student: req.user.id })
-      .populate('course')
+      .populate({
+        path: 'course',
+        populate: { path: 'instructor', select: 'name avatar isProgramInstructor' }
+      })
       .sort({ updatedAt: -1 });
 
     // Attach a computed progress percentage to each enrollment so the
     // frontend doesn't have to fetch lesson counts separately for every card.
     const withProgress = await Promise.all(
       enrollments.map(async (enrollment) => {
-        const totalLessons = await Lesson.countDocuments({ course: enrollment.course._id });
+        // Fetch all lessons for the course (via its sections), sorted by order
+        const sections = await Section.find({ course: enrollment.course._id });
+        const sectionIds = sections.map(s => s._id);
+        const allLessons = await Lesson.find({ section: { $in: sectionIds } }).sort({ order: 1 });
+        const totalLessons = allLessons.length;
+        
+        // Use completedLessons to calculate progress
         const completedCount = enrollment.completedLessons.length;
         const progressPercent = totalLessons === 0 ? 0 : Math.round((completedCount / totalLessons) * 100);
-        return { ...enrollment.toObject(), totalLessons, progressPercent };
+        
+        // Find current lesson: first lesson not in completedLessons
+        const completedIds = enrollment.completedLessons.map(id => id.toString());
+        const currentLesson = allLessons.find(lesson => !completedIds.includes(lesson._id.toString())) || null;
+
+        return { 
+          ...enrollment.toObject(), 
+          totalLessons, 
+          progressPercent,
+          currentLesson: currentLesson ? { title: currentLesson.title, duration: currentLesson.duration || 10, _id: currentLesson._id } : null
+        };
       })
     );
 
@@ -86,7 +120,9 @@ export const getEnrollmentStatus = async (req, res) => {
       return res.status(200).json({ enrolled: false });
     }
 
-    const totalLessons = await Lesson.countDocuments({ course: courseId });
+    const sections = await Section.find({ course: courseId });
+    const sectionIds = sections.map(s => s._id);
+    const totalLessons = await Lesson.countDocuments({ section: { $in: sectionIds } });
     const progressPercent =
       totalLessons === 0 ? 0 : Math.round((enrollment.completedLessons.length / totalLessons) * 100);
 

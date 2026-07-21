@@ -4,7 +4,6 @@ import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-
 import TopNav from './components/TopNav';
 import ExploreTab from './components/ExploreTab';
 import DashboardTab from './components/DashboardTab';
-import MyCoursesTab from './components/MyCoursesTab';
 import AuthPage from './components/AuthPage';
 import AdminAuthPage from './components/AdminAuthPage';
 import CoursePage from './components/CoursePage';
@@ -12,6 +11,7 @@ import LearningPortal from './components/LearningPortal';
 import CheckoutPage from './components/CheckoutPage';
 import InstructorPortal from './components/InstructorPortal';
 import AdminPortal from './components/AdminPortal';
+import SettingsPage from './components/SettingsPage';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -63,12 +63,10 @@ export default function App() {
     }
   });
 
+  const [searchQuery, setSearchQuery] = useState('');
+
   const navigate = useNavigate();
   const location = useLocation();
-
-  useEffect(() => {
-    localStorage.setItem('isAuthenticated', isAuthenticated);
-  }, [isAuthenticated]);
 
   useEffect(() => {
     localStorage.setItem('isAuthenticated', isAuthenticated);
@@ -139,14 +137,12 @@ export default function App() {
   // Derive activeTab for the TopNav indicator based on the URL
   let activeTab = 'explore';
   if (location.pathname.includes('/dashboard')) activeTab = 'dashboard';
-  if (location.pathname.includes('/mycourses')) activeTab = 'mycourses';
 
   // The Learning Portal and Checkout Page have their own fullscreen layouts
   if (location.pathname.startsWith('/learn/') || location.pathname.startsWith('/checkout/') || location.pathname === '/instructor' || location.pathname === '/admin') {
     return (
       <Routes>
         <Route path="/learn/:id" element={<LearningPortal />} />
-        <Route path="/checkout/:id" element={<CheckoutPage cart={cart} setCart={setCart} setNotifications={setNotifications} />} />
         <Route path="/checkout/cart" element={<CheckoutPage cart={cart} setCart={setCart} setNotifications={setNotifications} isCartCheckout={true} />} />
         <Route path="/instructor" element={<InstructorPortal user={user} onLogout={handleLogout} toggleTheme={toggleTheme} isLightMode={isLightMode} />} />
         <Route path="/admin" element={<AdminPortal user={user} onLogout={handleLogout} toggleTheme={toggleTheme} isLightMode={isLightMode} />} />
@@ -154,11 +150,14 @@ export default function App() {
     );
   }
 
-  // Admin/superadmin accounts don't have student features (enrollments,
-  // dashboard) — keep them out of the student area rather than letting them
-  // land on a tab that just 403s.
-  if ((user?.role === 'admin' || user?.role === 'superadmin') && location.pathname.startsWith('/student')) {
+  // Admin/superadmin accounts don't have student features
+  if ((user?.role === 'admin' || user?.role === 'superadmin') && (location.pathname.startsWith('/student') || location.pathname === '/')) {
     return <Navigate to="/admin" replace />;
+  }
+
+  // Instructors should not have access to the student portal either
+  if (user?.role === 'instructor' && (location.pathname.startsWith('/student') || location.pathname === '/')) {
+    return <Navigate to="/instructor" replace />;
   }
 
   // Redirect authenticated users away from auth pages
@@ -170,22 +169,24 @@ export default function App() {
 
   return (
     <>
-      <TopNav 
+      <TopNav
         user={user}
-        activeTab={activeTab} 
-        setActiveTab={(tab) => navigate(tab === 'explore' ? '/student' : `/student/${tab}`)} 
-        toggleTheme={toggleTheme} 
+        activeTab={activeTab}
+        setActiveTab={(tab) => navigate(tab === 'explore' ? '/student' : `/student/${tab}`)}
+        toggleTheme={toggleTheme}
         isLightMode={isLightMode}
         onLogout={handleLogout}
         cartCount={cart.length}
         notifications={notifications}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
       />
-      <main className="content">
+      <main className="content student-content">
         <Routes>
           <Route path="/" element={<Navigate to="/student" replace />} />
-          <Route path="/student" element={<ExploreTab user={user} />} />
+          <Route path="/student" element={<ExploreTab user={user} searchQuery={searchQuery} />} />
           <Route path="/student/dashboard" element={<DashboardTab />} />
-          <Route path="/student/mycourses" element={<MyCoursesTab />} />
+          <Route path="/student/settings" element={<SettingsPage user={user} setUser={setUser} isLightMode={isLightMode} toggleTheme={toggleTheme} onLogout={handleLogout} />} />
           <Route path="/course/:id" element={<CoursePage cart={cart} setCart={setCart} />} />
         </Routes>
       </main>

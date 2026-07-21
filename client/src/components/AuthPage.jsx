@@ -3,54 +3,7 @@ import logoDark from '../assets/logo-dark.png';
 import logoLight from '../assets/logo-light.png';
 import api from '../api/axios';
 
-const CustomSelect = ({ options, value, onChange, placeholder, icon }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const wrapperRef = useRef(null);
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const selectedOption = options.find(o => o.value === value);
-
-  return (
-    <div className="custom-select-wrapper" ref={wrapperRef}>
-      <div 
-        className={`icon-input-wrapper custom-select-trigger ${isOpen ? 'focus' : ''}`}
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        {icon}
-        <div className={`custom-select-value ${!selectedOption ? 'placeholder' : ''}`}>
-          {selectedOption ? selectedOption.label : placeholder}
-        </div>
-        <svg className={`custom-select-chevron ${isOpen ? 'open' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-      </div>
-      
-      {isOpen && (
-        <div className="custom-select-dropdown animate-entrance">
-          <div className="custom-select-options">
-            <div className="custom-select-option disabled">{placeholder}</div>
-            {options.map(opt => (
-              <div 
-                key={opt.value}
-                className={`custom-select-option ${value === opt.value ? 'selected' : ''}`}
-                onClick={() => { onChange(opt.value); setIsOpen(false); }}
-              >
-                {opt.label}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
+import CustomSelect from './CustomSelect';
 
 export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -64,6 +17,7 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [role, setRole] = useState('student');
   const [phone, setPhone] = useState('');
   const [phoneTouched, setPhoneTouched] = useState(false);
@@ -153,7 +107,7 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
     if (isLogin) {
       setIsCreatingAccount(true);
       try {
-        const response = await api.post('/auth/login', { email, password });
+        const response = await api.post('/auth/login', { email, password, rememberMe });
         onLoginSuccess(response.data.user);
       } catch (err) {
         setAuthError(err.response?.data?.message || 'Failed to login');
@@ -535,7 +489,17 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
               )}
 
               {isLogin && (
-                <a className="forgot-password">Forgot password?</a>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: 'var(--c-sub)', cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap' }}>
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                    />
+                    Remember me
+                  </label>
+                  <a className="forgot-password">Forgot password?</a>
+                </div>
               )}
 
               <div className="auth-actions">

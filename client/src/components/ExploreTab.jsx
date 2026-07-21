@@ -1,24 +1,36 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
+import CourseCard from './CourseCard';
 
-export default function ExploreTab({ user }) {
-  const navigate = useNavigate();
-  const firstName = user?.name ? user.name.split(" ")[0] : "Student";
-  const categories = ["All", "Development", "Design", "Data", "Business"];
-  const [currentCategory, setCurrentCategory] = useState("All");
+const SEARCH_DEBOUNCE_MS = 300;
+
+export default function ExploreTab({ user, searchQuery = '' }) {
+  const firstName = user?.name ? user.name.split(' ')[0] : 'Student';
+  const categories = ['All', 'Development', 'Design', 'Data', 'Business'];
+  const [currentCategory, setCurrentCategory] = useState('All');
   const categoryContainerRef = useRef(null);
-  const [filterIndicatorStyle, setFilterIndicatorStyle] = useState({ left: 0, width: 0, opacity: 0 });
-  
   const [courses, setCourses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [debouncedSearch, setDebouncedSearch] = useState(searchQuery.trim());
   const [websiteContent, setWebsiteContent] = useState(null);
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery.trim());
+    }, SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const controller = new AbortController();
     const fetchCourses = async () => {
+      setIsLoading(true);
       try {
+        const params = {};
+        if (debouncedSearch) params.search = debouncedSearch;
+        if (currentCategory !== 'All') params.category = currentCategory;
         const [res, contentRes] = await Promise.all([
-          api.get('/courses'),
+          api.get('/courses', { params, signal: controller.signal }),
           api.get('/website/public/content').catch(() => null)
         ]);
         setCourses(res.data.data || res.data.courses || []);
@@ -26,35 +38,15 @@ export default function ExploreTab({ user }) {
           setWebsiteContent(contentRes.data);
         }
       } catch (err) {
-        console.error("Failed to fetch courses", err);
+        if (err.code === 'ERR_CANCELED') return;
+        console.error('Failed to fetch courses', err);
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted) setIsLoading(false);
       }
     };
     fetchCourses();
-  }, []);
-
-  useEffect(() => {
-    // Small delay to ensure buttons are rendered and have dimensions
-    const timer = setTimeout(() => {
-      if (categoryContainerRef.current) {
-        // Find the active button within the container
-        const activeBtn = categoryContainerRef.current.querySelector('.filter-btn.active');
-        if (activeBtn) {
-          setFilterIndicatorStyle({
-            left: activeBtn.offsetLeft,
-            width: activeBtn.offsetWidth,
-            opacity: 1
-          });
-        }
-      }
-    }, 50);
-    return () => clearTimeout(timer);
-  }, [currentCategory, categories]);
-
-  const filteredCourses = currentCategory === "All" 
-    ? courses 
-    : courses.filter(c => c.category === currentCategory);
+    return () => controller.abort();
+  }, [debouncedSearch, currentCategory]);
 
   return (
     <>
@@ -98,28 +90,24 @@ export default function ExploreTab({ user }) {
 
       <div className="dashboard-grid">
         <div className="main-column" style={{ width: '100%' }}>
-
-          {/* Suggested Courses with Filters */}
           <section className="dashboard-section animate-entrance" style={{ animationDelay: '0.4s' }}>
             <div className="section-header">
               <h2>Recommended for You</h2>
               <a href="#" className="view-all">View all</a>
             </div>
-            
-            <div className="category-filters" style={{ position: 'relative' }} ref={categoryContainerRef}>
-              <div 
-                className="filter-indicator" 
-                style={{ 
-                  left: `${filterIndicatorStyle.left}px`, 
-                  width: `${filterIndicatorStyle.width}px`, 
-                  opacity: filterIndicatorStyle.opacity 
-                }} 
-              />
-              {categories.map(cat => (
-                <button 
+
+            {/* Category filters */}
+            <div
+              className="category-filters"
+              style={{ position: 'relative' }}
+              ref={categoryContainerRef}
+            >
+
+              {categories.map((cat) => (
+                <button
                   key={cat}
-                  type="button" 
-                  className={`filter-btn glass-card hover-glow ${cat === currentCategory ? 'active' : ''}`} 
+                  type="button"
+                  className={`filter-btn glass-card hover-glow ${cat === currentCategory ? 'active' : ''}`}
                   onClick={(e) => {
                     e.preventDefault();
                     setCurrentCategory(cat);
@@ -130,28 +118,26 @@ export default function ExploreTab({ user }) {
               ))}
             </div>
 
-            <div className="courses-row">
-              {isLoading ? (
-                <p style={{ color: 'var(--c-sub)' }}>Loading courses...</p>
-              ) : filteredCourses.length > 0 ? filteredCourses.map((course, idx) => (
-                <div 
-                  key={course._id || idx} 
-                  className="course-card glass-card animate-entrance hover-glow" 
-                  style={{ animationDelay: `${0.05 + (idx * 0.1)}s`, cursor: 'pointer' }}
-                  onClick={() => navigate(`/course/${course._id || idx + 1}`)}
-                >
-                  <div className="course-thumb" style={{ background: course.color || 'linear-gradient(135deg, #3B82F6, #8B5CF6)' }}></div>
-                  <div className="course-info">
-                    <h3>{course.title}</h3>
-                    <p>{course.instructor?.name || 'Instructor'}</p>
-                    <div className="course-meta">
-                      <span className="rating">⭐ {course.rating || '4.5'}</span>
-                      <span className="students">👨‍🎓 {course.students || '0'}</span>
-                    </div>
-                  </div>
-                </div>
-              )) : <p style={{ color: 'var(--c-sub)' }}>No courses found in this category.</p>}
-            </div>
+            {/* Course grid */}
+            {isLoading ? (
+              <div className="cc-skeleton-grid">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="cc-skeleton glass-card" />
+                ))}
+              </div>
+            ) : courses.length > 0 ? (
+              <div className="cc-grid">
+                {courses.map((course, idx) => (
+                  <CourseCard key={course._id || idx} course={course} idx={idx} />
+                ))}
+              </div>
+            ) : (
+              <p style={{ color: 'var(--c-sub)', padding: '32px 0' }}>
+                {debouncedSearch
+                  ? `No courses found for "${debouncedSearch}"${currentCategory !== 'All' ? ` in ${currentCategory}` : ''}.`
+                  : 'No courses found in this category.'}
+              </p>
+            )}
           </section>
         </div>
       </div>

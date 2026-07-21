@@ -98,7 +98,7 @@ const run = async () => {
   assert(res.status === 200, 'Course details fetch failed');
   assert(res.body.lessons.length === 1, 'Course details should include the 1 lesson we added');
   assert(res.body.lessons[0].videoUrl === undefined, 'Public course details must NOT leak videoUrl');
-  const lessonId = (await (await import('./models/Lesson.js')).default.findOne({ course: courseId }))._id;
+  const lessonId = res.body.lessons[0]._id;
   console.log('✓ Course details endpoint returns course + lessons (videoUrl correctly hidden)');
 
   // --- WEEK 3: enrollment + lesson player + progress ---

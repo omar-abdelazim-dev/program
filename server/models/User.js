@@ -31,23 +31,16 @@ const userSchema = new mongoose.Schema(
       trim: true,
       default: '',
     },
+    avatarUrl: {
+      type: String,
+      default: '',
+    },
     isBlocked: {
       type: Boolean,
       default: false,
     },
-    status: {
-      type: String,
-      enum: ['active', 'suspended', 'pending_verification', 'banned'],
-      default: 'active',
-    },
-    emailVerified: {
-      type: Boolean,
-      default: false,
-    },
-    lastLogin: {
-      type: Date,
-      default: null,
-    },
+    // Soft-delete flag — deleted users are hidden from admin lists by default
+    // but the record (and any FK references from Enrollment/Course) is preserved.
     isDeleted: {
       type: Boolean,
       default: false,

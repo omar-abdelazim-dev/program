@@ -11,7 +11,14 @@ import { getInternalConfig } from './configFetcher.js';
 // it to requests automatically, and only the server can read it. This doesn't
 // eliminate all risk (CSRF becomes the concern instead of XSS), but it's the
 // safer default for most apps, which is why we set sameSite + secure below.
-const generateTokenAndSetCookie = async (res, userId) => {
+// rememberMe (default true — unchanged behavior for register() and any other
+// caller that doesn't pass it) controls whether the cookie persists across
+// browser restarts. The JWT itself is always valid for the same duration
+// either way; what changes is whether the *cookie* survives closing the
+// browser (maxAge set) or not (session cookie, no maxAge). Token duration
+// itself comes from SystemConfig (security.jwtExpiration), admin-configurable,
+// falling back to 7 days.
+const generateTokenAndSetCookie = async (res, userId, rememberMe = true) => {
   const config = await getInternalConfig();
   const jwtExpirationDays = config?.security?.jwtExpiration || 7;
 
@@ -19,11 +26,13 @@ const generateTokenAndSetCookie = async (res, userId) => {
     expiresIn: `${jwtExpirationDays}d`,
   });
 
+  const maxAge = rememberMe ? jwtExpirationDays * 24 * 60 * 60 * 1000 : undefined; // configured duration, or a session cookie
+
   res.cookie('token', token, {
     httpOnly: true, // JavaScript on the frontend can never read this cookie
     secure: process.env.NODE_ENV === 'production', // HTTPS-only in production
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' needed cross-site (Vercel <-> Render)
-    maxAge: jwtExpirationDays * 24 * 60 * 60 * 1000, 
+    maxAge,
   });
 
   // Double-submit CSRF cookie: sameSite:'none' in production means the browser
@@ -37,7 +46,7 @@ const generateTokenAndSetCookie = async (res, userId) => {
     httpOnly: false,
     secure: process.env.NODE_ENV === 'production',
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    maxAge,
   });
 
   return token;

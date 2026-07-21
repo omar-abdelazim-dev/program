@@ -19,6 +19,13 @@ body.light-mode {
 *::before,
 *::after {
     box-sizing: border-box;
+    /* Smooth theme toggle: fades colors together instead of an instant
+       flash. Deliberately NOT `transition: all` (that would also slow
+       down hover/press states) — just the three properties that actually
+       differ between light.css and dark mode. Elements with their own
+       more specific transition (buttons, cards, etc.) keep behaving
+       exactly as before; this only fills in the ones that had none. */
+    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
 }
 
 body {
@@ -36,6 +43,7 @@ button:focus,
 input:focus {
     outline: none !important;
 }
+
 
 /* Ambient Animated Glowing Orbs Background */
 body::before,
@@ -112,7 +120,7 @@ body::after {
 .nav-row-top {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: space-between;
     height: 70px;
     gap: 40px;
 }
@@ -200,6 +208,27 @@ body::after {
     color: var(--c-light);
     border-color: var(--c-orange);
     background: rgba(255, 255, 255, 0.05);
+}
+
+/* Sun/moon theme toggle: both icons are always mounted and stacked, cross-
+   fading + rotating between them instead of a hard swap on theme change. */
+.theme-toggle-btn {
+    position: relative;
+}
+
+.theme-toggle-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(-90deg);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    pointer-events: none;
+}
+
+.theme-toggle-icon.is-active {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(0deg);
 }
 
 .nav-bell {
@@ -468,10 +497,34 @@ body.light-mode::after {
     opacity: 0.25;
 }
 
+/* Student interface light mode: opaque white background, no ambient
+   orb blur bleeding through. Scoped with :has() rather than editing the
+   rules above, since those are shared by admin/instructor/auth too. */
+body.light-mode:has(.student-content)::before,
+body.light-mode:has(.student-content)::after {
+    display: none;
+}
+
+/* Solid opaque white behind the centered page too — no gradient, no
+   transparency, matching the student content area itself. */
+body.light-mode:has(.student-content) {
+    background: #ffffff;
+}
+
+/* The #root border-inline (var(--border), a cold grey) cut a visible
+   seam between the page margin and the white content column. Drop it
+   here since both sides are the same white now. */
+body.light-mode:has(.student-content) #root {
+    border-inline-color: transparent;
+}
+
+body.light-mode .student-content {
+    background: #ffffff;
+}
+
 /* Fix Hover States in Light Mode */
 body.light-mode .course-card:hover,
-body.light-mode .instructor-card:hover,
-body.light-mode .hover-glow:hover {
+body.light-mode .instructor-card:hover {
     background: rgba(255, 255, 255, 0.9);
     /* Gets more solid white on hover */
     box-shadow: var(--shadow);

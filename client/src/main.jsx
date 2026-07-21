@@ -5,6 +5,8 @@ import App from './App.jsx'
 import { ConfigProvider } from './context/ConfigContext.jsx'
 import './styles/header.css'
 import './styles/content.css'
+import './styles/dashboard.css'
+import './styles/settings.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

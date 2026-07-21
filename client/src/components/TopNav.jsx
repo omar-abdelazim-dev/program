@@ -4,18 +4,16 @@ import logoDark from '../assets/logo-dark.png';
 import logoLight from '../assets/logo-light.png';
 import { useConfig } from '../context/ConfigContext';
 
-export default function TopNav({ user, activeTab, setActiveTab, toggleTheme, isLightMode, onLogout, cartCount, notifications }) {
+export default function TopNav({ user, activeTab, setActiveTab, toggleTheme, isLightMode, onLogout, cartCount, notifications, searchQuery, onSearchChange }) {
   const { config } = useConfig();
   const platformName = config?.general?.platformName || 'Program LMS';
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
   const exploreRef = useRef(null);
   const dashboardRef = useRef(null);
-  const myCoursesRef = useRef(null);
 
   const getActiveRef = () => {
     if (activeTab === 'explore') return exploreRef;
     if (activeTab === 'dashboard') return dashboardRef;
-    if (activeTab === 'mycourses') return myCoursesRef;
     return { current: null };
   };
 
@@ -64,28 +62,30 @@ export default function TopNav({ user, activeTab, setActiveTab, toggleTheme, isL
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
-          <input type="text" placeholder="Search courses, lessons, topics..." />
+          <input
+            type="text"
+            placeholder="Search courses, lessons, topics..."
+            value={searchQuery ?? ''}
+            onChange={(e) => onSearchChange?.(e.target.value)}
+          />
         </div>
 
         <div className="nav-controls">
-          <button className="nav-icon-btn" id="themeToggle" onClick={toggleTheme}>
-            {isLightMode ? (
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-              </svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-                <circle cx="12" cy="12" r="4"></circle>
-                <line x1="12" y1="2" x2="12" y2="4"></line>
-                <line x1="12" y1="20" x2="12" y2="22"></line>
-                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                <line x1="2" y1="12" x2="4" y2="12"></line>
-                <line x1="20" y1="12" x2="22" y2="12"></line>
-                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-              </svg>
-            )}
+          <button className="nav-icon-btn theme-toggle-btn" id="themeToggle" onClick={toggleTheme} aria-label="Toggle theme">
+            <svg className={`theme-toggle-icon ${isLightMode ? 'is-active' : ''}`} xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+            <svg className={`theme-toggle-icon ${isLightMode ? '' : 'is-active'}`} xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+              <circle cx="12" cy="12" r="4"></circle>
+              <line x1="12" y1="2" x2="12" y2="4"></line>
+              <line x1="12" y1="20" x2="12" y2="22"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="2" y1="12" x2="4" y2="12"></line>
+              <line x1="20" y1="12" x2="22" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
           </button>
 
           <Link to="/checkout/cart" className="nav-icon-btn" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -135,16 +135,19 @@ export default function TopNav({ user, activeTab, setActiveTab, toggleTheme, isL
 
           <div className="profile-wrapper">
             <div className="nav-avatar">
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-                <circle cx="12" cy="8" r="4"></circle>
-                <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"></path>
-              </svg>
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user?.name || 'Profile'} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                  <circle cx="12" cy="8" r="4"></circle>
+                  <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"></path>
+                </svg>
+              )}
             </div>
             <div className="profile-tooltip">
               <div className="tooltip-name">{user?.name || 'Student'}</div>
               <hr className="tooltip-divider" />
-              <a href="#" className="tooltip-link">Profile</a>
-              <a href="#" className="tooltip-link">Settings</a>
+              <Link to="/student/settings" className="tooltip-link">Settings</Link>
               <hr className="tooltip-divider" />
               <a href="#" onClick={(e) => { e.preventDefault(); onLogout(); }} className="tooltip-link logout-link">Log out</a>
             </div>
@@ -182,15 +185,6 @@ export default function TopNav({ user, activeTab, setActiveTab, toggleTheme, isL
           </Link>
         )}
 
-        {user?.role === 'student' && (
-          <button
-            ref={myCoursesRef}
-            className={`nav-tab ${activeTab === 'mycourses' ? 'active' : ''}`}
-            onClick={() => setActiveTab('mycourses')}
-          >
-            My Courses
-          </button>
-        )}
         <button className="nav-tab" disabled>
           Certificates <span className="badge-soon">Coming soon</span>
         </button>

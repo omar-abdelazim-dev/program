@@ -17,27 +17,30 @@ export default function CoursePage({ cart = [], setCart }) {
   const [enrollError, setEnrollError] = useState('');
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchData = async () => {
       try {
-        const { data } = await api.get(`/courses/${id}`);
+        const { data } = await api.get(`/courses/${id}`, { signal: controller.signal });
         setCourse(data.course);
         setLessons(data.lessons || []);
 
         try {
-          const enrollRes = await api.get(`/enrollments/${id}`);
+          const enrollRes = await api.get(`/enrollments/${id}`, { signal: controller.signal });
           if (enrollRes.data && enrollRes.data.enrolled) {
             setIsEnrolled(true);
           }
         } catch(e) {
-          // Ignore, likely 404 (not enrolled)
+          // Ignore — likely 404 (not enrolled) or the request was cancelled
         }
       } catch (err) {
+        if (err.code === 'ERR_CANCELED') return;
         setError(err.response?.data?.message || 'Failed to fetch course');
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     };
     fetchData();
+    return () => controller.abort();
   }, [id]);
 
   const handleEnroll = async () => {

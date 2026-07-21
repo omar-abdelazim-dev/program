@@ -27,10 +27,12 @@ router.post(
   uploadVideo
 );
 
+// No authorize('instructor') here (unlike /video) — this endpoint is also
+// used by any logged-in user to upload a profile picture from Settings, not
+// just instructors uploading course thumbnails.
 router.post(
   '/image',
   protect,
-  authorize('instructor'),
   handleMulterErrors(uploadImageFile),
   uploadImage
 );

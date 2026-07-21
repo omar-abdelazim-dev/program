@@ -1,7 +1,9 @@
 import Course from '../models/Course.js';
 import Lesson from '../models/Lesson.js';
+import Enrollment from '../models/Enrollment.js';
 import Section from '../models/Section.js';
 import { escapeRegex } from '../utils/escapeRegex.js';
+import mongoose from 'mongoose';
 
 // @route   POST /api/courses
 // @access  Private (instructor only)
@@ -59,6 +61,124 @@ export const getMyCourses = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error fetching your courses' });
+  }
+};
+
+// @route   GET /api/courses/stats
+// @access  Private (instructor only)
+export const getInstructorStats = async (req, res) => {
+  try {
+    const instructorId = new mongoose.Types.ObjectId(req.user.id);
+    
+    // Aggregation for course-level stats
+    const stats = await Course.aggregate([
+      { $match: { instructor: instructorId } },
+      {
+        $lookup: {
+          from: 'enrollments',
+          localField: '_id',
+          foreignField: 'course',
+          as: 'enrollments'
+        }
+      },
+      {
+        $lookup: {
+          from: 'lessons',
+          localField: '_id',
+          foreignField: 'course',
+          as: 'lessons'
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          title: 1,
+          totalEnrolled: { $size: '$enrollments' },
+          totalRevenue: { $sum: '$enrollments.amountPaid' },
+          lessonsCount: { $size: '$lessons' },
+          totalCompletions: {
+            $sum: {
+              $map: {
+                input: '$enrollments',
+                as: 'en',
+                in: { $size: '$$en.completedLessons' }
+              }
+            }
+          }
+        }
+      }
+    ]);
+
+    // Format stats and compute completion rate
+    const courseStats = stats.map(course => {
+      let completionRate = 0;
+      if (course.totalEnrolled > 0 && course.lessonsCount > 0) {
+        const totalPossibleCompletions = course.totalEnrolled * course.lessonsCount;
+        completionRate = Math.round((course.totalCompletions / totalPossibleCompletions) * 100);
+      }
+      return {
+        id: course._id,
+        title: course.title,
+        enrolled: course.totalEnrolled,
+        revenue: course.totalRevenue,
+        completionRate: `${completionRate}%`
+      };
+    });
+
+    // Aggregation for time-series charts (revenue and student growth)
+    const timeSeries = await Enrollment.aggregate([
+      {
+        $lookup: {
+          from: 'courses',
+          localField: 'course',
+          foreignField: '_id',
+          as: 'courseDoc'
+        }
+      },
+      { $unwind: '$courseDoc' },
+      { $match: { 'courseDoc.instructor': instructorId } },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$createdAt' },
+            month: { $month: '$createdAt' }
+          },
+          revenue: { $sum: '$amountPaid' },
+          students: { $sum: 1 }
+        }
+      },
+      { $sort: { '_id.year': 1, '_id.month': 1 } }
+    ]);
+
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    // Create base skeleton for the last 7 months to ensure continuous charts
+    const fullTimeSeries = [];
+    const currentDate = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+      fullTimeSeries.push({
+        year: d.getFullYear(),
+        month: d.getMonth() + 1,
+        name: monthNames[d.getMonth()],
+        revenue: 0,
+        students: 0
+      });
+    }
+
+    // Merge actual data into skeleton
+    timeSeries.forEach(ts => {
+      const match = fullTimeSeries.find(f => f.year === ts._id.year && f.month === ts._id.month);
+      if (match) {
+        match.revenue = ts.revenue;
+        match.students = ts.students;
+      }
+    });
+
+    res.status(200).json({ courseStats, timeSeriesData: fullTimeSeries });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error fetching stats' });
   }
 };
 
@@ -181,7 +301,7 @@ export const approveCourse = async (req, res) => {
   try {
     const course = await Course.findByIdAndUpdate(
       req.params.id,
-      { status: 'approved', rejectionReason: '' },
+      { status: 'approved', rejectionReason: '', approvedBy: req.user.id },
       { new: true } // return the updated document, not the pre-update one
     );
 

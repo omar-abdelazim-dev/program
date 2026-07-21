@@ -69,6 +69,7 @@ export const register = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        avatarUrl: user.avatarUrl,
       },
     });
   } catch (error) {
@@ -81,7 +82,7 @@ export const register = async (req, res) => {
 // @access  Public
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, rememberMe } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password are required' });
@@ -108,7 +109,7 @@ export const login = async (req, res) => {
       return res.status(403).json({ message: 'Platform is locked for maintenance. Only Super Admins can log in.' });
     }
 
-    await generateTokenAndSetCookie(res, user._id);
+    await generateTokenAndSetCookie(res, user._id, rememberMe !== false);
 
     res.status(200).json({
       user: {
@@ -116,6 +117,7 @@ export const login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        avatarUrl: user.avatarUrl,
       },
     });
   } catch (error) {
@@ -141,6 +143,85 @@ export const getMe = async (req, res) => {
   // req.user is attached by the `protect` middleware after verifying the cookie.
   // By the time we get here, we already know the user is authenticated.
   res.status(200).json({ user: req.user });
+};
+
+// @route   PATCH /api/auth/profile
+// @access  Private — a user editing their own name/email/avatar (Settings page)
+export const updateProfile = async (req, res) => {
+  try {
+    const { name, email, avatarUrl } = req.body;
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(401).json({ message: 'User no longer exists' });
+    }
+
+    if (name !== undefined) {
+      if (!name.trim()) {
+        return res.status(400).json({ message: 'Name cannot be empty' });
+      }
+      user.name = name.trim();
+    }
+
+    if (email !== undefined && email !== user.email) {
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(409).json({ message: 'An account with this email already exists' });
+      }
+      user.email = email;
+    }
+
+    if (avatarUrl !== undefined) {
+      user.avatarUrl = avatarUrl;
+    }
+
+    await user.save();
+
+    res.status(200).json({
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatarUrl: user.avatarUrl,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error updating profile' });
+  }
+};
+
+// @route   PATCH /api/auth/change-password
+// @access  Private
+export const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Current and new password are required' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'New password must be at least 6 characters' });
+    }
+
+    // .select('+password') needed here too — see login() above for why.
+    const user = await User.findById(req.user.id).select('+password');
+    if (!user || !(await user.comparePassword(currentPassword))) {
+      return res.status(401).json({ message: 'Current password is incorrect' });
+    }
+
+    // Just assign the plaintext new password and save — the model's own
+    // pre('save') hook hashes it the same way it does on register, so the
+    // hashing logic only ever lives in one place.
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({ message: 'Password updated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error changing password' });
+  }
 };
 
 // Role changes (promote/demote) now live under a single
