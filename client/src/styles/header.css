@@ -44,6 +44,7 @@ input:focus {
     outline: none !important;
 }
 
+
 /* Ambient Animated Glowing Orbs Background */
 body::before,
 body::after {
@@ -119,7 +120,7 @@ body::after {
 .nav-row-top {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: space-between;
     height: 70px;
     gap: 40px;
 }
@@ -523,8 +524,7 @@ body.light-mode .student-content {
 
 /* Fix Hover States in Light Mode */
 body.light-mode .course-card:hover,
-body.light-mode .instructor-card:hover,
-body.light-mode .hover-glow:hover {
+body.light-mode .instructor-card:hover {
     background: rgba(255, 255, 255, 0.9);
     /* Gets more solid white on hover */
     box-shadow: var(--shadow);

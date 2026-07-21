@@ -1,7 +1,7 @@
 import express from 'express';
 import {
   getStats, getRecentActivity, getRevenueAnalytics, getUsers, toggleBlockUser, changeUserRole,
-  softDeleteUser, restoreUser, getTransactions
+  softDeleteUser, restoreUser, getTransactions, getPendingPayouts
 } from '../controllers/adminController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 
@@ -19,5 +19,6 @@ router.patch('/users/:id/role', changeUserRole);
 router.delete('/users/:id/soft-delete', softDeleteUser);
 router.patch('/users/:id/restore', restoreUser);
 router.get('/transactions', getTransactions);
+router.get('/payouts', getPendingPayouts);
 
 export default router;

@@ -6,6 +6,9 @@ import courseRoutes from './routes/courseRoutes.js';
 import enrollmentRoutes from './routes/enrollmentRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
+import engagementRoutes from './routes/engagementRoutes.js';
+import financialRoutes from './routes/financialRoutes.js';
+import reviewRoutes from './routes/reviewRoutes.js';
 
 // This file builds the Express app but does NOT start listening on a port
 // and does NOT connect to the database. That separation means we can import
@@ -28,6 +31,9 @@ app.use('/api/courses', courseRoutes);
 app.use('/api/enrollments', enrollmentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/uploads', uploadRoutes);
+app.use('/api/engagement', engagementRoutes);
+app.use('/api/financials', financialRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok' });

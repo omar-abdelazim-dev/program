@@ -44,6 +44,10 @@ const courseSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
     thumbnailUrl: {
       type: String,
       default: '',

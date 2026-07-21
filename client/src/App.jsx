@@ -150,11 +150,14 @@ export default function App() {
     );
   }
 
-  // Admin/superadmin accounts don't have student features (enrollments,
-  // dashboard) — keep them out of the student area rather than letting them
-  // land on a tab that just 403s.
-  if ((user?.role === 'admin' || user?.role === 'superadmin') && location.pathname.startsWith('/student')) {
+  // Admin/superadmin accounts don't have student features
+  if ((user?.role === 'admin' || user?.role === 'superadmin') && (location.pathname.startsWith('/student') || location.pathname === '/')) {
     return <Navigate to="/admin" replace />;
+  }
+
+  // Instructors should not have access to the student portal either
+  if (user?.role === 'instructor' && (location.pathname.startsWith('/student') || location.pathname === '/')) {
+    return <Navigate to="/instructor" replace />;
   }
 
   // Redirect authenticated users away from auth pages

@@ -50,7 +50,7 @@ body.light-mode .continue-card {
     -webkit-backdrop-filter: blur(20px);
 }
 
-/* ─── content.css ─────────────────────────────────────────── */
+/* â”€â”€â”€ content.css â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .content {
     /* Pushed down 140px to safely clear the new header */
@@ -74,20 +74,23 @@ body.light-mode .continue-card {
 
 
 .glass-btn {
-    background: linear-gradient(135deg, var(--c-orange), var(--c-yellow));
+    background: linear-gradient(90deg, #F5A623, #FFD54A);
     color: #fff;
     border: none;
-    border-radius: 20px;
-    padding: 10px 24px;
+    border-radius: 999px;
+    padding: 12px 28px;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.3s;
-    box-shadow: var(--shadow);
-    padding: 14px 24px;
     font-size: 1.05rem;
+    box-shadow: 0 4px 15px rgba(245, 166, 35, 0.2);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-.glass-btn:hover,
+.glass-btn:hover {
+    box-shadow: 0 8px 25px rgba(245, 166, 35, 0.35);
+    transform: translateY(-2px);
+}
+
 .nav-icon-btn-auth:hover {
     box-shadow: var(--c-glow);
     transform: translateY(-3px);
@@ -99,7 +102,6 @@ body.light-mode .continue-card {
 }
 
 .hover-glow:hover {
-    background: rgba(255, 255, 255, 0.08);
     border-color: var(--role-color, var(--c-orange));
     box-shadow: var(--shadow);
     transform: translateY(-2px);
@@ -211,7 +213,7 @@ body.light-mode .continue-card {
 .stat-value {
     font-size: 2.2rem;
     font-weight: 800;
-    background: linear-gradient(135deg, var(--c-orange), var(--c-yellow));
+    background: linear-gradient(90deg, #F5A623, #FFD54A);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -769,10 +771,10 @@ box-shadow: var(--shadow);
    Following Program Glassmorphism Design System
    ================================================================ */
 
-/* Responsive grid: 4 → 3 → 2 → 1 */
+/* Responsive grid: 4 â†’ 3 â†’ 2 â†’ 1 */
 .cc-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 24px;
     margin-top: 8px;
 }
@@ -814,7 +816,7 @@ box-shadow: var(--shadow);
         0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
-/* ── 1. Thumbnail ── */
+/* â”€â”€ 1. Thumbnail â”€â”€ */
 .cc-thumb-wrap {
     position: relative;
     width: 100%;
@@ -842,7 +844,7 @@ box-shadow: var(--shadow);
             rgba(251, 147, 60, 0.15) 100%);
 }
 
-/* ── Card body ── */
+/* â”€â”€ Card body â”€â”€ */
 .cc-body {
     padding: 14px 16px 16px;
     display: flex;
@@ -852,7 +854,7 @@ box-shadow: var(--shadow);
     /* stretch so price stays at the bottom */
 }
 
-/* ── 2. Instructor row ── */
+/* â”€â”€ 2. Instructor row â”€â”€ */
 .cc-instructor-row {
     display: flex;
     align-items: center;
@@ -906,7 +908,7 @@ box-shadow: var(--shadow);
     filter: drop-shadow(0 0 4px rgba(251, 147, 60, 0.4));
 }
 
-/* ── 3. Course title ── */
+/* â”€â”€ 3. Course title â”€â”€ */
 .cc-title {
     margin: 0;
     font-size: 0.95rem;
@@ -920,7 +922,7 @@ box-shadow: var(--shadow);
     overflow: hidden;
 }
 
-/* ── 4. Reviews ── */
+/* â”€â”€ 4. Reviews â”€â”€ */
 .cc-reviews {
     display: flex;
     align-items: center;
@@ -969,7 +971,7 @@ box-shadow: var(--shadow);
     font-style: italic;
 }
 
-/* ── 5. Price ── */
+/* â”€â”€ 5. Price â”€â”€ */
 .cc-price-row {
     display: flex;
     align-items: baseline;
@@ -992,7 +994,7 @@ box-shadow: var(--shadow);
     text-decoration: line-through;
 }
 
-/* ── 6. Category tag ── */
+/* â”€â”€ 6. Category tag â”€â”€ */
 .cc-footer {
     display: flex;
     align-items: center;
@@ -1160,7 +1162,7 @@ body.light-mode .cc-thumb--fallback {
     background: linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(59, 130, 246, 0.1));
 }
 
-/* ── Skeleton loader ── */
+/* â”€â”€ Skeleton loader â”€â”€ */
 .cc-skeleton-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -1418,14 +1420,16 @@ body.light-mode .cc-thumb--fallback {
 .filter-btn:hover {
     background: rgba(255, 255, 255, 0.1) !important;
     border-color: rgba(255, 255, 255, 0.16) !important;
-    transform: none !important;
-    box-shadow: none !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .filter-btn.active,
-.filter-btn.active:hover {
+.filter-btn.active:hover,
+.nav-icon-btn-auth.active,
+.auth-submit-btn.active {
     border-color: transparent !important;
-    background: linear-gradient(135deg, var(--c-orange), var(--c-yellow)) !important;
+    background: linear-gradient(90deg, #F5A623, #FFD54A) !important;
     color: #fff !important;
     box-shadow: 0 10px 24px rgba(249, 115, 22, 0.24) !important;
     transform: none !important;
@@ -1444,9 +1448,10 @@ body.light-mode .filter-btn:hover {
 }
 
 body.light-mode .filter-btn.active {
-    background: linear-gradient(135deg, var(--c-orange), var(--c-yellow)) !important;
+    background: linear-gradient(90deg, #F5A623, #FFD54A) !important;
     color: #fff !important;
-    box-shadow: 0 10px 24px rgba(249, 115, 22, 0.24) !important;
+    box-shadow: 0 4px 15px rgba(245, 166, 35, 0.2) !important;
+    border-radius: 999px !important;
 }
 
 /* Learning Paths */
@@ -1566,7 +1571,7 @@ body.light-mode .progress-bar-container {
 
 .progress-bar {
     height: 100%;
-    background: linear-gradient(90deg, var(--c-orange), var(--c-yellow));
+    background: linear-gradient(90deg, #F5A623, #FFD54A);
     border-radius: 4px;
     transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -1632,7 +1637,7 @@ body.light-mode .progress-bar-container {
 }
 
 .auth-left h1 .highlight {
-    background: linear-gradient(135deg, var(--c-orange), var(--c-yellow));
+    background: linear-gradient(90deg, #F5A623, #FFD54A);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -1733,7 +1738,7 @@ body.light-mode .progress-bar-container {
     bottom: 4px;
     left: 4px;
     width: calc(50% - 4px);
-    background: linear-gradient(135deg, var(--c-orange), var(--c-yellow));
+    background: linear-gradient(90deg, #F5A623, #FFD54A);
     border-radius: 8px;
     box-shadow: var(--shadow);
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1848,7 +1853,7 @@ body.light-mode .step:not(:last-child)::after {
 }
 
 .step.active .step-icon {
-    background: linear-gradient(135deg, var(--c-orange), var(--c-yellow));
+    background: linear-gradient(90deg, #F5A623, #FFD54A);
     color: #fff;
     border-color: transparent;
     box-shadow: var(--shadow);
@@ -2257,24 +2262,21 @@ body.light-mode .strength-bar.strong {
 
 .custom-select-dropdown {
     position: absolute;
-    top: calc(100% + 8px);
+    top: calc(100% + 4px);
     left: 0;
-    background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)),
-        linear-gradient(to bottom, #1f1c2c 0%, #7a563d 50%, #d98a47 100%);
-
-    backdrop-filter: blur(100px);
-    -webkit-backdrop-filter: blur(100px);
+    width: 100%;
+    background: rgba(18, 20, 30, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     max-height: 250px;
     overflow-y: auto;
-    z-index: 50;
-    background-color: #1a1625;
+    z-index: 1000;
     border: var(--c-border);
     border-top: var(--c-border-top);
     border-left: var(--c-border-left);
-    border-radius: 8px;
-    padding: 6px;
-    margin-top: 4px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    border-radius: 12px;
+    padding: 8px 0;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 .dropdown-item {
@@ -2314,7 +2316,23 @@ body.light-mode .strength-bar.strong {
 }
 
 body.light-mode .custom-select-dropdown {
-    background: rgba(255, 255, 255, 0.75);
+    background: rgba(255, 255, 255, 0.95);
+}
+
+body.light-mode .custom-select-option:not(.disabled):hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+body.light-mode .custom-select-option.selected {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+body.light-mode .custom-select-option.disabled {
+    color: rgba(0, 0, 0, 0.4);
+}
+
+body.light-mode .custom-select-value.placeholder {
+    color: rgba(0, 0, 0, 0.45);
 }
 
 .custom-select-dropdown::-webkit-scrollbar-thumb {
@@ -2327,21 +2345,17 @@ body.light-mode .custom-select-dropdown {
 }
 
 .custom-select-options {
-    padding: 6px;
     display: flex;
     flex-direction: column;
 }
 
 .custom-select-option {
-    padding: 10px 14px;
-    border-radius: 6px;
+    padding: 12px 16px;
     cursor: pointer;
-    color: #e0e0e0;
-    padding: 10px 14px;
-    font-size: 14px;
-    border-radius: 6px;
+    color: var(--text-h);
+    font-size: 0.95rem;
     background-color: transparent;
-    transition: background-color 0.15s ease, color 0.15s ease;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .custom-select-option.disabled {
@@ -2349,10 +2363,14 @@ body.light-mode .custom-select-dropdown {
     cursor: default;
 }
 
-.custom-select-option:not(.disabled):hover,
+.custom-select-option:not(.disabled):hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
 .custom-select-option.selected {
-    background: linear-gradient(135deg, var(--c-orange), var(--c-yellow));
-    color: #fff;
+    color: var(--c-orange);
+    background: rgba(255, 255, 255, 0.02);
+    font-weight: 600;
 }
 
 .spinner {
@@ -2405,7 +2423,9 @@ body.light-mode .custom-select-dropdown {
     color: var(--c-sub);
 }
 
-.input-group input {
+.input-group input,
+.input-group textarea,
+.input-group select {
     width: 100%;
     padding: 10px 14px;
     background: var(--c-input-bg);
@@ -2419,10 +2439,37 @@ body.light-mode .custom-select-dropdown {
     transition: all 0.3s;
 }
 
-.input-group input:focus {
+.input-group input:focus,
+.input-group textarea:focus,
+.input-group select:focus {
     border-color: var(--c-orange);
     background: var(--code-bg);
     box-shadow: var(--shadow);
+}
+
+/* File Input Button Styling */
+.input-group input[type="file"] {
+    padding: 8px;
+    color: var(--c-sub);
+}
+
+.input-group input[type="file"]::file-selector-button {
+    background: var(--c-input-bg);
+    border: var(--c-border);
+    color: var(--text-h);
+    padding: 6px 14px;
+    border-radius: 8px;
+    margin-right: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    font-family: inherit;
+    transition: all 0.3s ease;
+}
+
+.input-group input[type="file"]::file-selector-button:hover {
+    background: var(--c-orange);
+    color: #fff;
+    border-color: var(--c-orange);
 }
 
 .input-hint {
@@ -2454,8 +2501,13 @@ body.light-mode .custom-select-dropdown {
     margin-top: 10px;
     padding: 14px;
     font-size: 1.05rem;
-    box-shadow: var(--c-glow);
-    transition: all 0.5s ease;
+    box-shadow: 0 4px 15px rgba(245, 166, 35, 0.2);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.auth-submit-btn:hover {
+    box-shadow: 0 8px 25px rgba(245, 166, 35, 0.35);
+    transform: translateY(-2px);
 }
 
 .nav-icon-btn-auth {
@@ -2469,14 +2521,14 @@ body.light-mode .custom-select-dropdown {
     justify-content: center;
     cursor: pointer;
     color: #fff;
-    background: linear-gradient(135deg, var(--c-orange), var(--c-yellow));
-    box-shadow: var(--c-glow);
-    transition: all 0.5s ease;
+    background: linear-gradient(90deg, #F5A623, #FFD54A);
+    box-shadow: 0 4px 15px rgba(245, 166, 35, 0.2);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-.auth-submit-btn:active {
-    transform: scale(0.85);
-    box-shadow: -6px 0 12px rgba(249, 115, 22, 0.15), 6px 0 12px rgba(250, 204, 21, 0.15);
+.auth-submit-btn:active, .nav-icon-btn-auth:active {
+    transform: scale(0.95);
+    box-shadow: 0 2px 10px rgba(245, 166, 35, 0.15);
 }
 
 .spinner-wrapper {
@@ -2713,7 +2765,7 @@ body:not(.light-mode) .analytics-card:hover {
    -------------------------------------------------------------------------- */
 .sys-btn-primary {
     background: linear-gradient(90deg, #F5A623, #FFD54A) !important;
-    color: #000 !important;
+    color: #fff !important;
     border: none !important;
     border-radius: 999px !important;
     font-weight: 700 !important;
@@ -2731,7 +2783,7 @@ body:not(.light-mode) .analytics-card:hover {
 .sys-btn-secondary {
     background: transparent !important;
     border: 1px solid var(--accent, #F5A623) !important;
-    color: #fff !important;
+    color: var(--text-h) !important;
     border-radius: 999px !important;
     font-weight: 700 !important;
     padding: 12px 24px !important;
@@ -2740,7 +2792,7 @@ body:not(.light-mode) .analytics-card:hover {
 }
 
 .sys-btn-secondary:hover {
-    background: var(--accent-glow, rgba(245, 166, 35, 0.15)) !important;
+    background: rgba(255, 255, 255, 0.05) !important;
     transform: translateY(-2px) !important;
 }
 
@@ -2758,6 +2810,30 @@ body:not(.light-mode) .analytics-card:hover {
 .sys-btn-danger:hover {
     background: rgba(239, 68, 68, 0.25) !important;
     transform: translateY(-2px) !important;
+}
+
+body.light-mode .sys-btn-danger {
+    color: #DC2626 !important;
+}
+
+.sys-btn-success {
+    background: rgba(16, 185, 129, 0.15) !important;
+    border: 1px solid rgba(16, 185, 129, 0.3) !important;
+    color: #34D399 !important;
+    border-radius: 999px !important;
+    font-weight: 700 !important;
+    padding: 8px 16px !important; /* using 8px 16px to match what they had in admin portal inline styles */
+    transition: all 0.3s ease !important;
+    cursor: pointer;
+}
+
+.sys-btn-success:hover {
+    background: rgba(16, 185, 129, 0.25) !important;
+    transform: translateY(-2px) !important;
+}
+
+body.light-mode .sys-btn-success {
+    color: #059669 !important;
 }
 
 /* --------------------------------------------------------------------------
@@ -2870,5 +2946,83 @@ label,
 }
 
 .filter-btn.active {
-    background-color: (linear(135deg, var(--c-orange), var(--c-yellow)));
+    background-color: linear-gradient(90deg, #F5A623, #FFD54A);
+}
+
+/* Neutralize legacy hover effects on informational/static containers */
+.course-info-card:hover,
+.course-info-card.glass-card:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    border-color: rgba(255,255,255,0.05) !important;
+}
+
+/* --- Global Light Mode Container Overrides --- */
+
+/* 1. Opaque Main Background & Disable Orbs */
+body.light-mode {
+    background-color: #f9fafb !important;
+}
+
+body.light-mode::before,
+body.light-mode::after {
+    display: none !important;
+}
+
+/* 2 & 3. Container Compatibility, Borders, and Shadows */
+body.light-mode .glass-card,
+body.light-mode .dash-card,
+body.light-mode .course-card,
+body.light-mode .stat-card,
+body.light-mode .instructor-card,
+body.light-mode .side-card,
+body.light-mode .path-card,
+body.light-mode .continue-card,
+body.light-mode .cc-card,
+body.light-mode .role-card {
+    background-color: rgba(255, 255, 255, 0.7) !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* 4. Text Legibility overrides (ensuring variables are strictly set) */
+body.light-mode {
+    --text: #4b5563;
+    --text-h: #1f2937;
+    --c-light: #1f2937;
+    --c-sub: #4b5563;
+    --bg: #f9fafb;
+    --c-bg: #e5e7eb;
+}
+
+/* --- Light Mode Overrides for Admin Sidebar --- */
+body.light-mode .admin-sidebar {
+    background: rgba(255, 255, 255, 0.7);
+    border-right: 1px solid rgba(0, 0, 0, 0.1);
+}
+body.light-mode .admin-sidebar-group-title {
+    background: rgba(0, 0, 0, 0.03);
+    color: var(--c-sub);
+}
+body.light-mode .admin-sidebar-group-icon {
+    background: rgba(0, 0, 0, 0.05);
+}
+body.light-mode .admin-sidebar-tab {
+    color: var(--c-sub);
+}
+body.light-mode .admin-sidebar-tab:hover {
+    color: var(--text-h) !important;
+    background: linear-gradient(90deg, rgba(0, 0, 0, 0.04) 0%, transparent 100%) !important;
+}
+body.light-mode .admin-sidebar-tab.active {
+    color: var(--text-h) !important;
+    /* The active gradient will use --accent-glow, which adapts to light mode automatically */
+    background: linear-gradient(90deg, var(--accent-glow) 0%, transparent 100%) !important;
+}
+body.light-mode .admin-sidebar-collapse-btn {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+body.light-mode .admin-sidebar-collapse-btn:hover {
+    background: rgba(0, 0, 0, 0.1);
 }

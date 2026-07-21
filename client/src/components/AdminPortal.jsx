@@ -1,3 +1,4 @@
+import notyf from '../utils/notyf';
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, Link } from "react-router-dom";
@@ -7,6 +8,16 @@ import {
 import api from "../api/axios";
 import logoDark from "../assets/logo-dark.png";
 import logoLight from "../assets/logo-light.png";
+import AdminPayoutsTab from "./AdminPayoutsTab";
+import AdminStatisticsTab from "./AdminStatisticsTab";
+import AdminAnalyticsTab from "./AdminAnalyticsTab";
+import AdminOverviewTab from "./AdminOverviewTab";
+import AdminUserManagementTab from "./AdminUserManagementTab";
+import AdminCourseManagementTab from "./AdminCourseManagementTab";
+
+
+
+
 
 const ROLE_OPTIONS = ["student", "instructor", "admin"];
 const SIDEBAR_TAB_STEP = 44;
@@ -48,8 +59,7 @@ const isSidebarTabActive = (tabId, currentTab) => {
   return currentTab === tabId;
 };
 
-const resolveSidebarTabId = (tabId) =>
-  tabId === "users" ? "users_students" : tabId;
+const resolveSidebarTabId = (tabId) => tabId;
 
 // Renders its content into document.body and positions it with `fixed`
 // coordinates measured from the trigger element. This is required because the
@@ -225,6 +235,9 @@ export default function AdminPortal({
   const [expandedGroup, setExpandedGroup] = useState("Dashboard");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+  // Recent Activity Filter
+  const [activityFilter, setActivityFilter] = useState("All");
+
   const toggleGroup = (title) => {
     setExpandedGroup((prev) => (prev === title ? null : title));
   };
@@ -328,25 +341,18 @@ export default function AdminPortal({
     return () => clearTimeout(delay);
   }, [searchQuery, activeTab, showDeletedUsers]);
 
-  // Compute visibleUsers based on the active users tab so each tab only shows its role
-  const roleMap = {
-    users_students: "student",
-    users_instructors: "instructor",
-    users_admins: "admin",
-    users_superadmins: "superadmin",
-  };
-  const getDesiredRole = (tabId) => roleMap[tabId] || "student";
-  const visibleUsers = activeTab.startsWith("users")
-    ? users.filter((u) => u.role === getDesiredRole(activeTab))
-    : users;
+  // No longer needed: visibleUsers is handled by AdminUserManagementTab
+  const visibleUsers = users;
 
   const handleApprove = async (id) => {
     setProcessingId(id);
     try {
       await api.patch(`/courses/${id}/approve`);
+      notyf.success('Course approved');
       fetchDashboardData();
     } catch (err) {
       console.error("Failed to approve course", err);
+      notyf.error('Failed to approve course');
     } finally {
       setProcessingId(null);
     }
@@ -378,13 +384,14 @@ export default function AdminPortal({
       await api.patch(`/courses/${pendingReject.id}/reject`, {
         reason: rejectReason.trim(),
       });
+      notyf.success('Course rejected');
       setPendingReject(null);
       setRejectReason("");
       fetchDashboardData();
     } catch (err) {
-      setRejectReasonError(
-        err.response?.data?.message || "Failed to reject course",
-      );
+      const errMsg = err.response?.data?.message || "Failed to reject course";
+      setRejectReasonError(errMsg);
+      notyf.error(errMsg);
     } finally {
       setProcessingId(null);
     }
@@ -489,6 +496,7 @@ export default function AdminPortal({
   if (loading && !stats && !users.length && !transactions.length) {
     return (
       <div
+        className="page-wrapper"
         style={{
           display: "flex",
           height: "100vh",
@@ -529,12 +537,15 @@ export default function AdminPortal({
             ],
           },
           {
-            title: "Enrollment Management",
-            items: [{ id: "enrollment", label: "Enrollments" }],
-          },
-          {
             title: "Certificate Management",
             items: [{ id: "certificates", label: "Certificates" }],
+          },
+          {
+            title: "Financial Management",
+            items: [
+              { id: "enrollment", label: "Enrollments" },
+              { id: "financial_payouts", label: "Payout Requests" },
+            ],
           },
           {
             title: "Website Management",
@@ -605,6 +616,13 @@ export default function AdminPortal({
             items: [{ id: "certificates", label: "Certificates" }],
           },
           {
+            title: "Financial Management",
+            items: [
+              { id: "enrollment", label: "Enrollments" },
+              { id: "financial_payouts", label: "Payout Requests" },
+            ],
+          },
+          {
             title: "Announcement Management",
             items: [{ id: "announcements", label: "Announcements" }],
           },
@@ -624,6 +642,7 @@ export default function AdminPortal({
   return (
     <div
       data-role={user?.role}
+      className="page-wrapper"
       style={{ display: "flex", flexDirection: "column", height: "100vh" }}
     >
       {/* Top Navbar using top-nav styling */}
@@ -783,6 +802,15 @@ export default function AdminPortal({
                     {group.title.charAt(0)}
                   </span>
                   <span className="admin-sidebar-group-label">{group.title}</span>
+                  {group.title === "Course Management" && pendingCourses.length > 0 && (
+                    <span
+                      className="admin-sidebar-badge"
+                      style={{ marginLeft: '8px', marginRight: '8px' }}
+                      aria-label={`${pendingCourses.length} pending courses`}
+                    >
+                      {pendingCourses.length}
+                    </span>
+                  )}
                   <svg
                     className="admin-sidebar-chevron"
                     width="14"
@@ -857,128 +885,38 @@ export default function AdminPortal({
             style={{ maxWidth: "100%", margin: "40px auto" }}
           >
             {activeTab === "dashboard_overview" && stats && (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "32px",
-                }}
-              >
-                <h2 style={{ fontSize: "1.8rem", margin: 0 }}>Overview</h2>
-
-                <div className="overview-rows-container">
-                  <div className="overview-row first-row">
-                    <div className="glass-card stat-card revenue-card">
-                      <div className="stat-label">Revenue</div>
-                      <div
-                        className="stat-value"
-                        style={{
-                          color: "#10B981",
-                          background: "none",
-                          WebkitTextFillColor: "initial",
-                        }}
-                      >
-                        EGP <AnimatedNumber value={stats.totalRevenue} />
-                      </div>
-                    </div>
-
-                    <div className="glass-card stat-card" data-role="student">
-                      <div className="stat-label">Students</div>
-                      <div className="stat-value role-text">
-                        <AnimatedNumber value={stats.totalStudents} />
-                      </div>
-                      <GrowthBadge growth={stats.growth?.students} />
-                    </div>
-
-                    <div
-                      className="glass-card stat-card"
-                      data-role="instructor"
-                    >
-                      <div className="stat-label">Instructors</div>
-                      <div className="stat-value role-text">
-                        <AnimatedNumber value={stats.totalInstructors} />
-                      </div>
-                      <GrowthBadge growth={stats.growth?.instructors} />
-                    </div>
-                  </div>
-
-                  <div className="overview-row second-row">
-                    {user?.role === "superadmin" && (
-                      <div
-                        style={{ width: "100%" }}
-                        className="glass-card stat-card"
-                        data-role="superadmin"
-                      >
-                        <div className="stat-label">Super Admins</div>
-                        <div
-                          className="stat-value role-text"
-                          style={{ color: "var(--c-red)" }}
-                        >
-                          <AnimatedNumber value={stats.totalSuperAdmins} />
-                        </div>
-                        <GrowthBadge growth={stats.growth?.superAdmins} />
-                      </div>
-                    )}
-
-                    <div className="glass-card stat-card" data-role="admin">
-                      <div className="stat-label">Admins</div>
-                      <div className="stat-value role-text">
-                        <AnimatedNumber value={stats.totalAdmins} />
-                      </div>
-                      <GrowthBadge growth={stats.growth?.admins} />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="glass-card" style={{ padding: "24px" }}>
-                  <h3 style={{ margin: "0 0 16px 0", fontSize: "1.2rem" }}>
-                    Enrollments by Category
-                  </h3>
-                  {Object.keys(stats.categoryCounts).length === 0 ? (
-                    <p style={{ color: "var(--c-sub)" }}>No enrollments yet.</p>
-                  ) : (
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "12px",
-                      }}
-                    >
-                      {Object.entries(stats.categoryCounts).map(
-                        ([cat, count]) => (
-                          <div
-                            key={cat}
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              padding: "12px",
-                              background: "var(--c-input-bg)",
-                              borderRadius: "8px",
-                            }}
-                          >
-                            <span style={{ fontWeight: "500" }}>{cat}</span>
-                            <span
-                              style={{
-                                color: "var(--c-orange)",
-                                fontWeight: "bold",
-                              }}
-                            >
-                              {count} enrolled
-                            </span>
-                          </div>
-                        ),
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
+              <AdminOverviewTab
+                stats={stats}
+                user={user}
+                setActiveTab={setActiveTab}
+              />
             )}
 
             {activeTab === "dashboard_activity" && (
               <div
                 style={{ display: "flex", flexDirection: "column", gap: "24px" }}
               >
-                <h2 style={{ fontSize: "1.8rem", margin: 0 }}>Recent Activity</h2>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <h2 style={{ fontSize: "1.8rem", margin: 0 }}>Recent Activity</h2>
+                  <div className="role-tabs">
+                    {[
+                      { id: "All", label: "All", role: "student" },
+                      { id: "Approved", label: "Approved", role: "student" },
+                      { id: "Submitted", label: "Submitted", role: "student" },
+                      { id: "Enrolled", label: "Enrolled", role: "student" },
+                      { id: "Admin", label: "Admin/Super Admin", role: "superadmin" }
+                    ].map(tab => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActivityFilter(tab.id)}
+                        className={"role-tab-button" + (activityFilter === tab.id ? " active" : "")}
+                        data-role={tab.role}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
                 <div className="glass-card" style={{ padding: "24px" }}>
                   {activityLoading ? (
@@ -995,7 +933,21 @@ export default function AdminPortal({
                         gap: "14px",
                       }}
                     >
-                      {activity.map((item) => (
+                      {(() => {
+                        const filtered = activity.filter(item => {
+                          if (activityFilter === "All") return true;
+                          if (activityFilter === "Approved") return item.title === "Course Approved";
+                          if (activityFilter === "Submitted") return item.title === "Course Submitted";
+                          if (activityFilter === "Enrolled") return item.title === "New Student Enrollment";
+                          if (activityFilter === "Admin") return item.title.includes("Admin");
+                          return true;
+                        });
+
+                        if (filtered.length === 0) {
+                          return <p style={{ color: "var(--c-sub)", textAlign: "center", padding: "16px 0" }}>No activity found for this category.</p>;
+                        }
+
+                        return filtered.map((item) => (
                         <div
                           key={item.id}
                           style={{
@@ -1036,7 +988,8 @@ export default function AdminPortal({
                             })}
                           </div>
                         </div>
-                      ))}
+                      ));
+                      })()}
                     </div>
                   )}
                 </div>
@@ -1044,520 +997,28 @@ export default function AdminPortal({
             )}
 
             {activeTab === "dashboard_stats" && (
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: "24px" }}
-              >
-                <h2 style={{ fontSize: "1.8rem", margin: 0 }}>Statistics</h2>
-
-                {revenueAnalyticsLoading ? (
-                  <p style={{ color: "var(--c-sub)" }}>Loading statistics...</p>
-                ) : (
-                  <>
-                    <div className="overview-row first-row">
-                      <div className="glass-card stat-card revenue-card">
-                        <div className="stat-label">Total Revenue (12mo)</div>
-                        <div
-                          className="stat-value"
-                          style={{ color: "#10B981", background: "none", WebkitTextFillColor: "initial" }}
-                        >
-                          EGP <AnimatedNumber value={revenueAnalytics?.totalRevenue} />
-                        </div>
-                      </div>
-                      <div className="glass-card stat-card">
-                        <div className="stat-label">Total Enrollments (12mo)</div>
-                        <div className="stat-value role-text">
-                          <AnimatedNumber value={revenueAnalytics?.totalEnrollments} />
-                        </div>
-                      </div>
-                      <div className="glass-card stat-card">
-                        <div className="stat-label">Avg. Order Value</div>
-                        <div className="stat-value role-text">
-                          EGP <AnimatedNumber value={revenueAnalytics?.avgOrderValue} />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="glass-card" style={{ padding: "24px" }}>
-                      <h3 style={{ margin: "0 0 16px 0", fontSize: "1.2rem" }}>
-                        Enrollments by Category
-                      </h3>
-                      {!stats || Object.keys(stats.categoryCounts).length === 0 ? (
-                        <p style={{ color: "var(--c-sub)" }}>No enrollments yet.</p>
-                      ) : (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                          {Object.entries(stats.categoryCounts).map(([cat, count]) => (
-                            <div
-                              key={cat}
-                              style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                padding: "12px",
-                                background: "var(--c-input-bg)",
-                                borderRadius: "8px",
-                              }}
-                            >
-                              <span style={{ fontWeight: "500" }}>{cat}</span>
-                              <span style={{ color: "var(--c-orange)", fontWeight: "bold" }}>
-                                {count} enrolled
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
+              <AdminStatisticsTab
+                stats={stats}
+                revenueAnalytics={revenueAnalytics}
+                revenueAnalyticsLoading={revenueAnalyticsLoading}
+              />
             )}
 
             {activeTab === "dashboard_analytics" && (
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: "24px" }}
-              >
-                <h2 style={{ fontSize: "1.8rem", margin: 0 }}>Analytics</h2>
-
-                <div className="glass-card" style={{ padding: "24px" }}>
-                  <h3 style={{ margin: "0 0 20px 0", fontSize: "1.2rem" }}>
-                    Monthly Revenue (last 12 months)
-                  </h3>
-                  {revenueAnalyticsLoading ? (
-                    <p style={{ color: "var(--c-sub)" }}>Loading analytics...</p>
-                  ) : (
-                    <div style={{ width: "100%", height: 280 }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart
-                          data={revenueAnalytics?.series || []}
-                          margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-                        >
-                          <defs>
-                            <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#10B981" stopOpacity={0.25} />
-                              <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                          <XAxis
-                            dataKey="label"
-                            axisLine={false}
-                            tickLine={false}
-                            tick={{ fill: "var(--c-sub)", fontSize: 11 }}
-                            dy={10}
-                          />
-                          <YAxis
-                            axisLine={false}
-                            tickLine={false}
-                            tick={{ fill: "var(--c-sub)", fontSize: 11 }}
-                            tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v)}
-                          />
-                          <Tooltip
-                            content={<RevenueTooltip />}
-                            cursor={{ stroke: "rgba(255,255,255,0.15)", strokeWidth: 1, strokeDasharray: "4 3" }}
-                          />
-                          <Area
-                            type="monotone"
-                            dataKey="revenue"
-                            name="Revenue"
-                            stroke="#10B981"
-                            strokeWidth={2.5}
-                            fillOpacity={1}
-                            fill="url(#colorRevenue)"
-                            activeDot={{ r: 6, fill: "#10B981", stroke: "#0f1117", strokeWidth: 2 }}
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <AdminAnalyticsTab
+                revenueAnalytics={revenueAnalytics}
+                revenueAnalyticsLoading={revenueAnalyticsLoading}
+              />
             )}
 
             {activeTab.startsWith("users") && (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "24px",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <h2 style={{ fontSize: "1.8rem", margin: 0 }}>
-                    User Management
-                  </h2>
-
-                  <div
-                    style={{
-                      marginLeft: "16px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "16px",
-                    }}
-                  >
-                    <label
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        fontSize: "0.85rem",
-                        color: "var(--c-sub)",
-                        whiteSpace: "nowrap",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={showDeletedUsers}
-                        onChange={(e) => setShowDeletedUsers(e.target.checked)}
-                      />
-                      Show deleted
-                    </label>
-                    <div className="search-bar-glass" style={{ width: "420px" }}>
-                      <input
-                        type="text"
-                        placeholder="Search users by name, email, or phone..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="user-search-input"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {blockError && (
-                  <div style={{ color: "#ef4444", fontSize: "0.9rem" }}>
-                    {blockError}
-                  </div>
-                )}
-                {userActionError && (
-                  <div style={{ color: "#ef4444", fontSize: "0.9rem" }}>
-                    {userActionError}
-                  </div>
-                )}
-
-                {/* Role Tabs */}
-                <div className="role-tabs" style={{ marginTop: "4px" }}>
-                  {[
-                    {
-                      id: "users_students",
-                      label: "Students",
-                      role: "student",
-                    },
-                    {
-                      id: "users_instructors",
-                      label: "Instructors",
-                      role: "instructor",
-                    },
-                    { id: "users_admins", label: "Admins", role: "admin" },
-                    {
-                      id: "users_superadmins",
-                      label: "Super Admins",
-                      role: "superadmin",
-                    },
-                  ]
-                    .filter(
-                      (t) =>
-                        !(
-                          t.role === "superadmin" && user?.role !== "superadmin"
-                        ),
-                    )
-                    .map((tab) => (
-                      <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={
-                          "role-tab-button" +
-                          (activeTab === tab.id ? " active" : "")
-                        }
-                        data-role={tab.role}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
-                </div>
-
-                <div className="glass-card user-management-table-card">
-                  <table
-                    style={{
-                      width: "100%",
-                      borderCollapse: "collapse",
-                      textAlign: "left",
-                    }}
-                  >
-                    <thead style={{ background: "var(--c-border-subtle)" }}>
-                      <tr>
-                        <th
-                          style={{
-                            padding: "16px",
-                            fontWeight: "600",
-                            color: "var(--c-sub)",
-                            borderTopLeftRadius: "15px",
-                          }}
-                        >
-                          Name
-                        </th>
-                        <th
-                          style={{
-                            padding: "16px",
-                            fontWeight: "600",
-                            color: "var(--c-sub)",
-                          }}
-                        >
-                          Email
-                        </th>
-                        <th
-                          style={{
-                            padding: "16px",
-                            fontWeight: "600",
-                            color: "var(--c-sub)",
-                          }}
-                        >
-                          Phone
-                        </th>
-                        <th
-                          style={{
-                            padding: "16px",
-                            fontWeight: "600",
-                            color: "var(--c-sub)",
-                          }}
-                        >
-                          Role
-                        </th>
-                        <th
-                          style={{
-                            padding: "16px",
-                            fontWeight: "600",
-                            color: "var(--c-sub)",
-                          }}
-                        >
-                          Status
-                        </th>
-                        <th
-                          style={{
-                            padding: "16px",
-                            fontWeight: "600",
-                            color: "var(--c-sub)",
-                            textAlign: "right",
-                            borderTopRightRadius: "15px",
-                          }}
-                        >
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(visibleUsers || []).length === 0 ? (
-                        <tr>
-                          <td
-                            colSpan="6"
-                            style={{
-                              maxWidth: "100%",
-                              padding: "24px",
-                              textAlign: "center",
-                              color: "var(--c-sub)",
-                            }}
-                          >
-                            No users found
-                          </td>
-                        </tr>
-                      ) : (
-                        (visibleUsers || []).map((u) => (
-                          <tr
-                            key={u._id}
-                            data-role={u.role}
-                            className="role-row"
-                            style={{
-                              borderTop: "1px solid var(--c-border-subtle)",
-                            }}
-                          >
-                            <td style={{ padding: "16px" }}>{u.name}</td>
-                            <td
-                              style={{ padding: "16px", color: "var(--c-sub)" }}
-                            >
-                              {u.email}
-                            </td>
-                            <td
-                              style={{ padding: "16px", color: "var(--c-sub)" }}
-                            >
-                              {u.phone || "-"}
-                            </td>
-                            <td style={{ padding: "16px" }}>
-                              <span className="role-badge">{u.role}</span>
-                            </td>
-                            <td style={{ padding: "16px" }}>
-                              <span
-                                style={{
-                                  color: u.isDeleted
-                                    ? "var(--c-sub)"
-                                    : u.isBlocked
-                                      ? "#ef4444"
-                                      : "#10B981",
-                                  fontSize: "0.9rem",
-                                }}
-                              >
-                                {u.isDeleted
-                                  ? "Deleted"
-                                  : u.isBlocked
-                                    ? "Blocked"
-                                    : "Active"}
-                              </span>
-                            </td>
-                            <td style={{ padding: "16px", textAlign: "right" }}>
-                              <div
-                                style={{
-                                  display: "flex",
-                                  gap: "8px",
-                                  justifyContent: "flex-end",
-                                  position: "relative",
-                                }}
-                              >
-                                {u._id !== user.id && (
-                                  <>
-                                    {canChangeRole(u) && (
-                                      <div>
-                                        <button className="changeRole"
-                                          ref={(el) => {
-                                            roleButtonRefs.current[u._id] = el;
-                                          }}
-                                          onClick={() =>
-                                            setRoleMenuUserId(
-                                              roleMenuUserId === u._id
-                                                ? null
-                                                : u._id,
-                                            )
-                                          }
-                                          style={{
-                                            background: "transparent",
-                                            border:
-                                              "1px solid var(--c-border-active)",
-                                            padding: "6px 12px",
-                                            borderRadius: "6px",
-                                            color: "var(--c-light)",
-                                            cursor: "pointer",
-                                            background: "rgba(15, 17, 23, 0.7)",
-                                            backdropFilter: "blur(20px)",
-                                            // -webkitBackdropFilter: "blur(20px)",
-                                            border: "var(--c-border)",
-                                            borderTop:
-                                              "1px solid rgba(255, 255, 255, 0.15)",
-                                            borderLeft:
-                                              "1px solid rgba(255, 255, 255, 0.15)",
-                                            borderRadius: "16px",
-                                            boxShadow: "var(--shadow)",
-                                          }}
-                                          /*
-                                          
-                                              background: rgba(15, 17, 23, 0.7);
-                                              backdrop-filter: blur(20px);
-                                              -webkit-backdrop-filter: blur(20px);
-                                              border: var(--c-border);
-                                              border-top: 1px solid rgba(255, 255, 255, 0.15);
-                                              border-left: 1px solid rgba(255, 255, 255, 0.15);
-                                              border-radius: 16px;
-                                              box-shadow: var(--shadow);
-
-                                          */
-                                        >
-                                          Change Role
-                                        </button>
-                                        {roleMenuUserId === u._id && (
-                                          <RoleMenu
-                                            anchorEl={
-                                              roleButtonRefs.current[u._id]
-                                            }
-                                            onClose={() =>
-                                              setRoleMenuUserId(null)
-                                            }
-                                          >
-                                            {ROLE_OPTIONS.filter(
-                                              (r) => r !== u.role,
-                                            ).map((r) => (
-                                              <button
-                                                key={r}
-                                                data-role={r}
-                                                onClick={() =>
-                                                  requestRoleChange(u, r)
-                                                }
-                                                className="role-option"
-                                                style={{
-                                                  background: "transparent",
-                                                  border:
-                                                    "1px solid transparent",
-                                                  padding: "8px 10px",
-                                                  borderRadius: "6px",
-                                                  color: "var(--c-light)",
-                                                  cursor: "pointer",
-                                                  textAlign: "left",
-                                                  textTransform: "capitalize",
-                                                  borderRadius: "11px",
-                                                }}
-                                              >
-                                                {r}
-                                              </button>
-                                            ))}
-                                          </RoleMenu>
-                                        )}
-                                      </div>
-                                    )}
-                                    {!u.isDeleted && canToggleBlock(u) && (
-                                      <button
-                                        onClick={() => handleToggleBlock(u._id)}
-                                        style={{
-                                          background: u.isBlocked
-                                            ? "rgba(16, 185, 129, 0.1)"
-                                            : "rgba(239, 68, 68, 0.1)",
-                                          border: `1px solid ${u.isBlocked ? "rgb(16, 185, 129)" : "rgb(239, 68, 68)"}`,
-                                          borderTop: `1px solid ${u.isBlocked ? "rgba(16, 185, 129, 0.15)" : "rgb(239, 68, 68, 0.15)"}`,
-                                          borderLeft: `1px solid ${u.isBlocked ? "rgba(16, 185, 129, 0.15)" : "rgb(239, 68, 68),0.15"}`,
-                                          padding: "6px 12px",
-                                          borderRadius: "16px",
-                                          color: u.isBlocked
-                                            ? "#10B981"
-                                            : "#ef4444",
-                                          cursor: "pointer",
-                                          backdropFilter: "blur(20px)",
-                                          boxShadow: "var(--shadow)",
-                                        }}
-                                      >
-                                        {u.isBlocked ? "Unblock" : "Block"}
-                                      </button>
-                                    )}
-                                    {canDelete(u) && (
-                                      <button
-                                        onClick={() =>
-                                          u.isDeleted
-                                            ? handleRestore(u._id)
-                                            : handleSoftDelete(u._id)
-                                        }
-                                        style={{
-                                          background: "rgba(148, 163, 184, 0.1)",
-                                          border: "1px solid var(--c-sub)",
-                                          padding: "6px 12px",
-                                          borderRadius: "16px",
-                                          color: "var(--c-sub)",
-                                          cursor: "pointer",
-                                          backdropFilter: "blur(20px)",
-                                          boxShadow: "var(--shadow)",
-                                        }}
-                                      >
-                                        {u.isDeleted ? "Restore" : "Delete"}
-                                      </button>
-                                    )}
-                                  </>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+              <AdminUserManagementTab
+                users={users}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                fetchUsers={fetchUsers}
+                currentUser={user}
+              />
             )}
 
             {activeTab === "enrollment" && (
@@ -1673,133 +1134,11 @@ export default function AdminPortal({
             )}
 
             {activeTab === "courses_all" && (
-              <div>
-                <h2 style={{ fontSize: "1.5rem", marginBottom: "24px" }}>
-                  Pending Course Approvals
-                </h2>
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "16px",
-                  }}
-                >
-                  {pendingCourses.length === 0 ? (
-                    <div
-                      className="glass-card"
-                      style={{
-                        padding: "40px",
-                        textAlign: "center",
-                        color: "var(--c-sub)",
-                      }}
-                    >
-                      No pending courses to review. You're all caught up!
-                    </div>
-                  ) : (
-                    pendingCourses.map((course) => (
-                      <div
-                        key={course._id}
-                        className="glass-card hover-glow"
-                        style={{
-                          padding: "24px",
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: "20px",
-                            alignItems: "center",
-                          }}
-                        >
-                          {course.thumbnailUrl ? (
-                            <img
-                              src={course.thumbnailUrl}
-                              alt={course.title}
-                              style={{
-                                width: "120px",
-                                height: "80px",
-                                objectFit: "cover",
-                                borderRadius: "8px",
-                              }}
-                            />
-                          ) : (
-                            <div
-                              style={{
-                                width: "120px",
-                                height: "80px",
-                                background:
-                                  "linear-gradient(135deg, #3B82F6, #8B5CF6)",
-                                borderRadius: "8px",
-                              }}
-                            ></div>
-                          )}
-                          <div>
-                            <h3
-                              style={{
-                                fontSize: "1.3rem",
-                                margin: "0 0 8px 0",
-                              }}
-                            >
-                              {course.title}
-                            </h3>
-                            <div
-                              style={{
-                                color: "var(--c-sub)",
-                                fontSize: "0.95rem",
-                              }}
-                            >
-                              By {course.instructor?.name || "Unknown"} • EGP{" "}
-                              {course.price} • {course.category}
-                            </div>
-                            <div
-                              style={{
-                                marginTop: "8px",
-                                color: "var(--c-sub)",
-                                fontSize: "0.85rem",
-                              }}
-                            >
-                              {course.description.substring(0, 80)}...
-                            </div>
-                          </div>
-                        </div>
-
-                        <div style={{ display: "flex", gap: "12px" }}>
-                          <button
-                            onClick={() => requestReject(course)}
-                            disabled={processingId === course._id}
-                            className="glass-btn hover-glow"
-                            style={{
-                              padding: "8px 16px",
-                              fontSize: "0.95rem",
-                              color: "#ef4444",
-                              borderColor: "rgba(239, 68, 68, 0.3)",
-                            }}
-                          >
-                            Reject
-                          </button>
-                          <button
-                            onClick={() => handleApprove(course._id)}
-                            disabled={processingId === course._id}
-                            className="glass-btn hover-glow"
-                            style={{
-                              padding: "8px 16px",
-                              fontSize: "0.95rem",
-                              background: "rgba(16, 185, 129, 0.2)",
-                              color: "#10B981",
-                              borderColor: "rgba(16, 185, 129, 0.5)",
-                            }}
-                          >
-                            Approve
-                          </button>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
+              <AdminCourseManagementTab currentUser={user} />
+            )}
+            
+            {activeTab === "financial_payouts" && (
+              <AdminPayoutsTab />
             )}
           </div>
         </div>

@@ -127,7 +127,7 @@
 
 .dashboard-tab.active {
   background: transparent;
-  color: #000;
+  color: #fff;
   font-weight: 700;
   box-shadow: none;
 }
@@ -313,7 +313,7 @@
 
 .continue-btn {
   background: linear-gradient(90deg, #F5A623, #FFD54A);
-  color: #000;
+  color: #fff;
   border: none;
   height: 48px;
   border-radius: 999px;

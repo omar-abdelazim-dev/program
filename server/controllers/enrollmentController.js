@@ -1,6 +1,7 @@
 import Enrollment from '../models/Enrollment.js';
 import Course from '../models/Course.js';
 import Lesson from '../models/Lesson.js';
+import Transaction from '../models/Transaction.js';
 
 // @route   POST /api/enrollments/:courseId
 // @access  Private (student)
@@ -26,6 +27,20 @@ export const enroll = async (req, res) => {
       course: courseId,
       amountPaid: course.price
     });
+
+    // Generate 70% revenue split transaction for the instructor
+    if (course.price > 0 && course.instructor) {
+      const instructorCut = course.price * 0.7;
+      await Transaction.create({
+        instructor: course.instructor,
+        amount: instructorCut,
+        type: 'course_sale',
+        status: 'cleared',
+        description: `Course Sale - ${course.title}`,
+        course: course._id
+      });
+    }
+
     res.status(201).json({ enrollment });
   } catch (error) {
     // A duplicate-key error (code 11000) means the unique index caught a

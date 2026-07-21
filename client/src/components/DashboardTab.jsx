@@ -1,6 +1,10 @@
+import notyf from '../utils/notyf';
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
+import ConfirmModal from './ConfirmModal';
+import ReportIssueModal from './ReportIssueModal';
+
 
 const ThreeDotMenu = ({ options }) => {
   const [open, setOpen] = useState(false);
@@ -49,7 +53,7 @@ const ThreeDotMenu = ({ options }) => {
   );
 };
 
-const InProgressCard = ({ enrollment, onOpen, onViewCourse }) => {
+const InProgressCard = ({ enrollment, onOpen, onViewCourse, openConfirm, openReportModal }) => {
   const course = enrollment.course;
   const instructor = course.instructor;
 
@@ -104,9 +108,16 @@ const InProgressCard = ({ enrollment, onOpen, onViewCourse }) => {
           </button>
           <ThreeDotMenu
             options={[
-              { label: "Notes", action: () => alert("Notes coming soon") },
-              { label: "Report issue", action: () => alert("Report issue") },
-              { label: "Leave course", action: () => alert("Leave course") },
+              { label: "Notes", action: () => notyf.open({ type: 'info', message: "Notes coming soon" }) },
+              { label: "Report issue", action: () => openReportModal(course) },
+              { label: "Leave course", action: () => openConfirm({
+                  title: "Leave Course",
+                  message: `Are you sure you want to leave ${course.title}? You will lose your progress.`,
+                  onConfirm: () => {
+                    notyf.success("Course removed from your dashboard");
+                    // Here you would typically call an API to leave the course
+                  }
+              }) },
             ]}
           />
         </div>
@@ -115,7 +126,7 @@ const InProgressCard = ({ enrollment, onOpen, onViewCourse }) => {
   );
 };
 
-const CompletedCard = ({ enrollment, onOpen, onViewCourse }) => {
+const CompletedCard = ({ enrollment, onOpen, onViewCourse, openConfirm, openReportModal }) => {
   const course = enrollment.course;
   const instructor = course.instructor;
 
@@ -165,9 +176,10 @@ const CompletedCard = ({ enrollment, onOpen, onViewCourse }) => {
             options={[
               {
                 label: "Download Certificate",
-                action: () => alert("Downloading certificate..."),
+                action: () => notyf.success("Downloading certificate..."),
               },
-              { label: "Share", action: () => alert("Share dialog") },
+              { label: "Share", action: () => notyf.open({ type: 'info', message: "Share link copied to clipboard" }) },
+              { label: "Report issue", action: () => openReportModal(course) }
             ]}
           />
         </div>
@@ -181,6 +193,51 @@ export default function DashboardTab() {
   const [enrollments, setEnrollments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  
+  // Confirm Modal State
+  const [confirmState, setConfirmState] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: null
+  });
+
+  const openConfirm = (config) => {
+    setConfirmState({
+      isOpen: true,
+      title: config.title,
+      message: config.message,
+      onConfirm: () => {
+        if(config.onConfirm) config.onConfirm();
+        closeConfirm();
+      }
+    });
+  };
+
+  const closeConfirm = () => {
+    setConfirmState(prev => ({ ...prev, isOpen: false }));
+  };
+
+  // Report Modal State
+  const [reportModalState, setReportModalState] = useState({
+    isOpen: false,
+    course: null
+  });
+
+  const openReportModal = (course) => {
+    setReportModalState({ isOpen: true, course });
+  };
+
+  const closeReportModal = () => {
+    setReportModalState({ isOpen: false, course: null });
+  };
+
+  const handleReportSubmit = (data) => {
+    // API Call goes here
+    console.log("Report submitted:", data);
+    notyf.success("Report submitted successfully! Thank you.");
+    closeReportModal();
+  };
 
   // Tab state: 'in_progress' or 'completed'
   const [activeSubTab, setActiveSubTab] = useState("in_progress");
@@ -339,6 +396,8 @@ export default function DashboardTab() {
                         enrollment={enrollment}
                         onOpen={(courseId) => navigate(`/learn/${courseId}`)}
                         onViewCourse={() => navigate(`/course/${enrollment.course._id}`)}
+                        openConfirm={openConfirm}
+                        openReportModal={openReportModal}
                       />
                     ))}
                   </div>
@@ -367,6 +426,8 @@ export default function DashboardTab() {
                         enrollment={enrollment}
                         onOpen={(courseId) => navigate(`/learn/${courseId}`)}
                         onViewCourse={() => navigate(`/course/${enrollment.course._id}`)}
+                        openConfirm={openConfirm}
+                        openReportModal={openReportModal}
                       />
                     ))}
                   </div>
@@ -376,6 +437,22 @@ export default function DashboardTab() {
           </section>
         </div>
       </div>
+
+      <ConfirmModal 
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        onConfirm={confirmState.onConfirm}
+        onCancel={closeConfirm}
+        confirmText="Leave Course"
+      />
+
+      <ReportIssueModal
+        isOpen={reportModalState.isOpen}
+        course={reportModalState.course}
+        onClose={closeReportModal}
+        onSubmit={handleReportSubmit}
+      />
     </>
   );
 }

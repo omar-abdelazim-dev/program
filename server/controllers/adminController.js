@@ -1,3 +1,4 @@
+import Transaction from '../models/Transaction.js';
 import User from '../models/User.js';
 import Course from '../models/Course.js';
 import Enrollment from '../models/Enrollment.js';
@@ -153,6 +154,7 @@ export const getRecentActivity = async (req, res) => {
 
     const recentCourses = await Course.find()
       .populate('instructor', 'name')
+      .populate('approvedBy', 'name role')
       .sort({ createdAt: -1 })
       .limit(5);
 
@@ -179,11 +181,16 @@ export const getRecentActivity = async (req, res) => {
     });
 
     recentCourses.forEach((c) => {
+      let desc = `'${c.title}' was submitted by ${c.instructor?.name || 'an instructor'}.`;
+      if (c.status === 'approved') {
+        desc = `'${c.title}' by ${c.instructor?.name || 'an instructor'} was approved by ${c.approvedBy?.name || 'an admin'}.`;
+      }
+      
       activities.push({
         id: `crs_${c._id}`,
         type: 'course',
         title: c.status === 'approved' ? 'Course Approved' : 'Course Submitted',
-        description: `'${c.title}' was ${c.status === 'approved' ? 'approved' : 'submitted'} by ${c.instructor?.name || 'an instructor'}.`,
+        description: desc,
         date: c.createdAt,
       });
     });
@@ -410,5 +417,21 @@ export const getTransactions = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error fetching transactions' });
+  }
+};
+
+
+// @route   GET /api/admin/payouts
+// @access  Private (Admin)
+export const getPendingPayouts = async (req, res) => {
+  try {
+    const payouts = await Transaction.find({ type: 'payout_request' })
+      .populate('instructor', 'name email phone')
+      .sort({ createdAt: -1 });
+    
+    res.status(200).json({ payouts });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error fetching payouts' });
   }
 };
