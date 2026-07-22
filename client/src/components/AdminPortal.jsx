@@ -595,12 +595,8 @@ export default function AdminPortal({
             ],
           },
           {
-            title: "Student Management",
-            items: [{ id: "users_students", label: "Students" }],
-          },
-          {
-            title: "Instructor Management",
-            items: [{ id: "users_instructors", label: "Instructors" }],
+            title: "User Management",
+            items: [{ id: "users", label: "Users" }],
           },
           {
             title: "Course Management",
