@@ -155,17 +155,6 @@ export default function LearningPortal() {
               }}
             ></div>
           </div>
-          <button
-            className="saas-btn-primary"
-            style={{
-              padding: "8px 16px",
-              fontSize: "0.9rem",
-              width: "auto",
-              borderRadius: "8px",
-            }}
-          >
-            Get Certificate
-          </button>
         </div>
       </div>
 

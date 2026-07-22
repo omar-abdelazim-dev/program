@@ -203,35 +203,6 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="glass-card" style={{ padding: '24px' }}>
-        <h3 style={{ margin: "0 0 20px 0", fontSize: '1.1rem', color: 'var(--text-h)' }}>Quick Actions</h3>
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          {[
-            { icon: '✏️', label: 'Create Course' },
-            { icon: '📁', label: 'Create Category' },
-            { icon: '📢', label: 'Announcement' },
-            { icon: '👥', label: 'Manage Users' },
-            { icon: '🌐', label: 'Manage Website' }
-          ].map(action => (
-            <button
-              key={action.label}
-              className="hover-glow"
-              style={{
-                display: 'flex', alignItems: 'center', gap: '8px',
-                padding: '10px 16px', borderRadius: '99px',
-                background: 'var(--c-input-bg)', border: '1px solid rgba(255,255,255,0.05)',
-                color: 'var(--text-h)', fontSize: '0.9rem', cursor: 'pointer',
-                boxShadow: 'none'
-              }}
-            >
-              <span>{action.icon}</span>
-              <span>{action.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Bottom Row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
         {/* Platform Health */}

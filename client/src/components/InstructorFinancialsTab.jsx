@@ -1,6 +1,7 @@
 import notyf from '../utils/notyf';
 import React, { useState, useEffect } from 'react';
 import CustomSelect from './CustomSelect';
+import Spinner from './Spinner';
 import api from '../api/axios';
 
 
@@ -113,7 +114,7 @@ export default function InstructorFinancialsTab({ user }) {
               {transactions.length === 0 ? (
                 <tr>
                   <td colSpan="4" style={{ padding: '24px', textAlign: 'center', color: 'var(--c-sub)' }}>
-                    {loading ? 'Loading...' : 'No transactions yet. Start selling courses to see your ledger grow!'}
+                    {loading ? <Spinner size="small" label="Loading..." /> : 'No transactions yet. Start selling courses to see your ledger grow!'}
                   </td>
                 </tr>
               ) : (

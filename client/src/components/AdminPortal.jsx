@@ -16,6 +16,7 @@ import AdminUserManagementTab from "./AdminUserManagementTab";
 import AdminCourseManagementTab from "./AdminCourseManagementTab";
 import WebsiteManagement from "./WebsiteManagement/WebsiteManagement";
 import SystemManagement from "./SystemManagement";
+import Spinner from "./Spinner";
 
 
 
@@ -506,7 +507,7 @@ export default function AdminPortal({
           justifyContent: "center",
         }}
       >
-        Loading Admin Portal...
+        <Spinner label="Loading Admin Portal..." />
       </div>
     );
   }
@@ -537,10 +538,6 @@ export default function AdminPortal({
               { id: "courses_lessons", label: "Lessons" },
               { id: "courses_categories", label: "Categories" },
             ],
-          },
-          {
-            title: "Certificate Management",
-            items: [{ id: "certificates", label: "Certificates" }],
           },
           {
             title: "Financial Management",
@@ -575,13 +572,6 @@ export default function AdminPortal({
             title: "System Settings",
             items: [{ id: "settings", label: "System Settings" }],
           },
-          {
-            title: "Profile",
-            items: [
-              { id: "profile_my", label: "My Profile" },
-              { id: "profile_password", label: "Change Password" },
-            ],
-          },
         ]
       : [
           {
@@ -594,12 +584,8 @@ export default function AdminPortal({
             ],
           },
           {
-            title: "Student Management",
-            items: [{ id: "users_students", label: "Students" }],
-          },
-          {
-            title: "Instructor Management",
-            items: [{ id: "users_instructors", label: "Instructors" }],
+            title: "User Management",
+            items: [{ id: "users", label: "Users" }],
           },
           {
             title: "Course Management",
@@ -614,13 +600,8 @@ export default function AdminPortal({
             items: [{ id: "enrollment", label: "Enrollments" }],
           },
           {
-            title: "Certificate Management",
-            items: [{ id: "certificates", label: "Certificates" }],
-          },
-          {
             title: "Financial Management",
             items: [
-              { id: "enrollment", label: "Enrollments" },
               { id: "financial_payouts", label: "Payout Requests" },
             ],
           },

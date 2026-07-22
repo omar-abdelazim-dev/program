@@ -1,0 +1,279 @@
+/* ==========================================================================
+   FOOTER & STATIC PAGES (About, Contact, Help, Terms, Privacy, Mobile App)
+   Uses the same flat-design tokens as the rest of the student portal.
+   ========================================================================== */
+
+.site-footer {
+    margin-top: 48px;
+    padding: 40px 0 24px;
+    border-top: 1px solid var(--border-solid, #2B2A3D);
+}
+
+.site-footer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.site-footer-col {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.site-footer-col h4 {
+    margin: 0 0 4px 0;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--text-primary);
+}
+
+.site-footer-col a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.2s ease;
+}
+
+.site-footer-col a:hover {
+    color: var(--color-accent, #f97316);
+}
+
+.site-footer-social {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-solid, #2B2A3D);
+}
+
+.site-footer-social a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+
+.site-footer-social a:hover {
+    color: var(--color-accent, #f97316);
+}
+
+.site-footer-bottom {
+    margin-top: 20px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* --------------------------------------------------------------------------
+   Static content pages
+   -------------------------------------------------------------------------- */
+.static-page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 20px 0 60px;
+}
+
+.static-page-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 24px 0;
+}
+
+.static-page-intro {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    margin-bottom: 32px;
+}
+
+.static-page-body {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.static-page-section h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 12px 0;
+}
+
+.static-page-section p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+}
+
+.static-page-grid-two {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+}
+
+.static-page-grid-three {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.static-page-card {
+    background: var(--bg-surface);
+    border-radius: var(--radius-card, 20px);
+    padding: 20px;
+}
+
+.static-page-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+.static-page-card p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.static-page-card a {
+    color: var(--color-accent, #f97316);
+    text-decoration: none;
+}
+
+.static-page-team-card {
+    text-align: center;
+}
+
+.static-page-team-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 0 auto 12px;
+    display: block;
+}
+
+.static-page-team-avatar-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-main);
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.static-page-team-position {
+    color: var(--color-accent, #f97316);
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.static-page-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.static-page-timeline-item {
+    display: flex;
+    gap: 20px;
+    align-items: baseline;
+}
+
+.static-page-timeline-year {
+    flex-shrink: 0;
+    width: 70px;
+    font-weight: 700;
+    color: var(--color-accent, #f97316);
+}
+
+.static-page-timeline-item h3 {
+    margin: 0 0 4px 0;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+.static-page-timeline-item p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.static-page-empty,
+.static-page-coming-soon p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.static-page-coming-soon {
+    background: var(--bg-surface);
+    border-radius: var(--radius-card, 20px);
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* FAQ accordion */
+.static-page-faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.static-page-faq-item {
+    background: var(--bg-surface);
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.static-page-faq-question {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 16px 20px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: left;
+}
+
+.static-page-faq-chevron {
+    color: var(--text-secondary);
+    transition: transform 0.2s ease;
+}
+
+.static-page-faq-item.open .static-page-faq-chevron {
+    transform: rotate(180deg);
+}
+
+.static-page-faq-answer {
+    padding: 0 20px 18px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+/* Skeleton loading — see styles/loading.css for the shared .skeleton-shimmer
+   animation; this just adds the line shape on top of it. */
+.skeleton-line {
+    height: 16px;
+    border-radius: 8px;
+}
+
+.static-page-skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}

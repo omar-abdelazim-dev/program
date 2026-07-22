@@ -184,7 +184,7 @@ export default function SystemManagement({ user }) {
     backup: { lastBackup: '', frequency: 'daily' },
     logs: { retentionDays: 30 },
     api: { status: 'active', version: 'v1', webhookUrl: '', rateLimit: 100 },
-    features: { notebook: true, certificates: true, community: false, marketplace: false, aiTutor: false, referral: true, betaFeatures: false },
+    features: { notebook: true, community: false, marketplace: false, aiTutor: false, referral: true, betaFeatures: false },
     ai: { provider: 'OpenAI', model: 'gpt-4o', temperature: 0.7, dailyTokenLimit: 100000, prompts: '' },
     audit: { retentionDays: 90, trackUsers: true, trackAdmins: true, trackFinancial: true, trackSettings: true }
   };
@@ -470,7 +470,6 @@ export default function SystemManagement({ user }) {
         <div className="glass-card" style={{ padding: '24px', animation: 'fadeIn 0.3s' }}>
           <h3 style={{ marginTop: 0, marginBottom: '24px', color: 'var(--text-h)' }}>Feature Flags</h3>
           <ToggleSwitch label="Notebook Module" checked={settings.features.notebook} onChange={e => handleChange('features', 'notebook', e.target.checked)} disabled={isFieldRestricted('features', 'notebook', isSuperAdmin)} />
-          <ToggleSwitch label="Certificates Generation" checked={settings.features.certificates} onChange={e => handleChange('features', 'certificates', e.target.checked)} disabled={isFieldRestricted('features', 'certificates', isSuperAdmin)} />
           <ToggleSwitch label="Community Discussions" checked={settings.features.community} onChange={e => handleChange('features', 'community', e.target.checked)} disabled={isFieldRestricted('features', 'community', isSuperAdmin)} />
           <ToggleSwitch label="Marketplace" checked={settings.features.marketplace} onChange={e => handleChange('features', 'marketplace', e.target.checked)} disabled={isFieldRestricted('features', 'marketplace', isSuperAdmin)} />
           <ToggleSwitch label="AI Tutor Bot" checked={settings.features.aiTutor} onChange={e => handleChange('features', 'aiTutor', e.target.checked)} disabled={isFieldRestricted('features', 'aiTutor', isSuperAdmin)} />

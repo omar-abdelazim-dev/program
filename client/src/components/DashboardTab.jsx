@@ -165,13 +165,9 @@ const CompletedCard = ({
         </div>
       </div>
       <div className="course-right">
-        <div className="course-actions certificate-actions">
+        <div className="course-actions">
           <ThreeDotMenu
             options={[
-              {
-                label: "Download Certificate",
-                action: () => notyf.success("Downloading certificate..."),
-              },
               {
                 label: "Share",
                 action: () =>

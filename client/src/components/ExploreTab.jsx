@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams, Link } from "react-router-dom";
 import api from "../api/axios";
 import CourseCard from "./CourseCard";
 
@@ -6,9 +7,10 @@ const SEARCH_DEBOUNCE_MS = 300;
 
 export default function ExploreTab({ user, searchQuery = "" }) {
   const firstName = user?.name ? user.name.split(" ")[0] : "Student";
-  const categories = ["All", "Development", "Design", "Data", "Business"];
-  const [currentCategory, setCurrentCategory] = useState("All");
-  const categoryContainerRef = useRef(null);
+  // Category filtering now comes from the "Courses" nav dropdown (see
+  // StudentLayout) via ?category=, rather than in-page filter buttons.
+  const [searchParams] = useSearchParams();
+  const currentCategory = searchParams.get("category") || "All";
   const [courses, setCourses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [debouncedSearch, setDebouncedSearch] = useState(searchQuery.trim());
@@ -196,52 +198,26 @@ export default function ExploreTab({ user, searchQuery = "" }) {
               </a>
             </div>
 
-            {/* Category filters */}
-            <div
-              className="category-filters"
-              style={{
-                position: "relative",
-                display: "flex",
-                gap: "12px",
-                marginBottom: "32px",
-                flexWrap: "wrap",
-              }}
-              ref={categoryContainerRef}
-            >
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  className="filter-btn"
-                  style={{
-                    background:
-                      cat === currentCategory
-                        ? "linear-gradient(135deg, #f97316 0%, #fbbf24 100%)"
-                        : "var(--bg-surface)",
-                    color:
-                      cat === currentCategory
-                        ? "#ffffff"
-                        : "var(--text-secondary)",
-                    border: "none",
-                    padding: "8px 24px",
-                    borderRadius: "50px",
-                    fontWeight: "600",
-                    cursor: "pointer",
-                    transition: "all 0.2s ease",
-                    boxShadow:
-                      cat !== currentCategory
-                        ? "0px 4px 10px rgba(0,0,0,0.1)"
-                        : "none",
-                  }}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setCurrentCategory(cat);
-                  }}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
+            {currentCategory !== "All" && (
+              <Link
+                to="/student"
+                className="active-category-pill"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  marginBottom: "32px",
+                  padding: "8px 20px",
+                  borderRadius: "50px",
+                  background: "linear-gradient(135deg, #f97316 0%, #fbbf24 100%)",
+                  color: "#ffffff",
+                  fontWeight: "600",
+                  textDecoration: "none",
+                }}
+              >
+                {currentCategory} ✕
+              </Link>
+            )}
 
             {/* Course grid */}
             {isLoading ? (
@@ -256,10 +232,9 @@ export default function ExploreTab({ user, searchQuery = "" }) {
                 {Array.from({ length: 8 }).map((_, i) => (
                   <div
                     key={i}
-                    className="cc-skeleton solid-card"
+                    className="cc-skeleton solid-card skeleton-shimmer"
                     style={{
                       height: "320px",
-                      backgroundColor: "var(--bg-surface)",
                     }}
                   />
                 ))}

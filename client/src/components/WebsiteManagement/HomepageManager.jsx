@@ -124,11 +124,6 @@ export default function HomepageManager({ user }) {
             value={content?.stats?.instructorsCount || ''}
             onChange={(e) => handleChange('stats', 'instructorsCount', e.target.value)}
           />
-          <InputField
-            label="Certificates Count"
-            value={content?.stats?.certificatesCount || ''}
-            onChange={(e) => handleChange('stats', 'certificatesCount', e.target.value)}
-          />
         </div>
       </div>
 

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import api from "../api/axios";
 import notyf from "../utils/notyf";
 import { createPortal } from "react-dom";
+import Spinner from "./Spinner";
 
 // Generic custom dropdown component to match the system's dark theme
 const CustomDropdown = ({ value, options, onChange, disabled, width = "100%" }) => {
@@ -106,10 +107,8 @@ export default function AdminCourseManagementTab({ currentUser }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeStatus, setActiveStatus] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("All Categories");
-  const [difficultyFilter, setDifficultyFilter] = useState("All Difficulties");
   const [showFilters, setShowFilters] = useState(false);
-  
-  const [selectedIds, setSelectedIds] = useState(new Set());
+
   const [sidePanelCourseId, setSidePanelCourseId] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -129,10 +128,10 @@ export default function AdminCourseManagementTab({ currentUser }) {
         
         let allCourses = [];
         
-        const published = publishedRes.data.data || publishedRes.data.courses || [];
-        // Ensure they have a status
-        const publishedWithStatus = published.map(c => ({ ...c, status: c.status || 'published' }));
-        allCourses = [...allCourses, ...publishedWithStatus];
+        // GET /courses only ever returns approved courses (status: 'approved'
+        // is already set server-side), so no fallback/relabeling needed here.
+        const approved = publishedRes.data.data || publishedRes.data.courses || [];
+        allCourses = [...allCourses, ...approved];
         
         if (pendingRes.data?.courses) {
             const pendingWithStatus = pendingRes.data.courses.map(c => ({ ...c, status: 'pending' }));
@@ -158,47 +157,18 @@ export default function AdminCourseManagementTab({ currentUser }) {
 
   const clearFilters = () => {
     setCategoryFilter("All Categories");
-    setDifficultyFilter("All Difficulties");
     setSearchQuery("");
   };
 
+  // Matches Course.status's real enum (pending/approved/rejected) - no
+  // published/draft/archived/hidden states exist in the backend.
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
-      case "published": return { text: "#10b981", bg: "rgba(16, 185, 129, 0.1)", border: "rgba(16, 185, 129, 0.25)" };
-      case "draft": return { text: "#9ca3af", bg: "rgba(156, 163, 175, 0.1)", border: "rgba(156, 163, 175, 0.25)" };
-      case "pending review": 
+      case "approved": return { text: "#10b981", bg: "rgba(16, 185, 129, 0.1)", border: "rgba(16, 185, 129, 0.25)" };
       case "pending": return { text: "#f5a623", bg: "rgba(245, 166, 35, 0.1)", border: "rgba(245, 166, 35, 0.25)" };
-      case "archived": return { text: "#6b7280", bg: "rgba(107, 114, 128, 0.1)", border: "rgba(107, 114, 128, 0.25)" };
-      case "hidden": return { text: "#8b5cf6", bg: "rgba(139, 92, 246, 0.1)", border: "rgba(139, 92, 246, 0.25)" };
       case "rejected": return { text: "#ef4444", bg: "rgba(239, 68, 68, 0.1)", border: "rgba(239, 68, 68, 0.25)" };
       default: return { text: "var(--c-sub)", bg: "rgba(255,255,255,0.05)", border: "rgba(255,255,255,0.1)" };
     }
-  };
-
-  const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      setSelectedIds(new Set(visibleCourses.map(c => c._id)));
-    } else {
-      setSelectedIds(new Set());
-    }
-  };
-
-  const handleSelectOne = (id) => {
-    const newSet = new Set(selectedIds);
-    if (newSet.has(id)) newSet.delete(id);
-    else newSet.add(id);
-    setSelectedIds(newSet);
-  };
-
-  const handleBulkAction = async (actionStr) => {
-    setIsProcessing(true);
-    notyf.success(`Processing bulk action: ${actionStr}...`);
-    // Placeholder for real bulk actions
-    setTimeout(() => {
-        setIsProcessing(false);
-        setSelectedIds(new Set());
-        notyf.success(`Bulk action completed.`);
-    }, 1000);
   };
 
   const handleApprove = async (id) => {
@@ -240,28 +210,18 @@ export default function AdminCourseManagementTab({ currentUser }) {
     }
     
     // Status Filter
-    if (activeStatus !== "all") {
-        if (activeStatus === "pending") {
-            if (c.status !== "pending" && c.status !== "pending review") return false;
-        } else {
-            if (c.status?.toLowerCase() !== activeStatus) return false;
-        }
-    }
-    
+    if (activeStatus !== "all" && c.status?.toLowerCase() !== activeStatus) return false;
+
     // Category Filter
     if (categoryFilter !== "All Categories" && c.category !== categoryFilter) return false;
-    
-    // Difficulty Filter
-    if (difficultyFilter !== "All Difficulties" && c.difficulty !== difficultyFilter) return false;
 
     return true;
   });
 
-  // Calculate metrics
+  // Calculate metrics (matches Course.status's real enum)
   const totalCourses = courses.length;
-  const publishedCourses = courses.filter(c => c.status === "published").length;
-  const pendingCourses = courses.filter(c => c.status === "pending" || c.status === "pending review").length;
-  const draftCourses = courses.filter(c => c.status === "draft").length;
+  const approvedCourses = courses.filter(c => c.status === "approved").length;
+  const pendingCourses = courses.filter(c => c.status === "pending").length;
 
   const sidePanelCourse = courses.find(c => c._id === sidePanelCourseId);
 
@@ -279,16 +239,12 @@ export default function AdminCourseManagementTab({ currentUser }) {
                 <div style={{ color: 'var(--text-h)', fontSize: '2rem', fontWeight: '700', margin: '0' }}>{totalCourses}</div>
             </div>
             <div className="glass-card stat-card overview-stat-green" style={{ padding: '24px', display: 'flex', flexDirection: 'column', transition: 'all 0.2s ease' }}>
-                <div style={{ color: 'var(--c-sub)', fontSize: '0.85rem', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '8px' }}>Published</div>
-                <div style={{ color: 'var(--text-h)', fontSize: '2rem', fontWeight: '700', margin: '0' }}>{publishedCourses}</div>
+                <div style={{ color: 'var(--c-sub)', fontSize: '0.85rem', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '8px' }}>Approved</div>
+                <div style={{ color: 'var(--text-h)', fontSize: '2rem', fontWeight: '700', margin: '0' }}>{approvedCourses}</div>
             </div>
             <div className="glass-card stat-card overview-stat-orange" style={{ padding: '24px', display: 'flex', flexDirection: 'column', transition: 'all 0.2s ease' }}>
                 <div style={{ color: 'var(--c-sub)', fontSize: '0.85rem', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '8px' }}>Pending Review</div>
                 <div style={{ color: 'var(--text-h)', fontSize: '2rem', fontWeight: '700', margin: '0' }}>{pendingCourses}</div>
-            </div>
-            <div className="glass-card stat-card overview-stat-white" style={{ padding: '24px', display: 'flex', flexDirection: 'column', transition: 'all 0.2s ease' }}>
-                <div style={{ color: 'var(--c-sub)', fontSize: '0.85rem', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '8px' }}>Drafts</div>
-                <div style={{ color: 'var(--text-h)', fontSize: '2rem', fontWeight: '700', margin: '0' }}>{draftCourses}</div>
             </div>
         </div>
       </div>
@@ -344,16 +300,7 @@ export default function AdminCourseManagementTab({ currentUser }) {
             />
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px", minWidth: "220px" }}>
-            <label style={{ fontSize: "0.75rem", fontWeight: "600", color: "var(--c-sub)", letterSpacing: "0.5px" }}>DIFFICULTY</label>
-            <CustomDropdown 
-              value={difficultyFilter}
-              options={["All Difficulties", "Beginner", "Intermediate", "Advanced"]}
-              onChange={setDifficultyFilter}
-            />
-          </div>
-
-          <button 
+          <button
             onClick={clearFilters}
             style={{ 
               background: "rgba(239, 68, 68, 0.05)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
@@ -373,11 +320,8 @@ export default function AdminCourseManagementTab({ currentUser }) {
       <div style={{ display: "flex", gap: "12px", overflowX: "auto", paddingBottom: "4px" }}>
         {[
           { id: "all", label: "All Courses" },
-          { id: "published", label: "Published" },
+          { id: "approved", label: "Approved" },
           { id: "pending", label: "Pending Review" },
-          { id: "draft", label: "Draft" },
-          { id: "archived", label: "Archived" },
-          { id: "rejected", label: "Rejected" }
         ].map(tab => {
           const isActive = activeStatus === tab.id;
           const statusStyle = getStatusColor(tab.id);
@@ -407,55 +351,11 @@ export default function AdminCourseManagementTab({ currentUser }) {
         )})}
       </div>
 
-      {/* Selection Bar */}
-      {selectedIds.size > 0 && (
-        <div style={{ 
-          background: "rgba(139, 92, 246, 0.1)", border: "1px solid rgba(139, 92, 246, 0.2)",
-          borderRadius: "12px", padding: "12px 24px", display: "flex", justifyContent: "space-between", alignItems: "center",
-          animation: "fadeIn 0.2s ease"
-        }}>
-          <div style={{ fontWeight: "600", color: "var(--text-h)" }}>
-            {selectedIds.size} courses selected
-          </div>
-          <div style={{ display: "flex", gap: "12px" }}>
-            <button 
-              onClick={() => handleBulkAction("publish")} disabled={isProcessing}
-              style={{
-                background: "rgba(16,185,129,0.1)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-                border: "1px solid rgba(16,185,129,0.2)", borderTop: "1px solid rgba(16,185,129,0.4)", borderLeft: "1px solid rgba(16,185,129,0.4)",
-                color: "#10b981", padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontWeight: "600"
-              }}>Publish</button>
-            <button 
-              onClick={() => handleBulkAction("archive")} disabled={isProcessing}
-              style={{
-                background: "rgba(107,114,128,0.1)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-                border: "1px solid rgba(107,114,128,0.2)", borderTop: "1px solid rgba(107,114,128,0.4)", borderLeft: "1px solid rgba(107,114,128,0.4)",
-                color: "#9ca3af", padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontWeight: "600"
-              }}>Archive</button>
-            <button 
-              onClick={() => handleBulkAction("delete")} disabled={isProcessing}
-              style={{
-                background: "rgba(239,68,68,0.1)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-                border: "1px solid rgba(239,68,68,0.2)", borderTop: "1px solid rgba(239,68,68,0.4)", borderLeft: "1px solid rgba(239,68,68,0.4)",
-                color: "#ef4444", padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontWeight: "600"
-              }}>Delete</button>
-          </div>
-        </div>
-      )}
-
       {/* Data Table */}
-      <div className="glass-card" style={{ border: "1px solid rgba(255,255,255,0.05)", borderRadius: "12px", overflow: "hidden", marginTop: selectedIds.size > 0 ? "0px" : "4px" }}>
+      <div className="glass-card" style={{ border: "1px solid rgba(255,255,255,0.05)", borderRadius: "12px", overflow: "hidden", marginTop: "4px" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
           <thead>
             <tr style={{ background: "rgba(255,255,255,0.02)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-              <th style={{ padding: "16px 24px", width: "50px" }}>
-                <input 
-                  type="checkbox" 
-                  checked={visibleCourses.length > 0 && selectedIds.size === visibleCourses.length}
-                  onChange={handleSelectAll}
-                  style={{ cursor: "pointer", width: "16px", height: "16px", accentColor: "#4f46e5" }}
-                />
-              </th>
               <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>Course</th>
               <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>Category</th>
               <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>Price</th>
@@ -467,8 +367,8 @@ export default function AdminCourseManagementTab({ currentUser }) {
           <tbody>
             {isLoading ? (
                 <tr>
-                    <td colSpan="7" style={{ padding: "40px", textAlign: "center", color: "var(--c-sub)" }}>
-                        Loading courses...
+                    <td colSpan="7" style={{ padding: "40px", textAlign: "center" }}>
+                        <Spinner size="small" label="Loading courses..." />
                     </td>
                 </tr>
             ) : visibleCourses.length === 0 ? (
@@ -479,23 +379,14 @@ export default function AdminCourseManagementTab({ currentUser }) {
               </tr>
             ) : (
               visibleCourses.map(c => (
-                <tr 
-                  key={c._id} 
-                  style={{ 
+                <tr
+                  key={c._id}
+                  style={{
                     borderBottom: "1px solid rgba(255,255,255,0.03)",
-                    background: selectedIds.has(c._id) ? "rgba(255,255,255,0.02)" : "transparent",
                     transition: "background 0.2s"
                   }}
                 >
                   <td style={{ padding: "16px 24px" }}>
-                    <input 
-                      type="checkbox" 
-                      checked={selectedIds.has(c._id)}
-                      onChange={() => handleSelectOne(c._id)}
-                      style={{ cursor: "pointer", width: "16px", height: "16px", accentColor: "#4f46e5" }}
-                    />
-                  </td>
-                  <td style={{ padding: "16px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                       {/* Thumbnail Placeholder if no real image */}
                       {c.thumbnailUrl ? (
@@ -644,7 +535,7 @@ export default function AdminCourseManagementTab({ currentUser }) {
               <div style={{ fontSize: "0.75rem", fontWeight: "700", color: "var(--c-sub)", letterSpacing: "1px", marginBottom: "16px" }}>ACTIONS</div>
               
               <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                {sidePanelCourse.status === "pending" || sidePanelCourse.status === "pending review" ? (
+                {sidePanelCourse.status === "pending" ? (
                     <div style={{ display: "flex", gap: "12px" }}>
                         <button 
                             onClick={() => handleApprove(sidePanelCourse._id)}
@@ -676,33 +567,8 @@ export default function AdminCourseManagementTab({ currentUser }) {
                         </button>
                     </div>
                 ) : (
-                    <div style={{ display: "flex", gap: "12px" }}>
-                        <button 
-                            disabled={isProcessing}
-                            style={{
-                            flex: 1, background: "rgba(255,255,255,0.03)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-                            border: "1px solid rgba(255,255,255,0.05)", borderTop: "1px solid rgba(255,255,255,0.15)", borderLeft: "1px solid rgba(255,255,255,0.15)",
-                            color: "var(--c-light)", padding: "12px", borderRadius: "10px", cursor: isProcessing ? "not-allowed" : "pointer", fontSize: "0.9rem",
-                            transition: "all 0.2s", opacity: isProcessing ? 0.5 : 1
-                            }}
-                            onMouseEnter={e => { if(!isProcessing) e.target.style.background = "rgba(255,255,255,0.08)"; }}
-                            onMouseLeave={e => { if(!isProcessing) e.target.style.background = "rgba(255,255,255,0.03)"; }}
-                        >
-                            Archive Course
-                        </button>
-                        <button 
-                            disabled={isProcessing}
-                            style={{
-                            flex: 1, background: "rgba(239,68,68,0.05)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-                            border: "1px solid rgba(239,68,68,0.1)", borderTop: "1px solid rgba(239,68,68,0.3)", borderLeft: "1px solid rgba(239,68,68,0.3)",
-                            color: "#ef4444", padding: "12px", borderRadius: "10px", cursor: isProcessing ? "not-allowed" : "pointer", fontSize: "0.9rem",
-                            transition: "all 0.2s", opacity: isProcessing ? 0.5 : 1
-                            }}
-                            onMouseEnter={e => { if(!isProcessing) e.target.style.background = "rgba(239,68,68,0.15)"; }}
-                            onMouseLeave={e => { if(!isProcessing) e.target.style.background = "rgba(239,68,68,0.05)"; }}
-                        >
-                            Soft Delete
-                        </button>
+                    <div style={{ color: "var(--c-sub)", fontSize: "0.85rem" }}>
+                        {sidePanelCourse.status === "approved" ? "This course is live in the public catalog." : "This course was rejected and is not visible to students."}
                     </div>
                 )}
               </div>

@@ -46,6 +46,16 @@ body.light-mode {
     --c-card: rgba(255, 255, 255, 0.7);
     --c-light: #1f2937;
     --c-sub: #4b5563;
+
+    /* Student Deep Navy Flat Design, recolored for light mode: same
+       elevation relationship as dark mode (surface reads lighter/brighter
+       than the canvas behind it), just white/light-grey instead of navy,
+       with the orange accent unchanged. */
+    --bg-main: #F3F4F6;
+    --bg-surface: #FFFFFF;
+    --text-primary: #15141E;
+    --text-secondary: #6B7280;
+    --border-solid: #E5E7EB;
 }
 
 body.light-mode .stat-card,
@@ -840,6 +850,7 @@ box-shadow: var(--shadow);
     height: 100%;
     background-color: var(--bg-surface);
     padding: 0;
+    border-radius: 24px;
     /* equal heights in grid row */
 }
 
@@ -871,6 +882,7 @@ box-shadow: var(--shadow);
 
 .cc-thumb--fallback {
     box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--border-solid);
     background-color: var(--bg-main);
 }
 

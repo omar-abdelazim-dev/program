@@ -99,6 +99,57 @@
 }
 
 /* --------------------------------------------------------------------------
+   Courses nav dropdown (category flyout, hover-triggered like the profile menu)
+   -------------------------------------------------------------------------- */
+.courses-nav-wrapper {
+  position: relative;
+}
+
+.courses-nav-dropdown {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  margin-left: 12px;
+  background-color: var(--bg-surface);
+  border: 2px solid var(--bg-main);
+  border-radius: 12px;
+  padding: 12px;
+  width: 200px;
+  display: none;
+  flex-direction: column;
+  z-index: 100;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.courses-nav-wrapper:hover .courses-nav-dropdown {
+  display: flex;
+}
+
+.courses-nav-dropdown-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  padding: 0 8px;
+}
+
+.courses-nav-dropdown-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+}
+
+.courses-nav-dropdown-link:hover {
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+}
+
+/* --------------------------------------------------------------------------
    Header (Floating)
    -------------------------------------------------------------------------- */
 .student-header {

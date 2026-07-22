@@ -3,7 +3,13 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import logoDark from "../assets/logo-dark.png";
 import logoLight from "../assets/logo-light.png";
 import studentLogo from "../assets/logo.png";
+import Footer from "./Footer";
 import "../styles/student-layout.css";
+import "../styles/static-pages.css";
+
+// The Course model's category field is freeform text; these are the only
+// values actually in use in the database today (see Course.category).
+const COURSE_CATEGORIES = ["Business", "Data", "Design", "Development"];
 
 export default function StudentLayout({
   user,
@@ -116,6 +122,37 @@ export default function StudentLayout({
                   <rect x="3" y="14" width="7" height="7" rx="1" />
                 </svg>
               </button>
+
+              <div className="courses-nav-wrapper">
+                <button
+                  className={`sidebar-icon-btn ${activeTab === "explore" && location.search.includes("category=") ? "active" : ""}`}
+                  onClick={() => navigate("/student")}
+                  title="Courses"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                  </svg>
+                </button>
+                <div className="courses-nav-dropdown">
+                  <div className="courses-nav-dropdown-title">Browse by category</div>
+                  {COURSE_CATEGORIES.map((cat) => (
+                    <Link key={cat} to={`/student?category=${encodeURIComponent(cat)}`} className="courses-nav-dropdown-link">
+                      {cat}
+                    </Link>
+                  ))}
+                  <hr className="dropdown-divider" />
+                  <Link to="/student" className="courses-nav-dropdown-link">All Courses</Link>
+                </div>
+              </div>
             </>
           )}
         </nav>
@@ -303,7 +340,10 @@ export default function StudentLayout({
         </header>
 
         {/* PAGE CONTENT */}
-        <div className="student-content-scroll">{children}</div>
+        <div className="student-content-scroll">
+          {children}
+          <Footer />
+        </div>
       </main>
     </div>
   );

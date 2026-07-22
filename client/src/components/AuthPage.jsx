@@ -6,12 +6,15 @@ import api from '../api/axios';
 import CustomSelect from './CustomSelect';
 
 export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
-  const [isLogin, setIsLogin] = useState(true);
-  
+  // Footer's "Become an Instructor" link (?mode=register&role=instructor) lands
+  // here pre-selected, since register/login share this one component/route.
+  const initialParams = new URLSearchParams(window.location.search);
+  const [isLogin, setIsLogin] = useState(initialParams.get('mode') !== 'register');
+
   // Multi-step Registration State
   const [registerStep, setRegisterStep] = useState(1);
   const [stepDirection, setStepDirection] = useState('forward');
-  
+
   // Step 1 Fields
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -19,7 +22,7 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
-  const [role, setRole] = useState('student');
+  const [role, setRole] = useState(initialParams.get('role') === 'instructor' ? 'instructor' : 'student');
   
   // Step 2 Fields
   const [department, setDepartment] = useState('');

@@ -13,6 +13,12 @@ import InstructorPortal from './components/InstructorPortal';
 import AdminPortal from './components/AdminPortal';
 import SettingsPage from './components/SettingsPage';
 import StudentLayout from './components/StudentLayout';
+import AboutPage from './components/AboutPage';
+import ContactPage from './components/ContactPage';
+import HelpPage from './components/HelpPage';
+import TermsPage from './components/TermsPage';
+import PrivacyPage from './components/PrivacyPage';
+import MobileAppPage from './components/MobileAppPage';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -193,6 +199,12 @@ export default function App() {
         <Route path="/student/dashboard" element={<DashboardTab />} />
         <Route path="/student/settings" element={<SettingsPage user={user} setUser={setUser} isLightMode={isLightMode} toggleTheme={toggleTheme} onLogout={handleLogout} />} />
         <Route path="/course/:id" element={<CoursePage cart={cart} setCart={setCart} />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/help" element={<HelpPage />} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/mobile-app" element={<MobileAppPage />} />
       </Routes>
     </StudentLayout>
   );

@@ -7,7 +7,7 @@ const websiteContentSchema = new mongoose.Schema(
     homepage: {
       hero: {
         title: { type: String, default: 'Learn Without Limits' },
-        subtitle: { type: String, default: 'Build skills with courses, certificates, and degrees online from world-class universities and companies.' },
+        subtitle: { type: String, default: 'Build skills with courses taught by world-class instructors.' },
         primaryButtonText: { type: String, default: 'Explore Courses' },
         primaryButtonUrl: { type: String, default: '/explore' },
         secondaryButtonText: { type: String, default: 'Become an Instructor' },
@@ -18,7 +18,6 @@ const websiteContentSchema = new mongoose.Schema(
         studentsCount: { type: String, default: '10,000+' },
         coursesCount: { type: String, default: '200+' },
         instructorsCount: { type: String, default: '50+' },
-        certificatesCount: { type: String, default: '15,000+' },
       },
       featuredCourses: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Course' }],
       featuredInstructors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],

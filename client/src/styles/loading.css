@@ -1,0 +1,43 @@
+/* ==========================================================================
+   SITEWIDE LOADING STATES — CSS-only spinner + skeleton shimmer
+   ========================================================================== */
+
+.spinner {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border-solid, rgba(255, 255, 255, 0.15));
+    border-top-color: var(--color-accent, #f97316);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+.spinner--small {
+    width: 18px;
+    height: 18px;
+    border-width: 2px;
+}
+
+.spinner-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 0;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Reusable shimmer, for skeleton placeholders standing in for real content
+   while it loads (course cards, table rows, stat cards, etc). */
+.skeleton-shimmer {
+    background: linear-gradient(90deg, var(--bg-surface, #1F1E2C) 25%, var(--bg-main, #15141E) 50%, var(--bg-surface, #1F1E2C) 75%);
+    background-size: 200% 100%;
+    animation: skeletonShimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes skeletonShimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
