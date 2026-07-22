@@ -609,7 +609,6 @@ export default function AdminPortal({
           {
             title: "Financial Management",
             items: [
-              { id: "enrollment", label: "Enrollments" },
               { id: "financial_payouts", label: "Payout Requests" },
             ],
           },
