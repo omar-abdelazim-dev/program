@@ -83,8 +83,8 @@ export default function LearningPortal() {
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       {/* Top Navbar specifically for Learning Portal */}
       <div
-        className="learning-glass"
         style={{
+          backgroundColor: 'var(--bg-surface)',
           padding: "16px 24px",
           borderBottom: "1px solid var(--c-border-subtle)",
           display: "flex",
@@ -156,7 +156,7 @@ export default function LearningPortal() {
             ></div>
           </div>
           <button
-            className="glass-btn auth-submit-btn"
+            className="saas-btn-primary"
             style={{
               padding: "8px 16px",
               fontSize: "0.9rem",
@@ -290,7 +290,7 @@ export default function LearningPortal() {
                   Resources
                 </h3>
                 <div
-                  className="glass-card hover-glow"
+                  className="saas-card"
                   style={{
                     padding: "16px",
                     display: "flex",
@@ -355,9 +355,9 @@ export default function LearningPortal() {
                   discussion!
                 </p>
                 <button
-                  className="glass-btn"
-                  style={{
-                    marginTop: "16px",
+                  className="saas-btn-secondary"
+                  onClick={() => setIsCourseContentOpen(true)}
+                  style={{  marginTop: "16px",
                     padding: "8px 16px",
                     fontSize: "0.9rem",
                   }}
@@ -393,13 +393,7 @@ export default function LearningPortal() {
 
         {/* Sidebar */}
         <div
-          className="learning-glass"
-          style={{
-            width: "400px",
-            borderLeft: "1px solid var(--c-border-subtle)",
-            display: "flex",
-            flexDirection: "column",
-          }}
+          style={{ backgroundColor: 'var(--bg-surface)', width: '350px', borderLeft: '1px solid var(--border)', display: 'flex', flexDirection: 'column' }}
         >
           <div style={{ flex: 1, overflowY: "auto" }}>
             <div style={{ borderBottom: "1px solid var(--c-border-subtle)" }}>
@@ -432,34 +426,16 @@ export default function LearningPortal() {
               <div style={{ display: 'grid', gridTemplateRows: isCourseContentOpen ? '1fr' : '0fr', transition: 'grid-template-rows 0.3s ease-out' }}>
                 <div style={{ overflow: 'hidden' }}>
                   <div style={{ position: "relative" }}>
-                {/* The sliding indicator */}
-                {activeLesson &&
-                  lessons.some((l) => l._id === activeLesson._id) && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: `${lessons.findIndex((l) => l._id === activeLesson._id) * 72}px`,
-                        left: 0,
-                        width: "100%",
-                        height: "72px",
-                        background: "rgba(245,158,11,0.1)",
-                        borderLeft: "3px solid var(--c-orange)",
-                        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                        zIndex: 0,
-                      }}
-                    />
-                  )}
 
                 {lessons.map((lesson) => {
                   const isCompleted = completedLessons.includes(lesson._id);
-                  const isActive = activeLesson?._id === lesson._id;
+                  const isCurrent = activeLesson?._id === lesson._id;
 
                   return (
                     <div
                       key={lesson._id}
-                      onClick={() =>
-                        handleSelectLesson(lesson._id, lesson.title)
-                      }
+                      className={`saas-card interactive ${isCurrent ? 'active-lesson' : ''}`}
+                      onClick={() => handleSelectLesson(lesson._id, lesson.title)}
                       style={{
                         height: "72px",
                         boxSizing: "border-box",

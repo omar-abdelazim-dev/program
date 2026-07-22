@@ -1,0 +1,371 @@
+/* ==========================================================================
+   STUDENT LAYOUT & GLOBAL FLAT SYSTEM (Deep Navy Flat Design)
+   ========================================================================== */
+
+:root {
+  --bg-main: #15141E;
+  --bg-surface: #1F1E2C;
+  --text-primary: #FFFFFF;
+  --text-secondary: #808191;
+  --border-solid: #2B2A3D;
+  --radius-card: 20px;
+  --radius-btn: 50px;
+}
+
+/* --------------------------------------------------------------------------
+   Layout Structure
+   -------------------------------------------------------------------------- */
+.student-layout-wrapper {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  background-color: var(--bg-main);
+  overflow: hidden;
+}
+
+/* MAIN AREA */
+.student-main-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.student-content-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 15px 40px 40px 40px;
+}
+
+/* --------------------------------------------------------------------------
+   Sidebar (Icon-Only)
+   -------------------------------------------------------------------------- */
+.student-sidebar {
+  width: 80px;
+  background-color: var(--bg-surface);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 0;
+  border-right: 2px solid var(--bg-main);
+  /* Solid separation instead of translucent border */
+  flex-shrink: 0;
+}
+
+.sidebar-logo {
+  margin-bottom: 40px;
+}
+
+.sidebar-nav-top {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.sidebar-nav-bottom {
+  margin-top: auto;
+  /* Pushes settings to the bottom */
+}
+
+.sidebar-icon-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 12px;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 48px;
+  height: 48px;
+  box-shadow: inset 0 0 0 rgba(0,0,0,0);
+}
+
+.sidebar-icon-btn:hover {
+  color: var(--text-primary);
+  background-color: var(--bg-main);
+  box-shadow: inset 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.sidebar-icon-btn.active {
+  color: #ffffff;
+  background: linear-gradient(135deg, #f97316 0%, #fbbf24 100%);
+}
+
+/* --------------------------------------------------------------------------
+   Header (Floating)
+   -------------------------------------------------------------------------- */
+.student-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 40px;
+  background: transparent;
+  /* No background, merges with main canvas */
+}
+
+.header-left .search-pill {
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-surface);
+  border-radius: var(--radius-card);
+  padding: 10px 20px;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
+  gap: 12px;
+  width: 350px;
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.header-left .search-pill:focus-within {
+  border-color: #f97316;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15), 0 0 0 3px rgba(249, 115, 22, 0.2);
+}
+
+.header-left .search-pill svg {
+  color: var(--text-secondary);
+}
+
+.header-left .search-pill input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  flex: 1;
+  font-size: 0.95rem;
+}
+
+.header-left .search-pill input::placeholder {
+  color: var(--text-secondary);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.utility-icon-btn {
+  background: var(--bg-surface);
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: opacity 0.2s ease;
+  position: relative;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+.utility-icon-btn:hover {
+  opacity: 0.8;
+}
+
+.notification-dot {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  width: 8px;
+  height: 8px;
+  background: #f97316 !important; /* Enforce orange */
+  border-radius: 50%;
+  border: 2px solid var(--bg-surface);
+}
+
+.cart-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background-color: #f97316;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--bg-surface);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* --------------------------------------------------------------------------
+   Profile Dropdown
+   -------------------------------------------------------------------------- */
+.avatar-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+.avatar-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-wrapper {
+  position: relative;
+}
+
+.profile-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background-color: var(--bg-surface);
+  border: 2px solid var(--bg-main);
+  border-radius: 12px;
+  padding: 12px;
+  width: 200px;
+  display: none;
+  flex-direction: column;
+  z-index: 100;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.profile-wrapper:hover .profile-dropdown {
+  display: flex;
+}
+
+.dropdown-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  padding: 0 8px;
+}
+
+.dropdown-divider {
+  border: none;
+  border-top: 2px solid var(--bg-main);
+  margin: 8px 0;
+}
+
+.dropdown-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  text-align: left;
+  font-size: 0.9rem;
+  width: 100%;
+  display: block;
+}
+
+.dropdown-link:hover {
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+}
+
+.logout-link {
+  color: #ff4d4f;
+}
+
+.logout-link:hover {
+  background-color: rgba(255, 77, 79, 0.1);
+}
+
+/* ==========================================================================
+   SOLID SYSTEM CLASSES (Replaces SaaS Glassmorphism)
+   ========================================================================== */
+
+/* Cards */
+.solid-card {
+  background-color: var(--bg-surface);
+  border-radius: var(--radius-card);
+  border: none;
+  padding: 24px;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
+}
+
+.solid-card.interactive:hover {
+  transform: translateY(-2px);
+}
+
+/* Buttons */
+.solid-btn {
+  background: linear-gradient(135deg, #f97316 0%, #fbbf24 100%);
+  color: #ffffff;
+  /* High contrast text */
+  box-shadow: 0 4px 14px rgba(249, 115, 22, 0.4);
+  border: none;
+  border-radius: var(--radius-btn);
+  padding: 12px 24px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.solid-btn:hover {
+  transform: translateY(-1px);
+  opacity: 0.9;
+}
+
+.solid-btn:active {
+  transform: scale(0.85);
+}
+
+/* Inputs */
+.solid-input {
+  background-color: var(--bg-main);
+  border: 2px solid transparent;
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+  box-shadow: inset 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.solid-input:focus {
+  border-color: var(--color-accent);
+}
+
+.solid-input::placeholder {
+  color: var(--text-secondary);
+}
+
+/* Typography */
+.saas-page-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 24px;
+  letter-spacing: -0.5px;
+}
+
+.saas-description {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}

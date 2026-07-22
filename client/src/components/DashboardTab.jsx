@@ -1,10 +1,9 @@
-import notyf from '../utils/notyf';
+import notyf from "../utils/notyf";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
-import ConfirmModal from './ConfirmModal';
-import ReportIssueModal from './ReportIssueModal';
-
+import ConfirmModal from "./ConfirmModal";
+import ReportIssueModal from "./ReportIssueModal";
 
 const ThreeDotMenu = ({ options }) => {
   const [open, setOpen] = useState(false);
@@ -21,7 +20,11 @@ const ThreeDotMenu = ({ options }) => {
   }, []);
 
   return (
-    <div className="menu-container course-menu-container" ref={menuRef} onClick={(e) => e.stopPropagation()}>
+    <div
+      className="menu-container course-menu-container"
+      ref={menuRef}
+      onClick={(e) => e.stopPropagation()}
+    >
       <button
         className="menu-trigger course-menu-trigger"
         onClick={(e) => {
@@ -33,7 +36,7 @@ const ThreeDotMenu = ({ options }) => {
         ⋮
       </button>
       {open && (
-        <div className="dropdown-menu course-dropdown glass-card">
+        <div className="dropdown-menu course-dropdown solid-card">
           {options.map((opt, i) => (
             <button
               key={i}
@@ -53,15 +56,21 @@ const ThreeDotMenu = ({ options }) => {
   );
 };
 
-const InProgressCard = ({ enrollment, onOpen, onViewCourse, openConfirm, openReportModal }) => {
+const InProgressCard = ({
+  enrollment,
+  onOpen,
+  onViewCourse,
+  openConfirm,
+  openReportModal,
+}) => {
   const course = enrollment.course;
   const instructor = course.instructor;
 
   return (
-    <div 
-      className="course-card animate-entrance"
+    <div
+      className="course-card solid-card interactive animate-entrance"
       onClick={onViewCourse}
-      style={{ cursor: "pointer" }}
+      style={{ cursor: "pointer", padding: "16px" }}
     >
       <div className="course-left">
         <div
@@ -69,17 +78,22 @@ const InProgressCard = ({ enrollment, onOpen, onViewCourse, openConfirm, openRep
           style={
             course.thumbnailUrl
               ? { backgroundImage: `url(${course.thumbnailUrl})` }
-              : { background: "linear-gradient(135deg, #3B82F6, #8B5CF6)" }
+              : { background: "var(--bg-main)", boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)" }
           }
         />
         <div className="course-content">
           <h3 className="course-title">{course.title}</h3>
-          <p className="course-instructor">{instructor?.name || "Instructor"}</p>
+          <p className="course-instructor">
+            {instructor?.name || "Instructor"}
+          </p>
           <div className="course-progress">
             <div className="progress-bar-container course-progress-bar">
               <div
                 className="progress-bar course-progress-fill"
-                style={{ width: `${enrollment.progressPercent}%` }}
+                style={{
+                  width: `${enrollment.progressPercent}%`,
+                  background: "linear-gradient(135deg, #f97316 0%, #fbbf24 100%)",
+                }}
               ></div>
             </div>
             <div className="progress-text-row course-progress-meta">
@@ -89,16 +103,22 @@ const InProgressCard = ({ enrollment, onOpen, onViewCourse, openConfirm, openRep
         </div>
       </div>
       <div className="course-right">
-        <div className="lesson-card">
-          <span className="lesson-label">Current Lesson</span>
-          <h4 className="lesson-title">{enrollment.currentLesson?.title || "Up Next"}</h4>
-          <span className="lesson-duration">
-            {enrollment.currentLesson?.duration ? `${enrollment.currentLesson.duration} min` : ""}
-          </span>
+        <div className="stats-grid">
+          <div className="stat-card solid-card">
+            <span className="lesson-label">Current Lesson</span>
+            <h4 className="lesson-title">
+              {enrollment.currentLesson?.title || "Up Next"}
+            </h4>
+            <span className="lesson-duration">
+              {enrollment.currentLesson?.duration
+                ? `${enrollment.currentLesson.duration} min`
+                : ""}
+            </span>
+          </div>
         </div>
         <div className="course-actions">
           <button
-            className="glass-btn primary-action continue-btn"
+            className="solid-btn primary-action continue-btn"
             onClick={(e) => {
               e.stopPropagation();
               onOpen(course._id);
@@ -108,16 +128,23 @@ const InProgressCard = ({ enrollment, onOpen, onViewCourse, openConfirm, openRep
           </button>
           <ThreeDotMenu
             options={[
-              { label: "Notes", action: () => notyf.open({ type: 'info', message: "Notes coming soon" }) },
+              {
+                label: "Notes",
+                action: () =>
+                  notyf.open({ type: "info", message: "Notes coming soon" }),
+              },
               { label: "Report issue", action: () => openReportModal(course) },
-              { label: "Leave course", action: () => openConfirm({
-                  title: "Leave Course",
-                  message: `Are you sure you want to leave ${course.title}? You will lose your progress.`,
-                  onConfirm: () => {
-                    notyf.success("Course removed from your dashboard");
-                    // Here you would typically call an API to leave the course
-                  }
-              }) },
+              {
+                label: "Leave course",
+                action: () =>
+                  openConfirm({
+                    title: "Leave Course",
+                    message: `Are you sure you want to leave ${course.title}? You will lose your progress.`,
+                    onConfirm: () => {
+                      notyf.success("Course removed from your dashboard");
+                    },
+                  }),
+              },
             ]}
           />
         </div>
@@ -126,18 +153,27 @@ const InProgressCard = ({ enrollment, onOpen, onViewCourse, openConfirm, openRep
   );
 };
 
-const CompletedCard = ({ enrollment, onOpen, onViewCourse, openConfirm, openReportModal }) => {
+const CompletedCard = ({
+  enrollment,
+  onOpen,
+  onViewCourse,
+  openConfirm,
+  openReportModal,
+}) => {
   const course = enrollment.course;
   const instructor = course.instructor;
 
   return (
-    <div 
-      className="course-card completed-card animate-entrance"
+    <div
+      className="course-card solid-card completed-card animate-entrance"
       onClick={onViewCourse}
       style={{ cursor: "pointer" }}
     >
       <div className="course-left">
-        <div className="completed-check completion-icon">
+        <div
+          className="completed-check completion-icon"
+          style={{ background: "linear-gradient(135deg, #f97316 0%, #fbbf24 100%)" }}
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="24"
@@ -158,16 +194,21 @@ const CompletedCard = ({ enrollment, onOpen, onViewCourse, openConfirm, openRepo
           className="course-thumbnail course-image"
           style={
             course.thumbnailUrl
-              ? {
-                  backgroundImage: `url(${course.thumbnailUrl})`
-                }
-              : { background: "linear-gradient(135deg, #3B82F6, #8B5CF6)" }
+              ? { backgroundImage: `url(${course.thumbnailUrl})` }
+              : { background: "var(--bg-main)", boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)" }
           }
         />
         <div className="course-content">
           <h3 className="course-title">{course.title}</h3>
-          <p className="course-instructor">{instructor?.name || "Instructor"}</p>
-          <div className="completion-badge">100% Complete</div>
+          <p className="course-instructor">
+            {instructor?.name || "Instructor"}
+          </p>
+          <div
+            className="completion-badge"
+            style={{ color: "var(--color-accent)" }}
+          >
+            100% Complete
+          </div>
         </div>
       </div>
       <div className="course-right">
@@ -178,8 +219,15 @@ const CompletedCard = ({ enrollment, onOpen, onViewCourse, openConfirm, openRepo
                 label: "Download Certificate",
                 action: () => notyf.success("Downloading certificate..."),
               },
-              { label: "Share", action: () => notyf.open({ type: 'info', message: "Share link copied to clipboard" }) },
-              { label: "Report issue", action: () => openReportModal(course) }
+              {
+                label: "Share",
+                action: () =>
+                  notyf.open({
+                    type: "info",
+                    message: "Share link copied to clipboard",
+                  }),
+              },
+              { label: "Report issue", action: () => openReportModal(course) },
             ]}
           />
         </div>
@@ -193,13 +241,12 @@ export default function DashboardTab() {
   const [enrollments, setEnrollments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  
-  // Confirm Modal State
+
   const [confirmState, setConfirmState] = useState({
     isOpen: false,
     title: "",
     message: "",
-    onConfirm: null
+    onConfirm: null,
   });
 
   const openConfirm = (config) => {
@@ -208,38 +255,31 @@ export default function DashboardTab() {
       title: config.title,
       message: config.message,
       onConfirm: () => {
-        if(config.onConfirm) config.onConfirm();
+        if (config.onConfirm) config.onConfirm();
         closeConfirm();
-      }
+      },
     });
   };
 
-  const closeConfirm = () => {
-    setConfirmState(prev => ({ ...prev, isOpen: false }));
-  };
+  const closeConfirm = () =>
+    setConfirmState((prev) => ({ ...prev, isOpen: false }));
 
-  // Report Modal State
   const [reportModalState, setReportModalState] = useState({
     isOpen: false,
-    course: null
+    course: null,
   });
 
-  const openReportModal = (course) => {
+  const openReportModal = (course) =>
     setReportModalState({ isOpen: true, course });
-  };
-
-  const closeReportModal = () => {
+  const closeReportModal = () =>
     setReportModalState({ isOpen: false, course: null });
-  };
 
   const handleReportSubmit = (data) => {
-    // API Call goes here
     console.log("Report submitted:", data);
     notyf.success("Report submitted successfully! Thank you.");
     closeReportModal();
   };
 
-  // Tab state: 'in_progress' or 'completed'
   const [activeSubTab, setActiveSubTab] = useState("in_progress");
   const tabsContainerRef = useRef(null);
   const [tabIndicatorStyle, setTabIndicatorStyle] = useState({
@@ -270,8 +310,9 @@ export default function DashboardTab() {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (tabsContainerRef.current) {
-        const activeBtn =
-          tabsContainerRef.current.querySelector(".dashboard-tab.active");
+        const activeBtn = tabsContainerRef.current.querySelector(
+          ".dashboard-tab.active",
+        );
         if (activeBtn) {
           setTabIndicatorStyle({
             left: activeBtn.offsetLeft,
@@ -285,7 +326,9 @@ export default function DashboardTab() {
   }, [activeSubTab, loading, enrollments]);
 
   if (loading)
-    return <p style={{ color: "var(--c-sub)" }}>Loading your courses...</p>;
+    return (
+      <p style={{ color: "var(--text-secondary)" }}>Loading your courses...</p>
+    );
   if (error) return <p style={{ color: "#ef4444" }}>{error}</p>;
 
   const completedLessonCount = enrollments.reduce(
@@ -298,37 +341,40 @@ export default function DashboardTab() {
   return (
     <>
       <div
-        className="stats-grid dashboard-stats animate-entrance"
+        className="stats-grid animate-entrance"
         style={{ animationDelay: "0.1s" }}
       >
-        <div className="stat-card dashboard-stat-card glass-card">
+        <div className="stat-card dashboard-stat-card solid-card">
           <div className="stat-value dashboard-stat-value">
             {enrollments.length}
           </div>
-          <div className="stat-label dashboard-stat-labell dashboard-stat-label">
+          <div className="stat-label dashboard-stat-label">
             Enrolled Courses
           </div>
         </div>
-        <div className="stat-card dashboard-stat-card glass-card">
+        <div className="stat-card dashboard-stat-card solid-card">
           <div className="stat-value dashboard-stat-value">
             {completedLessonCount}
           </div>
-          <div className="stat-label dashboard-stat-labell dashboard-stat-label">
+          <div className="stat-label dashboard-stat-label">
             Completed Lessons
           </div>
         </div>
-        <div className="stat-card dashboard-stat-card glass-card">
+        <div className="stat-card dashboard-stat-card solid-card">
           <div className="stat-value dashboard-stat-value">
             {completed.length}
           </div>
-          <div className="stat-label dashboard-stat-labell dashboard-stat-label">
+          <div className="stat-label dashboard-stat-label">
             Courses Completed
           </div>
         </div>
       </div>
 
       <div className="dashboard-grid dashboard-layout">
-        <div className="main-column dashboard main dashboard-main" style={{ width: "100%" }}>
+        <div
+          className="main-column dashboard main dashboard-main"
+          style={{ width: "100%" }}
+        >
           <div
             className="course-tabs"
             style={{ position: "relative", marginBottom: "24px" }}
@@ -340,6 +386,7 @@ export default function DashboardTab() {
                 left: `${tabIndicatorStyle.left}px`,
                 width: `${tabIndicatorStyle.width}px`,
                 opacity: tabIndicatorStyle.opacity,
+                background: "linear-gradient(135deg, #f97316 0%, #fbbf24 100%)",
               }}
             />
             <button
@@ -366,11 +413,11 @@ export default function DashboardTab() {
               <>
                 {inProgress.length === 0 ? (
                   <div
-                    className="glass-card"
+                    className="solid-card"
                     style={{
                       padding: "32px",
                       textAlign: "center",
-                      color: "var(--c-sub)",
+                      color: "var(--text-secondary)",
                     }}
                   >
                     <p>
@@ -380,7 +427,7 @@ export default function DashboardTab() {
                     </p>
                     {enrollments.length === 0 && (
                       <button
-                        className="glass-btn"
+                        className="solid-btn"
                         style={{ marginTop: "16px" }}
                         onClick={() => navigate("/student")}
                       >
@@ -395,7 +442,9 @@ export default function DashboardTab() {
                         key={enrollment._id}
                         enrollment={enrollment}
                         onOpen={(courseId) => navigate(`/learn/${courseId}`)}
-                        onViewCourse={() => navigate(`/course/${enrollment.course._id}`)}
+                        onViewCourse={() =>
+                          navigate(`/course/${enrollment.course._id}`)
+                        }
                         openConfirm={openConfirm}
                         openReportModal={openReportModal}
                       />
@@ -409,11 +458,11 @@ export default function DashboardTab() {
               <>
                 {completed.length === 0 ? (
                   <div
-                    className="glass-card"
+                    className="solid-card"
                     style={{
                       padding: "32px",
                       textAlign: "center",
-                      color: "var(--c-sub)",
+                      color: "var(--text-secondary)",
                     }}
                   >
                     <p>You haven't completed any courses yet. Keep learning!</p>
@@ -425,7 +474,9 @@ export default function DashboardTab() {
                         key={enrollment._id}
                         enrollment={enrollment}
                         onOpen={(courseId) => navigate(`/learn/${courseId}`)}
-                        onViewCourse={() => navigate(`/course/${enrollment.course._id}`)}
+                        onViewCourse={() =>
+                          navigate(`/course/${enrollment.course._id}`)
+                        }
                         openConfirm={openConfirm}
                         openReportModal={openReportModal}
                       />
@@ -438,7 +489,7 @@ export default function DashboardTab() {
         </div>
       </div>
 
-      <ConfirmModal 
+      <ConfirmModal
         isOpen={confirmState.isOpen}
         title={confirmState.title}
         message={confirmState.message}

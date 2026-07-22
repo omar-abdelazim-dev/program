@@ -53,8 +53,37 @@
   --c-purple: #8b5cf6;
   --c-pink: #ec4899;
   --c-blue: #3b82f6;
-  --shadow:
-    0 4px 25px rgba(251, 146, 60, 0.2), 0 8px 10px rgba(251, 146, 60, 0.1);
+  --shadow: 0 4px 25px rgba(251, 146, 60, 0.2), 0 8px 10px rgba(251, 146, 60, 0.1);
+}
+
+/* Deep Navy Flat Design Overrides (Student Only) */
+body[data-role="student"] {
+  --bg-main: #15141E;
+  --bg-surface: #1F1E2C;
+  --color-accent: #f97316; /* Program Orange */
+  --text-primary: #FFFFFF;
+
+  --text: #9ca3af;
+  --text-h: var(--text-primary);
+  --bg: var(--bg-main);
+  --border: rgba(255, 255, 255, 0.05);
+  --code-bg: #1f2028;
+  --accent: var(--color-accent);
+  --accent-bg: transparent;
+  --accent-border: var(--color-accent);
+  --social-bg: var(--bg-surface);
+  --c-sub: #9ca3af;
+  --shadow: none;
+}
+
+body[data-role="instructor"] { --color-accent: #FF754C; --accent: #FF754C; }
+body[data-role="admin"], body[data-role="superadmin"] { --color-accent: #6B5DD3; --accent: #6B5DD3; }
+
+body[data-role="student"] *, 
+body[data-role="student"] *::before, 
+body[data-role="student"] *::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 body.light-mode {

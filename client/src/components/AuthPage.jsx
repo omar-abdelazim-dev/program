@@ -13,14 +13,13 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
   const [stepDirection, setStepDirection] = useState('forward');
   
   // Step 1 Fields
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [role, setRole] = useState('student');
-  const [phone, setPhone] = useState('');
-  const [phoneTouched, setPhoneTouched] = useState(false);
   
   // Step 2 Fields
   const [university, setUniversity] = useState('');
@@ -60,26 +59,7 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
   };
   const passStrength = calculateStrength(password);
 
-  // Strips non-digits and normalizes common paste formats (e.g. "+201012345678"
-  // or a local "01012345678") down to the 10 digits that follow the fixed +20 prefix.
-  const normalizePhoneDigits = (raw) => {
-    let digits = raw.replace(/\D/g, '');
-    if (digits.startsWith('20') && digits.length > 10) {
-      digits = digits.slice(2);
-    }
-    if (digits.startsWith('0') && digits.length === 11) {
-      digits = digits.slice(1);
-    }
-    return digits.slice(0, 10);
-  };
 
-  const handlePhoneChange = (raw) => {
-    setPhone(normalizePhoneDigits(raw));
-  };
-
-  const phoneError = phone.length === 0
-    ? 'Phone number is required'
-    : (!/^\d{10}$/.test(phone) ? 'Enter exactly 10 digits after +20 (e.g. +201012345678)' : '');
 
   const PILLS = [
     { id: 'job', label: 'Get a job', icon: <><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></>, color: '#f87171' },
@@ -117,11 +97,7 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
       const maxSteps = role === 'instructor' ? 2 : 3;
       if (registerStep < maxSteps) {
         if (registerStep === 1) {
-          setPhoneTouched(true);
-          if (phoneError) {
-            setAuthError('Please enter a valid Egyptian phone number: +20 followed by exactly 10 digits.');
-            return;
-          }
+
           setIsCreatingAccount(true);
           try {
             await api.post('/auth/check-email', { email });
@@ -140,7 +116,7 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
         setIsCreatingAccount(true);
         try {
           const payload = {
-            name, email, password, role, phone: `+20${phone}`,
+            name: `${firstName} ${lastName}`.trim(), email, password, role,
             university: university === 'Other' ? otherUniversity : university,
             year,
             college,
@@ -216,7 +192,7 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
 
         {/* Right Side: Auth Card */}
         <div className="auth-right">
-          <div className="auth-card glass-card">
+          <div className="auth-card solid-card">
             
             <div className="auth-header">
               <h2>{isLogin ? 'Welcome back' : 'Create your account'}</h2>
@@ -279,28 +255,12 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
                       
                       <div className="input-row">
                         <div className="input-group">
-                          <label>Full Name *</label>
-                          <input type="text" placeholder="Ahmed Al-Rashidi" required={!isLogin} value={name} onChange={(e) => setName(e.target.value)} />
+                          <label>First Name *</label>
+                          <input type="text" placeholder="Ahmed" required={!isLogin} value={firstName} onChange={(e) => setFirstName(e.target.value)} />
                         </div>
                         <div className="input-group">
-                          <label>Phone Number *</label>
-                          <div className={`phone-input-wrapper ${phoneTouched && phoneError ? 'input-error' : ''}`}>
-                            <span className="phone-prefix">+20</span>
-                            <input
-                              type="tel"
-                              inputMode="numeric"
-                              autoComplete="tel-national"
-                              placeholder="1012345678"
-                              required={!isLogin}
-                              maxLength={10}
-                              value={phone}
-                              onChange={(e) => handlePhoneChange(e.target.value)}
-                              onBlur={() => setPhoneTouched(true)}
-                            />
-                          </div>
-                          {phoneTouched && phoneError && (
-                            <div style={{ color: '#ef4444', fontSize: '0.78rem', marginTop: '2px' }}>{phoneError}</div>
-                          )}
+                          <label>Last Name *</label>
+                          <input type="text" placeholder="Al-Rashidi" required={!isLogin} value={lastName} onChange={(e) => setLastName(e.target.value)} />
                         </div>
                       </div>
                     </div>
@@ -506,7 +466,7 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
                 {!isLogin && registerStep > 1 && (
                   <button 
                     type="button" 
-                    className="glass-btn hover-glow auth-back-btn" 
+                    className="solid-btn auth-back-btn" 
                     onClick={() => {
                         setStepDirection('backward');
                         setRegisterStep(registerStep - 1);
@@ -517,7 +477,7 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
                   </button>
                 )}
                 
-                <button type="submit" className="glass-btn auth-submit-btn" disabled={isCreatingAccount}>
+                <button type="submit" className="solid-btn auth-submit-btn" disabled={isCreatingAccount}>
                   {isCreatingAccount ? (
                     <span className="spinner-wrapper">
                       <svg className="spinner" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>

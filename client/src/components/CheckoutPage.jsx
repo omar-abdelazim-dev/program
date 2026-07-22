@@ -121,7 +121,7 @@ export default function CheckoutPage({ cart = [], setCart, setNotifications, isC
         </svg>
         <h2 style={{ fontSize: '2rem', marginBottom: '16px' }}>Your Cart is Empty</h2>
         <p style={{ color: 'var(--c-sub)', marginBottom: '32px' }}>Looks like you haven't added any courses to your cart yet.</p>
-        <Link to="/student" className="glass-btn hover-glow" style={{ padding: '12px 32px', textDecoration: 'none', color: 'var(--text-h)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600', width: 'auto', marginTop: 0 }}>
+        <Link to="/student" className="solid-btn" style={{ padding: '12px 32px', textDecoration: 'none', color: '#fff', background: 'linear-gradient(135deg, #f97316 0%, #fbbf24 100%)', boxShadow: '0 4px 14px rgba(249, 115, 22, 0.4)', borderRadius: '50px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600', width: 'auto', marginTop: 0, transition: 'transform 0.1s ease' }}>
           Explore Courses
         </Link>
       </div>
@@ -132,7 +132,7 @@ export default function CheckoutPage({ cart = [], setCart, setNotifications, isC
     <div className="animate-entrance" style={{ minHeight: '100vh', display: 'flex', flexDirection: window.innerWidth < 768 ? 'column-reverse' : 'row' }}>
       
       {/* Back Button */}
-      <button onClick={() => navigate(-1)} className="glass-card hover-glow" style={{ position: 'absolute', top: '24px', left: '24px', zIndex: 10, display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', width: 'auto', marginTop: 0, cursor: 'pointer', color: 'var(--text-h)' }}>
+      <button onClick={() => navigate(-1)} className="saas-btn-secondary" style={{ position: 'absolute', top: '24px', left: '24px', zIndex: 10, display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', width: 'auto', marginTop: 0, cursor: 'pointer', color: 'var(--text-h)', border: 'none' }}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
         Back
       </button>
@@ -166,11 +166,11 @@ export default function CheckoutPage({ cart = [], setCart, setNotifications, isC
 
             {/* Express Checkout */}
             <div style={{ display: 'flex', gap: '16px', marginBottom: '32px' }}>
-              <button className="glass-card hover-glow" style={{ flex: 1, padding: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '1rem', fontWeight: '600', cursor: 'pointer', color: 'var(--text-h)' }}>
+              <button className="saas-btn-secondary" style={{ flex: 1, padding: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '1rem', fontWeight: '600', cursor: 'pointer', color: 'var(--text-h)' }}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
                 Instapay
               </button>
-              <button className="glass-card hover-glow" style={{ flex: 1, padding: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '1rem', fontWeight: '600', cursor: 'pointer', color: 'var(--text-h)' }}>
+              <button className="saas-btn-secondary" style={{ flex: 1, padding: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '1rem', fontWeight: '600', cursor: 'pointer', color: 'var(--text-h)' }}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"></path><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"></path><path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z"></path></svg>
                 Mobile Wallet
               </button>
@@ -183,7 +183,7 @@ export default function CheckoutPage({ cart = [], setCart, setNotifications, isC
             </div>
 
             {/* Payment Method Radio List */}
-            <div className="glass-card" style={{ padding: '0', overflow: 'hidden', marginBottom: '32px' }}>
+            <div className="saas-card" style={{ padding: '0', overflow: 'hidden', marginBottom: '32px' }}>
               {paymentOptions.map((option, index) => (
                 <label 
                   key={option.id} 
@@ -219,7 +219,7 @@ export default function CheckoutPage({ cart = [], setCart, setNotifications, isC
             <div style={{ flex: 1 }}></div>
 
             {/* Personal Information */}
-            <div className="glass-card" style={{ padding: '20px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div className="saas-card" style={{ padding: '20px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '16px' }}>
               <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--c-purple), var(--c-yellow))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
               </div>
@@ -236,7 +236,7 @@ export default function CheckoutPage({ cart = [], setCart, setNotifications, isC
             <button 
               onClick={handleCheckout} 
               disabled={isProcessing} 
-              className="glass-btn auth-submit-btn"
+              className="saas-btn-primary"
               style={{ 
                 width: '100%', 
                 padding: '16px', 
@@ -263,7 +263,7 @@ export default function CheckoutPage({ cart = [], setCart, setNotifications, isC
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginBottom: '40px' }}>
               {checkoutItems.map((item) => (
-                <div key={item._id || item.id} className="glass-card" style={{ display: 'flex', gap: '16px', padding: '16px' }}>
+                <div key={item._id || item.id} className="saas-card" style={{ display: 'flex', gap: '16px', padding: '16px', marginBottom: '16px' }}>
                   <img 
                     src={item.image || "https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=600&auto=format&fit=crop"} 
                     alt={item.title} 

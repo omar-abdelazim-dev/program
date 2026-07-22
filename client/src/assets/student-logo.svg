@@ -1,4 +1,4 @@
-<svg viewBox="0 0 520 120" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <!-- Premium Theme Gradient -->
     <linearGradient id="themeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -23,32 +23,6 @@
       C 15 85, 30 75, 50 75 
       C 85 75, 85 25, 60 25 
       L 15 25 
-      Z" 
-      fill="url(#themeGrad)"
-    />
-    
-    <!-- Bold White Text 'ROGRA' -->
-    <text 
-      x="95" 
-      y="76" 
-      font-family="'Arial Rounded MT Bold', 'Arial Black', 'Segoe UI', sans-serif" 
-      font-weight="900" 
-      font-size="78" 
-      fill="#ffffff" 
-      letter-spacing="4">ROGRA</text>
-    
-    <!-- Custom Ribbon 'M' -->
-    <path d="
-      M 390 75 
-      C 400 75, 410 15, 425 15 
-      C 435 15, 440 45, 445 45 
-      C 450 45, 455 15, 465 15 
-      C 480 15, 490 75, 500 75 
-      L 485 75 
-      C 478 75, 470 30, 465 30 
-      C 460 30, 455 60, 445 60 
-      C 435 60, 430 30, 425 30 
-      C 420 30, 412 75, 405 75 
       Z" 
       fill="url(#themeGrad)"
     />

@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logoDark from '../assets/logo-dark.png';
 import logoLight from '../assets/logo-light.png';
 
 export default function CourseCard({ course, idx = 0, isLightMode = false }) {
   const navigate = useNavigate();
+  const [imgError, setImgError] = useState(false);
 
   const {
     _id,
@@ -41,8 +43,8 @@ export default function CourseCard({ course, idx = 0, isLightMode = false }) {
 
   return (
     <article
-      className="cc-card glass-card hover-glow animate-entrance"
-      style={{ animationDelay: `${0.05 + idx * 0.06}s` }}
+      className="cc-card saas-card interactive animate-entrance"
+      style={{ animationDelay: `${0.05 + idx * 0.06}s`, overflow: 'hidden' }}
       onClick={() => navigate(`/course/${_id}`)}
       role="button"
       tabIndex={0}
@@ -51,13 +53,14 @@ export default function CourseCard({ course, idx = 0, isLightMode = false }) {
     >
       {/* 1. Thumbnail */}
       <div className="cc-thumb-wrap">
-        {thumbnailUrl ? (
+        {thumbnailUrl && !imgError ? (
           <img
             className="cc-thumb"
             src={thumbnailUrl}
             alt={title}
             loading="lazy"
             decoding="async"
+            onError={() => setImgError(true)}
           />
         ) : (
           <div className="cc-thumb cc-thumb--fallback" aria-hidden="true" />

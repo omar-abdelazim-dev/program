@@ -12,22 +12,34 @@ export default function SettingsPage({ user, setUser, isLightMode, toggleTheme, 
   const [activeSection, setActiveSection] = useState('profile');
 
   return (
-    <div className="settings-page">
-      <h1>Settings</h1>
-      <div className="settings-layout">
-        <nav className="settings-nav glass-card">
+    <div className="settings-page animate-entrance" style={{ padding: '40px 24px', maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '32px' }}>
+      <h1 style={{ fontSize: '2.5rem', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>Settings</h1>
+      <div className="settings-layout" style={{ display: 'grid', gridTemplateColumns: '250px 1fr', gap: '40px', alignItems: 'start' }}>
+        <nav className="settings-nav solid-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '8px', position: 'sticky', top: '24px' }}>
           {SECTIONS.map((s) => (
             <button
               key={s.id}
               type="button"
               className={`settings-nav-item ${activeSection === s.id ? 'active' : ''}`}
+              style={{
+                textAlign: 'left',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                border: 'none',
+                background: activeSection === s.id ? 'var(--bg-main)' : 'transparent',
+                color: activeSection === s.id ? 'var(--color-accent)' : 'var(--text-secondary)',
+                fontWeight: activeSection === s.id ? '700' : '500',
+                boxShadow: activeSection === s.id ? 'inset 0 4px 12px rgba(0,0,0,0.5)' : 'inset 0 0 0 rgba(0,0,0,0)',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
               onClick={() => setActiveSection(s.id)}
             >
               {s.label}
             </button>
           ))}
         </nav>
-        <div className="settings-panel glass-card">
+        <div className="settings-panel solid-card" style={{ padding: '40px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
           {activeSection === 'profile' && <ProfileSection user={user} setUser={setUser} />}
           {activeSection === 'password' && <PasswordSection />}
           {activeSection === 'appearance' && <AppearanceSection isLightMode={isLightMode} toggleTheme={toggleTheme} />}
@@ -90,24 +102,24 @@ function ProfileSection({ user, setUser }) {
   };
 
   return (
-    <form className="settings-section" onSubmit={handleSave}>
-      <h2>Profile</h2>
-      {error && <div className="settings-message settings-message-error">{error}</div>}
-      {success && <div className="settings-message settings-message-success">{success}</div>}
+    <form className="settings-section" onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <h2 style={{ fontSize: '1.8rem', fontWeight: '800', margin: 0 }}>Profile</h2>
+      {error && <div className="settings-message settings-message-error" style={{ color: '#ef4444', padding: '12px', background: 'rgba(239,68,68,0.1)', borderRadius: '8px' }}>{error}</div>}
+      {success && <div className="settings-message settings-message-success" style={{ color: '#10B981', padding: '12px', background: 'rgba(16,185,129,0.1)', borderRadius: '8px' }}>{success}</div>}
 
-      <div className="avatar-upload">
-        <div className="avatar-preview">
+      <div className="avatar-upload" style={{ display: 'flex', alignItems: 'center', gap: '24px', marginBottom: '16px' }}>
+        <div className="avatar-preview" style={{ width: '80px', height: '80px', borderRadius: '50%', overflow: 'hidden', background: 'var(--bg-main)', border: '2px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {avatarPreview ? (
-            <img src={avatarPreview} alt="Avatar preview" />
+            <img src={avatarPreview} alt="Avatar preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="var(--text-secondary)" strokeWidth="1.5">
               <circle cx="12" cy="8" r="4"></circle>
               <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"></path>
             </svg>
           )}
         </div>
         <div>
-          <button type="button" className="glass-btn" onClick={() => fileInputRef.current?.click()}>
+          <button type="button" className="solid-btn" style={{ background: 'var(--bg-main)', border: '2px solid transparent', color: 'var(--text-primary)', boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5)' }} onClick={() => fileInputRef.current?.click()}>
             Change picture
           </button>
           <input
@@ -120,17 +132,17 @@ function ProfileSection({ user, setUser }) {
         </div>
       </div>
 
-      <div className="input-group">
-        <label>Name</label>
-        <input type="text" value={name} onChange={(e) => setName(e.target.value)} required />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Name</label>
+        <input type="text" className="solid-input" value={name} onChange={(e) => setName(e.target.value)} required />
       </div>
 
-      <div className="input-group">
-        <label>Email</label>
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Email</label>
+        <input type="email" className="solid-input" value={email} onChange={(e) => setEmail(e.target.value)} required />
       </div>
 
-      <button type="submit" className="glass-btn" disabled={saving}>
+      <button type="submit" className="solid-btn" disabled={saving} style={{ marginTop: '16px', alignSelf: 'flex-start', width: 'auto', padding: '12px 32px' }}>
         {saving ? 'Saving...' : 'Save changes'}
       </button>
     </form>
@@ -174,25 +186,25 @@ function PasswordSection() {
   };
 
   return (
-    <form className="settings-section" onSubmit={handleSubmit}>
-      <h2>Change Password</h2>
-      {error && <div className="settings-message settings-message-error">{error}</div>}
-      {success && <div className="settings-message settings-message-success">{success}</div>}
+    <form className="settings-section" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <h2 style={{ fontSize: '1.8rem', fontWeight: '800', margin: 0 }}>Change Password</h2>
+      {error && <div className="settings-message settings-message-error" style={{ color: '#ef4444', padding: '12px', background: 'rgba(239,68,68,0.1)', borderRadius: '8px' }}>{error}</div>}
+      {success && <div className="settings-message settings-message-success" style={{ color: '#10B981', padding: '12px', background: 'rgba(16,185,129,0.1)', borderRadius: '8px' }}>{success}</div>}
 
-      <div className="input-group">
-        <label>Current Password</label>
-        <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Current Password</label>
+        <input type="password" className="solid-input" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required />
       </div>
-      <div className="input-group">
-        <label>New Password</label>
-        <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required minLength={6} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>New Password</label>
+        <input type="password" className="solid-input" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required minLength={6} />
       </div>
-      <div className="input-group">
-        <label>Confirm New Password</label>
-        <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={6} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Confirm New Password</label>
+        <input type="password" className="solid-input" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={6} />
       </div>
 
-      <button type="submit" className="glass-btn" disabled={saving}>
+      <button type="submit" className="solid-btn" disabled={saving} style={{ marginTop: '16px', alignSelf: 'flex-start', width: 'auto', padding: '12px 32px' }}>
         {saving ? 'Updating...' : 'Update password'}
       </button>
     </form>
@@ -201,14 +213,21 @@ function PasswordSection() {
 
 function AppearanceSection({ isLightMode, toggleTheme }) {
   return (
-    <div className="settings-section">
-      <h2>Appearance</h2>
-      <p className="settings-section-desc">Choose how Program looks on this device.</p>
+    <div className="settings-section" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <h2 style={{ fontSize: '1.8rem', fontWeight: '800', margin: 0 }}>Appearance</h2>
+      <p className="settings-section-desc" style={{ color: 'var(--text-secondary)' }}>Choose how Program looks on this device.</p>
 
-      <div className="appearance-options">
+      <div className="appearance-options" style={{ display: 'flex', gap: '16px' }}>
         <button
           type="button"
-          className={`appearance-option ${!isLightMode ? 'active' : ''}`}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+            flex: 1, padding: '16px', borderRadius: '12px', border: !isLightMode ? '2px solid var(--color-accent)' : '2px solid var(--border)',
+            background: !isLightMode ? 'var(--bg-main)' : 'transparent',
+            color: !isLightMode ? 'var(--color-accent)' : 'var(--text-secondary)',
+            fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s ease',
+            boxShadow: !isLightMode ? 'inset 0 4px 12px rgba(0,0,0,0.5)' : 'inset 0 0 0 rgba(0,0,0,0)'
+          }}
           onClick={() => { if (isLightMode) toggleTheme(); }}
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
@@ -218,7 +237,14 @@ function AppearanceSection({ isLightMode, toggleTheme }) {
         </button>
         <button
           type="button"
-          className={`appearance-option ${isLightMode ? 'active' : ''}`}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+            flex: 1, padding: '16px', borderRadius: '12px', border: isLightMode ? '2px solid var(--color-accent)' : '2px solid var(--border)',
+            background: isLightMode ? 'var(--bg-main)' : 'transparent',
+            color: isLightMode ? 'var(--color-accent)' : 'var(--text-secondary)',
+            fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s ease',
+            boxShadow: isLightMode ? 'inset 0 4px 12px rgba(0,0,0,0.5)' : 'inset 0 0 0 rgba(0,0,0,0)'
+          }}
           onClick={() => { if (!isLightMode) toggleTheme(); }}
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
@@ -241,10 +267,10 @@ function AppearanceSection({ isLightMode, toggleTheme }) {
 
 function AccountSection({ onLogout }) {
   return (
-    <div className="settings-section">
-      <h2>Account</h2>
-      <p className="settings-section-desc">Sign out of Program on this device.</p>
-      <button type="button" className="glass-btn logout-btn" onClick={onLogout}>
+    <div className="settings-section" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <h2 style={{ fontSize: '1.8rem', fontWeight: '800', margin: 0 }}>Account</h2>
+      <p className="settings-section-desc" style={{ color: 'var(--text-secondary)' }}>Sign out of Program on this device.</p>
+      <button type="button" className="solid-btn" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid #ef4444', boxShadow: 'none', alignSelf: 'flex-start', padding: '12px 32px' }} onClick={onLogout}>
         Log out
       </button>
     </div>

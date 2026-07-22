@@ -22,6 +22,16 @@
         10px 0 25px rgba(250, 204, 21, 0.3);
 }
 
+:root {
+    --bg-main: #15141E;
+    --bg-surface: #1F1E2C;
+    --text-primary: #FFFFFF;
+    --text-secondary: #808191;
+    --border-solid: #2B2A3D;
+    --radius-card: 20px;
+    --radius-btn: 50px;
+}
+
 body.light-mode {
     --c-border: 1px solid rgba(0, 0, 0, 0.1);
     --c-border-top: 1px solid rgba(0, 0, 0, 0.15);
@@ -197,12 +207,6 @@ body.light-mode .continue-card {
     flex-direction: column;
     gap: 8px;
     transition: all 0.3s;
-}
-
-.stat-card:hover {
-    transform: translateY(-5px);
-    border-color: var(--role-color);
-    box-shadow: var(--shadow);
 }
 
 /* Revenue-specific hover: use green accent to match value color */
@@ -684,7 +688,6 @@ box-shadow: var(--shadow);
 /* --- Layout Grid --- */
 .dashboard-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr;
     gap: 32px;
     margin-top: 32px;
 }
@@ -707,7 +710,6 @@ box-shadow: var(--shadow);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.1));
     gap: 32px;
 }
 
@@ -717,6 +719,8 @@ box-shadow: var(--shadow);
     white-space: nowrap;
     position: relative;
     z-index: 5;
+    background-color: var(--bg-main);
+    color: white;
 }
 
 .hero-content {
@@ -774,7 +778,7 @@ box-shadow: var(--shadow);
 }
 
 .course-card:hover {
-    transform: translateY(-4px);
+    transform: translateY(-5px);
 }
 
 .view-all {
@@ -834,6 +838,8 @@ box-shadow: var(--shadow);
     cursor: pointer;
     transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
     height: 100%;
+    background-color: var(--bg-surface);
+    padding: 0;
     /* equal heights in grid row */
 }
 
@@ -851,7 +857,7 @@ box-shadow: var(--shadow);
     width: 100%;
     aspect-ratio: 16 / 9;
     overflow: hidden;
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.18), rgba(59, 130, 246, 0.18));
+    background-color: var(--bg-main);
     flex-shrink: 0;
 }
 
@@ -863,14 +869,9 @@ box-shadow: var(--shadow);
     transition: transform 0.4s ease;
 }
 
-.cc-card:hover .cc-thumb {
-}
-
 .cc-thumb--fallback {
-    background: linear-gradient(135deg,
-            rgba(139, 92, 246, 0.25) 0%,
-            rgba(59, 130, 246, 0.2) 50%,
-            rgba(251, 147, 60, 0.15) 100%);
+    box-shadow: inset 0 4px 12px rgba(0,0,0,0.5);
+    background-color: var(--bg-main);
 }
 
 /* â”€â”€ Card body â”€â”€ */
@@ -1039,20 +1040,14 @@ box-shadow: var(--shadow);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 4px 10px;
+    padding: 5px 14px;
     border-radius: 20px;
     flex-shrink: 0;
 
-    /* glassy dark box with orange accent */
-    background: rgba(251, 147, 60, 0.08);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(251, 147, 60, 0.22);
-    border-top-color: rgba(251, 147, 60, 0.38);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.08),
-        0 4px 12px rgba(251, 147, 60, 0.12);
-    transition: background 0.25s ease, box-shadow 0.25s ease;
+    /* Flat dark box */
+    background: var(--bg-main);
+    border: 1px solid var(--border-solid);
+    transition: background 0.25s ease, border-color 0.25s ease;
 }
 
 .cc-logo-box-img {
@@ -1060,15 +1055,9 @@ box-shadow: var(--shadow);
     width: auto;
     object-fit: contain;
     display: block;
-    filter: drop-shadow(0 0 3px rgba(251, 147, 60, 0.45));
 }
 
-.cc-card:hover .cc-logo-box {
-    background: rgba(251, 147, 60, 0.14);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.12),
-        0 6px 16px rgba(251, 147, 60, 0.22);
-}
+/* Hover effect removed per request */
 
 /* light mode */
 body.light-mode .cc-footer {
@@ -1087,25 +1076,17 @@ body.light-mode .cc-logo-box {
     padding: 5px 14px;
     border-radius: 20px;
 
-    /* faded purple glass */
-    background: linear-gradient(135deg,
-            rgba(139, 92, 246, 0.18) 0%,
-            rgba(109, 40, 217, 0.10) 100%);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(139, 92, 246, 0.30);
-    border-top-color: rgba(139, 92, 246, 0.45);
+    /* Flat dark box */
+    background: var(--bg-main);
+    border: 1px solid var(--border-solid);
 
-    color: #c4b5fd;
+    color: var(--text-secondary);
     /* soft lavender text */
     font-size: 0.72rem;
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.08),
-        0 4px 12px rgba(139, 92, 246, 0.15);
-    transition: background 0.25s ease, box-shadow 0.25s ease;
+    transition: border-color 0.25s ease, color 0.25s ease;
 }
 
 /* Program logo inside the category pill */
@@ -1115,7 +1096,6 @@ body.light-mode .cc-logo-box {
     object-fit: contain;
     flex-shrink: 0;
     opacity: 0.9;
-    filter: drop-shadow(0 0 3px rgba(251, 147, 60, 0.5));
 }
 
 /* Program logo badge overlay on thumbnail bottom-left */
@@ -1151,15 +1131,6 @@ body.light-mode .cc-logo-box {
     transform: translateY(-1px);
 }
 
-
-.cc-card:hover .cc-category-tag {
-    background: linear-gradient(135deg,
-            rgba(139, 92, 246, 0.28) 0%,
-            rgba(109, 40, 217, 0.18) 100%);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.12),
-        0 6px 18px rgba(139, 92, 246, 0.25);
-}
 
 /* light mode variant */
 body.light-mode .cc-footer {
@@ -1376,8 +1347,6 @@ body.light-mode .cc-thumb--fallback {
 .instructor-card:hover {
     transform: translateY(-8px);
     box-shadow: var(--shadow);
-    border-color: rgba(255, 255, 255, 0.3);
-    background: rgba(255, 255, 255, 0.06);
 }
 
 /* 3. Bouncy Click Feedback for Buttons */
@@ -1431,7 +1400,7 @@ body.light-mode .cc-thumb--fallback {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid transparent;
     color: var(--c-light);
-    border-radius: 999px;
+    border-radius: var(--radius-btn);
     font-weight: 600;
     cursor: pointer;
     white-space: nowrap;
@@ -1447,8 +1416,6 @@ body.light-mode .cc-thumb--fallback {
 }
 
 .filter-btn:hover {
-    background: rgba(255, 255, 255, 0.1) !important;
-    border-color: rgba(255, 255, 255, 0.16) !important;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
@@ -1626,6 +1593,11 @@ body.light-mode .progress-bar-container {
     align-items: center;
     padding: 20px;
     min-height: 100vh;
+    background: var(--bg-main);
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    overflow-y: auto;
 }
 
 /* New Split Grid Layout */
@@ -1687,28 +1659,25 @@ body.light-mode .progress-bar-container {
 .role-card {
     flex: 1;
     padding: 0.75rem;
-    border: var(--c-border);
-    border-top: var(--c-border-top);
-    border-left: var(--c-border-left);
+    border: 2px solid transparent;
     border-radius: 12px;
     cursor: pointer;
     text-align: center;
-    background: var(--c-input-bg);
-    backdrop-filter: blur(10px);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    color: var(--c-sub);
+    background: var(--bg-main);
+    transition: all 0.2s ease, box-shadow 0.2s ease;
+    color: var(--text-secondary);
+    box-shadow: inset 0 0 0 rgba(0,0,0,0);
 }
 
 .role-card:hover {
-    background: var(--c-bg-hover);
-    transform: translateY(-2px);
+    color: var(--text-primary);
 }
 
 .role-card.selected {
-    border: 1px solid var(--c-orange);
-    background: rgba(251, 146, 60, 0.1);
+    border-color: var(--c-orange);
+    background: var(--bg-main);
     color: var(--c-orange);
-    box-shadow: 0 4px 15px rgba(251, 146, 60, 0.15);
+    box-shadow: inset 0 4px 12px rgba(0,0,0,0.5);
 }
 
 .role-card svg {
@@ -1750,15 +1719,14 @@ body.light-mode .progress-bar-container {
 .auth-tabs {
     display: flex;
     width: 100%;
-    background: var(--c-input-bg);
+    background-color: var(--bg-main);
     border-radius: 12px;
     padding: 4px;
     margin-bottom: 10px;
     position: relative;
     z-index: 1;
-    border: var(--c-border);
-    border-top: var(--c-border-top);
-    border-left: var(--c-border-left);
+    border: 2px solid transparent;
+    box-shadow: inset 0 4px 12px rgba(0,0,0,0.5);
 }
 
 .tab-slider {
@@ -1767,9 +1735,10 @@ body.light-mode .progress-bar-container {
     bottom: 4px;
     left: 4px;
     width: calc(50% - 4px);
-    background: linear-gradient(90deg, #F5A623, #FFD54A);
+    background: var(--bg-surface);
+    border: 2px solid var(--color-accent);
     border-radius: 8px;
-    box-shadow: var(--shadow);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: -1;
 }
@@ -1792,7 +1761,7 @@ body.light-mode .progress-bar-container {
 }
 
 .auth-tab.active {
-    color: var(--text-h);
+    color: var(--c-orange);
 }
 
 /* Step Indicator */
@@ -1899,7 +1868,8 @@ body.light-mode .step:not(:last-child)::after {
     font-weight: 700;
     text-transform: uppercase;
     color: var(--c-sub);
-    margin-left: 10px;
+    text-align: center;
+    margin: 0;
 }
 
 .step.completed .step-label {
@@ -1907,7 +1877,10 @@ body.light-mode .step:not(:last-child)::after {
 }
 
 .step.active .step-label {
-    color: var(--c-orange);
+    background: linear-gradient(135deg, #f97316 0%, #fbbf24 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 800;
     transition: all 0.3s;
 }
 
@@ -2102,24 +2075,24 @@ body.light-mode .strength-bar.strong {
     gap: 8px;
     padding: 8px 16px;
     background: transparent;
-    border: var(--c-border);
-    border-top: var(--c-border-top);
-    border-left: var(--c-border-left);
+    border: 2px solid transparent;
     border-radius: 20px;
-    color: var(--c-light);
+    color: var(--text-secondary);
     font-size: 0.9rem;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: inset 0 0 0 rgba(0,0,0,0);
 }
 
 .goal-pill:hover {
-    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
 }
 
 .goal-pill.selected {
     border-color: var(--c-orange);
-    background: rgba(251, 146, 60, 0.1);
-    box-shadow: var(--shadow);
+    background: var(--bg-main);
+    color: var(--c-orange);
+    box-shadow: inset 0 4px 12px rgba(0,0,0,0.5);
 }
 
 .smart-textarea-wrapper {
@@ -2446,34 +2419,33 @@ body.light-mode .custom-select-value.placeholder {
 }
 
 .input-group label {
-    font-size: 0.75rem;
-    font-weight: 700;
+    font-size: 0.85rem;
+    font-weight: 600;
     text-transform: uppercase;
-    color: var(--c-sub);
+    letter-spacing: 1px;
+    color: var(--text-secondary);
 }
 
 .input-group input,
 .input-group textarea,
 .input-group select {
     width: 100%;
-    padding: 10px 14px;
-    background: var(--c-input-bg);
-    border: var(--c-border);
-    border-top: var(--c-border-top);
-    border-left: var(--c-border-left);
+    padding: 12px 16px;
+    background-color: var(--bg-main);
+    border: 2px solid transparent;
     border-radius: 12px;
-    color: var(--text-h);
+    color: var(--text-primary);
     font-size: 0.95rem;
     box-sizing: border-box;
-    transition: all 0.3s;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: inset 0 4px 12px rgba(0,0,0,0.5);
+    outline: none;
 }
 
 .input-group input:focus,
 .input-group textarea:focus,
 .input-group select:focus {
     border-color: var(--c-orange);
-    background: var(--code-bg);
-    box-shadow: var(--shadow);
 }
 
 /* File Input Button Styling */
@@ -2510,10 +2482,16 @@ body.light-mode .custom-select-value.placeholder {
 .forgot-password {
     text-align: right;
     font-size: 0.8rem;
-    color: var(--c-orange);
+    background: linear-gradient(135deg, #f97316 0%, #fbbf24 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
     text-decoration: none;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
+}
+
+input[type="checkbox"] {
+    accent-color: var(--c-orange);
 }
 
 .forgot-password:hover {
@@ -2555,7 +2533,8 @@ body.light-mode .custom-select-value.placeholder {
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-.auth-submit-btn:active, .nav-icon-btn-auth:active {
+.auth-submit-btn:active,
+.nav-icon-btn-auth:active {
     transform: scale(0.95);
     box-shadow: 0 2px 10px rgba(245, 166, 35, 0.15);
 }
@@ -2698,14 +2677,12 @@ body.light-mode .changeRole {
    compositing a 50%-opaque near-black over the light background). */
 body:not(.light-mode) .glass-card,
 body:not(.light-mode) .dash-card,
-body:not(.light-mode) .stat-card,
 body:not(.light-mode) .course-card,
 body:not(.light-mode) .admin-card,
 body:not(.light-mode) .table-card,
 body:not(.light-mode) .analytics-card,
 body:not(.light-mode) .cc-card {
     border-radius: 24px !important;
-    background: rgba(15, 17, 23, 0.5) !important;
     backdrop-filter: blur(20px) !important;
     -webkit-backdrop-filter: blur(20px) !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -2758,16 +2735,12 @@ body:not(.light-mode) .cc-card {
 }
 
 /* Master Universal Interaction Styling (Applied ONLY to Interactive Elements) */
-.course-card:hover,
-.cc-card:hover,
 a.glass-card:hover,
 button.glass-card:hover,
 a.dash-card:hover,
 button.dash-card:hover,
 a.admin-card:hover,
 button.admin-card:hover,
-.stat-card:hover,
-.dashboard-stat-card:hover,
 .analytics-card:hover {
     transform: translateY(-4px) !important;
     border-color: var(--card-accent, var(--role-color, var(--accent, #F5A623))) !important;
@@ -2775,16 +2748,12 @@ button.admin-card:hover,
     z-index: 10 !important;
 }
 
-body:not(.light-mode) .course-card:hover,
-body:not(.light-mode) .cc-card:hover,
 body:not(.light-mode) a.glass-card:hover,
 body:not(.light-mode) button.glass-card:hover,
 body:not(.light-mode) a.dash-card:hover,
 body:not(.light-mode) button.dash-card:hover,
 body:not(.light-mode) a.admin-card:hover,
 body:not(.light-mode) button.admin-card:hover,
-body:not(.light-mode) .stat-card:hover,
-body:not(.light-mode) .dashboard-stat-card:hover,
 body:not(.light-mode) .analytics-card:hover {
     background: rgba(25, 27, 33, 0.6) !important;
 }
@@ -2851,7 +2820,8 @@ body.light-mode .sys-btn-danger {
     color: #34D399 !important;
     border-radius: 999px !important;
     font-weight: 700 !important;
-    padding: 8px 16px !important; /* using 8px 16px to match what they had in admin portal inline styles */
+    padding: 8px 16px !important;
+    /* using 8px 16px to match what they had in admin portal inline styles */
     transition: all 0.3s ease !important;
     cursor: pointer;
 }
@@ -2983,7 +2953,7 @@ label,
 .course-info-card.glass-card:hover {
     transform: none !important;
     box-shadow: none !important;
-    border-color: rgba(255,255,255,0.05) !important;
+    border-color: rgba(255, 255, 255, 0.05) !important;
 }
 
 /* --- Global Light Mode Container Overrides --- */
@@ -3029,29 +2999,36 @@ body.light-mode .admin-sidebar {
     background: rgba(255, 255, 255, 0.7);
     border-right: 1px solid rgba(0, 0, 0, 0.1);
 }
+
 body.light-mode .admin-sidebar-group-title {
     background: rgba(0, 0, 0, 0.03);
     color: var(--c-sub);
 }
+
 body.light-mode .admin-sidebar-group-icon {
     background: rgba(0, 0, 0, 0.05);
 }
+
 body.light-mode .admin-sidebar-tab {
     color: var(--c-sub);
 }
+
 body.light-mode .admin-sidebar-tab:hover {
     color: var(--text-h) !important;
     background: linear-gradient(90deg, rgba(0, 0, 0, 0.04) 0%, transparent 100%) !important;
 }
+
 body.light-mode .admin-sidebar-tab.active {
     color: var(--text-h) !important;
     /* The active gradient will use --accent-glow, which adapts to light mode automatically */
     background: linear-gradient(90deg, var(--accent-glow) 0%, transparent 100%) !important;
 }
+
 body.light-mode .admin-sidebar-collapse-btn {
     background: rgba(0, 0, 0, 0.05);
     border-color: rgba(0, 0, 0, 0.1);
 }
+
 body.light-mode .admin-sidebar-collapse-btn:hover {
     background: rgba(0, 0, 0, 0.1);
 }
@@ -3062,29 +3039,30 @@ body.light-mode .admin-sidebar-collapse-btn:hover {
 
 /* ── Skeleton shimmer ──────────────────────────────────────────────────────── */
 @keyframes skeletonShimmer {
-    0%   { background-position: -200% 0; }
-    100% { background-position:  200% 0; }
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
 }
 
 .skeleton-pulse {
-    background: linear-gradient(
-        90deg,
-        rgba(255, 255, 255, 0.04) 25%,
-        rgba(255, 255, 255, 0.10) 50%,
-        rgba(255, 255, 255, 0.04) 75%
-    );
+    background: linear-gradient(90deg,
+            rgba(255, 255, 255, 0.04) 25%,
+            rgba(255, 255, 255, 0.10) 50%,
+            rgba(255, 255, 255, 0.04) 75%);
     background-size: 200% 100%;
     animation: skeletonShimmer 1.6s ease-in-out infinite;
     display: block;
 }
 
 body.light-mode .skeleton-pulse {
-    background: linear-gradient(
-        90deg,
-        rgba(0, 0, 0, 0.04) 25%,
-        rgba(0, 0, 0, 0.10) 50%,
-        rgba(0, 0, 0, 0.04) 75%
-    );
+    background: linear-gradient(90deg,
+            rgba(0, 0, 0, 0.04) 25%,
+            rgba(0, 0, 0, 0.10) 50%,
+            rgba(0, 0, 0, 0.04) 75%);
     background-size: 200% 100%;
     animation: skeletonShimmer 1.6s ease-in-out infinite;
 }
