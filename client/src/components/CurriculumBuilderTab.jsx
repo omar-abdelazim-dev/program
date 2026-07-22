@@ -2,7 +2,7 @@ import notyf from '../utils/notyf';
 import React, { useState } from 'react';
 
 
-export default function CurriculumBuilderTab({ courses = [], lessonsByCourse = {}, onOpenAddLesson }) {
+export default function CurriculumBuilderTab({ courses = [], lessonsByCourse = {}, onOpenAddLesson, onEditCourse, onDeleteCourse }) {
   const [selectedCourseId, setSelectedCourseId] = useState(null);
 
   const selectedCourse = courses.find(c => c._id === selectedCourseId);
@@ -14,10 +14,10 @@ export default function CurriculumBuilderTab({ courses = [], lessonsByCourse = {
 
   return (
     <div data-role="instructor">
-      <div className="glass-card" style={{ display: 'flex', minHeight: '600px', overflow: 'hidden', padding: 0 }}>
+      <div style={{ display: 'flex', minHeight: '600px', gap: '24px' }}>
         
         {/* Left pane: Course List */}
-        <div style={{ width: '300px', borderRight: '1px solid var(--border)', background: 'rgba(255, 255, 255, 0.02)', padding: '24px', overflowY: 'auto' }}>
+        <div className="glass-card no-border" style={{ width: '300px', background: 'var(--bg-surface)', border: 'none', padding: '24px', overflowY: 'auto', borderRadius: '24px', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)' }}>
           <h3 style={{ fontSize: '1.2rem', marginBottom: '24px', color: 'var(--text-h)' }}>Your Courses</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {courses.length === 0 ? (
@@ -32,8 +32,9 @@ export default function CurriculumBuilderTab({ courses = [], lessonsByCourse = {
                     padding: '16px', 
                     borderRadius: '8px', 
                     cursor: 'pointer',
-                    background: selectedCourseId === course._id ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
-                    border: selectedCourseId === course._id ? '1px solid var(--c-orange)' : '1px solid var(--border)',
+                    background: selectedCourseId === course._id ? 'var(--bg-main)' : 'transparent',
+                    border: selectedCourseId === course._id ? '1px solid transparent' : '1px solid transparent',
+                    boxShadow: selectedCourseId === course._id ? 'inset 0 4px 12px rgba(0,0,0,0.5)' : 'none',
                     transition: 'all 0.2s'
                   }}
                 >
@@ -60,13 +61,34 @@ export default function CurriculumBuilderTab({ courses = [], lessonsByCourse = {
                   <h2 style={{ fontSize: '1.8rem', margin: 0, color: 'var(--text-h)' }}>{selectedCourse?.title}</h2>
                   <p style={{ color: 'var(--c-sub)', margin: '4px 0 0 0' }}>Manage lessons and content</p>
                 </div>
-                <button 
-                  onClick={() => onOpenAddLesson(selectedCourseId)} 
-                  className="sys-btn-primary" 
-                  style={{ width: 'auto', borderRadius: '24px', padding: '10px 24px', fontWeight: 700 }}
-                >
-                  + Add Lesson
-                </button>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button 
+                    onClick={() => onEditCourse(selectedCourse)} 
+                    className="sys-btn-secondary" 
+                    style={{ width: 'auto', borderRadius: '24px', padding: '10px 24px', fontWeight: 600 }}
+                  >
+                    Edit Course
+                  </button>
+                  <button 
+                    onClick={() => {
+                      if(window.confirm('Are you sure you want to delete this course? This action cannot be undone.')) {
+                        onDeleteCourse(selectedCourseId);
+                      }
+                    }} 
+                    style={{ width: 'auto', borderRadius: '24px', padding: '10px 24px', fontWeight: 600, background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.5)', cursor: 'pointer', transition: 'all 0.2s' }}
+                    onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'; }}
+                    onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; }}
+                  >
+                    Delete Course
+                  </button>
+                  <button 
+                    onClick={() => onOpenAddLesson(selectedCourseId)} 
+                    className="sys-btn-primary" 
+                    style={{ width: 'auto', borderRadius: '24px', padding: '10px 24px', fontWeight: 700 }}
+                  >
+                    + Add Lesson
+                  </button>
+                </div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>

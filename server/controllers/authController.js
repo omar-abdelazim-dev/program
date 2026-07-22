@@ -149,7 +149,7 @@ export const getMe = async (req, res) => {
 // @access  Private — a user editing their own name/email/avatar (Settings page)
 export const updateProfile = async (req, res) => {
   try {
-    const { name, email, avatarUrl } = req.body;
+    const { name, lastName, email, avatarUrl, college, providedCourses, linkedinUrl, socialUrl, phone, university, goalsText } = req.body;
     const user = await User.findById(req.user.id);
 
     if (!user) {
@@ -175,15 +175,32 @@ export const updateProfile = async (req, res) => {
       user.avatarUrl = avatarUrl;
     }
 
+    if (college !== undefined) user.college = college;
+    if (providedCourses !== undefined) user.providedCourses = providedCourses;
+    if (linkedinUrl !== undefined) user.linkedinUrl = linkedinUrl;
+    if (socialUrl !== undefined) user.socialUrl = socialUrl;
+    if (lastName !== undefined) user.lastName = lastName.trim();
+    if (phone !== undefined) user.phone = phone.trim();
+    if (university !== undefined) user.university = university.trim();
+    if (goalsText !== undefined) user.goalsText = goalsText.trim();
+
     await user.save();
 
     res.status(200).json({
       user: {
         id: user._id,
         name: user.name,
+        lastName: user.lastName,
         email: user.email,
         role: user.role,
         avatarUrl: user.avatarUrl,
+        college: user.college,
+        providedCourses: user.providedCourses,
+        linkedinUrl: user.linkedinUrl,
+        socialUrl: user.socialUrl,
+        phone: user.phone,
+        university: user.university,
+        goalsText: user.goalsText,
       },
     });
   } catch (error) {

@@ -22,8 +22,8 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
   const [role, setRole] = useState('student');
   
   // Step 2 Fields
-  const [university, setUniversity] = useState('');
-  const [otherUniversity, setOtherUniversity] = useState('');
+  const [department, setDepartment] = useState('');
+  const [otherDepartment, setOtherDepartment] = useState('');
   const [college, setCollege] = useState('');
   const [year, setYear] = useState('');
   const [track, setTrack] = useState('');
@@ -39,14 +39,12 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
   const [authError, setAuthError] = useState('');
 
-  const EGYPTIAN_UNIVERSITIES = [
-    "Ain Shams University", "Alexandria University", "Arish University", "Assiut University",
-    "Aswan University", "Banha University", "Beni Suef University", "Cairo University",
-    "Damanhour University", "Damietta University", "Fayoum University", "Helwan University",
-    "Kafrelsheikh University", "Luxor University", "Mansoura University", "Matrouh University",
-    "Menoufia University", "Minya University", "New Valley University", "Port Said University",
-    "Sohag University", "South Valley University", "Suez Canal University", "Suez University",
-    "Zagazig University"
+  const DEPARTMENTS = [
+    "Computer Science", "Information Technology", "Software Engineering", 
+    "Electrical Engineering", "Mechanical Engineering", "Civil Engineering",
+    "Business Administration", "Accounting", "Marketing",
+    "Medicine", "Pharmacy", "Dentistry", "Architecture",
+    "Arts & Humanities", "Law", "Sciences", "Education"
   ];
 
   const calculateStrength = (pass) => {
@@ -117,7 +115,7 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
         try {
           const payload = {
             name: `${firstName} ${lastName}`.trim(), email, password, role,
-            university: university === 'Other' ? otherUniversity : university,
+            university: department === 'Other' ? otherDepartment : department,
             year,
             college,
             track,
@@ -270,24 +268,24 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
                   {registerStep === 2 && (
                     <div className="step-content animate-entrance">
                       <div className="input-group">
-                        <label>University *</label>
+                        <label>Department *</label>
                         <div className="custom-select-container">
                           <CustomSelect 
                             options={[
-                              ...EGYPTIAN_UNIVERSITIES.map(u => ({ value: u, label: u })),
+                              ...DEPARTMENTS.map(d => ({ value: d, label: d })),
                               { value: 'Other', label: 'Other' }
                             ]}
-                            value={university}
-                            onChange={setUniversity}
-                            placeholder="e.g. Cairo University, Ain Shams"
+                            value={department}
+                            onChange={setDepartment}
+                            placeholder="e.g. Computer Science, Engineering"
                             icon={<svg className="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>}
                           />
                         </div>
                       </div>
                       
-                      {university === 'Other' && (
+                      {department === 'Other' && (
                         <div className="input-group animate-entrance">
-                          <input type="text" placeholder="Type your university name..." value={otherUniversity} onChange={(e) => setOtherUniversity(e.target.value)} required />
+                          <input type="text" placeholder="Type your department name..." value={otherDepartment} onChange={(e) => setOtherDepartment(e.target.value)} required />
                         </div>
                       )}
 

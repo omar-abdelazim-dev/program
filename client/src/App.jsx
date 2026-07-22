@@ -153,7 +153,7 @@ export default function App() {
       <Routes>
         <Route path="/learn/:id" element={<LearningPortal />} />
         <Route path="/checkout/cart" element={<CheckoutPage cart={cart} setCart={setCart} setNotifications={setNotifications} isCartCheckout={true} />} />
-        <Route path="/instructor" element={<InstructorPortal user={user} onLogout={handleLogout} toggleTheme={toggleTheme} isLightMode={isLightMode} />} />
+        <Route path="/instructor" element={<InstructorPortal user={user} setUser={setUser} onLogout={handleLogout} toggleTheme={toggleTheme} isLightMode={isLightMode} />} />
         <Route path="/admin" element={<AdminPortal user={user} onLogout={handleLogout} toggleTheme={toggleTheme} isLightMode={isLightMode} />} />
       </Routes>
     );

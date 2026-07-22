@@ -298,20 +298,6 @@ export default function StudentLayout({
                   </svg>
                 )}
               </div>
-              <div className="profile-dropdown">
-                <div className="dropdown-name">{user?.name || "Student"}</div>
-                <hr className="dropdown-divider" />
-                <Link to="/student/settings" className="dropdown-link">
-                  Settings
-                </Link>
-                <hr className="dropdown-divider" />
-                <button
-                  onClick={onLogout}
-                  className="dropdown-link logout-link"
-                >
-                  Log out
-                </button>
-              </div>
             </div>
           </div>
         </header>

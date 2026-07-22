@@ -3,7 +3,7 @@ import { Notyf } from 'notyf';
 import 'notyf/notyf.min.css';
 
 export const notyf = new Notyf({
-  position: { x: 'right', y: 'top' },
+  position: { x: 'right', y: 'bottom' },
   types: [{ type: 'info', background: '#3B82F6', icon: false }]
 });
 export const InputField = ({ label, type = "text", value, onChange, disabled, placeholder, required }) => (

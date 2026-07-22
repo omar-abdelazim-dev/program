@@ -173,37 +173,6 @@ export default function TopNav({
               </svg>
             )}
           </div>
-          <div className="profile-dropdown">
-            <div className="dropdown-name">{user?.name || "Student"}</div>
-            <hr className="dropdown-divider" />
-
-            <Link to="/student/settings" className="dropdown-link">
-              Settings
-            </Link>
-
-            {user?.role === "instructor" && (
-              <Link to="/instructor" className="dropdown-link">
-                Instructor Portal
-              </Link>
-            )}
-
-            {(user?.role === "admin" || user?.role === "superadmin") && (
-              <Link to="/admin" className="dropdown-link">
-                Admin Portal
-              </Link>
-            )}
-
-            <hr className="dropdown-divider" />
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                onLogout();
-              }}
-              className="dropdown-link logout-link"
-            >
-              Log out
-            </button>
-          </div>
         </div>
       </div>
     </header>

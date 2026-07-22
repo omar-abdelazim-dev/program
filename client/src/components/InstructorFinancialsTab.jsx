@@ -82,7 +82,7 @@ export default function InstructorFinancialsTab({ user }) {
   return (
     <div className="animate-entrance" style={{ maxWidth: '1000px', margin: '0 auto' }}>
       {/* Current Balance Card */}
-      <div className="stat-card glass-card" style={{ padding: '32px', marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '24px' }}>
+      <div className="stat-card glass-card no-border" style={{ padding: '32px', marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '24px', background: 'var(--bg-surface)', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)' }}>
         <div>
           <div className="stat-label" style={{ color: 'var(--c-sub)', marginBottom: '8px', fontSize: '1rem' }}>Available Payout Balance</div>
           <div className="stat-value" style={{ fontSize: '2.5rem', color: 'var(--text-h)', fontWeight: 800 }}>EGP {availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
@@ -97,10 +97,10 @@ export default function InstructorFinancialsTab({ user }) {
       </div>
 
       {/* Earnings Ledger */}
-      <div className="glass-card" style={{ padding: '24px', overflow: 'hidden' }}>
+      <div className="glass-card no-border" style={{ padding: '24px', overflow: 'hidden', background: 'var(--bg-surface)', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)' }}>
         <h3 style={{ fontSize: '1.2rem', marginBottom: '24px', color: 'var(--text-h)' }}>Transaction History</h3>
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 4px', textAlign: 'left' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--c-sub)' }}>
                 <th style={{ padding: '16px', fontWeight: 600 }}>Date</th>
@@ -118,28 +118,31 @@ export default function InstructorFinancialsTab({ user }) {
                 </tr>
               ) : (
                 transactions.map((tx) => (
-                  <tr key={tx._id} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} className="table-row-hover">
-                    <td style={{ padding: '16px', color: 'var(--text)' }}>
+                  <tr key={tx._id} className="analytics-row" style={{ backgroundColor: 'transparent', transition: 'all 0.3s' }}>
+                    <td style={{ padding: '16px', color: 'var(--text)', borderBottom: '1px solid var(--border)', borderTopLeftRadius: '16px', borderBottomLeftRadius: '16px' }}>
                       {new Date(tx.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                     </td>
-                    <td style={{ padding: '16px', color: 'var(--text-h)', fontWeight: 500 }}>{tx.description}</td>
-                    <td style={{ 
+                    <td style={{ padding: '16px', color: 'var(--text-h)', fontWeight: 500, borderBottom: '1px solid var(--border)' }}>{tx.description}</td>
+                    <td style={tx.amount > 0 ? {
                       padding: '16px', 
                       textAlign: 'right', 
                       fontWeight: 600,
-                      color: tx.amount > 0 ? 'var(--c-orange)' : 'var(--text)'
+                      borderBottom: '1px solid var(--border)',
+                      backgroundImage: 'linear-gradient(135deg, #f97316 0%, #fbbf24 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent'
+                    } : {
+                      padding: '16px', 
+                      textAlign: 'right', 
+                      fontWeight: 600,
+                      borderBottom: '1px solid var(--border)',
+                      color: 'var(--text)'
                     }}>
                       {tx.amount > 0 ? '+ ' : '- '}EGP {Math.abs(tx.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
-                    <td style={{ padding: '16px', textAlign: 'right' }}>
-                      <span style={{
-                        padding: '4px 12px',
-                        borderRadius: '12px',
-                        fontSize: '0.85rem',
-                        fontWeight: 600,
-                        background: tx.status === 'cleared' ? 'rgba(16, 185, 129, 0.1)' : tx.status === 'rejected' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                    <td style={{ padding: '16px', textAlign: 'right', borderBottom: '1px solid var(--border)', borderTopRightRadius: '16px', borderBottomRightRadius: '16px' }}>
+                      <span className="status-badge" style={{
                         color: tx.status === 'cleared' ? '#10b981' : tx.status === 'rejected' ? '#ef4444' : '#f59e0b',
-                        textTransform: 'capitalize'
                       }}>
                         {tx.status}
                       </span>
