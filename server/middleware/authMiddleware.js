@@ -25,12 +25,17 @@ export const protect = async (req, res, next) => {
       }
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // ─── JWT Hardening ───────────────────────────────────────────────────────
+    // Strict algorithm enforcement prevents "none" algorithm attacks or
+    // asymmetric key confusion attacks.
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, {
+      algorithms: ['HS256'],
+    });
 
     // Fetch the fresh user from the DB rather than trusting the token's
     // payload alone — this way, if a user's role changes or their account
     // is deleted after the token was issued, we catch it on every request.
-    const user = await User.findById(decoded.userId);
+    const user = await User.findById(decoded.userId).select('+passwordChangedAt');
 
     if (!user) {
       return res.status(401).json({ message: 'User no longer exists' });
@@ -40,8 +45,23 @@ export const protect = async (req, res, next) => {
       return res.status(403).json({ message: 'Your account has been blocked' });
     }
 
+    // ─── Password Change Session Invalidation ────────────────────────────────
+    // If the token was issued BEFORE the password was last changed, reject it.
+    // decoded.iat is in seconds, passwordChangedAt is in milliseconds.
+    if (user.passwordChangedAt) {
+      const issuedAtTimestamp = decoded.iat * 1000;
+      const changedAtTimestamp = user.passwordChangedAt.getTime();
+      
+      // We allow a 1-second grace period in case the token was issued in the
+      // exact same millisecond the password was changed (unlikely but safe).
+      if (issuedAtTimestamp < changedAtTimestamp - 1000) {
+        return res.status(401).json({ message: 'Session expired due to password change. Please log in again.' });
+      }
+    }
+
     req.user = {
       id: user._id,
+      sessionId: decoded.sessionId, // Extracted from JWT
       name: user.name,
       email: user.email,
       role: user.role,
@@ -50,8 +70,12 @@ export const protect = async (req, res, next) => {
 
     next();
   } catch (error) {
-    // Covers expired tokens, tampered tokens, malformed tokens — all treated
-    // the same way from the client's perspective: "you're not logged in".
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: 'Session expired. Please log in again.' });
+    }
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: 'Invalid token signature. Please log in again.' });
+    }
     return res.status(401).json({ message: 'Invalid or expired session. Please log in again.' });
   }
 };

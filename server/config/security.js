@@ -72,3 +72,23 @@ export const RATE_LIMITS = {
   // Global API catch-all — 200 req/15 min is generous but still protective
   global: { windowMs: 15 * 60 * 1000, max: 200 },
 };
+
+// ─── Authentication & Session Lifecycles ───────────────────────────────────
+export const AUTH_CONSTANTS = {
+  // Account Lockout
+  MAX_LOGIN_ATTEMPTS: 5,
+  ACCOUNT_LOCK_DURATION: 15 * 60 * 1000, // 15 minutes in ms
+
+  // Token Lifetimes
+  ACCESS_TOKEN_LIFETIME: '15m', // Short-lived access token
+  REFRESH_TOKEN_LIFETIME: '7d', // Long-lived refresh token
+  REFRESH_TOKEN_MAX_AGE_MS: 7 * 24 * 60 * 60 * 1000, // 7 days in ms for cookies
+
+  // Verification & Reset Tokens
+  EMAIL_TOKEN_EXPIRATION: 24 * 60 * 60 * 1000, // 24 hours in ms
+  PASSWORD_RESET_EXPIRATION: 60 * 60 * 1000, // 1 hour in ms
+
+  // Session Management
+  MAX_ACTIVE_SESSIONS: 5, // Prevent infinite session accumulation
+  SESSION_IDLE_TIMEOUT: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
+};

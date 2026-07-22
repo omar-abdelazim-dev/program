@@ -61,6 +61,45 @@ const userSchema = new mongoose.Schema(
     socialUrl: { type: String, default: '' },
     goalsText: { type: String, default: '' },
     selectedPills: { type: [String], default: [] },
+    // ─── Sprint 2: Account Lockout ───────────────────────────────────────────
+    failedLoginAttempts: {
+      type: Number,
+      default: 0,
+    },
+    lockUntil: {
+      type: Date,
+    },
+    // ─── Sprint 2: Email Verification ────────────────────────────────────────
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    emailVerificationToken: {
+      type: String,
+      select: false, // stored as SHA-256 hash
+    },
+    emailVerificationExpires: {
+      type: Date,
+      select: false,
+    },
+    // ─── Sprint 2: Active Session Tracking ───────────────────────────────────
+    activeSessions: {
+      type: [
+        {
+          sessionId: String,
+          refreshTokenHash: String,
+          issuedAt: Date,
+          expiresAt: Date,
+          device: String,
+          browser: String,
+          operatingSystem: String,
+          ipAddress: String,
+          revoked: { type: Boolean, default: false },
+        },
+      ],
+      default: [],
+      select: false, // Keep sessions out of generic user queries
+    },
   },
   { timestamps: true }
 );
@@ -90,6 +129,11 @@ userSchema.pre('save', async function (next) {
 // the hashed password stored in the DB. Returns true/false.
 userSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
+};
+
+// Instance method: check if account is currently locked out
+userSchema.methods.isLocked = function () {
+  return !!(this.lockUntil && this.lockUntil > Date.now());
 };
 
 const User = mongoose.model('User', userSchema);

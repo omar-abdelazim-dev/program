@@ -158,3 +158,13 @@ export const validateUpdateProfile = [
 
   handleValidationErrors,
 ];
+
+// ─── Validate Verify Email ───────────────────────────────────────────────────
+export const validateVerifyEmail = [
+  body('token')
+    .trim()
+    .notEmpty().withMessage('Verification token is required')
+    .isHexadecimal().withMessage('Invalid token format'),
+
+  handleValidationErrors,
+];
