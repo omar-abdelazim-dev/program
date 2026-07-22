@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import { BCRYPT_ROUNDS } from '../config/security.js';
 
 const userSchema = new mongoose.Schema(
   {
@@ -18,8 +19,14 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: [true, 'Password is required'],
-      minlength: 6,
+      minlength: 8, // Applies to new passwords; existing hashes are unaffected.
       select: false, // Never return password field by default on queries.
+    },
+    // Set whenever a password is changed — useful for audit trails and
+    // invalidating sessions that were issued before the password was rotated.
+    passwordChangedAt: {
+      type: Date,
+      select: false,
     },
     role: {
       type: String,
@@ -67,8 +74,15 @@ userSchema.pre('save', async function (next) {
   // (otherwise updating a user's name would re-hash their already-hashed password).
   if (!this.isModified('password')) return next();
 
-  const salt = await bcrypt.genSalt(10);
+  // BCRYPT_ROUNDS = 12 (per OWASP recommendation, ≥ 12 for bcrypt).
+  // Cost 12 adds ~250 ms per hash on a modern CPU — acceptable for auth,
+  // practically impractical for offline brute-force attacks.
+  const salt = await bcrypt.genSalt(BCRYPT_ROUNDS);
   this.password = await bcrypt.hash(this.password, salt);
+
+  // Record the time of the password change for audit purposes
+  this.passwordChangedAt = new Date();
+
   next();
 });
 

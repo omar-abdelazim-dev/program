@@ -1,6 +1,8 @@
 import User from '../models/User.js';
 import generateTokenAndSetCookie from '../utils/generateToken.js';
 import { getInternalConfig } from '../utils/configFetcher.js';
+import { logAudit } from '../utils/auditLogger.js';
+import { checkPasswordPolicy } from '../validators/authValidators.js';
 
 // @route   POST /api/auth/check-email
 // @access  Public
@@ -97,10 +99,29 @@ export const login = async (req, res) => {
     // "wrong password" separately, so an attacker can't use this endpoint to
     // discover which emails are registered.
     if (!user || !(await user.comparePassword(password))) {
+      // Audit failed login attempt (no userId — attacker may not have one)
+      await logAudit({
+        action: 'LOGIN_FAILURE',
+        module: 'auth',
+        userId: user?._id || null,
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+        severity: 'warn',
+        metadata: { email: email.toLowerCase() },
+      });
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
     if (user.isBlocked) {
+      await logAudit({
+        action: 'LOGIN_BLOCKED',
+        module: 'auth',
+        userId: user._id,
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+        severity: 'warn',
+        metadata: { email: user.email },
+      });
       return res.status(403).json({ message: 'Your account has been blocked. Please contact support.' });
     }
 
@@ -110,6 +131,19 @@ export const login = async (req, res) => {
     }
 
     await generateTokenAndSetCookie(res, user._id, rememberMe !== false);
+
+    // Audit successful login
+    await logAudit({
+      action: 'LOGIN_SUCCESS',
+      module: 'auth',
+      userId: user._id,
+      targetId: user._id,
+      targetModel: 'User',
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      severity: 'info',
+      metadata: { role: user.role },
+    });
 
     res.status(200).json({
       user: {
@@ -134,6 +168,25 @@ export const logout = (req, res) => {
     secure: process.env.NODE_ENV === 'production',
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
   });
+  // Also clear the CSRF token cookie on logout
+  res.clearCookie('csrfToken', {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  });
+
+  // Fire-and-forget audit log — logout doesn't need to wait for it
+  if (req.user?.id) {
+    logAudit({
+      action: 'LOGOUT',
+      module: 'auth',
+      userId: req.user.id,
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      severity: 'info',
+    });
+  }
+
   res.status(200).json({ message: 'Logged out successfully' });
 };
 
@@ -201,13 +254,27 @@ export const changePassword = async (req, res) => {
     if (!currentPassword || !newPassword) {
       return res.status(400).json({ message: 'Current and new password are required' });
     }
-    if (newPassword.length < 6) {
-      return res.status(400).json({ message: 'New password must be at least 6 characters' });
+
+    // Server-side policy check (validators catch this first, but this is the
+    // authoritative backstop — defence-in-depth).
+    const policyError = checkPasswordPolicy(newPassword);
+    if (policyError) {
+      return res.status(400).json({ message: policyError });
     }
 
     // .select('+password') needed here too — see login() above for why.
     const user = await User.findById(req.user.id).select('+password');
     if (!user || !(await user.comparePassword(currentPassword))) {
+      await logAudit({
+        action: 'PASSWORD_CHANGE_FAILURE',
+        module: 'auth',
+        userId: req.user.id,
+        targetId: req.user.id,
+        targetModel: 'User',
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+        severity: 'warn',
+      });
       return res.status(401).json({ message: 'Current password is incorrect' });
     }
 
@@ -216,6 +283,18 @@ export const changePassword = async (req, res) => {
     // hashing logic only ever lives in one place.
     user.password = newPassword;
     await user.save();
+
+    // Audit successful password change
+    await logAudit({
+      action: 'PASSWORD_CHANGE_SUCCESS',
+      module: 'auth',
+      userId: req.user.id,
+      targetId: user._id,
+      targetModel: 'User',
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      severity: 'info',
+    });
 
     res.status(200).json({ message: 'Password updated successfully' });
   } catch (error) {

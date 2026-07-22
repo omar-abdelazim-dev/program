@@ -4,6 +4,7 @@ import Course from '../models/Course.js';
 import Enrollment from '../models/Enrollment.js';
 import Lesson from '../models/Lesson.js';
 import { escapeRegex } from '../utils/escapeRegex.js';
+import { logAudit } from '../utils/auditLogger.js';
 
 // @route   GET /api/admin/stats
 // @access  Private (Admin)
@@ -284,8 +285,22 @@ export const toggleBlockUser = async (req, res) => {
       return res.status(403).json({ message: 'Only a superadmin can block or unblock an admin or superadmin' });
     }
 
+    const previousState = user.isBlocked;
     user.isBlocked = !user.isBlocked;
     await user.save();
+
+    // Audit the block/unblock action
+    await logAudit({
+      action: user.isBlocked ? 'USER_BLOCKED' : 'USER_UNBLOCKED',
+      module: 'admin',
+      userId: req.user.id,
+      targetId: user._id,
+      targetModel: 'User',
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      severity: 'warn',
+      metadata: { targetEmail: user.email, targetRole: user.role, previousState },
+    });
 
     res.status(200).json({ message: `User ${user.isBlocked ? 'blocked' : 'unblocked'}`, user });
   } catch (error) {
@@ -328,8 +343,24 @@ export const changeUserRole = async (req, res) => {
       return res.status(403).json({ message: 'Only superadmins can change another admin\'s role' });
     }
 
+    const previousRole = user.role;
     user.role = role;
     await user.save();
+
+    // Audit role change
+    await logAudit({
+      action: 'USER_ROLE_CHANGED',
+      module: 'admin',
+      userId: req.user.id,
+      targetId: user._id,
+      targetModel: 'User',
+      oldValue: { role: previousRole },
+      newValue: { role },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      severity: 'warn',
+      metadata: { targetEmail: user.email },
+    });
 
     res.status(200).json({ message: `User's role changed to ${role}`, user });
   } catch (error) {
@@ -362,6 +393,20 @@ export const softDeleteUser = async (req, res) => {
     user.isDeleted = true;
     user.isBlocked = true;
     await user.save();
+
+    // Audit soft delete
+    await logAudit({
+      action: 'USER_SOFT_DELETED',
+      module: 'admin',
+      userId: req.user.id,
+      targetId: user._id,
+      targetModel: 'User',
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      severity: 'error',
+      metadata: { targetEmail: user.email, targetRole: user.role },
+    });
+
     res.status(200).json({ message: 'User deleted', user });
   } catch (error) {
     console.error(error);
@@ -380,6 +425,20 @@ export const restoreUser = async (req, res) => {
     user.isDeleted = false;
     user.isBlocked = false;
     await user.save();
+
+    // Audit restore
+    await logAudit({
+      action: 'USER_RESTORED',
+      module: 'admin',
+      userId: req.user.id,
+      targetId: user._id,
+      targetModel: 'User',
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      severity: 'info',
+      metadata: { targetEmail: user.email, targetRole: user.role },
+    });
+
     res.status(200).json({ message: 'User restored', user });
   } catch (error) {
     console.error(error);
