@@ -4,6 +4,8 @@ import CustomSelect from './CustomSelect';
 import api from '../api/axios';
 import logoDark from '../assets/logo-dark.png';
 import logoLight from '../assets/logo-light.png';
+import StudentLayout from './StudentLayout';
+import FullPageLoader from './FullPageLoader';
 import studentLogo from '../assets/logo.png';
 import InstructorAnalyticsTab from './InstructorAnalyticsTab';
 import CurriculumBuilderTab from './CurriculumBuilderTab';
@@ -174,7 +176,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
     return <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>Redirecting...</div>;
   }
 
-  if (loading) return <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>Loading Instructor Portal...</div>;
+  if (loading) return <FullPageLoader message="Loading Instructor Portal..." />;
 
   return (
     <div className="student-layout-wrapper" data-role="instructor">

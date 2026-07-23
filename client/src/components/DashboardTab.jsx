@@ -2,6 +2,7 @@ import notyf from "../utils/notyf";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
+import FullPageLoader from './FullPageLoader';
 import ConfirmModal from "./ConfirmModal";
 import ReportIssueModal from "./ReportIssueModal";
 import ThreeDotMenu from "./common/ThreeDotMenu";
@@ -274,10 +275,7 @@ export default function DashboardTab() {
     return () => clearTimeout(timer);
   }, [activeSubTab, loading, enrollments]);
 
-  if (loading)
-    return (
-      <p style={{ color: "var(--text-secondary)" }}>Loading your courses...</p>
-    );
+  if (loading) return <FullPageLoader message="Loading your courses..." fullScreen={false} />;
   if (error) return <p style={{ color: "#ef4444" }}>{error}</p>;
 
   const completedLessonCount = enrollments.reduce(

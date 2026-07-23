@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../api/axios';
 import { Button, InputField, TextareaField, SelectField, notyf } from './SharedUI';
+import FullPageLoader from '../FullPageLoader';
 
 export default function FAQManager({ user }) {
   const [faqs, setFaqs] = useState([]);
@@ -66,7 +67,7 @@ export default function FAQManager({ user }) {
     setShowModal(true);
   };
 
-  if (loading) return <div className="p-6 text-white">Loading...</div>;
+  if (loading) return <FullPageLoader message="Loading Data..." fullScreen={false} />;
 
   return (
     <div style={{ width: '100%', maxWidth: '1100px', margin: '0 auto' }}>

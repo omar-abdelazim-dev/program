@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../api/axios';
 import { Button, InputField, TextareaField, CheckboxField, notyf } from './SharedUI';
+import FullPageLoader from '../FullPageLoader';
 
 export default function HomepageManager({ user }) {
   const [content, setContent] = useState(null);
@@ -49,7 +50,7 @@ export default function HomepageManager({ user }) {
     }));
   };
 
-  if (loading) return <div className="p-6 text-white">Loading...</div>;
+  if (loading) return <FullPageLoader message="Loading Data..." fullScreen={false} />;
   if (error) return <div className="p-6 text-red-500">{error}</div>;
 
   return (

@@ -1,7 +1,8 @@
-import notyf from '../utils/notyf';
 import React, { useState, useEffect, useRef } from 'react';
+import notyf from '../utils/notyf';
 import api from '../api/axios';
 import ThreeDotMenu from "./common/ThreeDotMenu";
+import FullPageLoader from './FullPageLoader';
 
 
 const StarIcon = ({ filled }) => (
@@ -75,11 +76,7 @@ export default function InstructorReviewsTab() {
   };
 
   if (loading) {
-    return (
-      <div className="glass-card no-border animate-entrance" style={{ padding: '48px', textAlign: 'center', background: 'var(--bg-surface)', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)' }}>
-        <div style={{ color: 'var(--c-sub)' }}>Loading reviews...</div>
-      </div>
-    );
+    return <FullPageLoader message="Loading reviews..." fullScreen={false} />;
   }
 
   return (

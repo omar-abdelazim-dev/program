@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../../api/axios";
 import { Button, InputField, TextareaField, notyf } from "./SharedUI";
+import FullPageLoader from "../FullPageLoader";
 
 export default function ContactManager({ user }) {
   const [content, setContent] = useState(null);
@@ -53,7 +54,7 @@ export default function ContactManager({ user }) {
     }));
   };
 
-  if (loading) return <div className="p-6 text-white">Loading...</div>;
+  if (loading) return <FullPageLoader message="Loading Data..." fullScreen={false} />;
 
   return (
     <div style={{ width: '100%', maxWidth: '900px', margin: '0 auto' }}>

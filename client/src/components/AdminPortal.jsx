@@ -22,7 +22,7 @@ import AdminUserManagementTab from "./AdminUserManagementTab";
 import AdminCourseManagementTab from "./AdminCourseManagementTab";
 import WebsiteManagement from "./WebsiteManagement/WebsiteManagement";
 import SystemManagement from "./SystemManagement";
-import Spinner from "./Spinner";
+import FullPageLoader from "./FullPageLoader";
 
 const ROLE_OPTIONS = ["student", "instructor", "admin"];
 const SIDEBAR_TAB_STEP = 44;
@@ -550,19 +550,10 @@ export default function AdminPortal({
     );
   }
 
-  if (loading && !stats && !users.length && !transactions.length) {
+  if (loading) {
     return (
-      <div
-        className="page-wrapper"
-        style={{
-          display: "flex",
-          height: "100vh",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: isLightMode ? undefined : "var(--bg-main)",
-        }}
-      >
-        <Spinner label="Loading Admin Portal..." />
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-main)' }}>
+        <FullPageLoader message="Loading Admin Portal..." />
       </div>
     );
   }

@@ -2,12 +2,50 @@ import React, { useState, useEffect } from 'react';
 import { Notyf } from 'notyf';
 import 'notyf/notyf.min.css';
 import api from '../api/axios';
-import CommissionSlider from './CommissionSlider';
 
 const notyf = new Notyf({
   position: { x: 'right', y: 'top' },
   types: [{ type: 'info', background: '#3B82F6', icon: false }]
 });
+
+const systemTabStyles = `
+  .system-tab-btn {
+    padding: 12px 24px;
+    margin: 4px 12px;
+    background: transparent;
+    color: var(--c-sub);
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    border-radius: 12px;
+  }
+  .system-tab-btn:hover {
+    color: #fff;
+    transform: translateX(4px);
+    background: var(--bg-main);
+    box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.5);
+  }
+  .system-tab-btn.active {
+    background: var(--bg-main);
+    box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.5);
+    color: #fff;
+    font-weight: 600;
+    transform: translateX(4px);
+  }
+  /* Light mode adjustments */
+  [data-theme="light"] .system-tab-btn:hover,
+  [data-theme="light"] .system-tab-btn.active {
+    background: rgba(0, 0, 0, 0.05);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    color: var(--text-h);
+  }
+`;
 
 const TABS = [
   { id: 'general', label: 'General', icon: 'settings' },
@@ -20,7 +58,6 @@ const TABS = [
   { id: 'appearance', label: 'Appearance', icon: 'layout' },
   { id: 'maintenance', label: 'Maintenance', icon: 'tool' },
   { id: 'backup', label: 'Backup', icon: 'database' },
-  { id: 'logs', label: 'Logs', icon: 'file-text' },
   { id: 'api', label: 'API & Webhooks', icon: 'code' },
   { id: 'features', label: 'Feature Flags', icon: 'toggle-right' },
   { id: 'ai', label: 'AI Settings', icon: 'cpu' },
@@ -70,7 +107,8 @@ const ToggleSwitch = ({ label, checked, onChange, disabled }) => (
       <input type="checkbox" checked={checked} onChange={e => !disabled && onChange(e)} style={{ opacity: 0, width: 0, height: 0 }} disabled={disabled} />
       <span style={{
         position: 'absolute', cursor: disabled ? 'not-allowed' : 'pointer', top: 0, left: 0, right: 0, bottom: 0,
-        backgroundColor: checked ? '#3B82F6' : 'var(--c-border)', transition: '.4s', borderRadius: '34px'
+        backgroundColor: checked ? '#f97316' : 'var(--bg-main)', transition: '.4s', borderRadius: '34px',
+        boxShadow: checked ? '0 0 12px rgba(249, 115, 22, 0.4)' : 'inset 0 2px 4px rgba(0,0,0,0.5)'
       }}>
         <span style={{
           position: 'absolute', content: '""', height: '18px', width: '18px', left: checked ? '22px' : '3px', bottom: '3px',
@@ -90,33 +128,124 @@ const InputField = ({ label, type = "text", value, onChange, disabled, placehold
       onChange={onChange}
       disabled={disabled}
       placeholder={placeholder}
-      className="glass-input"
+      className="solid-input"
       style={{ width: '100%', opacity: disabled ? 0.6 : 1, cursor: disabled ? 'not-allowed' : 'text' }}
     />
   </div>
 );
 
-const SelectField = ({ label, value, onChange, options, disabled }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }} title={disabled ? "Super Admin permission required" : ""}>
-    <label style={{ fontSize: '0.85rem', color: 'var(--c-sub)', fontWeight: 600, textTransform: 'uppercase' }}>{label}</label>
-    <div style={{ position: 'relative' }}>
-      <select
-        value={value}
-        onChange={onChange}
-        disabled={disabled}
-        className="glass-input"
-        style={{ width: '100%', opacity: disabled ? 0.6 : 1, cursor: disabled ? 'not-allowed' : 'pointer', appearance: 'none', paddingRight: '40px' }}
-      >
-        {options.map(opt => (
-          <option key={opt.value} value={opt.value} style={{ background: 'var(--c-bg)', color: 'var(--text-h)' }}>{opt.label}</option>
-        ))}
-      </select>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-h)' }}>
-        <path d="M6 9l6 6 6-6" />
-      </svg>
+const SelectField = ({ label, value, onChange, options, disabled }) => {
+  const [isOpen, setIsOpen] = React.useState(false);
+  const dropdownRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(opt => (opt.value !== undefined ? opt.value : opt) === value);
+  const selectedLabel = selectedOption ? (selectedOption.label !== undefined ? selectedOption.label : selectedOption) : '';
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }} title={disabled ? "Super Admin permission required" : ""}>
+      <label style={{ fontSize: '0.85rem', color: 'var(--c-sub)', fontWeight: 600, textTransform: 'uppercase' }}>{label}</label>
+      <div ref={dropdownRef} style={{ position: 'relative' }}>
+        <div 
+          className="solid-input"
+          onClick={() => !disabled && setIsOpen(!isOpen)}
+          style={{ 
+            width: '100%', 
+            opacity: disabled ? 0.6 : 1, 
+            cursor: disabled ? 'not-allowed' : 'pointer', 
+            paddingRight: '40px',
+            display: 'flex',
+            alignItems: 'center',
+            userSelect: 'none',
+            minHeight: '44px',
+            borderColor: isOpen ? '#f97316' : undefined,
+            boxShadow: isOpen ? '0 0 0 1px #f97316' : undefined,
+            transition: 'all 0.2s ease'
+          }}
+        >
+          {selectedLabel}
+        </div>
+        <i style={{ 
+          position: 'absolute', right: '14px', top: '50%', 
+          transform: `translateY(-50%) ${isOpen ? 'rotate(180deg)' : ''}`, 
+          transition: 'transform 0.2s ease', 
+          color: isOpen ? '#f97316' : 'var(--text-secondary)', 
+          pointerEvents: 'none',
+          fontSize: '0.8rem'
+        }}>
+          ▼
+        </i>
+        
+        {isOpen && (
+          <div style={{
+            position: 'absolute',
+            top: 'calc(100% + 8px)',
+            left: 0,
+            right: 0,
+            backgroundColor: 'rgba(26, 29, 39, 0.95)',
+            backdropFilter: 'blur(16px)',
+            border: '1px solid var(--c-border-subtle)',
+            borderRadius: '12px',
+            boxShadow: '0 12px 32px rgba(0,0,0,0.6)',
+            zIndex: 100,
+            overflow: 'hidden',
+            maxHeight: '250px',
+            overflowY: 'auto',
+            animation: 'fadeInUp 0.2s ease-out'
+          }}>
+            {options.map(opt => {
+              const optValue = opt.value !== undefined ? opt.value : opt;
+              const optLabel = opt.label !== undefined ? opt.label : opt;
+              const isSelected = optValue === value;
+              return (
+                <div
+                  key={optValue}
+                  onClick={() => {
+                    onChange({ target: { value: optValue } });
+                    setIsOpen(false);
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = isSelected ? 'rgba(249, 115, 22, 0.15)' : 'var(--c-bg-hover)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = isSelected ? 'rgba(249, 115, 22, 0.1)' : 'transparent';
+                  }}
+                  style={{
+                    padding: '12px 16px',
+                    cursor: 'pointer',
+                    color: isSelected ? '#f97316' : 'var(--text-primary)',
+                    backgroundColor: isSelected ? 'rgba(249, 115, 22, 0.1)' : 'transparent',
+                    fontWeight: isSelected ? 600 : 400,
+                    transition: 'all 0.2s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                  }}
+                >
+                  {optLabel}
+                  {isSelected && (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const TextareaField = ({ label, value, onChange, disabled, placeholder }) => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }} title={disabled ? "Super Admin permission required" : ""}>
@@ -126,7 +255,7 @@ const TextareaField = ({ label, value, onChange, disabled, placeholder }) => (
       onChange={onChange}
       disabled={disabled}
       placeholder={placeholder}
-      className="glass-input"
+      className="solid-input"
       style={{ width: '100%', minHeight: '100px', resize: 'vertical', opacity: disabled ? 0.6 : 1, cursor: disabled ? 'not-allowed' : 'text' }}
     />
   </div>
@@ -147,13 +276,20 @@ const FinancialPanel = ({ state, handleChange, isSuperAdmin }) => (
   <div className="glass-card" style={{ padding: '24px', animation: 'fadeIn 0.3s' }}>
     <h3 style={{ marginTop: 0, marginBottom: '24px', color: 'var(--text-h)' }}>Financial Configuration</h3>
     
-    <CommissionSlider 
-      value={state.commission} 
-      onChange={val => handleChange('financial', 'commission', val)} 
-      disabled={isFieldRestricted('financial', 'commission', isSuperAdmin)} 
-    />
-
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+      <SelectField 
+        label="Platform Commission" 
+        value={state.commission} 
+        onChange={e => handleChange('financial', 'commission', Number(e.target.value))} 
+        disabled={isFieldRestricted('financial', 'commission', isSuperAdmin)}
+        options={[
+          { value: 10, label: '10%' },
+          { value: 15, label: '15%' },
+          { value: 20, label: '20%' },
+          { value: 25, label: '25%' },
+          { value: 30, label: '30%' }
+        ]}
+      />
       <InputField label="Tax Percentage (%)" type="number" value={state.tax} onChange={e => handleChange('financial', 'tax', e.target.value)} disabled={isFieldRestricted('financial', 'tax', isSuperAdmin)} />
       <SelectField label="Currency" value={state.currency} onChange={e => handleChange('financial', 'currency', e.target.value)} disabled={isFieldRestricted('financial', 'currency', isSuperAdmin)} options={[{ value: 'USD', label: 'USD ($)' }, { value: 'EUR', label: 'EUR (€)' }, { value: 'GBP', label: 'GBP (£)' }, { value: 'EGP', label: 'EGP (E£)' }]} />
       <InputField label="Refund Window (Days)" type="number" value={state.refundWindow} onChange={e => handleChange('financial', 'refundWindow', e.target.value)} disabled={isFieldRestricted('financial', 'refundWindow', isSuperAdmin)} />
@@ -503,6 +639,7 @@ export default function SystemManagement({ user }) {
 
   return (
     <div style={{ animation: 'fadeIn 0.3s ease-out' }}>
+      <style>{systemTabStyles}</style>
       
       {/* Header & Save Bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
@@ -556,24 +693,8 @@ export default function SystemManagement({ user }) {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                style={{
-                  padding: '12px 24px',
-                  background: activeTab === tab.id ? 'rgba(59,130,246,0.1)' : 'transparent',
-                  color: activeTab === tab.id ? '#3B82F6' : 'var(--text-h)',
-                  border: 'none',
-                  borderRight: activeTab === tab.id ? '3px solid #3B82F6' : '3px solid transparent',
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  fontWeight: activeTab === tab.id ? 600 : 500,
-                  transition: 'all 0.2s'
-                }}
-                onMouseEnter={e => { if (activeTab !== tab.id) e.currentTarget.style.background = 'var(--c-bg-hover)' }}
-                onMouseLeave={e => { if (activeTab !== tab.id) e.currentTarget.style.background = 'transparent' }}
+                className={`system-tab-btn ${activeTab === tab.id ? 'active' : ''}`}
               >
-                <i className={`lucide-${tab.icon}`} style={{ fontSize: '1.1rem', opacity: activeTab === tab.id ? 1 : 0.6 }} />
                 {tab.label}
               </button>
             ))}
@@ -588,7 +709,9 @@ export default function SystemManagement({ user }) {
               <div className="skeleton-pulse" style={{ height: '300px', borderRadius: '12px' }} />
             </div>
           ) : (
-            renderActiveTab()
+            <div key={activeTab} style={{ animation: 'fadeInUp 0.3s ease-out' }}>
+              {renderActiveTab()}
+            </div>
           )}
         </div>
 
