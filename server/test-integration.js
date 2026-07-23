@@ -21,7 +21,7 @@ const run = async () => {
   let res = await agentInstructor.post('/api/auth/register').send({
     name: 'Nora Instructor',
     email: 'nora@example.com',
-    password: 'password123',
+    password: 'Password123!',
     role: 'instructor',
   });
   assert(res.status === 201, `Instructor register failed: ${JSON.stringify(res.body)}`);
@@ -108,7 +108,7 @@ const run = async () => {
   res = await agentStudent.post('/api/auth/register').send({
     name: 'Sara Student',
     email: 'sara@example.com',
-    password: 'password123',
+    password: 'Password123!',
     role: 'student',
   });
   assert(res.status === 201, `Student register failed: ${JSON.stringify(res.body)}`);
