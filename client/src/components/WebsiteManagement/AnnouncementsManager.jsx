@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../api/axios';
-import { Button, InputField, TextareaField, SelectField, notyf } from './SharedUI';
+import { Button, InputField, TextareaField, SelectField, CheckboxField, notyf } from './SharedUI';
 
 export default function AnnouncementsManager({ user }) {
   const [announcements, setAnnouncements] = useState([]);
@@ -76,66 +76,84 @@ export default function AnnouncementsManager({ user }) {
   if (loading) return <div className="p-6 text-white">Loading...</div>;
 
   return (
-    <div className="admin-page-content">
-      <div className="admin-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+    <div style={{ width: '100%', maxWidth: '1100px', margin: '0 auto' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
         <div>
-          <h2>Announcements</h2>
-          <p style={{ color: 'var(--text-2)' }}>Broadcast messages, maintenance alerts, and banners.</p>
+          <h1 style={{ fontSize: '2.5rem', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>Announcements</h1>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '8px' }}>Broadcast messages, maintenance alerts, and banners.</p>
         </div>
-        <Button variant="primary" onClick={openCreate} style={{ height: '40px' }}>
+        <Button variant="primary" onClick={openCreate} style={{ height: '44px', borderRadius: '50px', padding: '0 28px' }}>
           + New Announcement
         </Button>
       </div>
 
-      <div className="admin-card">
-        <table className="program-table" style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
+      <div className="solid-card" style={{ padding: '32px', marginBottom: '32px' }}>
+        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 4px', textAlign: 'left' }}>
           <thead>
-            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-              <th style={{ padding: '16px', color: 'var(--text-2)' }}>Announcement</th>
-              <th style={{ padding: '16px', color: 'var(--text-2)' }}>Audience</th>
-              <th style={{ padding: '16px', color: 'var(--text-2)' }}>Priority</th>
-              <th style={{ padding: '16px', color: 'var(--text-2)' }}>Status</th>
-              <th style={{ padding: '16px', color: 'var(--text-2)', textAlign: 'right' }}>Actions</th>
+            <tr style={{ background: 'rgba(0, 0, 0, 0.2)', color: 'var(--c-sub)', boxShadow: 'inset 0 4px 12px rgba(0, 0, 0, 0.5)', borderRadius: '12px' }}>
+              <th style={{ padding: '16px', fontWeight: 600, borderTopLeftRadius: '12px', borderBottomLeftRadius: '12px' }}>Announcement</th>
+              <th style={{ padding: '16px', fontWeight: 600 }}>Audience</th>
+              <th style={{ padding: '16px', fontWeight: 600 }}>Priority</th>
+              <th style={{ padding: '16px', fontWeight: 600 }}>Status</th>
+              <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right', borderTopRightRadius: '12px', borderBottomRightRadius: '12px' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {announcements.map(item => (
-              <tr key={item._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <td style={{ padding: '16px' }}>
-                  <div style={{ color: 'var(--text-1)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <tr key={item._id} style={{ backgroundColor: 'transparent', transition: 'all 0.3s' }}>
+                <td style={{ padding: '16px', borderBottom: '1px solid var(--border)', borderTopLeftRadius: '16px', borderBottomLeftRadius: '16px' }}>
+                  <div style={{ color: 'var(--text-primary)', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {item.title}
-                    {item.isPinned && <span style={{ fontSize: '12px' }}>📌</span>}
-                    {item.showAsBanner && <span style={{ fontSize: '12px', background: 'var(--c-orange)', padding: '2px 6px', borderRadius: '4px', color: 'black' }}>Banner</span>}
+                    {item.isPinned && <span style={{ fontSize: '14px' }}>📌</span>}
+                    {item.showAsBanner && (
+                      <span style={{ 
+                        fontSize: '0.75rem', 
+                        background: 'linear-gradient(135deg, #f97316 0%, #fbbf24 100%)', 
+                        padding: '2px 8px', 
+                        borderRadius: '12px', 
+                        color: '#fff',
+                        fontWeight: 600
+                      }}>
+                        Banner
+                      </span>
+                    )}
                   </div>
-                  <div style={{ color: 'var(--text-2)', fontSize: '12px', marginTop: '4px' }}>{item.type}</div>
+                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '4px' }}>{item.type}</div>
                 </td>
-                <td style={{ padding: '16px', color: 'var(--text-2)' }}>{item.audience}</td>
-                <td style={{ padding: '16px' }}>
-                  <span className={`badge badge-${item.priority === 'Critical' ? 'danger' : item.priority === 'High' ? 'warning' : 'secondary'}`}>
+                <td style={{ padding: '16px', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border)' }}>{item.audience}</td>
+                <td style={{ padding: '16px', borderBottom: '1px solid var(--border)' }}>
+                  <span className="status-badge" style={{
+                    color: item.priority === 'Critical' ? '#ef4444' : item.priority === 'High' ? '#f59e0b' : item.priority === 'Medium' ? '#3b82f6' : 'var(--text-secondary)'
+                  }}>
                     {item.priority}
                   </span>
                 </td>
-                <td style={{ padding: '16px' }}>
-                  <span className={`badge badge-${item.status === 'published' ? 'success' : 'secondary'}`}>
+                <td style={{ padding: '16px', borderBottom: '1px solid var(--border)' }}>
+                  <span className="status-badge" style={{
+                    color: item.status === 'published' ? '#10b981' : item.status === 'draft' ? '#f59e0b' : 'var(--text-secondary)'
+                  }}>
                     {item.status}
                   </span>
                 </td>
-                <td style={{ padding: '16px', textAlign: 'right', display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                  <Button variant="secondary" onClick={() => openEdit(item)}>Edit</Button>
-                  <Button 
-                    variant="danger" 
-                    onClick={() => handleDelete(item._id)}
-                    disabled={!isSuperAdmin}
-                    title={!isSuperAdmin ? "Super Admin permission required" : ""}
-                  >
-                    Delete
-                  </Button>
+                <td style={{ padding: '16px', textAlign: 'right', borderBottom: '1px solid var(--border)', borderTopRightRadius: '16px', borderBottomRightRadius: '16px' }}>
+                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                    <Button variant="secondary" onClick={() => openEdit(item)} style={{ padding: '6px 16px', borderRadius: '12px' }}>Edit</Button>
+                    <Button 
+                      variant="danger" 
+                      onClick={() => handleDelete(item._id)}
+                      disabled={!isSuperAdmin}
+                      title={!isSuperAdmin ? "Super Admin permission required" : ""}
+                      style={{ padding: '6px 16px', borderRadius: '12px' }}
+                    >
+                      Delete
+                    </Button>
+                  </div>
                 </td>
               </tr>
             ))}
             {announcements.length === 0 && (
               <tr>
-                <td colSpan="5" style={{ padding: '32px', textAlign: 'center', color: 'var(--text-2)' }}>
+                <td colSpan="5" style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text-secondary)' }}>
                   No announcements found.
                 </td>
               </tr>
@@ -145,9 +163,9 @@ export default function AnnouncementsManager({ user }) {
       </div>
 
       {showModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div className="admin-card" style={{ width: '600px', padding: '24px', maxHeight: '90vh', overflowY: 'auto' }}>
-            <h3 style={{ marginBottom: '20px', color: 'var(--text-1)' }}>{editingId ? 'Edit Announcement' : 'New Announcement'}</h3>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div className="solid-card" style={{ width: '100%', maxWidth: '600px', padding: '32px', maxHeight: '90vh', overflowY: 'auto', borderRadius: '24px' }}>
+            <h3 style={{ fontSize: '1.4rem', fontWeight: '800', marginBottom: '24px', color: 'var(--text-primary)' }}>{editingId ? 'Edit Announcement' : 'New Announcement'}</h3>
             <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <InputField
                 label="Title"
@@ -195,20 +213,22 @@ export default function AnnouncementsManager({ user }) {
                 />
               </div>
 
-              <div style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: 'var(--text-1)' }}>
-                  <input type="checkbox" checked={formData.isPinned} onChange={e => setFormData({...formData, isPinned: e.target.checked})} style={{ width: '16px', height: '16px', accentColor: 'var(--c-accent)' }} />
-                  Pin to Top
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: 'var(--text-1)' }}>
-                  <input type="checkbox" checked={formData.showAsBanner} onChange={e => setFormData({...formData, showAsBanner: e.target.checked})} style={{ width: '16px', height: '16px', accentColor: 'var(--c-accent)' }} />
-                  Show as Homepage Banner
-                </label>
+              <div style={{ display: 'flex', gap: '32px', marginTop: '16px' }}>
+                <CheckboxField 
+                  label="Pin to Top" 
+                  checked={formData.isPinned} 
+                  onChange={e => setFormData({...formData, isPinned: !formData.isPinned})} 
+                />
+                <CheckboxField 
+                  label="Show as Homepage Banner" 
+                  checked={formData.showAsBanner} 
+                  onChange={e => setFormData({...formData, showAsBanner: !formData.showAsBanner})} 
+                />
               </div>
 
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '20px' }}>
-                <Button variant="secondary" onClick={() => setShowModal(false)}>Cancel</Button>
-                <Button variant="primary" type="submit">Save Announcement</Button>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>
+                <Button variant="secondary" onClick={() => setShowModal(false)} style={{ borderRadius: '50px', padding: '10px 24px' }}>Cancel</Button>
+                <Button variant="primary" type="submit" style={{ borderRadius: '50px', padding: '10px 24px' }}>Save Announcement</Button>
               </div>
             </form>
           </div>

@@ -19,6 +19,7 @@ import HelpPage from './components/HelpPage';
 import TermsPage from './components/TermsPage';
 import PrivacyPage from './components/PrivacyPage';
 import MobileAppPage from './components/MobileAppPage';
+import logo from './assets/logo.png';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -135,7 +136,60 @@ export default function App() {
   };
 
   if (isInitializing) {
-    return <div style={{display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center'}}>Loading...</div>;
+    return (
+      <div style={{
+        display: 'flex', flexDirection: 'column', height: '100vh', 
+        alignItems: 'center', justifyContent: 'center', 
+        backgroundColor: 'var(--bg-main)', color: 'var(--text-primary)'
+      }}>
+        <style>
+          {`
+            @keyframes loadPulseGlow {
+              0% { transform: scale(0.95); opacity: 0.5; filter: blur(20px); }
+              50% { transform: scale(1.1); opacity: 0.8; filter: blur(35px); }
+              100% { transform: scale(0.95); opacity: 0.5; filter: blur(20px); }
+            }
+            @keyframes loadFloatLogo {
+              0% { transform: translateY(0px); }
+              50% { transform: translateY(-10px); }
+              100% { transform: translateY(0px); }
+            }
+            @keyframes loadTextPulse {
+              0% { opacity: 0.5; }
+              50% { opacity: 1; }
+              100% { opacity: 0.5; }
+            }
+          `}
+        </style>
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '120px', height: '120px' }}>
+          <div style={{
+            position: 'absolute',
+            width: '100%', height: '100%',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #f97316 0%, #fbbf24 100%)',
+            animation: 'loadPulseGlow 3s ease-in-out infinite'
+          }} />
+          <img 
+            src={logo} 
+            alt="Program" 
+            style={{ 
+              width: '70px', height: 'auto', 
+              objectFit: 'contain', 
+              animation: 'loadFloatLogo 3s ease-in-out infinite',
+              transform: 'scale(1.2)'
+            }} 
+          />
+        </div>
+        <h2 style={{
+          marginTop: '40px', fontSize: '1.2rem', fontWeight: '800', letterSpacing: '4px', textTransform: 'uppercase',
+          background: 'linear-gradient(135deg, #f97316 0%, #fbbf24 100%)',
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+          animation: 'loadTextPulse 3s ease-in-out infinite'
+        }}>
+          Loading
+        </h2>
+      </div>
+    );
   }
 
   if (!isAuthenticated) {

@@ -368,14 +368,14 @@
   background: linear-gradient(135deg, #f97316 0%, #fbbf24 100%);
   color: #ffffff;
   /* High contrast text */
-  box-shadow: 0 4px 14px rgba(249, 115, 22, 0.4);
+  box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.5);
   border: none;
   border-radius: var(--radius-btn);
   padding: 12px 24px;
   font-weight: 700;
   font-size: 0.95rem;
   cursor: pointer;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: filter 0.2s ease, transform 0.1s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -383,12 +383,11 @@
 }
 
 .solid-btn:hover {
-  transform: translateY(-1px);
-  opacity: 0.9;
+  filter: brightness(1.2);
 }
 
 .solid-btn:active {
-  transform: scale(0.85);
+  transform: scale(0.95);
 }
 
 /* Inputs */

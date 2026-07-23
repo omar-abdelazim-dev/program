@@ -320,7 +320,10 @@ function AccountSection({ user, setUser, onLogout }) {
       <div className="solid-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', height: '100%' }}>
         <h3 style={{ fontSize: '1.1rem', fontWeight: '700', margin: 0, color: 'var(--text-primary)' }}>Device Sessions</h3>
         <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>Sign out of Program on this device. You will need to log back in to access your dashboard.</p>
-        <button type="button" className="solid-btn" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid #ef4444', boxShadow: 'none', alignSelf: 'flex-start', width: 'auto', padding: '10px 24px', marginTop: 'auto', borderRadius: '50px' }} onClick={onLogout}>
+        <button type="button" className="solid-btn" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5)', alignSelf: 'flex-start', width: 'auto', padding: '10px 24px', marginTop: 'auto', borderRadius: '50px', transition: 'all 0.2s ease', cursor: 'pointer' }} 
+          onMouseEnter={e => { e.target.style.background = "rgba(239,68,68,0.2)"; }}
+          onMouseLeave={e => { e.target.style.background = "rgba(239,68,68,0.1)"; }}
+          onClick={onLogout}>
           Log out
         </button>
       </div>
@@ -328,7 +331,9 @@ function AccountSection({ user, setUser, onLogout }) {
       <div className="solid-card" style={{ background: 'rgba(239, 68, 68, 0.05)', display: 'flex', flexDirection: 'column', gap: '16px', height: '100%' }}>
         <h3 style={{ fontSize: '1.1rem', fontWeight: '700', margin: 0, color: '#ef4444' }}>Danger Zone</h3>
         <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>Permanently delete your account and all of your data. This action cannot be undone.</p>
-        <button type="button" className="solid-btn" style={{ background: '#ef4444', color: '#fff', border: 'none', boxShadow: 'none', alignSelf: 'flex-start', width: 'auto', padding: '10px 24px', marginTop: 'auto', borderRadius: '50px' }}>
+        <button type="button" className="solid-btn" style={{ background: '#ef4444', color: '#fff', border: 'none', boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5)', alignSelf: 'flex-start', width: 'auto', padding: '10px 24px', marginTop: 'auto', borderRadius: '50px', transition: 'all 0.2s ease', cursor: 'pointer' }}
+          onMouseEnter={e => { e.target.style.background = "#f87171"; }}
+          onMouseLeave={e => { e.target.style.background = "#ef4444"; }}>
           Delete Account
         </button>
       </div>

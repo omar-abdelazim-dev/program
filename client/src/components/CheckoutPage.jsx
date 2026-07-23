@@ -156,7 +156,7 @@ export default function CheckoutPage({ cart = [], setCart, setNotifications, isC
               <img 
                 src={isLightMode ? `${logoDark}?v=2` : `${logoLight}?v=2`} 
                 alt="Program Logo" 
-                style={{ height: '32px', marginBottom: '24px', display: 'block' }} 
+                style={{ height: '64px', objectFit: 'contain', marginBottom: '24px', display: 'block' }} 
               />
               <div style={{ color: 'var(--c-sub)', fontSize: '1rem', marginBottom: '4px' }}>Checkout</div>
               <h1 style={{ margin: 0, fontSize: '2.2rem', fontWeight: '700' }}>

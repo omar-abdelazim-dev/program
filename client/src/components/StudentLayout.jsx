@@ -45,11 +45,12 @@ export default function StudentLayout({
               alt="Student Logo"
               style={{
                 marginTop: "10px",
-                width: "44px",
+                width: "100%",
+                scale:'1.5',
                 marginBottom: "0",
                 objectFit: "contain",
                 display: "block",
-                scale: "4",
+                transform: "scale(1.2)",
               }}
             />
           </Link>

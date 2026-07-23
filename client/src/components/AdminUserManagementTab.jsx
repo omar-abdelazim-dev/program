@@ -6,17 +6,45 @@ import { createPortal } from "react-dom";
 // Generic custom dropdown component to match the system's dark theme
 const CustomDropdown = ({ value, options, onChange, disabled, width = "100%" }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
   const dropdownRef = useRef(null);
+  const menuRef = useRef(null);
   
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+      if (
+        dropdownRef.current && !dropdownRef.current.contains(e.target) &&
+        (!menuRef.current || !menuRef.current.contains(e.target))
+      ) {
         setIsOpen(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      
+      const updatePosition = () => {
+        if (dropdownRef.current) {
+          const rect = dropdownRef.current.getBoundingClientRect();
+          setDropdownPos({
+            top: rect.bottom + 8 + window.scrollY,
+            left: rect.left + window.scrollX,
+            width: rect.width
+          });
+        }
+      };
+      
+      updatePosition();
+      window.addEventListener("scroll", updatePosition, true);
+      window.addEventListener("resize", updatePosition);
+      
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+        window.removeEventListener("scroll", updatePosition, true);
+        window.removeEventListener("resize", updatePosition);
+      };
+    }
+  }, [isOpen]);
 
   return (
     <div ref={dropdownRef} style={{ position: "relative", width }}>
@@ -25,35 +53,38 @@ const CustomDropdown = ({ value, options, onChange, disabled, width = "100%" }) 
         onClick={() => setIsOpen(!isOpen)}
         style={{
           width: "100%",
-          padding: "12px 16px",
+          height: "42px",
+          padding: "0 16px",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          background: "rgba(255,255,255,0.03)",
-          border: "1px solid rgba(255,255,255,0.1)",
-          borderRadius: "10px",
+          background: "var(--bg-main)",
+          border: isOpen ? "1px solid #f97316" : "1px solid transparent",
+          borderRadius: "12px",
+          boxShadow: isOpen 
+            ? "0 10px 30px rgba(0,0,0,0.15), 0 0 0 3px rgba(249, 115, 22, 0.2)"
+            : "inset 0 4px 12px rgba(0,0,0,0.5)",
           color: "var(--c-light)",
           cursor: disabled ? "not-allowed" : "pointer",
           opacity: disabled ? 0.5 : 1,
-          fontSize: "0.95rem"
+          fontSize: "0.9rem"
         }}
       >
         <span>{value.charAt(0).toUpperCase() + value.slice(1)}</span>
         <span style={{ fontSize: "0.8rem", color: "var(--c-sub)", transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "rotate(0)" }}>▼</span>
       </button>
       
-      {isOpen && !disabled && (
-        <div style={{
+      {isOpen && !disabled && createPortal(
+        <div ref={menuRef} style={{
           position: "absolute",
-          top: "100%",
-          left: 0,
-          right: 0,
-          marginTop: "8px",
-          background: "#15171e", // Dark solid background
-          border: "1px solid rgba(255,255,255,0.08)",
+          top: dropdownPos.top,
+          left: dropdownPos.left,
+          width: dropdownPos.width,
+          background: "var(--bg-surface)",
+          border: "none",
           borderRadius: "12px",
           padding: "8px",
-          zIndex: 100,
+          zIndex: 999999,
           display: "flex",
           flexDirection: "column",
           gap: "4px",
@@ -68,30 +99,44 @@ const CustomDropdown = ({ value, options, onChange, disabled, width = "100%" }) 
               }}
               style={{
                 padding: "10px 12px",
-                background: "transparent",
+                background: value.toLowerCase() === opt.toLowerCase() ? "var(--bg-main)" : "transparent",
+                boxShadow: value.toLowerCase() === opt.toLowerCase() ? "inset 0 4px 12px rgba(0,0,0,0.5)" : "none",
                 border: "none",
-                color: value.toLowerCase() === opt.toLowerCase() ? "var(--c-light)" : "var(--c-sub)",
                 textAlign: "left",
                 cursor: "pointer",
                 borderRadius: "8px",
                 fontSize: "0.95rem",
-                transition: "all 0.2s ease"
+                transition: "all 0.2s ease",
+                color: value.toLowerCase() === opt.toLowerCase() ? "transparent" : "var(--c-sub)",
+                ...(value.toLowerCase() === opt.toLowerCase() ? {
+                  backgroundImage: "linear-gradient(90deg, #f97316, #fbad41)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  fontWeight: "600"
+                } : {})
               }}
               onMouseEnter={(e) => {
-                e.target.style.background = "rgba(255,255,255,0.05)";
-                e.target.style.color = "var(--c-light)";
+                if (value.toLowerCase() !== opt.toLowerCase()) {
+                  e.target.style.background = "var(--bg-main)";
+                  e.target.style.boxShadow = "inset 0 4px 12px rgba(0,0,0,0.5)";
+                  e.target.style.color = "var(--c-light)";
+                  e.target.style.WebkitTextFillColor = "var(--c-light)";
+                }
               }}
               onMouseLeave={(e) => {
-                e.target.style.background = "transparent";
                 if (value.toLowerCase() !== opt.toLowerCase()) {
+                  e.target.style.background = "transparent";
+                  e.target.style.boxShadow = "none";
                   e.target.style.color = "var(--c-sub)";
+                  e.target.style.WebkitTextFillColor = "var(--c-sub)";
                 }
               }}
             >
               {opt}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
@@ -108,6 +153,7 @@ export default function AdminUserManagementTab({
   const [accountStatus, setAccountStatus] = useState("All Statuses");
   const [verification, setVerification] = useState("All");
   const [showFilters, setShowFilters] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [sidePanelUserId, setSidePanelUserId] = useState(null);
@@ -140,11 +186,11 @@ export default function AdminUserManagementTab({
 
   const getRoleColor = (role) => {
     switch (role?.toLowerCase()) {
-      case "student": return { text: "#9ca3af", bg: "rgba(156, 163, 175, 0.1)", border: "rgba(156, 163, 175, 0.25)" };
-      case "instructor": return { text: "#f97316", bg: "rgba(249, 115, 22, 0.1)", border: "rgba(249, 115, 22, 0.25)" };
-      case "admin": return { text: "#8b5cf6", bg: "rgba(139, 92, 246, 0.1)", border: "rgba(139, 92, 246, 0.25)" };
-      case "superadmin": return { text: "#ef4444", bg: "rgba(239, 68, 68, 0.1)", border: "rgba(239, 68, 68, 0.25)" };
-      default: return { text: "var(--c-sub)", bg: "rgba(255,255,255,0.05)", border: "rgba(255,255,255,0.1)" };
+      case "student": return { text: "#e5e7eb", bg: "rgba(156, 163, 175, 0.2)", border: "none" };
+      case "instructor": return { text: "#fb923c", bg: "rgba(249, 115, 22, 0.2)", border: "none" };
+      case "admin": return { text: "#c084fc", bg: "rgba(168, 85, 247, 0.2)", border: "none" };
+      case "superadmin": return { text: "#f87171", bg: "rgba(239, 68, 68, 0.2)", border: "none" };
+      default: return { text: "var(--c-sub)", bg: "rgba(255,255,255,0.1)", border: "none" };
     }
   };
 
@@ -275,27 +321,38 @@ export default function AdminUserManagementTab({
               placeholder="Search by name, email, or ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setIsSearchFocused(false)}
+              style={{
+                background: "var(--bg-surface)",
+                border: isSearchFocused ? "1px solid #f97316" : "1px solid transparent",
+                borderRadius: "99px",
+                boxShadow: isSearchFocused 
+                  ? "0 10px 30px rgba(0,0,0,0.15), 0 0 0 3px rgba(249, 115, 22, 0.2)"
+                  : "0 4px 12px rgba(0,0,0,0.15)",
+                paddingLeft: "42px", // keep space for the search icon
+                outline: "none",
+                transition: "all 0.3s ease",
+                color: "var(--c-light)"
+              }}
             />
           </div>
           <button 
             onClick={() => setShowFilters(!showFilters)}
             style={{ 
-              background: showFilters ? "rgba(255,255,255,0.08)" : "rgba(255, 255, 255, 0.03)", 
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
-              border: "1px solid rgba(255, 255, 255, 0.05)",
-              borderTop: "1px solid rgba(255, 255, 255, 0.15)",
-              borderLeft: "1px solid rgba(255, 255, 255, 0.15)",
-              color: "var(--c-light)",
-              padding: "10px 20px",
-              borderRadius: "20px",
+              background: showFilters ? "var(--c-sub)" : "var(--bg-surface)", 
+              color: showFilters ? "var(--bg-main)" : "var(--c-sub)",
+              padding: "10px 24px",
+              borderRadius: "99px",
               cursor: "pointer",
               fontSize: "0.9rem",
-              transition: "all 0.3s ease",
-              boxShadow: showFilters ? "0 0 0 2px rgba(139, 92, 246, 0.3)" : "none"
+              fontWeight: "500",
+              transition: "all 0.2s ease",
+              border: "none",
+              boxShadow: showFilters ? "inset 0 4px 12px rgba(0,0,0,0.5)" : "0 4px 12px rgba(0,0,0,0.15)"
             }}
-            onMouseEnter={e => { if(!showFilters) e.target.style.background = "rgba(255,255,255,0.06)"; }}
-            onMouseLeave={e => { if(!showFilters) e.target.style.background = "rgba(255,255,255,0.03)"; }}
+            onMouseEnter={e => { if(!showFilters) { e.target.style.background = "rgba(255,255,255,0.05)"; e.target.style.color = "var(--c-light)"; } }}
+            onMouseLeave={e => { if(!showFilters) { e.target.style.background = "var(--bg-surface)"; e.target.style.color = "var(--c-sub)"; } }}
           >
             Filters
           </button>
@@ -303,17 +360,27 @@ export default function AdminUserManagementTab({
       </div>
 
       {/* Filters Bar */}
-      {showFilters && (
-        <div style={{ 
-          background: "rgba(15,17,23,0.95)", 
-          border: "1px solid rgba(255,255,255,0.05)",
-          borderRadius: "12px",
-          padding: "20px 24px",
-          display: "flex",
-          alignItems: "flex-end",
-          gap: "24px",
-          animation: "fadeIn 0.2s ease"
-        }}>
+      <div style={{
+        display: "grid",
+        gridTemplateRows: showFilters ? "1fr" : "0fr",
+        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        opacity: showFilters ? 1 : 0,
+        margin: showFilters ? "0 0 24px 0" : "-24px 0 0 0",
+        pointerEvents: showFilters ? "auto" : "none",
+        filter: "drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.5))"
+      }}>
+        <div style={{ overflow: "hidden" }}>
+          <div style={{ 
+            background: "var(--bg-surface)", 
+            border: "none",
+            borderRadius: "12px",
+            padding: "20px 24px",
+            display: "flex",
+            alignItems: "flex-end",
+            gap: "24px",
+            transform: showFilters ? "translateY(0)" : "translateY(-10px)",
+            transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+          }}>
           <div style={{ display: "flex", flexDirection: "column", gap: "8px", minWidth: "220px" }}>
             <label style={{ fontSize: "0.75rem", fontWeight: "600", color: "var(--c-sub)", letterSpacing: "0.5px" }}>ACCOUNT STATUS</label>
             <CustomDropdown 
@@ -335,26 +402,29 @@ export default function AdminUserManagementTab({
           <button 
             onClick={clearFilters}
             style={{ 
-              background: "rgba(239, 68, 68, 0.05)",
-              backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-              border: "1px solid rgba(239, 68, 68, 0.2)",
-              borderTop: "1px solid rgba(239, 68, 68, 0.4)",
-              borderLeft: "1px solid rgba(239, 68, 68, 0.4)",
-              color: "#ef4444",
-              padding: "12px 20px",
-              borderRadius: "10px",
+              background: "rgba(239, 68, 68, 0.1)",
+              color: "#f87171",
+              height: "42px",
+              padding: "0 20px",
+              border: "none",
+              borderRadius: "12px",
               cursor: "pointer",
               fontSize: "0.9rem",
               fontWeight: "500",
-              transition: "all 0.2s"
+              transition: "all 0.2s ease",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)"
             }}
-            onMouseEnter={e => { e.target.style.background = "rgba(239,68,68,0.15)"; }}
-            onMouseLeave={e => { e.target.style.background = "rgba(239,68,68,0.05)"; }}
+            onMouseEnter={e => e.target.style.background = "rgba(239, 68, 68, 0.2)"}
+            onMouseLeave={e => e.target.style.background = "rgba(239, 68, 68, 0.1)"}
           >
             Clear All Filters
           </button>
+          </div>
         </div>
-      )}
+      </div>
 
       {/* Role Tabs */}
       <div style={{ display: "flex", gap: "12px" }}>
@@ -379,17 +449,24 @@ export default function AdminUserManagementTab({
               fontSize: "0.9rem",
               fontWeight: "500",
               cursor: "pointer",
-              transition: "all 0.2s",
-              backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-              border: `1px solid ${isActive ? roleStyle.border : "rgba(255,255,255,0.05)"}`,
-              borderTop: `1px solid ${isActive ? roleStyle.border : "rgba(255,255,255,0.15)"}`,
-              borderLeft: `1px solid ${isActive ? roleStyle.border : "rgba(255,255,255,0.15)"}`,
-              background: isActive ? roleStyle.bg : "rgba(255,255,255,0.03)",
+              transition: "all 0.2s ease",
+              border: "none",
+              background: isActive ? roleStyle.bg : "var(--bg-surface)",
               color: isActive ? roleStyle.text : "var(--c-sub)",
-              boxShadow: isActive ? `0 0 10px ${roleStyle.bg}` : "none"
+              boxShadow: isActive ? `inset 0 4px 12px rgba(0,0,0,0.5)` : "0 4px 12px rgba(0,0,0,0.15)"
             }}
-            onMouseEnter={e => { if(!isActive) e.target.style.background = "rgba(255,255,255,0.08)"; }}
-            onMouseLeave={e => { if(!isActive) e.target.style.background = "rgba(255,255,255,0.03)"; }}
+            onMouseEnter={e => { 
+              if(!isActive) {
+                e.target.style.background = "rgba(255,255,255,0.05)";
+                e.target.style.color = "var(--c-light)";
+              } 
+            }}
+            onMouseLeave={e => { 
+              if(!isActive) {
+                e.target.style.background = "var(--bg-surface)";
+                e.target.style.color = "var(--c-sub)";
+              } 
+            }}
           >
             {tab.label}
           </button>
@@ -399,8 +476,9 @@ export default function AdminUserManagementTab({
       {/* Selection Bar */}
       {selectedIds.size > 0 && (
         <div style={{ 
-          background: "rgba(139, 92, 246, 0.1)", // Purple tint matching screenshot
-          border: "1px solid rgba(139, 92, 246, 0.2)",
+          background: "var(--bg-surface)",
+          border: "none",
+          boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.5)",
           borderRadius: "12px",
           padding: "12px 24px",
           display: "flex",
@@ -416,39 +494,59 @@ export default function AdminUserManagementTab({
               onClick={() => handleBulkAction("activate")}
               disabled={isProcessing}
               style={{
-                background: "rgba(16,185,129,0.1)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-                border: "1px solid rgba(16,185,129,0.2)", borderTop: "1px solid rgba(16,185,129,0.4)", borderLeft: "1px solid rgba(16,185,129,0.4)",
-                color: "#10b981", padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontWeight: "600"
-              }}>
+                background: "rgba(16,185,129,0.1)",
+                border: "none",
+                boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)",
+                color: "#10b981", padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontWeight: "600",
+                transition: "all 0.2s ease"
+              }}
+              onMouseEnter={e => e.target.style.background = "rgba(16,185,129,0.2)"}
+              onMouseLeave={e => e.target.style.background = "rgba(16,185,129,0.1)"}
+            >
               Activate
             </button>
             <button 
               onClick={() => handleBulkAction("suspend")}
               disabled={isProcessing}
               style={{
-                background: "rgba(249,115,22,0.1)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-                border: "1px solid rgba(249,115,22,0.2)", borderTop: "1px solid rgba(249,115,22,0.4)", borderLeft: "1px solid rgba(249,115,22,0.4)",
-                color: "#f97316", padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontWeight: "600"
-              }}>
+                background: "rgba(249,115,22,0.1)",
+                border: "none",
+                boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)",
+                color: "#f97316", padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontWeight: "600",
+                transition: "all 0.2s ease"
+              }}
+              onMouseEnter={e => e.target.style.background = "rgba(249,115,22,0.2)"}
+              onMouseLeave={e => e.target.style.background = "rgba(249,115,22,0.1)"}
+            >
               Suspend
             </button>
             <button 
               onClick={() => notyf.success("Exporting CSV...")}
               style={{
-                background: "rgba(255,255,255,0.05)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-                border: "1px solid rgba(255,255,255,0.05)", borderTop: "1px solid rgba(255,255,255,0.15)", borderLeft: "1px solid rgba(255,255,255,0.15)",
-                color: "var(--c-light)", padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontWeight: "600"
-              }}>
+                background: "rgba(255,255,255,0.05)",
+                border: "none",
+                boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)",
+                color: "var(--c-light)", padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontWeight: "600",
+                transition: "all 0.2s ease"
+              }}
+              onMouseEnter={e => e.target.style.background = "rgba(255,255,255,0.1)"}
+              onMouseLeave={e => e.target.style.background = "rgba(255,255,255,0.05)"}
+            >
               Export CSV
             </button>
             <button 
               onClick={() => handleBulkAction("delete")}
               disabled={isProcessing}
               style={{
-                background: "rgba(239,68,68,0.1)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-                border: "1px solid rgba(239,68,68,0.2)", borderTop: "1px solid rgba(239,68,68,0.4)", borderLeft: "1px solid rgba(239,68,68,0.4)",
-                color: "#ef4444", padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontWeight: "600"
-              }}>
+                background: "rgba(239,68,68,0.1)",
+                border: "none",
+                boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)",
+                color: "#ef4444", padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "0.85rem", fontWeight: "600",
+                transition: "all 0.2s ease"
+              }}
+              onMouseEnter={e => e.target.style.background = "rgba(239,68,68,0.2)"}
+              onMouseLeave={e => e.target.style.background = "rgba(239,68,68,0.1)"}
+            >
               Delete
             </button>
           </div>
@@ -456,7 +554,7 @@ export default function AdminUserManagementTab({
       )}
 
       {/* Data Table */}
-      <div className="glass-card" style={{ border: "1px solid rgba(255,255,255,0.05)", borderRadius: "12px", overflow: "hidden", marginTop: selectedIds.size > 0 ? "0px" : "4px" }}>
+      <div className="glass-card" style={{ background: "var(--bg-surface)", boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.5)", border: "none", borderRadius: "12px", overflow: "hidden", marginTop: selectedIds.size > 0 ? "0px" : "4px" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
           <thead>
             <tr style={{ background: "rgba(255,255,255,0.02)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
@@ -487,10 +585,12 @@ export default function AdminUserManagementTab({
                 <tr 
                   key={u._id} 
                   style={{ 
-                    borderBottom: "1px solid rgba(255,255,255,0.03)",
-                    background: selectedIds.has(u._id) ? "rgba(255,255,255,0.02)" : "transparent",
-                    transition: "background 0.2s"
+                    borderBottom: "1px solid rgba(255,255,255,0.05)",
+                    background: selectedIds.has(u._id) ? "rgba(255,255,255,0.05)" : "transparent",
+                    transition: "all 0.2s ease"
                   }}
+                  onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}
+                  onMouseLeave={e => e.currentTarget.style.background = selectedIds.has(u._id) ? "rgba(255,255,255,0.05)" : "transparent"}
                 >
                   <td style={{ padding: "16px 24px" }}>
                     <input 
@@ -504,7 +604,7 @@ export default function AdminUserManagementTab({
                     <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                       <div style={{ 
                         width: "36px", height: "36px", borderRadius: "50%", 
-                        background: "rgba(255,255,255,0.1)", color: "var(--c-light)",
+                        background: "var(--bg-main)", color: "var(--c-light)",
                         display: "flex", alignItems: "center", justifyContent: "center",
                         fontWeight: "600", fontSize: "0.9rem", flexShrink: 0
                       }}>
@@ -518,7 +618,7 @@ export default function AdminUserManagementTab({
                   </td>
                   <td style={{ padding: "16px" }}>
                     <span style={{ 
-                      background: getRoleColor(u.role).bg, border: `1px solid ${getRoleColor(u.role).border}`,
+                      background: getRoleColor(u.role).bg, border: "none", boxShadow: "inset 0 4px 12px rgba(0, 0, 0, 0.5)",
                       color: getRoleColor(u.role).text, padding: "4px 10px", borderRadius: "99px",
                       fontSize: "0.75rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.5px"
                     }}>
@@ -527,11 +627,11 @@ export default function AdminUserManagementTab({
                   </td>
                   <td style={{ padding: "16px" }}>
                     {u.isDeleted ? (
-                      <span style={{ color: "var(--c-sub)", fontSize: "0.75rem", fontWeight: "700", letterSpacing: "0.5px", background: "rgba(255,255,255,0.05)", padding: "4px 10px", borderRadius: "4px" }}>DELETED</span>
+                      <span style={{ color: "var(--c-sub)", fontSize: "0.75rem", fontWeight: "700", letterSpacing: "0.5px", background: "rgba(255,255,255,0.1)", border: "none", boxShadow: "inset 0 4px 12px rgba(0, 0, 0, 0.5)", padding: "4px 10px", borderRadius: "99px" }}>DELETED</span>
                     ) : u.isBlocked ? (
-                      <span style={{ color: "#ef4444", fontSize: "0.75rem", fontWeight: "700", letterSpacing: "0.5px", background: "rgba(239,68,68,0.1)", padding: "4px 10px", borderRadius: "4px" }}>SUSPENDED</span>
+                      <span style={{ color: "#f87171", fontSize: "0.75rem", fontWeight: "700", letterSpacing: "0.5px", background: "rgba(239,68,68,0.2)", border: "none", boxShadow: "inset 0 4px 12px rgba(0, 0, 0, 0.5)", padding: "4px 10px", borderRadius: "99px" }}>SUSPENDED</span>
                     ) : (
-                      <span style={{ color: "#10b981", fontSize: "0.75rem", fontWeight: "700", letterSpacing: "0.5px", background: "rgba(16,185,129,0.1)", padding: "4px 10px", borderRadius: "4px" }}>ACTIVE</span>
+                      <span style={{ color: "#34d399", fontSize: "0.75rem", fontWeight: "700", letterSpacing: "0.5px", background: "rgba(16,185,129,0.2)", border: "none", boxShadow: "inset 0 4px 12px rgba(0, 0, 0, 0.5)", padding: "4px 10px", borderRadius: "99px" }}>ACTIVE</span>
                     )}
                   </td>
                   <td style={{ padding: "16px", color: "var(--c-sub)", fontSize: "0.9rem" }}>
@@ -541,13 +641,18 @@ export default function AdminUserManagementTab({
                     <button 
                       onClick={() => setSidePanelUserId(u._id)}
                       style={{ 
-                        background: "rgba(255,255,255,0.03)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-                        border: "1px solid rgba(255,255,255,0.05)", borderTop: "1px solid rgba(255,255,255,0.15)", borderLeft: "1px solid rgba(255,255,255,0.15)",
-                        color: "var(--c-light)", padding: "6px 14px", borderRadius: "8px",
-                        fontSize: "0.85rem", cursor: "pointer", transition: "all 0.2s"
+                        padding: "6px 14px", fontSize: "0.8rem", width: "fit-content", whiteSpace: "nowrap", background: "var(--bg-main)",
+                        color: "var(--c-sub)", border: "none", borderRadius: "999px", cursor: "pointer", transition: "all 0.2s ease",
+                        boxShadow: "inset 0 4px 12px rgba(0, 0, 0, 0.5)"
                       }}
-                      onMouseEnter={e => e.target.style.background = "rgba(255,255,255,0.08)"}
-                      onMouseLeave={e => e.target.style.background = "rgba(255,255,255,0.03)"}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+                        e.currentTarget.style.color = "var(--c-light)";
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.background = "var(--bg-main)";
+                        e.currentTarget.style.color = "var(--c-sub)";
+                      }}
                     >
                       View Profile
                     </button>
@@ -571,8 +676,8 @@ export default function AdminUserManagementTab({
           {/* Panel */}
           <div style={{ 
             position: "relative", width: "400px", height: "100%", 
-            background: "#15171e", // Dark solid background matching screenshot
-            borderLeft: "1px solid rgba(255,255,255,0.1)",
+            background: "var(--bg-surface)",
+            borderLeft: "1px solid rgba(255,255,255,0.05)",
             boxShadow: "-10px 0 40px rgba(0,0,0,0.5)",
             padding: "24px",
             display: "flex", flexDirection: "column", gap: "32px",
@@ -585,7 +690,8 @@ export default function AdminUserManagementTab({
                 background: "rgba(255,255,255,0.05)", border: "none", color: "var(--c-sub)",
                 padding: "6px 12px", borderRadius: "99px", width: "fit-content",
                 display: "flex", alignItems: "center", gap: "6px", cursor: "pointer",
-                fontSize: "0.8rem", transition: "all 0.2s"
+                fontSize: "0.8rem", transition: "all 0.2s",
+                boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)"
               }}
               onMouseEnter={e => { e.target.style.background = "rgba(255,255,255,0.1)"; e.target.style.color = "var(--c-light)"; }}
               onMouseLeave={e => { e.target.style.background = "rgba(255,255,255,0.05)"; e.target.style.color = "var(--c-sub)"; }}
@@ -597,7 +703,7 @@ export default function AdminUserManagementTab({
             <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
               <div style={{ 
                 width: "48px", height: "48px", borderRadius: "50%", 
-                background: "rgba(255,255,255,0.1)", color: "var(--c-light)",
+                background: "var(--bg-main)", color: "var(--c-light)",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontWeight: "600", fontSize: "1.2rem", flexShrink: 0
               }}>
@@ -609,16 +715,17 @@ export default function AdminUserManagementTab({
                   <span style={{ 
                     background: getRoleColor(sidePanelUser.role).bg, border: `1px solid ${getRoleColor(sidePanelUser.role).border}`,
                     color: getRoleColor(sidePanelUser.role).text, padding: "2px 8px", borderRadius: "99px",
-                    fontSize: "0.7rem", fontWeight: "600", textTransform: "uppercase"
+                    fontSize: "0.7rem", fontWeight: "600", textTransform: "uppercase",
+                    boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)"
                   }}>
                     {sidePanelUser.role}
                   </span>
                   {sidePanelUser.isDeleted ? (
-                    <span style={{ color: "var(--c-sub)", fontSize: "0.7rem", fontWeight: "700", background: "rgba(255,255,255,0.05)", padding: "2px 8px", borderRadius: "99px" }}>DELETED</span>
+                    <span style={{ color: "var(--c-sub)", fontSize: "0.7rem", fontWeight: "700", background: "rgba(255,255,255,0.05)", padding: "2px 8px", borderRadius: "99px", boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)" }}>DELETED</span>
                   ) : sidePanelUser.isBlocked ? (
-                    <span style={{ color: "#ef4444", fontSize: "0.7rem", fontWeight: "700", background: "rgba(239,68,68,0.1)", padding: "2px 8px", borderRadius: "99px" }}>SUSPENDED</span>
+                    <span style={{ color: "#ef4444", fontSize: "0.7rem", fontWeight: "700", background: "rgba(239,68,68,0.1)", padding: "2px 8px", borderRadius: "99px", boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)" }}>SUSPENDED</span>
                   ) : (
-                    <span style={{ color: "#10b981", fontSize: "0.7rem", fontWeight: "700", background: "rgba(16,185,129,0.1)", padding: "2px 8px", borderRadius: "99px" }}>ACTIVE</span>
+                    <span style={{ color: "#10b981", fontSize: "0.7rem", fontWeight: "700", background: "rgba(16,185,129,0.1)", padding: "2px 8px", borderRadius: "99px", boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)" }}>ACTIVE</span>
                   )}
                 </div>
               </div>
@@ -663,7 +770,7 @@ export default function AdminUserManagementTab({
                 </div>
                 <div>
                   <div style={{ color: "var(--c-sub)", fontSize: "0.8rem", marginBottom: "4px" }}>Email Verified</div>
-                  <div style={{ color: sidePanelUser.isEmailVerified ? "#10b981" : "#f5a623", fontSize: "0.95rem", fontWeight: "600" }}>
+                  <div style={{ color: sidePanelUser.isEmailVerified ? "#10b981" : "#ef4444", fontSize: "0.95rem", fontWeight: "600" }}>
                     {sidePanelUser.isEmailVerified ? "Yes" : "No"}
                   </div>
                 </div>
@@ -688,8 +795,9 @@ export default function AdminUserManagementTab({
                     disabled={isProcessing || !canModifyRole(sidePanelUser)}
                     style={{
                       flex: 1,
-                      background: "rgba(249,115,22,0.05)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-                      border: "1px solid rgba(249,115,22,0.1)", borderTop: "1px solid rgba(249,115,22,0.3)", borderLeft: "1px solid rgba(249,115,22,0.3)",
+                      background: "rgba(249,115,22,0.1)",
+                      border: "none",
+                      boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)",
                       color: "#f97316",
                       padding: "12px",
                       borderRadius: "10px",
@@ -698,8 +806,8 @@ export default function AdminUserManagementTab({
                       opacity: (isProcessing || !canModifyRole(sidePanelUser)) ? 0.5 : 1,
                       transition: "all 0.2s"
                     }}
-                    onMouseEnter={e => { if(!isProcessing && canModifyRole(sidePanelUser)) e.target.style.background = "rgba(249,115,22,0.15)"; }}
-                    onMouseLeave={e => { if(!isProcessing && canModifyRole(sidePanelUser)) e.target.style.background = "rgba(249,115,22,0.05)"; }}
+                    onMouseEnter={e => { if(!isProcessing && canModifyRole(sidePanelUser)) e.target.style.background = "rgba(249,115,22,0.2)"; }}
+                    onMouseLeave={e => { if(!isProcessing && canModifyRole(sidePanelUser)) e.target.style.background = "rgba(249,115,22,0.1)"; }}
                   >
                     {sidePanelUser.isBlocked ? "Unsuspend Account" : "Suspend Account"}
                   </button>
@@ -709,8 +817,9 @@ export default function AdminUserManagementTab({
                     disabled={isProcessing || !canModifyRole(sidePanelUser)}
                     style={{
                       flex: 1,
-                      background: "rgba(239,68,68,0.05)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-                      border: "1px solid rgba(239,68,68,0.1)", borderTop: "1px solid rgba(239,68,68,0.3)", borderLeft: "1px solid rgba(239,68,68,0.3)",
+                      background: "rgba(239,68,68,0.1)",
+                      border: "none",
+                      boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)",
                       color: "#ef4444",
                       padding: "12px",
                       borderRadius: "10px",
@@ -719,8 +828,8 @@ export default function AdminUserManagementTab({
                       opacity: (isProcessing || !canModifyRole(sidePanelUser)) ? 0.5 : 1,
                       transition: "all 0.2s"
                     }}
-                    onMouseEnter={e => { if(!isProcessing && canModifyRole(sidePanelUser)) e.target.style.background = "rgba(239,68,68,0.15)"; }}
-                    onMouseLeave={e => { if(!isProcessing && canModifyRole(sidePanelUser)) e.target.style.background = "rgba(239,68,68,0.05)"; }}
+                    onMouseEnter={e => { if(!isProcessing && canModifyRole(sidePanelUser)) e.target.style.background = "rgba(239,68,68,0.2)"; }}
+                    onMouseLeave={e => { if(!isProcessing && canModifyRole(sidePanelUser)) e.target.style.background = "rgba(239,68,68,0.1)"; }}
                   >
                     {sidePanelUser.isDeleted ? "Restore Account" : "Soft Delete Account"}
                   </button>

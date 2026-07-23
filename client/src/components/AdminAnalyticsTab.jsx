@@ -59,17 +59,24 @@ const AdminAnalyticsTab = ({ revenueAnalytics, revenueAnalyticsLoading }) => {
   const CustomAreaTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
-        <div style={{ background: '#11131a', border: '1px solid rgba(255,255,255,0.1)', padding: '12px', borderRadius: '8px', minWidth: '200px' }}>
+        <div style={{ background: '#11131a', border: 'none', boxShadow: 'inset 0 4px 12px rgba(0, 0, 0, 0.5)', padding: '12px', borderRadius: '8px', minWidth: '200px' }}>
           <div style={{ fontWeight: '600', marginBottom: '8px', color: '#fff' }}>{label}</div>
-          {payload.map((entry, index) => (
-            <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', fontSize: '0.9rem' }}>
-              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: entry.color }}></div>
-              <span style={{ color: 'var(--c-sub)' }}>{entry.name}:</span>
-              <span style={{ color: entry.color, fontWeight: '600' }}>
-                EGP {entry.value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-              </span>
-            </div>
-          ))}
+          {payload.map((entry, index) => {
+            let displayColor = entry.color;
+            if (entry.name === 'Revenue') displayColor = '#10B981';
+            if (entry.name === 'Company Share') displayColor = '#8b5cf6';
+            if (entry.name === 'Growth') displayColor = '#facc15';
+            
+            return (
+              <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', fontSize: '0.9rem' }}>
+                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: displayColor }}></div>
+                <span style={{ color: 'var(--c-sub)' }}>{entry.name}:</span>
+                <span style={{ color: displayColor, fontWeight: '600' }}>
+                  EGP {entry.value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                </span>
+              </div>
+            );
+          })}
         </div>
       );
     }
@@ -79,17 +86,24 @@ const AdminAnalyticsTab = ({ revenueAnalytics, revenueAnalyticsLoading }) => {
   const CustomComposedTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
-        <div style={{ background: '#11131a', border: '1px solid rgba(255,255,255,0.1)', padding: '12px', borderRadius: '8px', minWidth: '180px' }}>
+        <div style={{ background: '#11131a', border: 'none', boxShadow: 'inset 0 4px 12px rgba(0, 0, 0, 0.5)', padding: '12px', borderRadius: '8px', minWidth: '180px' }}>
           <div style={{ fontWeight: '600', marginBottom: '8px', color: '#fff' }}>{label}</div>
-          {payload.map((entry, index) => (
-            <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', fontSize: '0.9rem' }}>
-              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: entry.color }}></div>
-              <span style={{ color: 'var(--c-sub)' }}>{entry.name}:</span>
-              <span style={{ color: entry.color, fontWeight: '600' }}>
-                {entry.name === 'Growth' ? `${entry.value > 0 ? '+' : ''}${entry.value}%` : `EGP ${entry.value.toLocaleString()}`}
-              </span>
-            </div>
-          ))}
+          {payload.map((entry, index) => {
+            let displayColor = entry.color;
+            if (entry.name === 'Revenue') displayColor = '#10B981';
+            if (entry.name === 'Company Share') displayColor = '#8b5cf6';
+            if (entry.name === 'Growth') displayColor = '#facc15';
+
+            return (
+              <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', fontSize: '0.9rem' }}>
+                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: displayColor }}></div>
+                <span style={{ color: 'var(--c-sub)' }}>{entry.name}:</span>
+                <span style={{ color: displayColor, fontWeight: '600' }}>
+                  {entry.name === 'Growth' ? `${entry.value > 0 ? '+' : ''}${entry.value}%` : `EGP ${entry.value.toLocaleString()}`}
+                </span>
+              </div>
+            );
+          })}
         </div>
       );
     }
@@ -105,29 +119,46 @@ const AdminAnalyticsTab = ({ revenueAnalytics, revenueAnalyticsLoading }) => {
           <div style={{ fontSize: "0.9rem", color: "var(--c-sub)" }}>Financial performance over time.</div>
         </div>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          {['Last 7 Days', 'Last 30 Days', 'Last 6 Months', 'Last Year'].map(filter => (
-            <button
-              key={filter}
-              onClick={() => setTimeFilter(filter)}
-              style={{
-                background: timeFilter === filter ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255, 255, 255, 0.03)',
-                border: `1px solid ${timeFilter === filter ? 'rgba(239, 68, 68, 0.3)' : 'rgba(255, 255, 255, 0.1)'}`,
-                color: timeFilter === filter ? '#ef4444' : 'var(--c-sub)',
-                padding: '6px 16px',
-                borderRadius: '99px',
-                fontSize: '0.85rem',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              {filter}
-            </button>
-          ))}
+          {['Last 7 Days', 'Last 30 Days', 'Last 6 Months', 'Last Year'].map(filter => {
+            const isActive = timeFilter === filter;
+            return (
+              <button
+                key={filter}
+                onClick={() => setTimeFilter(filter)}
+                style={{
+                  padding: "6px 16px",
+                  borderRadius: "99px",
+                  fontSize: "0.85rem",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  border: "none",
+                  background: isActive ? "rgba(239, 68, 68, 0.2)" : "var(--bg-surface)",
+                  color: isActive ? "#f87171" : "var(--c-sub)",
+                  boxShadow: isActive ? "inset 0 4px 12px rgba(0,0,0,0.5)" : "0 4px 12px rgba(0,0,0,0.15)"
+                }}
+                onMouseEnter={e => { 
+                  if(!isActive) {
+                    e.target.style.background = "rgba(255,255,255,0.05)";
+                    e.target.style.color = "var(--c-light)";
+                  } 
+                }}
+                onMouseLeave={e => { 
+                  if(!isActive) {
+                    e.target.style.background = "var(--bg-surface)";
+                    e.target.style.color = "var(--c-sub)";
+                  } 
+                }}
+              >
+                {filter}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Monthly Revenue vs Company Share Area Chart */}
-      <div className="glass-card" style={{ padding: '24px' }}>
+      <div className="glass-card stat-card" style={{ padding: '24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
           <div>
             <h3 style={{ margin: "0 0 4px 0", fontSize: "1.1rem", color: "var(--text-h)" }}>Monthly Revenue vs Company Share</h3>
@@ -173,7 +204,7 @@ const AdminAnalyticsTab = ({ revenueAnalytics, revenueAnalyticsLoading }) => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
         
         {/* Revenue Distribution Pie Chart */}
-        <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
+        <div className="glass-card stat-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
           <div>
             <h3 style={{ margin: "0 0 4px 0", fontSize: "1.1rem", color: "var(--text-h)" }}>Revenue Distribution</h3>
             <div style={{ fontSize: "0.85rem", color: "var(--c-sub)" }}>How revenue is split between the company (30%) and instructors.</div>
@@ -199,7 +230,7 @@ const AdminAnalyticsTab = ({ revenueAnalytics, revenueAnalyticsLoading }) => {
                   </Pie>
                   <Tooltip 
                     formatter={(value) => `EGP ${value.toLocaleString()}`}
-                    contentStyle={{ background: '#11131a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
+                    contentStyle={{ background: '#11131a', border: 'none', boxShadow: 'inset 0 4px 12px rgba(0, 0, 0, 0.5)', borderRadius: '8px', color: '#fff' }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -236,7 +267,7 @@ const AdminAnalyticsTab = ({ revenueAnalytics, revenueAnalyticsLoading }) => {
         </div>
 
         {/* Financial Growth Composed Chart */}
-        <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
+        <div className="glass-card stat-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
             <div>
               <h3 style={{ margin: "0 0 4px 0", fontSize: "1.1rem", color: "var(--text-h)" }}>Financial Growth</h3>

@@ -387,7 +387,7 @@ export default function SystemManagement({ user }) {
       // Appearance Tab
       case 'appearance': return (
         <div className="glass-card" style={{ padding: '24px', animation: 'fadeIn 0.3s' }}>
-          <h3 style={{ marginTop: 0, marginBottom: '24px', color: 'var(--text-h)' }}>Platform Appearance</h3>
+          <h3 style={{ scale:'5', marginTop: 0, marginBottom: '24px', color: 'var(--text-h)' }}>Platform Appearance</h3>
           <InputField label="Platform Logo URL" value={settings.appearance.platformLogo} onChange={e => handleChange('appearance', 'platformLogo', e.target.value)} disabled={isFieldRestricted('appearance', 'platformLogo', isSuperAdmin)} />
           <InputField label="Favicon URL" value={settings.appearance.favicon} onChange={e => handleChange('appearance', 'favicon', e.target.value)} disabled={isFieldRestricted('appearance', 'favicon', isSuperAdmin)} />
           <SelectField label="Default Theme" value={settings.appearance.defaultTheme} onChange={e => handleChange('appearance', 'defaultTheme', e.target.value)} disabled={isFieldRestricted('appearance', 'defaultTheme', isSuperAdmin)} options={[{ value: 'system', label: 'System Preference' }, { value: 'light', label: 'Light Mode' }, { value: 'dark', label: 'Dark Mode' }]} />

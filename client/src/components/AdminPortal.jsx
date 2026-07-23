@@ -1,9 +1,15 @@
-import notyf from '../utils/notyf';
+import notyf from "../utils/notyf";
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, Link } from "react-router-dom";
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
 } from "recharts";
 import api from "../api/axios";
 import logoDark from "../assets/logo-dark.png";
@@ -17,10 +23,6 @@ import AdminCourseManagementTab from "./AdminCourseManagementTab";
 import WebsiteManagement from "./WebsiteManagement/WebsiteManagement";
 import SystemManagement from "./SystemManagement";
 import Spinner from "./Spinner";
-
-
-
-
 
 const ROLE_OPTIONS = ["student", "instructor", "admin"];
 const SIDEBAR_TAB_STEP = 44;
@@ -41,13 +43,39 @@ const RevenueTooltip = ({ active, payload, label }) => {
         backdropFilter: "blur(10px)",
       }}
     >
-      <div style={{ fontWeight: 700, marginBottom: "6px", color: "var(--c-light)" }}>{label}</div>
+      <div
+        style={{
+          fontWeight: 700,
+          marginBottom: "6px",
+          color: "var(--c-light)",
+        }}
+      >
+        {label}
+      </div>
       {payload.map((entry) => (
-        <div key={entry.dataKey} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-          <span style={{ width: 10, height: 10, borderRadius: "50%", background: entry.color, flexShrink: 0 }} />
+        <div
+          key={entry.dataKey}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            marginBottom: "4px",
+          }}
+        >
+          <span
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: "50%",
+              background: entry.color,
+              flexShrink: 0,
+            }}
+          />
           <span style={{ color: "var(--c-sub)" }}>{entry.name}: </span>
           <span style={{ color: entry.color, fontWeight: 700 }}>
-            {entry.dataKey === "revenue" ? `EGP ${entry.value.toLocaleString()}` : entry.value}
+            {entry.dataKey === "revenue"
+              ? `EGP ${entry.value.toLocaleString()}`
+              : entry.value}
           </span>
         </div>
       ))}
@@ -330,7 +358,10 @@ export default function AdminPortal({
       fetchActivity();
     }
 
-    if (activeTab === "dashboard_stats" || activeTab === "dashboard_analytics") {
+    if (
+      activeTab === "dashboard_stats" ||
+      activeTab === "dashboard_analytics"
+    ) {
       fetchRevenueAnalytics();
     }
   }, [user, navigate, activeTab]);
@@ -351,11 +382,11 @@ export default function AdminPortal({
     setProcessingId(id);
     try {
       await api.patch(`/courses/${id}/approve`);
-      notyf.success('Course approved');
+      notyf.success("Course approved");
       fetchDashboardData();
     } catch (err) {
       console.error("Failed to approve course", err);
-      notyf.error('Failed to approve course');
+      notyf.error("Failed to approve course");
     } finally {
       setProcessingId(null);
     }
@@ -387,7 +418,7 @@ export default function AdminPortal({
       await api.patch(`/courses/${pendingReject.id}/reject`, {
         reason: rejectReason.trim(),
       });
-      notyf.success('Course rejected');
+      notyf.success("Course rejected");
       setPendingReject(null);
       setRejectReason("");
       fetchDashboardData();
@@ -411,7 +442,11 @@ export default function AdminPortal({
   };
 
   const handleSoftDelete = async (id) => {
-    if (!window.confirm("Delete this user? They'll be hidden from lists and unable to log in — this can be reversed with Restore.")) {
+    if (
+      !window.confirm(
+        "Delete this user? They'll be hidden from lists and unable to log in — this can be reversed with Restore.",
+      )
+    ) {
       return;
     }
     setUserActionError("");
@@ -419,7 +454,9 @@ export default function AdminPortal({
       await api.delete(`/admin/users/${id}/soft-delete`);
       fetchUsers(searchQuery);
     } catch (err) {
-      setUserActionError(err.response?.data?.message || "Failed to delete user");
+      setUserActionError(
+        err.response?.data?.message || "Failed to delete user",
+      );
     }
   };
 
@@ -429,7 +466,9 @@ export default function AdminPortal({
       await api.patch(`/admin/users/${id}/restore`);
       fetchUsers(searchQuery);
     } catch (err) {
-      setUserActionError(err.response?.data?.message || "Failed to restore user");
+      setUserActionError(
+        err.response?.data?.message || "Failed to restore user",
+      );
     }
   };
 
@@ -478,22 +517,37 @@ export default function AdminPortal({
   // mirrors the backend check in adminController.toggleBlockUser.
   const canToggleBlock = (u) => {
     if (u._id === user.id) return false;
-    if ((u.role === 'admin' || u.role === 'superadmin') && user.role !== 'superadmin') return false;
+    if (
+      (u.role === "admin" || u.role === "superadmin") &&
+      user.role !== "superadmin"
+    )
+      return false;
     return true;
   };
 
   // Mirrors the backend's canModerate guard for soft-delete/restore.
   const canDelete = (u) => {
     if (u._id === user.id) return false;
-    if (u.role === 'superadmin') return false;
-    if (u.role === 'admin' && user.role !== 'superadmin') return false;
+    if (u.role === "superadmin") return false;
+    if (u.role === "admin" && user.role !== "superadmin") return false;
     return true;
   };
 
   // Guard the real UI render, not just the redirect effect above — otherwise
   // a wrong-role user briefly sees the full portal before the effect fires.
-  if (user?.role !== 'admin' && user?.role !== 'superadmin') {
-    return <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>Redirecting...</div>;
+  if (user?.role !== "admin" && user?.role !== "superadmin") {
+    return (
+      <div
+        style={{
+          display: "flex",
+          height: "100vh",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        Redirecting...
+      </div>
+    );
   }
 
   if (loading && !stats && !users.length && !transactions.length) {
@@ -505,6 +559,7 @@ export default function AdminPortal({
           height: "100vh",
           alignItems: "center",
           justifyContent: "center",
+          backgroundColor: isLightMode ? undefined : "var(--bg-main)",
         }}
       >
         <Spinner label="Loading Admin Portal..." />
@@ -526,9 +581,7 @@ export default function AdminPortal({
           },
           {
             title: "User Management",
-            items: [
-              { id: "users", label: "Users" },
-            ],
+            items: [{ id: "users", label: "Users" }],
           },
 
           {
@@ -601,9 +654,7 @@ export default function AdminPortal({
           },
           {
             title: "Financial Management",
-            items: [
-              { id: "financial_payouts", label: "Payout Requests" },
-            ],
+            items: [{ id: "financial_payouts", label: "Payout Requests" }],
           },
           {
             title: "Announcement Management",
@@ -626,246 +677,304 @@ export default function AdminPortal({
     <div
       data-role={user?.role}
       className="page-wrapper"
-      style={{ display: "flex", flexDirection: "column", height: "100vh" }}
+      style={{
+        display: "flex",
+        flexDirection: "row",
+        height: "100vh",
+        backgroundColor: isLightMode ? undefined : "var(--bg-main)",
+      }}
     >
-      {/* Top Navbar using top-nav styling */}
-      <nav
-        className="top-nav"
-        style={{
-          position: "relative",
-          borderBottom: "1px solid rgba(255, 255, 255, 0.15)",
-          zIndex: 10,
-          display: "flex",
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "0 24px",
-          height: "70px",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-          <Link to="/student" style={{ display: "flex", alignItems: "center" }}>
-            <img
-              src={isLightMode ? `${logoLight}?v=3` : `${logoDark}?v=3`}
-              alt="Program Logo"
-              style={{ height: "32px", width: "auto", objectFit: "contain" }}
-            />
-          </Link>
-        </div>
-        <div className="nav-logo">
-          <h1 style={{ fontSize: "1.2rem", margin: "0" }}>
-            {user?.role === "superadmin"
-              ? "Super Admin Portal"
-              : "Admin Portal"}
-          </h1>
-        </div>
+      {/* Sidebar */}
+      <aside className={`admin-sidebar${sidebarCollapsed ? " collapsed" : ""}`}>
         <div
-          className="nav-controls"
-          style={{ display: "flex", alignItems: "center" }}
+          className="admin-sidebar-header"
+          style={{ display: "flex", flexDirection: "column", padding: "16px" }}
         >
-          <button
-            className="nav-icon-btn"
-            onClick={toggleTheme}
-            style={{ marginRight: "16px" }}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              marginBottom: "24px",
+            }}
           >
-            {isLightMode ? (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="1.8"
-              >
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-              </svg>
-            ) : (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="1.8"
-              >
-                <circle cx="12" cy="12" r="4"></circle>
-                <line x1="12" y1="2" x2="12" y2="4"></line>
-                <line x1="12" y1="20" x2="12" y2="22"></line>
-                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                <line x1="2" y1="12" x2="4" y2="12"></line>
-                <line x1="20" y1="12" x2="22" y2="12"></line>
-                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-              </svg>
-            )}
-          </button>
-          <div className="profile-wrapper">
-            <div className="nav-avatar">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="22"
-                height="22"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              >
-                <circle cx="12" cy="8" r="4"></circle>
-                <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"></path>
-              </svg>
-            </div>
-            <div className="profile-tooltip">
-              <div className="tooltip-name">{user?.name}</div>
-              <hr className="tooltip-divider" />
-              <a href="#" className="tooltip-link">
-                Profile
-              </a>
-              <a href="#" className="tooltip-link">
-                Settings
-              </a>
-              <hr className="tooltip-divider" />
-              <a
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onLogout();
-                }}
-                className="tooltip-link logout-link"
-              >
-                Log out
-              </a>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-        {/* Sidebar */}
-        <aside
-          className={`admin-sidebar${sidebarCollapsed ? " collapsed" : ""}`}
-        >
-          <div className="admin-sidebar-header">
-            {/* <button
-              type="button"
-              className="admin-sidebar-collapse-btn"
-              onClick={() => setSidebarCollapsed((prev) => !prev)}
-              aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-              title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            <Link
+              to="/student"
+              style={{ display: "flex", alignItems: "center" }}
             >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M15 18l-6-6 6-6" />
-              </svg>
-            </button> */}
+              <img
+                src={isLightMode ? logoLight : logoDark}
+                alt="Program Logo"
+                style={{
+                  height: "100%",
+                  width: "100%",
+                  transition: "opacity 0.2s ease",
+                }}
+              />
+            </Link>
           </div>
 
-          {menuGroups.map((group, idx) => {
-            const isGroupExpanded = expandedGroup === group.title;
-            const activeIndex = group.items.findIndex((t) =>
-              isSidebarTabActive(t.id, activeTab),
-            );
+          {/* <button
+            type="button"
+            className="admin-sidebar-collapse-btn"
+            onClick={() => setSidebarCollapsed((prev) => !prev)}
+            aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button> */}
+        </div>
 
-            return (
-              <div key={idx} className="admin-sidebar-group">
-                <button
-                  type="button"
-                  onClick={() => toggleGroup(group.title)}
-                  className="admin-sidebar-group-title hover-glow"
-                >
-                  <span className="admin-sidebar-group-icon" aria-hidden="true">
-                    {group.title.charAt(0)}
-                  </span>
-                  <span className="admin-sidebar-group-label">{group.title}</span>
-                  {group.title === "Course Management" && pendingCourses.length > 0 && (
+        {menuGroups.map((group, idx) => {
+          const isGroupExpanded = expandedGroup === group.title;
+          const activeIndex = group.items.findIndex((t) =>
+            isSidebarTabActive(t.id, activeTab),
+          );
+
+          return (
+            <div key={idx} className="admin-sidebar-group">
+              <button
+                type="button"
+                onClick={() => toggleGroup(group.title)}
+                className="admin-sidebar-group-title hover-glow"
+              >
+                <span className="admin-sidebar-group-icon" aria-hidden="true">
+                  {group.title.charAt(0)}
+                </span>
+                <span className="admin-sidebar-group-label">{group.title}</span>
+                {group.title === "Course Management" &&
+                  pendingCourses.length > 0 && (
                     <span
                       className="admin-sidebar-badge"
-                      style={{ marginLeft: '8px', marginRight: '8px' }}
+                      style={{ marginLeft: "8px", marginRight: "8px" }}
                       aria-label={`${pendingCourses.length} pending courses`}
                     >
                       {pendingCourses.length}
                     </span>
                   )}
-                  <svg
-                    className="admin-sidebar-chevron"
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    style={{
-                      transform: isGroupExpanded
-                        ? "rotate(180deg)"
-                        : "rotate(0deg)",
-                    }}
-                  >
-                    <path d="M6 9l6 6 6-6" />
-                  </svg>
-                </button>
-
-                <div
-                  className={`admin-sidebar-items${
-                    isGroupExpanded ? " expanded-group" : " collapsed-group"
-                  }`}
+                <svg
+                  className="admin-sidebar-chevron"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  style={{
+                    transform: isGroupExpanded
+                      ? "rotate(180deg)"
+                      : "rotate(0deg)",
+                  }}
                 >
-                  <div className="admin-sidebar-items-inner">
-                    {/* Legacy indicator removed. Active state handled entirely via CSS on the tab itself */}
-                    {group.items.map((tab) => {
-                      const isActive = isSidebarTabActive(tab.id, activeTab);
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </button>
 
-                      return (
-                        <button
-                          key={tab.id}
-                          type="button"
-                          onClick={() =>
-                            handleSidebarTabClick(tab.id, group.title)
-                          }
-                          className={`admin-sidebar-tab ${
-                            isActive ? " active" : ""
-                          }`}
-                          data-tooltip={tab.label}
-                          title={sidebarCollapsed ? tab.label : undefined}
-                        >
-                          <span className="admin-sidebar-tab-short">
-                            {tab.label.charAt(0)}
+              <div
+                className={`admin-sidebar-items${
+                  isGroupExpanded ? " expanded-group" : " collapsed-group"
+                }`}
+              >
+                <div className="admin-sidebar-items-inner">
+                  {/* The Sliding Pill Background */}
+                  <div
+                    className="admin-sidebar-pill"
+                    style={{
+                      position: "absolute",
+                      left: sidebarCollapsed ? "4px" : "14px",
+                      right: sidebarCollapsed ? "4px" : "14px",
+                      height: "40px",
+                      top: `${activeIndex * 44}px`, // 40px tab height + 4px gap
+                      opacity: activeIndex >= 0 ? 1 : 0,
+                      backgroundColor: "var(--bg-main)",
+                      borderRadius: "12px",
+                      transition:
+                        "top 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease",
+                      zIndex: 0,
+                      pointerEvents: "none",
+                      boxShadow: "inset 0 4px 12px rgba(0, 0, 0, 0.5)",
+                    }}
+                  />
+                  {group.items.map((tab) => {
+                    const isActive = isSidebarTabActive(tab.id, activeTab);
+
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() =>
+                          handleSidebarTabClick(tab.id, group.title)
+                        }
+                        className={`admin-sidebar-tab ${
+                          isActive ? " active" : ""
+                        }`}
+                        data-tooltip={tab.label}
+                        title={sidebarCollapsed ? tab.label : undefined}
+                      >
+                        <span className="admin-sidebar-tab-label">
+                          {tab.label}
+                        </span>
+                        <span className="admin-sidebar-tab-short">
+                          {tab.short}
+                        </span>
+                        {/* {tab.id === "courses_pending" && pendingCourses.length > 0 && (
+                          <span className="admin-sidebar-badge">
+                            {pendingCourses.length}
                           </span>
-                          <span className="admin-sidebar-tab-label">
-                            {tab.label}
-                          </span>
-                          {tab.id === "courses_all" &&
-                            pendingCourses.length > 0 && (
-                              <span
-                                className="admin-sidebar-badge"
-                                aria-label={`${pendingCourses.length} pending courses`}
-                              >
-                                {pendingCourses.length}
-                              </span>
-                            )}
-                        </button>
-                      );
-                    })}
-                  </div>
+                        )} */}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-            );
-          })}
-        </aside>
+            </div>
+          );
+        })}
+      </aside>
+
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          flex: 1,
+          overflow: "hidden",
+        }}
+      >
+        {/* Top Navbar using top-nav styling */}
+        <nav
+          className="top-nav"
+          style={{
+            position: "relative",
+            borderBottom: isLightMode ? "1px solid rgba(0, 0, 0, 0.1)" : "none",
+            zIndex: 10,
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "0 24px",
+            height: "70px",
+            backgroundColor: isLightMode ? undefined : "var(--bg-main)",
+          }}
+        >
+          <div className="nav-logo">
+            <h1 style={{ fontSize: "1.2rem", margin: "0" }}>
+              {user?.role === "superadmin"
+                ? "Super Admin Portal"
+                : "Admin Portal"}
+            </h1>
+          </div>
+          <div
+            className="nav-controls"
+            style={{ display: "flex", alignItems: "center" }}
+          >
+            <button
+              className="nav-icon-btn"
+              onClick={toggleTheme}
+              style={{ marginRight: "16px" }}
+            >
+              {isLightMode ? (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                >
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                >
+                  <circle cx="12" cy="12" r="4"></circle>
+                  <line x1="12" y1="2" x2="12" y2="4"></line>
+                  <line x1="12" y1="20" x2="12" y2="22"></line>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                  <line x1="2" y1="12" x2="4" y2="12"></line>
+                  <line x1="20" y1="12" x2="22" y2="12"></line>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+              )}
+            </button>
+            <div className="profile-wrapper">
+              <div className="nav-avatar">
+                {user?.avatarUrl ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt={user?.name || "Profile"}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                  />
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="22"
+                    height="22"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  >
+                    <circle cx="12" cy="8" r="4"></circle>
+                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"></path>
+                  </svg>
+                )}
+              </div>
+              <div className="profile-tooltip">
+                <div className="tooltip-name">{user?.name}</div>
+                <hr className="tooltip-divider" />
+                <a href="#" className="tooltip-link">
+                  Profile
+                </a>
+                <a href="#" className="tooltip-link">
+                  Settings
+                </a>
+                <hr className="tooltip-divider" />
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onLogout();
+                  }}
+                  className="tooltip-link logout-link"
+                >
+                  Log out
+                </a>
+              </div>
+            </div>
+          </div>
+        </nav>
 
         {/* Main Content Area */}
         <div style={{ flex: 1, padding: "32px 48px", overflowY: "auto" }}>
           <div
             key={activeTab}
             className="admin-content-panel"
-            style={{ maxWidth: "100%", margin: "40px auto" }}
+            style={{
+              maxWidth: "100%",
+              margin: "40px auto",
+            }}
           >
             {activeTab === "dashboard_overview" && stats && (
               <AdminOverviewTab
@@ -877,27 +986,114 @@ export default function AdminPortal({
 
             {activeTab === "dashboard_activity" && (
               <div
-                style={{ display: "flex", flexDirection: "column", gap: "24px" }}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "24px",
+                }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <h2 style={{ fontSize: "1.8rem", margin: 0 }}>Recent Activity</h2>
-                  <div className="role-tabs">
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <h2 style={{ fontSize: "1.8rem", margin: 0 }}>
+                    Recent Activity
+                  </h2>
+                  <div
+                    className="role-tabs"
+                    style={{ display: "flex", gap: "12px" }}
+                  >
                     {[
                       { id: "All", label: "All", role: "student" },
                       { id: "Approved", label: "Approved", role: "student" },
                       { id: "Submitted", label: "Submitted", role: "student" },
                       { id: "Enrolled", label: "Enrolled", role: "student" },
-                      { id: "Admin", label: "Admin/Super Admin", role: "superadmin" }
-                    ].map(tab => (
-                      <button
-                        key={tab.id}
-                        onClick={() => setActivityFilter(tab.id)}
-                        className={"role-tab-button" + (activityFilter === tab.id ? " active" : "")}
-                        data-role={tab.role}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
+                      {
+                        id: "Admin",
+                        label: "Admin/Super Admin",
+                        role: "superadmin",
+                      },
+                    ].map((tab) => {
+                      const isActive = activityFilter === tab.id;
+
+                      const getRoleColor = (role) => {
+                        switch (role?.toLowerCase()) {
+                          case "student":
+                            return {
+                              text: "#e5e7eb",
+                              bg: "rgba(156, 163, 175, 0.2)",
+                              border: "none",
+                            };
+                          case "instructor":
+                            return {
+                              text: "#fb923c",
+                              bg: "rgba(249, 115, 22, 0.2)",
+                              border: "none",
+                            };
+                          case "admin":
+                            return {
+                              text: "#c084fc",
+                              bg: "rgba(168, 85, 247, 0.2)",
+                              border: "none",
+                            };
+                          case "superadmin":
+                            return {
+                              text: "#f87171",
+                              bg: "rgba(239, 68, 68, 0.2)",
+                              border: "none",
+                            };
+                          default:
+                            return {
+                              text: "var(--c-sub)",
+                              bg: "rgba(255,255,255,0.1)",
+                              border: "none",
+                            };
+                        }
+                      };
+
+                      const roleStyle = getRoleColor(tab.role);
+
+                      return (
+                        <button
+                          key={tab.id}
+                          onClick={() => setActivityFilter(tab.id)}
+                          style={{
+                            padding: "10px 24px",
+                            borderRadius: "99px",
+                            fontSize: "0.9rem",
+                            fontWeight: "500",
+                            cursor: "pointer",
+                            transition: "all 0.2s ease",
+                            border: "none",
+                            background: isActive
+                              ? roleStyle.bg
+                              : "var(--bg-surface)",
+                            color: isActive ? roleStyle.text : "var(--c-sub)",
+                            boxShadow: isActive
+                              ? `inset 0 4px 12px rgba(0,0,0,0.5)`
+                              : "0 4px 12px rgba(0,0,0,0.15)",
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isActive) {
+                              e.target.style.background =
+                                "rgba(255,255,255,0.05)";
+                              e.target.style.color = "var(--c-light)";
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isActive) {
+                              e.target.style.background = "var(--bg-surface)";
+                              e.target.style.color = "var(--c-sub)";
+                            }
+                          }}
+                        >
+                          {tab.label}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -917,61 +1113,80 @@ export default function AdminPortal({
                       }}
                     >
                       {(() => {
-                        const filtered = activity.filter(item => {
+                        const filtered = activity.filter((item) => {
                           if (activityFilter === "All") return true;
-                          if (activityFilter === "Approved") return item.title === "Course Approved";
-                          if (activityFilter === "Submitted") return item.title === "Course Submitted";
-                          if (activityFilter === "Enrolled") return item.title === "New Student Enrollment";
-                          if (activityFilter === "Admin") return item.title.includes("Admin");
+                          if (activityFilter === "Approved")
+                            return item.title === "Course Approved";
+                          if (activityFilter === "Submitted")
+                            return item.title === "Course Submitted";
+                          if (activityFilter === "Enrolled")
+                            return item.title === "New Student Enrollment";
+                          if (activityFilter === "Admin")
+                            return item.title.includes("Admin");
                           return true;
                         });
 
                         if (filtered.length === 0) {
-                          return <p style={{ color: "var(--c-sub)", textAlign: "center", padding: "16px 0" }}>No activity found for this category.</p>;
+                          return (
+                            <p
+                              style={{
+                                color: "var(--c-sub)",
+                                textAlign: "center",
+                                padding: "16px 0",
+                              }}
+                            >
+                              No activity found for this category.
+                            </p>
+                          );
                         }
 
                         return filtered.map((item) => (
-                        <div
-                          key={item.id}
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "baseline",
-                            gap: "16px",
-                            padding: "12px",
-                            background: "var(--c-input-bg)",
-                            borderRadius: "8px",
-                          }}
-                        >
-                          <div>
-                            <div style={{ fontWeight: 600 }}>{item.title}</div>
+                          <div
+                            key={item.id}
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "baseline",
+                              gap: "16px",
+                              padding: "12px",
+                              background: "var(--bg-main)",
+                              boxShadow: isLightMode
+                                ? "inset 0 4px 12px rgba(0, 0, 0, 0.05)"
+                                : "inset 0 4px 12px rgba(0, 0, 0, 0.5)",
+                              borderRadius: "8px",
+                            }}
+                          >
+                            <div>
+                              <div style={{ fontWeight: 600 }}>
+                                {item.title}
+                              </div>
+                              <div
+                                style={{
+                                  color: "var(--c-sub)",
+                                  fontSize: "0.88rem",
+                                  marginTop: "2px",
+                                }}
+                              >
+                                {item.description}
+                              </div>
+                            </div>
                             <div
                               style={{
                                 color: "var(--c-sub)",
-                                fontSize: "0.88rem",
-                                marginTop: "2px",
+                                fontSize: "0.8rem",
+                                whiteSpace: "nowrap",
+                                flexShrink: 0,
                               }}
                             >
-                              {item.description}
+                              {new Date(item.date).toLocaleString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
                             </div>
                           </div>
-                          <div
-                            style={{
-                              color: "var(--c-sub)",
-                              fontSize: "0.8rem",
-                              whiteSpace: "nowrap",
-                              flexShrink: 0,
-                            }}
-                          >
-                            {new Date(item.date).toLocaleString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </div>
-                        </div>
-                      ));
+                        ));
                       })()}
                     </div>
                   )}
@@ -1119,10 +1334,8 @@ export default function AdminPortal({
             {activeTab === "courses_all" && (
               <AdminCourseManagementTab currentUser={user} />
             )}
-            
-            {activeTab === "financial_payouts" && (
-              <AdminPayoutsTab />
-            )}
+
+            {activeTab === "financial_payouts" && <AdminPayoutsTab />}
 
             {activeTab === "web_home" && (
               <WebsiteManagement user={user} subTab="home" />
@@ -1143,9 +1356,7 @@ export default function AdminPortal({
               <WebsiteManagement user={user} subTab="announcements" />
             )}
 
-            {activeTab === "settings" && (
-              <SystemManagement user={user} />
-            )}
+            {activeTab === "settings" && <SystemManagement user={user} />}
           </div>
         </div>
       </div>

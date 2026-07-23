@@ -1,0 +1,1 @@
+const { Jimp } = require('jimp'); async function run() { const image = await Jimp.read('../public/favicon.png'); image.autocrop(); await image.write('../public/favicon.png'); console.log('Cropped!'); } run().catch(console.error);

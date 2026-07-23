@@ -30,9 +30,12 @@ const CustomDropdown = ({ value, options, onChange, disabled, width = "100%" }) 
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          background: "rgba(255,255,255,0.03)",
-          border: "1px solid rgba(255,255,255,0.1)",
+          background: "var(--bg-main)",
+          border: isOpen ? "1px solid #f97316" : "1px solid transparent",
           borderRadius: "10px",
+          boxShadow: isOpen 
+            ? "0 10px 30px rgba(0,0,0,0.15), 0 0 0 3px rgba(249, 115, 22, 0.2)"
+            : "inset 0 4px 12px rgba(0,0,0,0.5)",
           color: "var(--c-light)",
           cursor: disabled ? "not-allowed" : "pointer",
           opacity: disabled ? 0.5 : 1,
@@ -50,15 +53,15 @@ const CustomDropdown = ({ value, options, onChange, disabled, width = "100%" }) 
           left: 0,
           right: 0,
           marginTop: "8px",
-          background: "#15171e", // Dark solid background
-          border: "1px solid rgba(255,255,255,0.08)",
+          background: "var(--bg-surface)",
+          border: "none",
           borderRadius: "12px",
           padding: "8px",
           zIndex: 100,
           display: "flex",
           flexDirection: "column",
           gap: "4px",
-          boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+          boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.5)",
           maxHeight: "250px",
           overflowY: "auto"
         }}>
@@ -71,23 +74,36 @@ const CustomDropdown = ({ value, options, onChange, disabled, width = "100%" }) 
               }}
               style={{
                 padding: "10px 12px",
-                background: "transparent",
+                background: value === opt ? "var(--bg-main)" : "transparent",
+                boxShadow: value === opt ? "inset 0 4px 12px rgba(0,0,0,0.5)" : "none",
                 border: "none",
-                color: value === opt ? "var(--c-light)" : "var(--c-sub)",
                 textAlign: "left",
                 cursor: "pointer",
                 borderRadius: "8px",
                 fontSize: "0.95rem",
-                transition: "all 0.2s ease"
+                transition: "all 0.2s ease",
+                color: value === opt ? "transparent" : "var(--c-sub)",
+                ...(value === opt ? {
+                  backgroundImage: "linear-gradient(90deg, #f97316, #fbad41)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  fontWeight: "600"
+                } : {})
               }}
               onMouseEnter={(e) => {
-                e.target.style.background = "rgba(255,255,255,0.05)";
-                e.target.style.color = "var(--c-light)";
+                if (value !== opt) {
+                  e.target.style.background = "var(--bg-main)";
+                  e.target.style.boxShadow = "inset 0 4px 12px rgba(0,0,0,0.5)";
+                  e.target.style.color = "var(--c-light)";
+                  e.target.style.WebkitTextFillColor = "var(--c-light)";
+                }
               }}
               onMouseLeave={(e) => {
-                e.target.style.background = "transparent";
                 if (value !== opt) {
+                  e.target.style.background = "transparent";
+                  e.target.style.boxShadow = "none";
                   e.target.style.color = "var(--c-sub)";
+                  e.target.style.WebkitTextFillColor = "var(--c-sub)";
                 }
               }}
             >
@@ -105,6 +121,7 @@ export default function AdminCourseManagementTab({ currentUser }) {
   const [isLoading, setIsLoading] = useState(true);
   
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [activeStatus, setActiveStatus] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("All Categories");
   const [showFilters, setShowFilters] = useState(false);
@@ -262,22 +279,34 @@ export default function AdminCourseManagementTab({ currentUser }) {
               placeholder="Search courses..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="custom-search-input"
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setIsSearchFocused(false)}
+              style={{
+                background: "var(--bg-surface)",
+                border: isSearchFocused ? "1px solid #f97316" : "1px solid transparent",
+                borderRadius: "99px",
+                boxShadow: isSearchFocused 
+                  ? "0 10px 30px rgba(0,0,0,0.15), 0 0 0 3px rgba(249, 115, 22, 0.2)"
+                  : "0 4px 12px rgba(0,0,0,0.15)",
+                paddingLeft: "42px", // keep space for the search icon
+                outline: "none",
+                transition: "all 0.3s ease",
+                color: "var(--c-light)"
+              }}
             />
           </div>
           <button 
             onClick={() => setShowFilters(!showFilters)}
             style={{ 
-              background: showFilters ? "rgba(255,255,255,0.08)" : "rgba(255, 255, 255, 0.03)", 
-              backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-              border: "1px solid rgba(255, 255, 255, 0.05)",
-              borderTop: "1px solid rgba(255, 255, 255, 0.15)", borderLeft: "1px solid rgba(255, 255, 255, 0.15)",
-              color: "var(--c-light)", padding: "10px 20px", borderRadius: "20px",
-              cursor: "pointer", fontSize: "0.9rem", transition: "all 0.3s ease",
-              boxShadow: showFilters ? "0 0 0 2px rgba(139, 92, 246, 0.3)" : "none"
+              background: showFilters ? "var(--c-sub)" : "var(--bg-surface)", 
+              color: showFilters ? "var(--bg-main)" : "var(--c-sub)",
+              border: "none",
+              padding: "10px 20px", borderRadius: "99px",
+              cursor: "pointer", fontSize: "0.9rem", transition: "all 0.2s ease",
+              boxShadow: showFilters ? "inset 0 4px 12px rgba(0,0,0,0.5)" : "0px 4px 10px rgba(0, 0, 0, 0.5)"
             }}
-            onMouseEnter={e => { if(!showFilters) e.target.style.background = "rgba(255,255,255,0.06)"; }}
-            onMouseLeave={e => { if(!showFilters) e.target.style.background = "rgba(255,255,255,0.03)"; }}
+            onMouseEnter={e => { if(!showFilters) { e.target.style.background = "rgba(255,255,255,0.05)"; e.target.style.color = "var(--c-light)"; } }}
+            onMouseLeave={e => { if(!showFilters) { e.target.style.background = "var(--bg-surface)"; e.target.style.color = "var(--c-sub)"; } }}
           >
             Filters
           </button>
@@ -287,7 +316,7 @@ export default function AdminCourseManagementTab({ currentUser }) {
       {/* Filters Bar */}
       {showFilters && (
         <div style={{ 
-          background: "rgba(15,17,23,0.95)", border: "1px solid rgba(255,255,255,0.05)",
+          background: "var(--bg-surface)", border: "none", boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.5)",
           borderRadius: "12px", padding: "20px 24px", display: "flex", alignItems: "flex-end", gap: "24px",
           animation: "fadeIn 0.2s ease"
         }}>
@@ -303,8 +332,8 @@ export default function AdminCourseManagementTab({ currentUser }) {
           <button
             onClick={clearFilters}
             style={{ 
-              background: "rgba(239, 68, 68, 0.05)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-              border: "1px solid rgba(239, 68, 68, 0.2)", borderTop: "1px solid rgba(239, 68, 68, 0.4)", borderLeft: "1px solid rgba(239, 68, 68, 0.4)",
+              background: "rgba(239, 68, 68, 0.1)",
+              border: "none", boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)",
               color: "#ef4444", padding: "12px 20px", borderRadius: "10px",
               cursor: "pointer", fontSize: "0.9rem", fontWeight: "500", transition: "all 0.2s"
             }}
@@ -334,13 +363,10 @@ export default function AdminCourseManagementTab({ currentUser }) {
             }}
             style={{
               padding: "10px 24px", borderRadius: "99px", fontSize: "0.9rem", fontWeight: "500", cursor: "pointer", transition: "all 0.2s",
-              backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-              border: `1px solid ${isActive ? statusStyle.border : "rgba(255,255,255,0.05)"}`,
-              borderTop: `1px solid ${isActive ? statusStyle.border : "rgba(255,255,255,0.15)"}`,
-              borderLeft: `1px solid ${isActive ? statusStyle.border : "rgba(255,255,255,0.15)"}`,
+              border: "none",
               background: isActive ? statusStyle.bg : "rgba(255,255,255,0.03)",
               color: isActive ? statusStyle.text : "var(--c-sub)",
-              boxShadow: isActive ? `0 0 10px ${statusStyle.bg}` : "none",
+              boxShadow: isActive ? "inset 0 4px 12px rgba(0,0,0,0.5)" : "none",
               whiteSpace: "nowrap"
             }}
             onMouseEnter={e => { if(!isActive) e.target.style.background = "rgba(255,255,255,0.08)"; }}
@@ -352,7 +378,7 @@ export default function AdminCourseManagementTab({ currentUser }) {
       </div>
 
       {/* Data Table */}
-      <div className="glass-card" style={{ border: "1px solid rgba(255,255,255,0.05)", borderRadius: "12px", overflow: "hidden", marginTop: "4px" }}>
+      <div className="glass-card" style={{ background: "var(--bg-surface)", border: "none", boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.5)", borderRadius: "12px", overflow: "hidden", marginTop: "4px" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
           <thead>
             <tr style={{ background: "rgba(255,255,255,0.02)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
@@ -409,8 +435,9 @@ export default function AdminCourseManagementTab({ currentUser }) {
                   <td style={{ padding: "16px", color: "var(--text-h)", fontSize: "0.9rem" }}>${c.price || "0.00"}</td>
                   <td style={{ padding: "16px" }}>
                     <span style={{ 
-                      background: getStatusColor(c.status).bg, border: `1px solid ${getStatusColor(c.status).border}`,
+                      background: getStatusColor(c.status).bg, border: "none",
                       color: getStatusColor(c.status).text, padding: "4px 10px", borderRadius: "99px",
+                      boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)",
                       fontSize: "0.75rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.5px"
                     }}>
                       {c.status || 'unknown'}
@@ -423,8 +450,8 @@ export default function AdminCourseManagementTab({ currentUser }) {
                     <button 
                       onClick={() => setSidePanelCourseId(c._id)}
                       style={{ 
-                        background: "rgba(255,255,255,0.03)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-                        border: "1px solid rgba(255,255,255,0.05)", borderTop: "1px solid rgba(255,255,255,0.15)", borderLeft: "1px solid rgba(255,255,255,0.15)",
+                        background: "rgba(255,255,255,0.03)", border: "none",
+                        boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)",
                         color: "var(--c-light)", padding: "6px 14px", borderRadius: "8px",
                         fontSize: "0.85rem", cursor: "pointer", transition: "all 0.2s"
                       }}
@@ -450,7 +477,7 @@ export default function AdminCourseManagementTab({ currentUser }) {
           />
           <div style={{ 
             position: "relative", width: "450px", height: "100%", 
-            background: "#15171e", borderLeft: "1px solid rgba(255,255,255,0.1)",
+            background: "var(--bg-surface)", borderLeft: "1px solid rgba(255,255,255,0.05)",
             boxShadow: "-10px 0 40px rgba(0,0,0,0.5)", padding: "24px", display: "flex", flexDirection: "column", gap: "24px",
             overflowY: "auto", animation: "slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
           }}>
@@ -458,6 +485,7 @@ export default function AdminCourseManagementTab({ currentUser }) {
               onClick={() => setSidePanelCourseId(null)}
               style={{
                 background: "rgba(255,255,255,0.05)", border: "none", color: "var(--c-sub)",
+                boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)",
                 padding: "6px 12px", borderRadius: "99px", width: "fit-content",
                 display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "0.8rem", transition: "all 0.2s"
               }}
@@ -479,8 +507,9 @@ export default function AdminCourseManagementTab({ currentUser }) {
               <h3 style={{ margin: "0 0 8px 0", fontSize: "1.4rem", color: "var(--text-h)" }}>{sidePanelCourse.title}</h3>
               <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px" }}>
                   <span style={{ 
-                    background: getStatusColor(sidePanelCourse.status).bg, border: `1px solid ${getStatusColor(sidePanelCourse.status).border}`,
+                    background: getStatusColor(sidePanelCourse.status).bg, border: "none",
                     color: getStatusColor(sidePanelCourse.status).text, padding: "2px 8px", borderRadius: "99px",
+                    boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)",
                     fontSize: "0.7rem", fontWeight: "600", textTransform: "uppercase"
                   }}>
                     {sidePanelCourse.status}
@@ -541,8 +570,7 @@ export default function AdminCourseManagementTab({ currentUser }) {
                             onClick={() => handleApprove(sidePanelCourse._id)}
                             disabled={isProcessing}
                             style={{
-                            flex: 1, background: "rgba(16,185,129,0.05)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-                            border: "1px solid rgba(16,185,129,0.2)", borderTop: "1px solid rgba(16,185,129,0.4)", borderLeft: "1px solid rgba(16,185,129,0.4)",
+                            flex: 1, background: "rgba(16,185,129,0.1)", border: "none", boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)",
                             color: "#10b981", padding: "12px", borderRadius: "10px", cursor: isProcessing ? "not-allowed" : "pointer", fontSize: "0.9rem",
                             transition: "all 0.2s", opacity: isProcessing ? 0.5 : 1
                             }}
@@ -555,8 +583,7 @@ export default function AdminCourseManagementTab({ currentUser }) {
                             onClick={() => handleReject(sidePanelCourse._id)}
                             disabled={isProcessing}
                             style={{
-                            flex: 1, background: "rgba(239,68,68,0.05)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-                            border: "1px solid rgba(239,68,68,0.1)", borderTop: "1px solid rgba(239,68,68,0.3)", borderLeft: "1px solid rgba(239,68,68,0.3)",
+                            flex: 1, background: "rgba(239,68,68,0.1)", border: "none", boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)",
                             color: "#ef4444", padding: "12px", borderRadius: "10px", cursor: isProcessing ? "not-allowed" : "pointer", fontSize: "0.9rem",
                             transition: "all 0.2s", opacity: isProcessing ? 0.5 : 1
                             }}
@@ -593,10 +620,6 @@ export default function AdminCourseManagementTab({ currentUser }) {
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(-10px); }
           to { opacity: 1; transform: translateY(0); }
-        }
-        .custom-search-input:focus {
-          border-color: rgba(139, 92, 246, 0.6) !important;
-          box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15) !important;
         }
       `}</style>
     </div>
