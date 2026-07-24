@@ -16,9 +16,9 @@ import StudentLayout from './components/StudentLayout';
 import AboutPage from './components/AboutPage';
 import ContactPage from './components/ContactPage';
 import HelpPage from './components/HelpPage';
-import TermsPage from './components/TermsPage';
 import PrivacyPage from './components/PrivacyPage';
 import MobileAppPage from './components/MobileAppPage';
+import FullPageLoader from './components/FullPageLoader';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -135,7 +135,11 @@ export default function App() {
   };
 
   if (isInitializing) {
-    return <div style={{display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center'}}>Loading...</div>;
+    return (
+      <div style={{ backgroundColor: 'var(--bg-main)', minHeight: '100vh' }}>
+        <FullPageLoader message="Loading" />
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
@@ -159,7 +163,7 @@ export default function App() {
       <Routes>
         <Route path="/learn/:id" element={<LearningPortal />} />
         <Route path="/checkout/cart" element={<CheckoutPage cart={cart} setCart={setCart} setNotifications={setNotifications} isCartCheckout={true} />} />
-        <Route path="/instructor" element={<InstructorPortal user={user} onLogout={handleLogout} toggleTheme={toggleTheme} isLightMode={isLightMode} />} />
+        <Route path="/instructor" element={<InstructorPortal user={user} setUser={setUser} onLogout={handleLogout} toggleTheme={toggleTheme} isLightMode={isLightMode} />} />
         <Route path="/admin" element={<AdminPortal user={user} onLogout={handleLogout} toggleTheme={toggleTheme} isLightMode={isLightMode} />} />
       </Routes>
     );

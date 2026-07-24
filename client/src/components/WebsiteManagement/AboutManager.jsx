@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../api/axios';
-import { Button, TextareaField, notyf } from './SharedUI';
+import { Button, InputField, TextareaField, notyf } from './SharedUI';
+import FullPageLoader from '../FullPageLoader';
 
 export default function AboutManager({ user }) {
   const [content, setContent] = useState(null);
@@ -43,44 +44,51 @@ export default function AboutManager({ user }) {
     }));
   };
 
-  if (loading) return <div className="p-6 text-white">Loading...</div>;
+  if (loading) return <FullPageLoader message="Loading Data..." fullScreen={false} />;
 
   return (
-    <div className="admin-page-content">
-      <div className="admin-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+    <div style={{ width: '100%', maxWidth: '900px', margin: '0 auto' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
         <div>
-          <h2>About Page Management</h2>
-          <p style={{ color: 'var(--text-2)' }}>Manage company story, mission, and team members.</p>
+          <h1 style={{ fontSize: '2.5rem', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>About Page Management</h1>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '8px' }}>
+            Manage company story, mission, and team members.
+          </p>
         </div>
-        <Button 
-          variant="primary" 
-          onClick={handleSave} 
+        <Button
+          variant="primary"
+          onClick={handleSave}
           disabled={saving}
-          style={{ height: '40px' }}
+          style={{ height: '44px', borderRadius: '50px', padding: '0 32px' }}
         >
-          {saving ? 'Saving...' : 'Save Changes'}
+          {saving ? "Saving..." : "Save Changes"}
         </Button>
       </div>
 
-      <div className="admin-card" style={{ padding: '24px', marginBottom: '24px' }}>
-        <h3 style={{ marginBottom: '16px', color: 'var(--text-1)' }}>Company Information</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
+      <div className="solid-card" style={{ padding: '32px', marginBottom: '32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <h3 style={{ fontSize: '1.2rem', fontWeight: '700', margin: 0, color: 'var(--text-primary)' }}>
+          Company Information
+        </h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           <TextareaField
             label="Company Story"
-            value={content?.companyStory || ''}
-            onChange={(e) => handleChange('companyStory', e.target.value)}
+            placeholder="Tell your students and instructors about how this platform started..."
+            value={content?.companyStory || ""}
+            onChange={(e) => handleChange("companyStory", e.target.value)}
             rows={4}
           />
           <TextareaField
             label="Mission Statement"
-            value={content?.mission || ''}
-            onChange={(e) => handleChange('mission', e.target.value)}
+            placeholder="Our mission is to democratize education..."
+            value={content?.mission || ""}
+            onChange={(e) => handleChange("mission", e.target.value)}
             rows={2}
           />
           <TextareaField
             label="Vision Statement"
-            value={content?.vision || ''}
-            onChange={(e) => handleChange('vision', e.target.value)}
+            placeholder="To be the leading global platform for online learning..."
+            value={content?.vision || ""}
+            onChange={(e) => handleChange("vision", e.target.value)}
             rows={2}
           />
         </div>

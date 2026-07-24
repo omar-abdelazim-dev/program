@@ -4,6 +4,7 @@ import Enrollment from '../models/Enrollment.js';
 import Section from '../models/Section.js';
 import { escapeRegex } from '../utils/escapeRegex.js';
 import mongoose from 'mongoose';
+import fs from 'fs';
 
 // @route   POST /api/courses
 // @access  Private (instructor only)
@@ -336,5 +337,66 @@ export const rejectCourse = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error rejecting course' });
+  }
+};
+
+// @route   PUT /api/courses/:id
+// @access  Private (instructor only)
+export const updateCourse = async (req, res) => {
+  try {
+    const { title, description, price, category, thumbnailUrl } = req.body;
+    
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    if (course.instructor.toString() !== req.user.id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to update this course' });
+    }
+
+    course.title = title || course.title;
+    course.description = description || course.description;
+    course.price = price !== undefined ? price : course.price;
+    course.category = category || course.category;
+    if (thumbnailUrl !== undefined) {
+      course.thumbnailUrl = thumbnailUrl;
+    }
+    // Optional: reset status to pending when heavily edited
+    // course.status = 'pending';
+
+    await course.save();
+    res.status(200).json({ course });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error updating course' });
+  }
+};
+
+// @route   DELETE /api/courses/:id
+// @access  Private (instructor only)
+export const deleteCourse = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    if (course.instructor.toString() !== req.user.id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to delete this course' });
+    }
+
+    await Course.findByIdAndDelete(req.params.id);
+    
+    // Cleanup associated lessons and sections
+    await Lesson.deleteMany({ course: req.params.id });
+    await Section.deleteMany({ course: req.params.id });
+    // Enrollments generally shouldn't be deleted so students maintain history, 
+    // or they could be depending on business logic. We'll leave them or soft-delete.
+
+    res.status(200).json({ message: 'Course deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error deleting course' });
   }
 };

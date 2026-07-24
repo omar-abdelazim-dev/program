@@ -2,59 +2,10 @@ import notyf from "../utils/notyf";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
+import FullPageLoader from './FullPageLoader';
 import ConfirmModal from "./ConfirmModal";
 import ReportIssueModal from "./ReportIssueModal";
-
-const ThreeDotMenu = ({ options }) => {
-  const [open, setOpen] = useState(false);
-  const menuRef = useRef(null);
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  return (
-    <div
-      className="menu-container course-menu-container"
-      ref={menuRef}
-      onClick={(e) => e.stopPropagation()}
-    >
-      <button
-        className="menu-trigger course-menu-trigger"
-        onClick={(e) => {
-          e.stopPropagation();
-          setOpen(!open);
-        }}
-        aria-label="Menu"
-      >
-        ⋮
-      </button>
-      {open && (
-        <div className="dropdown-menu course-dropdown solid-card">
-          {options.map((opt, i) => (
-            <button
-              key={i}
-              className="dropdown-item course-dropdown-item"
-              onClick={(e) => {
-                e.stopPropagation();
-                setOpen(false);
-                opt.action();
-              }}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
+import ThreeDotMenu from "./common/ThreeDotMenu";
 
 const InProgressCard = ({
   enrollment,
@@ -104,7 +55,10 @@ const InProgressCard = ({
       </div>
       <div className="course-right">
         <div className="stats-grid">
-          <div className="stat-card solid-card">
+          <div 
+          className="solid-card" 
+          style={{boxShadow: 'none',}}
+          >
             <span className="lesson-label">Current Lesson</span>
             <h4 className="lesson-title">
               {enrollment.currentLesson?.title || "Up Next"}
@@ -321,10 +275,7 @@ export default function DashboardTab() {
     return () => clearTimeout(timer);
   }, [activeSubTab, loading, enrollments]);
 
-  if (loading)
-    return (
-      <p style={{ color: "var(--text-secondary)" }}>Loading your courses...</p>
-    );
+  if (loading) return <FullPageLoader message="Loading your courses..." fullScreen={false} />;
   if (error) return <p style={{ color: "#ef4444" }}>{error}</p>;
 
   const completedLessonCount = enrollments.reduce(

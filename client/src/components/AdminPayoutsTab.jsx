@@ -159,7 +159,7 @@ export default function AdminPayoutsTab() {
         <div className="glass-card animate-entrance" style={{ padding: '24px', overflow: 'hidden', marginTop: '32px' }}>
           <h3 style={{ fontSize: '1.2rem', marginBottom: '24px', color: 'var(--text-h)' }}>Processed Requests</h3>
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 4px', textAlign: 'left' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--c-sub)' }}>
                   <th style={{ padding: '16px', fontWeight: 600 }}>Date</th>
@@ -171,28 +171,22 @@ export default function AdminPayoutsTab() {
               </thead>
               <tbody>
                 {payouts.filter(p => p.status !== 'pending').map((tx) => (
-                  <tr key={tx._id} style={{ borderBottom: '1px solid var(--border)' }}>
-                    <td style={{ padding: '16px', color: 'var(--text)' }}>
-                      {new Date(tx.updatedAt).toLocaleDateString()}
+                  <tr key={tx._id} className="analytics-row" style={{ backgroundColor: 'transparent', transition: 'all 0.3s' }}>
+                    <td style={{ padding: '16px', color: 'var(--text)', borderBottom: '1px solid var(--border)', borderTopLeftRadius: '16px', borderBottomLeftRadius: '16px' }}>
+                      {new Date(tx.updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                     </td>
-                    <td style={{ padding: '16px', color: 'var(--text-h)' }}>
+                    <td style={{ padding: '16px', color: 'var(--text-h)', fontWeight: 500, borderBottom: '1px solid var(--border)' }}>
                       {tx.instructor?.name || 'Unknown'}
                     </td>
-                    <td style={{ padding: '16px', color: 'var(--text)', fontWeight: 600 }}>
-                      EGP {Math.abs(tx.amount).toLocaleString()}
+                    <td style={{ padding: '16px', color: 'var(--text)', fontWeight: 600, borderBottom: '1px solid var(--border)' }}>
+                      EGP {Math.abs(tx.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
-                    <td style={{ padding: '16px', color: 'var(--text)', textTransform: 'capitalize' }}>
+                    <td style={{ padding: '16px', color: 'var(--text)', textTransform: 'capitalize', borderBottom: '1px solid var(--border)' }}>
                       {tx.payoutMethod?.replace('_', ' ')}
                     </td>
-                    <td style={{ padding: '16px', textAlign: 'right' }}>
-                      <span style={{
-                        padding: '4px 12px',
-                        borderRadius: '12px',
-                        fontSize: '0.85rem',
-                        fontWeight: 600,
-                        background: tx.status === 'cleared' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                        color: tx.status === 'cleared' ? '#10b981' : '#ef4444',
-                        textTransform: 'capitalize'
+                    <td style={{ padding: '16px', textAlign: 'right', borderBottom: '1px solid var(--border)', borderTopRightRadius: '16px', borderBottomRightRadius: '16px' }}>
+                      <span className="status-badge" style={{
+                        color: tx.status === 'cleared' ? '#10b981' : tx.status === 'rejected' ? '#ef4444' : '#f59e0b',
                       }}>
                         {tx.status}
                       </span>

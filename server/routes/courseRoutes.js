@@ -8,6 +8,8 @@ import {
   approveCourse,
   rejectCourse,
   getInstructorStats,
+  updateCourse,
+  deleteCourse,
 } from '../controllers/courseController.js';
 import { addLesson, getLessonContent } from '../controllers/lessonController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
@@ -25,6 +27,8 @@ router.get('/pending', protect, authorize('admin', 'superadmin'), getPendingCour
 router.post('/', protect, authorize('instructor'), createCourse);
 router.get('/mine', protect, authorize('instructor'), getMyCourses);
 router.get('/stats', protect, authorize('instructor'), getInstructorStats);
+router.put('/:id', protect, authorize('instructor'), updateCourse);
+router.delete('/:id', protect, authorize('instructor'), deleteCourse);
 router.post('/:courseId/lessons', protect, authorize('instructor'), addLesson);
 router.get('/:courseId/lessons/:lessonId', protect, getLessonContent);
 

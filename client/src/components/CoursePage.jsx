@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
+import FullPageLoader from './FullPageLoader';
 
 export default function CoursePage({ cart = [], setCart }) {
   const { id } = useParams();
@@ -60,7 +61,7 @@ export default function CoursePage({ cart = [], setCart }) {
     }
   };
 
-  if (loading) return <div style={{ padding: '100px', textAlign: 'center', color: 'white', fontSize: '1.2rem' }}>Loading course details...</div>;
+  if (loading) return <FullPageLoader message="Loading course details..." />;
   if (error) return <div style={{ padding: '100px', textAlign: 'center', color: '#ef4444', fontSize: '1.2rem' }}>{error}</div>;
   if (!course) return null;
 

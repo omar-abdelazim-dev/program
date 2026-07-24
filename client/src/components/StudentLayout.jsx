@@ -45,11 +45,12 @@ export default function StudentLayout({
               alt="Student Logo"
               style={{
                 marginTop: "10px",
-                width: "44px",
+                width: "100%",
+                scale:'1.5',
                 marginBottom: "0",
                 objectFit: "contain",
                 display: "block",
-                scale: "4",
+                transform: "scale(1.2)",
               }}
             />
           </Link>
@@ -334,20 +335,6 @@ export default function StudentLayout({
                     ></path>
                   </svg>
                 )}
-              </div>
-              <div className="profile-dropdown">
-                <div className="dropdown-name">{user?.name || "Student"}</div>
-                <hr className="dropdown-divider" />
-                <Link to="/student/settings" className="dropdown-link">
-                  Settings
-                </Link>
-                <hr className="dropdown-divider" />
-                <button
-                  onClick={onLogout}
-                  className="dropdown-link logout-link"
-                >
-                  Log out
-                </button>
               </div>
             </div>
           </div>

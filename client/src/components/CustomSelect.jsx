@@ -17,14 +17,17 @@ const CustomSelect = ({ options, value, onChange, placeholder, icon }) => {
   const selectedOption = options.find(o => o.value === value);
 
   return (
-    <div className="custom-select-wrapper" ref={wrapperRef}>
+    <div className="custom-select-wrapper" ref={wrapperRef} style={{ zIndex: isOpen ? 100 : 1 }}>
       <div 
         className={`icon-input-wrapper custom-select-trigger ${isOpen ? 'focus' : ''} ${!icon ? 'no-icon' : ''}`}
         onClick={() => setIsOpen(!isOpen)}
         style={!icon ? { paddingLeft: '14px' } : undefined}
       >
         {icon}
-        <div className={`custom-select-value ${!selectedOption ? 'placeholder' : ''}`}>
+        <div 
+          className={`custom-select-value ${!selectedOption ? 'placeholder' : ''}`}
+          title={selectedOption ? selectedOption.label : placeholder}
+        >
           {selectedOption ? selectedOption.label : placeholder}
         </div>
         <svg className={`custom-select-chevron ${isOpen ? 'open' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
@@ -40,7 +43,7 @@ const CustomSelect = ({ options, value, onChange, placeholder, icon }) => {
                 className={`custom-select-option ${value === opt.value ? 'selected' : ''}`}
                 onClick={() => { onChange(opt.value); setIsOpen(false); }}
               >
-                {opt.label}
+                <span className="option-text">{opt.label}</span>
               </div>
             ))}
           </div>

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
+import FullPageLoader from './FullPageLoader';
+import '../styles/content.css';
 
 export default function LearningPortal() {
   const { id } = useParams();
@@ -76,7 +78,7 @@ export default function LearningPortal() {
     }
   };
 
-  if (loading) return <div style={{ padding: '100px', textAlign: 'center', color: 'white' }}>Loading Learning Portal...</div>;
+  if (loading) return <FullPageLoader message="Loading Learning Portal..." />;
   if (error) return <div style={{ padding: '100px', textAlign: 'center', color: 'red' }}>{error}</div>;
 
   return (

@@ -41,9 +41,14 @@
   --text: #9ca3af;
   --text-h: #f3f4f6;
   --bg: #16171d;
+  --bg-main: #1f2028;
+  --bg-surface: #2e303a;
   --border: #2e303a;
   --code-bg: #1f2028;
   --accent: #c084fc;
+  --z-dropdown: 10000;
+  --z-modal: 11000;
+  --z-toast: 12000;
   --accent-bg: rgba(192, 132, 252, 0.15);
   --accent-border: rgba(192, 132, 252, 0.5);
   --social-bg: rgba(47, 48, 58, 0.5);
@@ -53,11 +58,12 @@
   --c-purple: #8b5cf6;
   --c-pink: #ec4899;
   --c-blue: #3b82f6;
+  --color-accent: #f97316;
   --shadow: 0 4px 25px rgba(251, 146, 60, 0.2), 0 8px 10px rgba(251, 146, 60, 0.1);
 }
 
-/* Deep Navy Flat Design Overrides (Student Only) */
-body[data-role="student"] {
+/* Deep Navy Flat Design Overrides (Student & Instructor) */
+body[data-role="student"], body[data-role="instructor"] {
   --bg-main: #15141E;
   --bg-surface: #1F1E2C;
   --color-accent: #f97316; /* Program Orange */
@@ -76,12 +82,14 @@ body[data-role="student"] {
   --shadow: none;
 }
 
-body[data-role="instructor"] { --color-accent: #FF754C; --accent: #FF754C; }
 body[data-role="admin"], body[data-role="superadmin"] { --color-accent: #6B5DD3; --accent: #6B5DD3; }
 
 body[data-role="student"] *, 
 body[data-role="student"] *::before, 
-body[data-role="student"] *::after {
+body[data-role="student"] *::after,
+body[data-role="instructor"] *, 
+body[data-role="instructor"] *::before, 
+body[data-role="instructor"] *::after {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }

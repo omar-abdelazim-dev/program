@@ -43,9 +43,17 @@ export const protect = async (req, res, next) => {
     req.user = {
       id: user._id,
       name: user.name,
+      lastName: user.lastName,
       email: user.email,
       role: user.role,
       avatarUrl: user.avatarUrl,
+      college: user.college,
+      providedCourses: user.providedCourses,
+      linkedinUrl: user.linkedinUrl,
+      socialUrl: user.socialUrl,
+      phone: user.phone,
+      university: user.university,
+      goalsText: user.goalsText,
     };
 
     next();

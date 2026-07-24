@@ -129,16 +129,30 @@ export default function InstructorEngagementTab({ courses = [] }) {
       </div>
 
       {activeTab === 'qa' && (
-        <div className="glass-card animate-entrance" style={{ padding: '32px' }}>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '24px', color: 'var(--text-h)' }}>Student Questions</h2>
+        <div className="glass-card no-border animate-entrance" style={{ padding: '40px', borderRadius: '24px', background: 'var(--bg-surface)', border: 'none' }}>
+          <h2 style={{ fontSize: '1.75rem', marginBottom: '32px', fontWeight: '700', backgroundImage: 'linear-gradient(135deg, #ffffff 0%, #a1a1aa 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Student Questions</h2>
           {loading ? (
             <div style={{ color: 'var(--c-sub)' }}>Loading questions...</div>
           ) : questions.length === 0 ? (
-            <div style={{ color: 'var(--c-sub)' }}>No questions from students yet.</div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 32px', textAlign: 'center', background: 'var(--bg-main)', borderRadius: '16px', border: 'none', boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.2)' }}>
+              <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(249, 115, 22, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="url(#orange-gradient)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <defs>
+                    <linearGradient id="orange-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#f97316" />
+                      <stop offset="100%" stopColor="#fbbf24" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                </svg>
+              </div>
+              <h3 style={{ fontSize: '1.25rem', color: 'var(--text-h)', marginBottom: '8px', fontWeight: '600' }}>No questions yet</h3>
+              <p style={{ color: 'var(--c-sub)', maxWidth: '400px', lineHeight: '1.6' }}>When students ask questions about your courses, they'll appear here for you to answer.</p>
+            </div>
           ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {questions.map(q => (
-              <div key={q._id} style={{ padding: '20px', borderRadius: '12px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border)' }}>
+              <div key={q._id} style={{ padding: '20px', borderRadius: '12px', background: 'var(--bg-main)', border: '1px solid var(--border)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                   <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                     <img src={q.student?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${q.student?.name || 'User'}`} alt={q.student?.name || 'Student'} style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--c-bg)' }} />
@@ -190,9 +204,9 @@ export default function InstructorEngagementTab({ courses = [] }) {
       )}
 
       {activeTab === 'announcements' && (
-        <div className="glass-card animate-entrance" style={{ padding: '32px', maxWidth: '800px' }}>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '8px', color: 'var(--text-h)' }}>New Announcement</h2>
-          <p style={{ color: 'var(--c-sub)', marginBottom: '24px' }}>Send an email and push notification to all enrolled students.</p>
+        <div className="glass-card animate-entrance" style={{ padding: '40px', borderRadius: '24px', maxWidth: '800px', background: 'var(--bg-surface)' }}>
+          <h2 style={{ fontSize: '1.75rem', marginBottom: '12px', fontWeight: '700', backgroundImage: 'linear-gradient(135deg, #ffffff 0%, #a1a1aa 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>New Announcement</h2>
+          <p style={{ color: 'var(--c-sub)', marginBottom: '32px' }}>Send an email and push notification to all enrolled students.</p>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div className="input-group" style={{ zIndex: 10 }}>
