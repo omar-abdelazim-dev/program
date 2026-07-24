@@ -12,6 +12,8 @@ import {
 import { addLesson, getLessonContent } from '../controllers/lessonController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 import { optionalAuth } from '../middleware/optionalAuth.js';
+import { verifyOwnership } from '../middleware/ownershipMiddleware.js';
+import Course from '../models/Course.js';
 
 const router = express.Router();
 
@@ -25,7 +27,7 @@ router.get('/pending', protect, authorize('admin', 'superadmin'), getPendingCour
 router.post('/', protect, authorize('instructor'), createCourse);
 router.get('/mine', protect, authorize('instructor'), getMyCourses);
 router.get('/stats', protect, authorize('instructor'), getInstructorStats);
-router.post('/:courseId/lessons', protect, authorize('instructor'), addLesson);
+router.post('/:courseId/lessons', protect, authorize('instructor'), verifyOwnership(Course, 'courseId', 'instructor'), addLesson);
 router.get('/:courseId/lessons/:lessonId', protect, getLessonContent);
 
 // --- Admin actions on a specific course ---

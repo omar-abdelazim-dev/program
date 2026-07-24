@@ -12,6 +12,7 @@ import financialRoutes from './routes/financialRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import systemConfigRoutes from './routes/systemConfigRoutes.js';
 import websiteRoutes from './routes/websiteRoutes.js';
+import sessionRoutes from './routes/sessionRoutes.js';
 import { maintenanceMiddleware } from './middleware/maintenanceMiddleware.js';
 import { mongoSanitizeMiddleware, xssSanitizeMiddleware } from './middleware/sanitize.js';
 import { errorHandler } from './middleware/errorHandler.js';
@@ -78,7 +79,9 @@ app.use(
       if (!origin || allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
-      callback(new Error(`CORS: Origin '${origin}' is not allowed`));
+      const err = new Error(`CORS policy violation`);
+      err.status = 403;
+      callback(err);
     },
     credentials: true,
   })
@@ -125,6 +128,7 @@ app.use(globalApiLimiter);
 
 // ── 9. Routes (order and paths are identical to original) ─────────────────────
 app.use('/api/auth', authRoutes);
+app.use('/api/auth/sessions', sessionRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/enrollments', enrollmentRoutes);
 app.use('/api/admin', adminRoutes);
