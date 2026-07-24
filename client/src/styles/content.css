@@ -1,4 +1,4 @@
-:root {
+﻿:root {
     --c-border: 1px solid rgba(255, 255, 255, 0.05);
     --c-border-top: 1px solid rgba(255, 255, 255, 0.15);
     --c-border-left: 1px solid rgba(255, 255, 255, 0.15);
@@ -2853,16 +2853,6 @@ label,
 }
 
 /* --- Global Light Mode Container Overrides --- */
-
-/* 1. Opaque Main Background & Disable Orbs */
-body.light-mode {
-    background-color: #f9fafb !important;
-}
-
-body.light-mode::before,
-body.light-mode::after {
-    display: none !important;
-}
 
 /* 2 & 3. Container Compatibility, Borders, and Shadows */
 body.light-mode .glass-card,

@@ -44,51 +44,6 @@ input:focus {
     outline: none !important;
 }
 
-
-/* Ambient Animated Glowing Orbs Background */
-body::before,
-body::after {
-    content: '';
-    position: fixed;
-    width: 600px;
-    height: 600px;
-    border-radius: 50%;
-    z-index: -1;
-    filter: blur(120px);
-    opacity: 0.15;
-    animation: float 20s infinite alternate ease-in-out;
-    pointer-events: none;
-    /* ensures they don't block clicks */
-}
-
-body::before {
-    background: var(--c-purple);
-    top: -100px;
-    left: -100px;
-}
-
-body::after {
-    background: var(--c-orange);
-    bottom: -100px;
-    right: -100px;
-    animation-duration: 25s;
-    animation-delay: -5s;
-}
-
-@keyframes float {
-    0% {
-        transform: translate(0, 0) scale(1);
-    }
-
-    50% {
-        transform: translate(10vw, 15vh) scale(1.2);
-    }
-
-    100% {
-        transform: translate(-5vw, 20vh) scale(0.9);
-    }
-}
-
 .top-nav {
     position: fixed;
     top: 0;
