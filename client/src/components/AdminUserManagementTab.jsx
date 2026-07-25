@@ -297,7 +297,7 @@ export default function AdminUserManagementTab({
   const canModifyRole = (u) => {
     if (!u) return false;
     if (u._id === currentUser.id) return false;
-    if (u.role === "superadmin") return false;
+    if (u.role === "superadmin" && currentUser.role !== "superadmin") return false;
     if (u.role === "admin" && currentUser.role !== "superadmin") return false;
     return true;
   };

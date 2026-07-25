@@ -344,7 +344,7 @@ export const changeUserRole = async (req, res) => {
 const canModerate = (req, targetUser) => {
   if (!targetUser) return 'User not found';
   if (targetUser._id.toString() === req.user.id.toString()) return 'Cannot act on your own account';
-  if (targetUser.role === 'superadmin') return 'Cannot act on a superadmin';
+  if (targetUser.role === 'superadmin' && req.user.role !== 'superadmin') return 'Only a superadmin can act on a superadmin';
   if (targetUser.role === 'admin' && req.user.role !== 'superadmin') return 'Only a superadmin can act on an admin';
   return null;
 };

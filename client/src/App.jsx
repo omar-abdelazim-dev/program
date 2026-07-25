@@ -18,6 +18,7 @@ import ContactPage from './components/ContactPage';
 import HelpPage from './components/HelpPage';
 import PrivacyPage from './components/PrivacyPage';
 import MobileAppPage from './components/MobileAppPage';
+import TermsPage from './components/TermsPage';
 import FullPageLoader from './components/FullPageLoader';
 
 export default function App() {
