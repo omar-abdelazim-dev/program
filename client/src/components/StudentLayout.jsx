@@ -19,11 +19,15 @@ export default function StudentLayout({
   onLogout,
   cartCount,
   notifications,
+  setNotifications,
   searchQuery,
   onSearchChange,
 }) {
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  
+  const showSearch = location.pathname === '/student' || location.pathname === '/student/dashboard';
 
   // Derive active tab from pathname
   let activeTab = "explore";
@@ -193,26 +197,28 @@ export default function StudentLayout({
         {/* HEADER */}
         <header className="student-header">
           <div className="header-left">
-            <div className="search-pill">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-              <input
-                type="text"
-                placeholder="Search courses, lessons, topics..."
-                value={searchQuery ?? ""}
-                onChange={(e) => onSearchChange?.(e.target.value)}
-              />
-            </div>
+            {showSearch && (
+              <div className="search-pill">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Search courses, lessons, topics..."
+                  value={searchQuery ?? ""}
+                  onChange={(e) => onSearchChange?.(e.target.value)}
+                />
+              </div>
+            )}
           </div>
 
           <div className="header-right">
@@ -311,6 +317,69 @@ export default function StudentLayout({
                   <span className="notification-dot"></span>
                 )}
               </button>
+
+              <div className="profile-dropdown" style={{ width: "320px" }}>
+                <div className="dropdown-name" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>Notifications</span>
+                  {notifications && notifications.length > 0 && (
+                    <button 
+                      onClick={() => setNotifications([])}
+                      style={{ background: 'none', border: 'none', color: 'var(--color-accent)', cursor: 'pointer', fontSize: '0.8rem', padding: 0 }}
+                    >
+                      Clear all
+                    </button>
+                  )}
+                </div>
+                <hr className="dropdown-divider" />
+                {!notifications || notifications.length === 0 ? (
+                  <div
+                    style={{
+                      padding: "16px",
+                      textAlign: "center",
+                      color: "var(--text-secondary)",
+                      fontSize: "0.9rem",
+                    }}
+                  >
+                    No new notifications
+                  </div>
+                ) : (
+                  <div style={{ maxHeight: "300px", overflowY: "auto" }}>
+                    {notifications
+                      .sort((a, b) => b.timestamp - a.timestamp)
+                      .map((notif, idx) => (
+                        <div
+                          key={notif.id || idx}
+                          style={{
+                            padding: "12px 8px",
+                            borderBottom:
+                              idx !== notifications.length - 1
+                                ? "1px solid var(--border-solid)"
+                                : "none",
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: "0.9rem",
+                              color: "var(--text-primary)",
+                              marginBottom: "4px",
+                            }}
+                          >
+                            {notif.text}
+                          </div>
+                          <div
+                            style={{
+                              fontSize: "0.75rem",
+                              color: "var(--text-secondary)",
+                              textAlign: "right",
+                            }}
+                          >
+                            {new Date(notif.timestamp).toLocaleString()}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="profile-wrapper">
@@ -342,7 +411,9 @@ export default function StudentLayout({
 
         {/* PAGE CONTENT */}
         <div className="student-content-scroll">
-          {children}
+          <div style={{ flex: '1 0 auto' }}>
+            {children}
+          </div>
           <Footer />
         </div>
       </main>

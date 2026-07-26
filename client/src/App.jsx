@@ -195,6 +195,7 @@ export default function App() {
       onLogout={handleLogout}
       cartCount={cart.length}
       notifications={notifications}
+      setNotifications={setNotifications}
       searchQuery={searchQuery}
       onSearchChange={setSearchQuery}
     >

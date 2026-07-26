@@ -45,10 +45,10 @@ export default function CourseCard({ course, idx = 0, isLightMode = false }) {
     <article
       className="cc-card saas-card interactive animate-entrance"
       style={{ animationDelay: `${0.05 + idx * 0.06}s`, overflow: 'hidden' }}
-      onClick={() => navigate(`/course/${_id}`)}
+      onClick={() => navigate(`/course/${_id}`, { state: { from: 'explore' } })}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => e.key === 'Enter' && navigate(`/course/${_id}`)}
+      onKeyDown={(e) => e.key === 'Enter' && navigate(`/course/${_id}`, { state: { from: 'explore' } })}
       aria-label={`View course: ${title}`}
     >
       {/* 1. Thumbnail */}

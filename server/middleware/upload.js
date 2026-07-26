@@ -28,3 +28,15 @@ export const uploadImageFile = multer({
     cb(null, true);
   },
 }).single('image'); // expects the form field to be named "image"
+
+export const uploadDocumentFile = multer({
+  storage,
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB for documents like PDF, doc, zip
+  fileFilter: (req, file, cb) => {
+    // We can be more permissive here, just rejecting video/image if we want, or restrict to docs
+    if (file.mimetype.startsWith('video/')) {
+      return cb(new Error('Videos should be uploaded via the video endpoint'));
+    }
+    cb(null, true);
+  },
+}).single('document'); // expects the form field to be named "document"

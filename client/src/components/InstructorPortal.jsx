@@ -34,8 +34,10 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
   const [formData, setFormData] = useState({ title: '', description: '', price: '', category: '' });
   const [thumbnailFile, setThumbnailFile] = useState(null);
 
-  const [lessonData, setLessonData] = useState({ title: '' });
+  const [editingLessonId, setEditingLessonId] = useState(null);
+  const [lessonData, setLessonData] = useState({ title: '', attachmentTitle: '' });
   const [videoFile, setVideoFile] = useState(null);
+  const [attachmentFile, setAttachmentFile] = useState(null);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -138,9 +140,9 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
     }
   };
 
-  const handleAddLesson = async (e) => {
+  const handleSaveLesson = async (e) => {
     e.preventDefault();
-    if (!videoFile) {
+    if (!videoFile && !editingLessonId) {
       setError('Please select a video file');
       return;
     }
@@ -148,23 +150,47 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
     setError('');
 
     try {
-      const fileData = new FormData();
-      fileData.append('video', videoFile);
-      const uploadRes = await api.post('/uploads/video', fileData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      let videoUrl = undefined;
+      if (videoFile) {
+        const fileData = new FormData();
+        fileData.append('video', videoFile);
+        const uploadRes = await api.post('/uploads/video', fileData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        videoUrl = uploadRes.data.url;
+      }
+
+      let attachmentUrl = undefined;
+      if (attachmentFile) {
+        const docData = new FormData();
+        docData.append('document', attachmentFile);
+        const docRes = await api.post('/uploads/document', docData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        attachmentUrl = docRes.data.url;
+      }
       
-      await api.post(`/courses/${selectedCourseId}/lessons`, {
+      const payload = {
         title: lessonData.title,
-        videoUrl: uploadRes.data.url
-      });
+        attachmentTitle: lessonData.attachmentTitle
+      };
+      if (videoUrl) payload.videoUrl = videoUrl;
+      if (attachmentUrl) payload.attachmentUrl = attachmentUrl;
+
+      if (editingLessonId) {
+        await api.put(`/courses/${selectedCourseId}/lessons/${editingLessonId}`, payload);
+      } else {
+        await api.post(`/courses/${selectedCourseId}/lessons`, payload);
+      }
 
       setShowLessonModal(false);
-      setLessonData({ title: '' });
+      setEditingLessonId(null);
+      setLessonData({ title: '', attachmentTitle: '' });
       setVideoFile(null);
+      setAttachmentFile(null);
       fetchMyCourses();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to add lesson');
+      setError(err.response?.data?.message || 'Failed to save lesson');
     } finally {
       setSubmitting(false);
     }
@@ -307,6 +333,18 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                 onOpenAddLesson={(courseId) => {
                   setError('');
                   setSelectedCourseId(courseId);
+                  setEditingLessonId(null);
+                  setLessonData({ title: '', attachmentTitle: '' });
+                  setVideoFile(null);
+                  setAttachmentFile(null);
+                  setShowLessonModal(true);
+                }}
+                onOpenEditLesson={(lesson) => {
+                  setError('');
+                  setEditingLessonId(lesson._id);
+                  setLessonData({ title: lesson.title, attachmentTitle: lesson.attachmentTitle || '' });
+                  setVideoFile(null);
+                  setAttachmentFile(null);
                   setShowLessonModal(true);
                 }}
                 onEditCourse={(course) => {
@@ -377,7 +415,12 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
               
               <div className="flex justify-between items-center mb-8" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
               <h2 style={{ fontSize: '2rem', margin: 0, color: 'var(--text-h)' }}>My Courses</h2>
-              <button onClick={() => { setError(''); setEditingCourse(null); setFormData({ title: '', description: '', price: '', category: '' }); setShowCreateModal(true); }} className="sys-btn-primary" style={{ width: 'auto' }}>
+              <button 
+                onClick={() => { setError(''); setEditingCourse(null); setFormData({ title: '', description: '', price: '', category: '' }); setShowCreateModal(true); }} 
+                style={{ width: 'auto', borderRadius: '24px', padding: '10px 24px', fontWeight: 700, background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: 'none', boxShadow: 'inset 0 4px 12px rgba(0, 0, 0, 0.3)', cursor: 'pointer', transition: 'all 0.2s' }}
+                onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)'; e.currentTarget.style.boxShadow = 'inset 0 4px 12px rgba(0, 0, 0, 0.5)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
+                onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'; e.currentTarget.style.boxShadow = 'inset 0 4px 12px rgba(0, 0, 0, 0.3)'; e.currentTarget.style.filter = 'none'; }}
+              >
                 + Create New Course
               </button>
           </div>
@@ -505,26 +548,38 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
       {/* Add Lesson Modal */}
       {showLessonModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-          <div className="solid-card animate-entrance" style={{ width: '100%', maxWidth: '500px', padding: '32px' }}>
-            <h2 style={{ margin: '0 0 24px 0' }}>Add Lesson</h2>
+          <div className="solid-card animate-entrance" style={{ width: '100%', maxWidth: '700px', padding: '32px' }}>
+            <h2 style={{ margin: '0 0 24px 0' }}>{editingLessonId ? 'Edit Lesson' : 'Add Lesson'}</h2>
             {error && <div style={{ color: '#ef4444', marginBottom: '16px' }}>{error}</div>}
             
-            <form onSubmit={handleAddLesson} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div className="input-group">
-                <label>Lesson Title</label>
-                <input required type="text" value={lessonData.title} onChange={e => setLessonData({...lessonData, title: e.target.value})} placeholder="e.g. Introduction to State" />
-                <div className="input-hint">Lessons are numbered automatically in the order you add them.</div>
-              </div>
-              <div className="input-group">
-                <label>Video File</label>
-                <input required type="file" accept="video/*" onChange={e => setVideoFile(e.target.files[0])} />
-                <div className="input-hint">Uploading directly to Cloudinary</div>
+            <form onSubmit={handleSaveLesson} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                <div className="input-group">
+                  <label>Lesson Title</label>
+                  <input required type="text" value={lessonData.title} onChange={e => setLessonData({...lessonData, title: e.target.value})} placeholder="e.g. Introduction to State" />
+                  <div className="input-hint">Lessons are numbered automatically in the order you add them.</div>
+                </div>
+                <div className="input-group">
+                  <label>Video File</label>
+                  <input required={!editingLessonId} type="file" accept="video/*" onChange={e => setVideoFile(e.target.files[0])} />
+                  <div className="input-hint">{editingLessonId ? "Leave blank to keep existing video" : "Uploading directly to Cloudinary"}</div>
+                </div>
+                
+                <div className="input-group">
+                  <label>Attachment Title (Optional)</label>
+                  <input type="text" value={lessonData.attachmentTitle} onChange={e => setLessonData({...lessonData, attachmentTitle: e.target.value})} placeholder="e.g. Cheat Sheet PDF" />
+                </div>
+                <div className="input-group">
+                  <label>Attachment File (Optional)</label>
+                  <input type="file" onChange={e => setAttachmentFile(e.target.files[0])} />
+                  <div className="input-hint">{editingLessonId ? "Leave blank to keep existing attachment" : "Optional supplementary document (PDF, doc, zip)"}</div>
+                </div>
               </div>
               
-              <div className="input-row" style={{ marginTop: '16px' }}>
+              <div className="input-row" style={{ marginTop: '16px', justifyContent: 'flex-end', gap: '12px' }}>
                 <button type="button" onClick={() => setShowLessonModal(false)} className="sys-btn-secondary">Cancel</button>
                 <button type="submit" disabled={submitting} className="sys-btn-primary">
-                  {submitting ? 'Uploading Video...' : 'Add Lesson'}
+                  {submitting ? 'Saving...' : (editingLessonId ? 'Update Lesson' : 'Add Lesson')}
                 </button>
               </div>
             </form>

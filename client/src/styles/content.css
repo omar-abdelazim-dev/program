@@ -1,4 +1,4 @@
-﻿:root {
+:root {
     --c-border: 1px solid rgba(255, 255, 255, 0.05);
     --c-border-top: 1px solid rgba(255, 255, 255, 0.15);
     --c-border-left: 1px solid rgba(255, 255, 255, 0.15);
@@ -90,7 +90,7 @@ body.light-mode .continue-card {
 
 
 .glass-btn {
-    background: linear-gradient(90deg, #F5A623, #FFD54A);
+    background: linear-gradient(135deg, #f97316, #fbbf24);
     color: #fff;
     border: none;
     border-radius: 999px;
@@ -104,12 +104,11 @@ body.light-mode .continue-card {
 
 .glass-btn:hover {
     box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.6);
-    transform: translateY(-2px);
+    filter: brightness(1.15);
 }
 
 .nav-icon-btn-auth:hover {
-    box-shadow: var(--c-glow);
-    transform: translateY(-3px);
+    opacity: 0.8;
 }
 
 .hover-glow {
@@ -223,7 +222,7 @@ body.light-mode .continue-card {
 .stat-value {
     font-size: 2.2rem;
     font-weight: 800;
-    background: linear-gradient(90deg, #F5A623, #FFD54A);
+    background: linear-gradient(135deg, #f97316, #fbbf24);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -473,7 +472,7 @@ body.light-mode .continue-card {
 
 .admin-sidebar-tab:hover {
     color: #fff !important;
-    transform: translateX(4px) !important;
+    filter: brightness(1.15) !important;
     background-color: var(--bg-main) !important;
     box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.5) !important;
 }
@@ -791,11 +790,11 @@ body.light-mode .continue-card {
     border-radius: 50%;
     overflow: hidden;
     flex-shrink: 0;
-    background: linear-gradient(135deg, var(--c-orange), var(--c-purple));
+    background: var(--bg-main);
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: none;
 }
 
 .cc-avatar img {
@@ -807,7 +806,7 @@ body.light-mode .continue-card {
 .cc-avatar-initials {
     font-size: 0.7rem;
     font-weight: 700;
-    color: #fff;
+    color: var(--text-primary);
     line-height: 1;
 }
 
@@ -1313,7 +1312,7 @@ body.light-mode .cc-star--empty {
 .nav-icon-btn-auth.active,
 .auth-submit-btn.active {
     border-color: transparent !important;
-    background: linear-gradient(90deg, #F5A623, #FFD54A) !important;
+    background: linear-gradient(135deg, #f97316, #fbbf24) !important;
     color: #fff !important;
     box-shadow: 0 10px 24px rgba(249, 115, 22, 0.24) !important;
     transform: none !important;
@@ -1332,7 +1331,7 @@ body.light-mode .filter-btn:hover {
 }
 
 body.light-mode .filter-btn.active {
-    background: linear-gradient(90deg, #F5A623, #FFD54A) !important;
+    background: linear-gradient(135deg, #f97316, #fbbf24) !important;
     color: #fff !important;
     box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.5) !important;
     border-radius: 999px !important;
@@ -1455,7 +1454,7 @@ body.light-mode .progress-bar-container {
 
 .progress-bar {
     height: 100%;
-    background: linear-gradient(90deg, #F5A623, #FFD54A);
+    background: linear-gradient(135deg, #f97316, #fbbf24);
     border-radius: 4px;
     transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -1526,7 +1525,7 @@ body.light-mode .progress-bar-container {
 }
 
 .auth-left h1 .highlight {
-    background: linear-gradient(90deg, #F5A623, #FFD54A);
+    background: linear-gradient(135deg, #f97316, #fbbf24);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -1746,7 +1745,7 @@ body.light-mode .step:not(:last-child)::after {
 }
 
 .step.active .step-icon {
-    background: linear-gradient(90deg, #F5A623, #FFD54A);
+    background: linear-gradient(135deg, #f97316, #fbbf24);
     color: #fff;
     border-color: transparent;
     box-shadow: var(--shadow);
@@ -1921,8 +1920,9 @@ body.light-mode .strength-bar.strong {
 }
 
 .icon-input-wrapper input,
-.icon-input-wrapper select {
-    padding-left: 42px;
+.icon-input-wrapper select,
+.icon-input-wrapper.custom-select-trigger {
+    padding-left: 46px !important;
 }
 
 /* Vision / Goals */
@@ -2039,8 +2039,9 @@ body.light-mode .strength-bar.strong {
 
 /* Ensure icon inputs keep their specific padding despite the global override */
 .auth-form .icon-input-wrapper input,
-.auth-form .icon-input-wrapper select {
-    padding-left: 42px;
+.auth-form .icon-input-wrapper select,
+.auth-form .icon-input-wrapper.custom-select-trigger {
+    padding-left: 46px !important;
 }
 
 .phone-input-wrapper {
@@ -2272,7 +2273,7 @@ body.light-mode .custom-select-value.placeholder {
     font-weight: 700;
 }
 
-.spinner {
+.btn-spinner {
     animation: spin 1s linear infinite;
 }
 
@@ -2368,7 +2369,7 @@ body.light-mode .custom-select-value.placeholder {
 
 .input-group input[type="file"]::file-selector-button:hover {
     box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.6);
-    transform: translateY(-1px);
+    filter: brightness(1.15);
 }
 
 .input-hint {
@@ -2412,12 +2413,11 @@ input[type="checkbox"] {
 
 .auth-submit-btn:hover {
     box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.6);
-    transform: translateY(-2px);
 }
 
 .nav-icon-btn-auth {
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--bg-surface);
+    border: none;
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -2425,16 +2425,23 @@ input[type="checkbox"] {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    color: #fff;
-    background: linear-gradient(90deg, #F5A623, #FFD54A);
-    box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.5);
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    color: var(--text-primary);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+    transition: opacity 0.2s ease, box-shadow 0.2s ease;
 }
 
-.auth-submit-btn:active,
-.nav-icon-btn-auth:active {
+body.light-mode .nav-icon-btn-auth {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.auth-submit-btn:active {
     transform: scale(0.95);
     box-shadow: 0 2px 10px rgba(245, 166, 35, 0.15);
+}
+
+.nav-icon-btn-auth:active {
+    transform: scale(0.95);
+    box-shadow: none;
 }
 
 .spinner-wrapper {
@@ -2445,8 +2452,7 @@ input[type="checkbox"] {
 
 .auth-back-btn {
     flex: 1;
-    background: transparent !important;
-    border: 1px solid #f97316 !important;
+    background: var(--bg-main) !important;
     color: var(--text-h) !important;
     padding: 14px !important;
     font-size: 1.05rem !important;
@@ -2456,12 +2462,7 @@ input[type="checkbox"] {
     justify-content: center;
     /* box-shadow: var(--shadow) !important; */
     margin-top: 10px;
-}
-
-.auth-back-btn:hover {
-    box-shadow:
-        -6px 0 12px rgba(249, 115, 22, 0.15),
-        6px 0 12px rgba(250, 204, 21, 0.15);
+    border: 2px solid transparent !important;
 }
 
 /* Responsive Design */
@@ -2658,7 +2659,7 @@ body:not(.light-mode) .analytics-card:hover {
    Buttons (Universal)
    -------------------------------------------------------------------------- */
 .sys-btn-primary {
-    background: linear-gradient(90deg, #F5A623, #FFD54A) !important;
+    background: linear-gradient(135deg, #f97316, #fbbf24) !important;
     color: #fff !important;
     border: none !important;
     border-radius: 999px !important;
@@ -2670,7 +2671,7 @@ body:not(.light-mode) .analytics-card:hover {
 }
 
 .sys-btn-primary:hover {
-    transform: translateY(-2px) !important;
+    filter: brightness(1.15) !important;
     box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.6) !important;
 }
 
@@ -2841,7 +2842,7 @@ label,
 }
 
 .filter-btn.active {
-    background-color: linear-gradient(90deg, #F5A623, #FFD54A);
+    background-color: linear-gradient(135deg, #f97316, #fbbf24);
 }
 
 /* Neutralize legacy hover effects on informational/static containers */
@@ -3136,7 +3137,8 @@ body.light-mode .pending-item {
 
 .global-three-dot-trigger:hover,
 .global-three-dot-trigger.active {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--bg-main);
+    box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.5);
     color: var(--text-h);
 }
 

@@ -311,10 +311,15 @@ input:focus {
     color: var(--c-light);
 }
 
+.nav-tab:focus {
+    color: var(--color-accent) !important;
+}
+
 .nav-tab.active {
-    background: linear-gradient(90deg, var(--c-orange), var(--c-yellow));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--color-accent) !important;
+    background: none;
+    -webkit-background-clip: unset;
+    -webkit-text-fill-color: initial;
 }
 
 /* The Sliding Indicator! */
