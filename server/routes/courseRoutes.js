@@ -11,7 +11,7 @@ import {
   updateCourse,
   deleteCourse,
 } from '../controllers/courseController.js';
-import { addLesson, getLessonContent } from '../controllers/lessonController.js';
+import { addLesson, getLessonContent, updateLesson } from '../controllers/lessonController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 import { optionalAuth } from '../middleware/optionalAuth.js';
 
@@ -30,6 +30,7 @@ router.get('/stats', protect, authorize('instructor'), getInstructorStats);
 router.put('/:id', protect, authorize('instructor'), updateCourse);
 router.delete('/:id', protect, authorize('instructor'), deleteCourse);
 router.post('/:courseId/lessons', protect, authorize('instructor'), addLesson);
+router.put('/:courseId/lessons/:lessonId', protect, authorize('instructor'), updateLesson);
 router.get('/:courseId/lessons/:lessonId', protect, getLessonContent);
 
 // --- Admin actions on a specific course ---

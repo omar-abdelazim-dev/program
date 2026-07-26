@@ -54,3 +54,24 @@ export const uploadImage = async (req, res) => {
     res.status(500).json({ message: 'Image upload failed' });
   }
 };
+
+// @route   POST /api/uploads/document
+// @access  Private (instructor only)
+// Expects multipart/form-data with a field named "document"
+export const uploadDocument = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No document file was provided' });
+    }
+
+    const result = await streamUpload(req.file.buffer, {
+      resource_type: 'raw', // required for non-media files like PDFs
+      folder: 'program/documents',
+    });
+
+    res.status(200).json({ url: result.secure_url });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Document upload failed' });
+  }
+};

@@ -12,5 +12,8 @@
 - **Early Email Validation**: Implemented an early backend email validation check (`/api/auth/check-email`) that catches duplicate emails seamlessly on step 1 of the registration process before the user wastes time filling out the rest of the form.
 - **End-to-End Data Binding**: Wired all the new frontend fields (College, Track, LinkedIn, Courses, etc.) directly to the backend payload and updated the Mongoose `User` schema so all data is now permanently saved into the database upon registration.
 
+- **UI Consistency Fixes**: Standardized the toggle buttons (e.g. Auth page theme toggle now perfectly matches TopNav), fixed input padding overlapping with icons in custom selects/inputs, and resolved the loading button text state (displaying "Signing in..." correctly).
+- **Notification Functionality**: Restored the missing notification dropdown menu in the Student Layout. Added a smooth, animated entrance for the dropdown (fade-in, slide-up, and an invisible hover bridge) to make it easily reachable. Added a global "Clear all" button to dismiss notifications anywhere.
+
 ## Next Steps / What We Are Doing
 - *[Track next steps here]*

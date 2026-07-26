@@ -60,6 +60,7 @@ export default function LearningPortal() {
     try {
       const { data } = await api.get(`/courses/${id}/lessons/${lessonId}`);
       setActiveVideoUrl(data.lesson?.videoUrl || '');
+      if (data.lesson) setActiveLesson(data.lesson);
     } catch(err) {
       console.error('Failed to load video URL', err);
     } finally {
@@ -253,11 +254,11 @@ export default function LearningPortal() {
                 Q&A
               </button>
               <button
-                className={`nav-tab ${activeTab === "notes" ? "active" : ""}`}
-                onClick={() => setActiveTab("notes")}
+                className={`nav-tab ${activeTab === "attachments" ? "active" : ""}`}
+                onClick={() => setActiveTab("attachments")}
                 style={{ padding: 0, paddingBottom: "8px" }}
               >
-                Notes
+                Attachments
               </button>
             </div>
 
@@ -277,65 +278,7 @@ export default function LearningPortal() {
                   sure to download the attached cheat sheet before proceeding!
                 </p>
 
-                <h3 style={{ fontSize: "1.2rem", marginBottom: "16px" }}>
-                  Resources
-                </h3>
-                <div
-                  className="saas-card"
-                  style={{
-                    padding: "16px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    cursor: "pointer",
-                    maxWidth: "400px",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "12px",
-                    }}
-                  >
-                    <svg
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#F59E0B"
-                      strokeWidth="2"
-                    >
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                      <polyline points="14 2 14 8 20 8"></polyline>
-                      <line x1="16" y1="13" x2="8" y2="13"></line>
-                      <line x1="16" y1="17" x2="8" y2="17"></line>
-                      <polyline points="10 9 9 9 8 9"></polyline>
-                    </svg>
-                    <div>
-                      <div style={{ fontWeight: "600" }}>
-                        Architecture_Cheat_Sheet.pdf
-                      </div>
-                      <div
-                        style={{ fontSize: "0.85rem", color: "var(--c-sub)" }}
-                      >
-                        2.4 MB PDF
-                      </div>
-                    </div>
-                  </div>
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                  </svg>
-                </div>
+
               </div>
             )}
 
@@ -346,7 +289,7 @@ export default function LearningPortal() {
                   discussion!
                 </p>
                 <button
-                  className="saas-btn-secondary"
+                  className="sys-btn-secondary"
                   onClick={() => setIsCourseContentOpen(true)}
                   style={{  marginTop: "16px",
                     padding: "8px 16px",
@@ -358,25 +301,76 @@ export default function LearningPortal() {
               </div>
             )}
 
-            {activeTab === "notes" && (
+            {activeTab === "attachments" && (
               <div>
-                <textarea
-                  placeholder="Type your notes here... They will be saved automatically."
-                  style={{
-                    border: "var(--c-border)",
-                    borderTop: "var(--c-border-top)",
-                    borderLeft: "var(--c-border-left)",
-                    width: "100%",
-                    height: "150px",
-                    background: "rgba(15, 17, 23, 0.7)",
-                    border: "1px solid var(--c-border-medium)",
-                    borderRadius: "8px",
-                    padding: "16px",
-                    color: "#fff",
-                    fontSize: "1rem",
-                    resize: "vertical",
-                  }}
-                ></textarea>
+                {activeLesson?.attachmentUrl ? (
+                  <>
+                    <h3 style={{ fontSize: "1.2rem", marginBottom: "16px" }}>
+                      Resources
+                    </h3>
+                    <div
+                      className="saas-card"
+                      onClick={() => window.open(activeLesson.attachmentUrl, "_blank")}
+                      style={{
+                        padding: "16px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        cursor: "pointer",
+                        maxWidth: "400px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "12px",
+                        }}
+                      >
+                        <svg
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="#F59E0B"
+                          strokeWidth="2"
+                        >
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                          <polyline points="14 2 14 8 20 8"></polyline>
+                          <line x1="16" y1="13" x2="8" y2="13"></line>
+                          <line x1="16" y1="17" x2="8" y2="17"></line>
+                          <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        <div>
+                          <div style={{ fontWeight: "600" }}>
+                            {activeLesson.attachmentTitle || 'Attachment'}
+                          </div>
+                          <div
+                            style={{ fontSize: "0.85rem", color: "var(--c-sub)" }}
+                          >
+                            Document
+                          </div>
+                        </div>
+                      </div>
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                      </svg>
+                    </div>
+                  </>
+                ) : (
+                  <p style={{ color: "var(--c-sub)" }}>
+                    No attachments are available for this lesson.
+                  </p>
+                )}
               </div>
             )}
           </div>

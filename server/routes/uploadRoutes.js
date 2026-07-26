@@ -1,6 +1,6 @@
 import express from 'express';
-import { uploadVideo, uploadImage } from '../controllers/uploadController.js';
-import { uploadVideoFile, uploadImageFile } from '../middleware/upload.js';
+import { uploadVideo, uploadImage, uploadDocument } from '../controllers/uploadController.js';
+import { uploadVideoFile, uploadImageFile, uploadDocumentFile } from '../middleware/upload.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -35,6 +35,14 @@ router.post(
   protect,
   handleMulterErrors(uploadImageFile),
   uploadImage
+);
+
+router.post(
+  '/document',
+  protect,
+  authorize('instructor'),
+  handleMulterErrors(uploadDocumentFile),
+  uploadDocument
 );
 
 export default router;

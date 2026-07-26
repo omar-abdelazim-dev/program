@@ -3,7 +3,6 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import FullPageLoader from './FullPageLoader';
-import ConfirmModal from "./ConfirmModal";
 import ReportIssueModal from "./ReportIssueModal";
 import ThreeDotMenu from "./common/ThreeDotMenu";
 
@@ -11,7 +10,6 @@ const InProgressCard = ({
   enrollment,
   onOpen,
   onViewCourse,
-  openConfirm,
   openReportModal,
 }) => {
   const course = enrollment.course;
@@ -82,23 +80,7 @@ const InProgressCard = ({
           </button>
           <ThreeDotMenu
             options={[
-              {
-                label: "Notes",
-                action: () =>
-                  notyf.open({ type: "info", message: "Notes coming soon" }),
-              },
               { label: "Report issue", action: () => openReportModal(course) },
-              {
-                label: "Leave course",
-                action: () =>
-                  openConfirm({
-                    title: "Leave Course",
-                    message: `Are you sure you want to leave ${course.title}? You will lose your progress.`,
-                    onConfirm: () => {
-                      notyf.success("Course removed from your dashboard");
-                    },
-                  }),
-              },
             ]}
           />
         </div>
@@ -111,7 +93,6 @@ const CompletedCard = ({
   enrollment,
   onOpen,
   onViewCourse,
-  openConfirm,
   openReportModal,
 }) => {
   const course = enrollment.course;
@@ -191,28 +172,6 @@ export default function DashboardTab() {
   const [enrollments, setEnrollments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  const [confirmState, setConfirmState] = useState({
-    isOpen: false,
-    title: "",
-    message: "",
-    onConfirm: null,
-  });
-
-  const openConfirm = (config) => {
-    setConfirmState({
-      isOpen: true,
-      title: config.title,
-      message: config.message,
-      onConfirm: () => {
-        if (config.onConfirm) config.onConfirm();
-        closeConfirm();
-      },
-    });
-  };
-
-  const closeConfirm = () =>
-    setConfirmState((prev) => ({ ...prev, isOpen: false }));
 
   const [reportModalState, setReportModalState] = useState({
     isOpen: false,
@@ -383,16 +342,15 @@ export default function DashboardTab() {
                     )}
                   </div>
                 ) : (
-                  <div className="dash-row course-list">
+                  <div className="dash-row course-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '24px' }}>
                     {inProgress.map((enrollment) => (
                       <InProgressCard
                         key={enrollment._id}
                         enrollment={enrollment}
                         onOpen={(courseId) => navigate(`/learn/${courseId}`)}
                         onViewCourse={() =>
-                          navigate(`/course/${enrollment.course._id}`)
+                          navigate(`/course/${enrollment.course._id}`, { state: { from: 'dashboard' } })
                         }
-                        openConfirm={openConfirm}
                         openReportModal={openReportModal}
                       />
                     ))}
@@ -415,16 +373,15 @@ export default function DashboardTab() {
                     <p>You haven't completed any courses yet. Keep learning!</p>
                   </div>
                 ) : (
-                  <div className="dash-row">
+                  <div className="dash-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '24px' }}>
                     {completed.map((enrollment) => (
                       <CompletedCard
                         key={enrollment._id}
                         enrollment={enrollment}
                         onOpen={(courseId) => navigate(`/learn/${courseId}`)}
                         onViewCourse={() =>
-                          navigate(`/course/${enrollment.course._id}`)
+                          navigate(`/course/${enrollment.course._id}`, { state: { from: 'dashboard' } })
                         }
-                        openConfirm={openConfirm}
                         openReportModal={openReportModal}
                       />
                     ))}
@@ -435,15 +392,6 @@ export default function DashboardTab() {
           </section>
         </div>
       </div>
-
-      <ConfirmModal
-        isOpen={confirmState.isOpen}
-        title={confirmState.title}
-        message={confirmState.message}
-        onConfirm={confirmState.onConfirm}
-        onCancel={closeConfirm}
-        confirmText="Leave Course"
-      />
 
       <ReportIssueModal
         isOpen={reportModalState.isOpen}
