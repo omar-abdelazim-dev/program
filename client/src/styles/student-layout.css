@@ -147,8 +147,9 @@
 }
 
 .courses-nav-dropdown-link:hover {
-  background-color: var(--bg-main);
+  opacity: 0.8;
   color: var(--text-primary);
+  background-color: transparent !important;
 }
 
 /* --------------------------------------------------------------------------
@@ -350,9 +351,10 @@
 .dropdown-link:hover,
 .dropdown-link:focus,
 .dropdown-link:active {
-  background-color: var(--bg-main);
-  box-shadow: inset 0px 4px 12px rgba(0, 0, 0, 0.5);
+  background-color: transparent !important;
+  opacity: 0.8;
   outline: none;
+  box-shadow: none !important;
 }
 
 .logout-link {
@@ -360,7 +362,8 @@
 }
 
 .logout-link:hover {
-  background-color: rgba(255, 77, 79, 0.1);
+  background-color: transparent !important;
+  opacity: 0.8;
 }
 
 /* ==========================================================================

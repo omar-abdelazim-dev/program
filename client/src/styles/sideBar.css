@@ -130,7 +130,8 @@ body {
 }
 
 .sideBarButton:hover {
-    background: var(--bg-hover);
+    background: transparent !important;
+    opacity: 0.8;
     color: var(--text-primary);
 }
 

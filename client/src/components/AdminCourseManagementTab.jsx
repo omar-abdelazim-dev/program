@@ -205,7 +205,7 @@ export default function AdminCourseManagementTab({ currentUser }) {
     try {
         setIsProcessing(true);
         // Note: original reject required a reason, using a hardcoded string as fallback for now
-        await api.patch(`/courses/${id}/reject`, { reason: "Rejected by admin from bulk UI" });
+        await api.patch(`/courses/${id}/reject`, { reason: "Rejected by admin from" });
         notyf.success('Course rejected');
         setCourses(courses.map(c => c._id === id ? { ...c, status: 'rejected' } : c));
     } catch (err) {

@@ -20,6 +20,7 @@ import PrivacyPage from './components/PrivacyPage';
 import MobileAppPage from './components/MobileAppPage';
 import TermsPage from './components/TermsPage';
 import FullPageLoader from './components/FullPageLoader';
+import LandingPage from './components/LandingPage';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -145,12 +146,25 @@ export default function App() {
 
   if (!isAuthenticated) {
     return (
-      <main className="content" style={{ padding: '20px' }}>
-        <Routes>
-          <Route path="/auth/admin" element={<AdminAuthPage onLoginSuccess={(userData) => { setUser(userData); setIsAuthenticated(true); navigate('/admin'); }} isLightMode={isLightMode} toggleTheme={toggleTheme} />} />
-          <Route path="*" element={<AuthPage onLoginSuccess={handleLogin} isLightMode={isLightMode} toggleTheme={toggleTheme} />} />
-        </Routes>
-      </main>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route
+          path="/auth/admin"
+          element={(
+            <main className="content" style={{ padding: '20px' }}>
+              <AdminAuthPage onLoginSuccess={(userData) => { setUser(userData); setIsAuthenticated(true); navigate('/admin'); }} isLightMode={isLightMode} toggleTheme={toggleTheme} />
+            </main>
+          )}
+        />
+        <Route
+          path="*"
+          element={(
+            <main className="content" style={{ padding: '20px' }}>
+              <AuthPage onLoginSuccess={handleLogin} isLightMode={isLightMode} toggleTheme={toggleTheme} />
+            </main>
+          )}
+        />
+      </Routes>
     );
   }
 
