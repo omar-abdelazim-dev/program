@@ -106,9 +106,9 @@ export const updateLesson = async (req, res) => {
       return res.status(403).json({ message: 'You do not own this course' });
     }
 
-    const lesson = await Lesson.findById(lessonId);
-    if (!lesson) {
-      return res.status(404).json({ message: 'Lesson not found' });
+    const lesson = await Lesson.findById(lessonId).populate('section');
+    if (!lesson || !lesson.section || lesson.section.course.toString() !== courseId) {
+      return res.status(404).json({ message: 'Lesson not found in this course' });
     }
 
     if (title) lesson.title = title;
