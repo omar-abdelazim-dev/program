@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import api from '../api/axios';
 import FullPageLoader from './FullPageLoader';
 
 export default function CoursePage({ cart = [], setCart }) {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromDashboard = location.state?.from === 'dashboard';
   const [activeTab, setActiveTab] = useState('syllabus');
 
   const [course, setCourse] = useState(null);
@@ -70,12 +72,12 @@ export default function CoursePage({ cart = [], setCart }) {
       
       {/* Course Header Banner */}
       <div className="solid-card" style={{ padding: '40px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-        <button onClick={() => navigate('/student')} className="back-arrow-btn" style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '0', marginBottom: '24px', fontSize: '0.95rem', fontWeight: '500', transition: 'color 0.2s ease' }}>
+        <button onClick={() => navigate(fromDashboard ? '/student/dashboard' : '/student')} className="back-arrow-btn" style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '0', marginBottom: '24px', fontSize: '0.95rem', fontWeight: '500' }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-          Back to Explore
+          {fromDashboard ? 'Back to Dashboard' : 'Back to Explore'}
         </button>
         
-        <span style={{ display: 'inline-flex', padding: '6px 14px', background: 'rgba(249, 115, 22, 0.1)', color: 'var(--color-accent)', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>
+        <span style={{ display: 'inline-flex', padding: '6px 14px', background: 'rgba(249, 115, 22, 0.1)', color: 'var(--color-accent)', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px', boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5)' }}>
           {course.category}
         </span>
         
@@ -122,12 +124,12 @@ export default function CoursePage({ cart = [], setCart }) {
                 </div>
 
                 {lessons.length === 0 ? (
-                  <div style={{ padding: '32px', textAlign: 'center', background: 'var(--bg-main)', borderRadius: '12px', color: 'var(--text-secondary)' }}>
+                  <div style={{ padding: '32px', textAlign: 'center', background: 'var(--bg-main)', borderRadius: '12px', color: 'var(--text-secondary)', boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5)' }}>
                     No lessons have been added to this course yet.
                   </div>
                 ) : lessons.map((lesson, i) => (
-                  <div key={lesson._id} style={{ padding: '20px 24px', background: 'var(--bg-main)', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--bg-surface)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '0.9rem' }}>
+                  <div key={lesson._id} style={{ padding: '20px 24px', background: 'var(--bg-main)', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '16px', boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5)' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--bg-surface)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '0.9rem', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
                       {i + 1}
                     </div>
                     <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '600', color: 'var(--text-primary)' }}>{lesson.title}</h4>
@@ -156,7 +158,7 @@ export default function CoursePage({ cart = [], setCart }) {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '8px' }}>
             {isEnrolled ? (
-              <button onClick={() => navigate(`/learn/${course._id}`)} className="solid-btn" style={{ width: '100%', height: '54px', fontSize: '1.05rem', background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)' }}>
+              <button onClick={() => navigate(`/learn/${course._id}`)} className="solid-btn" style={{ width: '100%', height: '54px', fontSize: '1.05rem', background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5)' }}>
                 Go to Course
               </button>
             ) : (

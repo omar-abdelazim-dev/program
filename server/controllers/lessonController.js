@@ -7,7 +7,7 @@ import Section from '../models/Section.js';
 // @access  Private (instructor only, must own the course)
 export const addLesson = async (req, res) => {
   try {
-    const { title, videoUrl } = req.body;
+    const { title, videoUrl, attachmentUrl, attachmentTitle } = req.body;
     const { courseId } = req.params;
 
     if (!title || !videoUrl) {
@@ -41,6 +41,8 @@ export const addLesson = async (req, res) => {
     const lesson = await Lesson.create({
       title,
       videoUrl,
+      attachmentUrl: attachmentUrl || '',
+      attachmentTitle: attachmentTitle || '',
       section: section._id,
       order: existingCount + 1,
     });
@@ -85,5 +87,40 @@ export const getLessonContent = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error fetching lesson' });
+  }
+};
+
+// @route   PUT /api/courses/:courseId/lessons/:lessonId
+// @access  Private (instructor only, must own the course)
+export const updateLesson = async (req, res) => {
+  try {
+    const { title, videoUrl, attachmentUrl, attachmentTitle } = req.body;
+    const { courseId, lessonId } = req.params;
+
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    if (course.instructor.toString() !== req.user.id.toString()) {
+      return res.status(403).json({ message: 'You do not own this course' });
+    }
+
+    const lesson = await Lesson.findById(lessonId).populate('section');
+    if (!lesson || !lesson.section || lesson.section.course.toString() !== courseId) {
+      return res.status(404).json({ message: 'Lesson not found in this course' });
+    }
+
+    if (title) lesson.title = title;
+    if (videoUrl) lesson.videoUrl = videoUrl;
+    if (attachmentUrl !== undefined) lesson.attachmentUrl = attachmentUrl;
+    if (attachmentTitle !== undefined) lesson.attachmentTitle = attachmentTitle;
+
+    await lesson.save();
+
+    res.status(200).json({ lesson });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error updating lesson' });
   }
 };

@@ -127,7 +127,7 @@ export default function ReportIssueModal({ isOpen, course, onClose, onSubmit }) 
                   opacity: tabIndicatorStyle.opacity,
                   background: '#131219',
                   borderRadius: '12px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                  boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5)',
                   transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
                   zIndex: 0
                 }}
@@ -174,6 +174,7 @@ export default function ReportIssueModal({ isOpen, course, onClose, onSubmit }) 
                 background: "rgba(59, 130, 246, 0.05)",
                 border: "1px solid rgba(59, 130, 246, 0.2)",
                 borderRadius: "12px",
+                boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)",
               }}
             >
               <div
@@ -238,6 +239,7 @@ export default function ReportIssueModal({ isOpen, course, onClose, onSubmit }) 
                 background: "rgba(249, 115, 22, 0.05)",
                 border: "1px solid rgba(249, 115, 22, 0.2)",
                 borderRadius: "12px",
+                boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)",
               }}
             >
               <div
@@ -320,14 +322,18 @@ export default function ReportIssueModal({ isOpen, course, onClose, onSubmit }) 
                 color: "var(--text-h)",
                 fontSize: "0.95rem",
                 outline: "none",
-                transition: "border-color 0.2s ease",
-                backgroundColor: "inset rgba(0, 0, 0, 0.5) 0px 4px 12px",
+                transition: "all 0.2s ease",
+                boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)",
               }}
               onFocus={(e) => {
                 e.target.style.borderColor = "var(--color-accent)";
+                e.target.style.boxShadow = "inset 0 4px 12px rgba(0,0,0,0.5), 0 0 0 3px rgba(249, 115, 22, 0.2)";
+                e.target.style.outline = "none";
               }}
               onBlur={(e) => {
                 e.target.style.borderColor = "var(--border)";
+                e.target.style.boxShadow = "inset 0 4px 12px rgba(0,0,0,0.5)";
+                e.target.style.outline = "none";
               }}
             />
           </div>
@@ -351,7 +357,7 @@ export default function ReportIssueModal({ isOpen, course, onClose, onSubmit }) 
             </button>
             <button 
               type="submit"
-              className="sys-btn-primary" 
+              className="solid-btn primary-action" 
               disabled={!category || !description.trim()}
               style={{
                 flex: 1,

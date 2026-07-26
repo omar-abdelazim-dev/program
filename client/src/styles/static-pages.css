@@ -40,6 +40,7 @@
 
 .site-footer-col a:hover {
     color: var(--color-accent, #f97316);
+    background-color: transparent !important;
 }
 
 .site-footer-social {
@@ -124,13 +125,35 @@
 .static-page-card {
     background: var(--bg-surface);
     border-radius: var(--radius-card, 20px);
-    padding: 20px;
+    padding: 24px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
 .static-page-card h3 {
-    margin: 0 0 8px 0;
-    font-size: 1rem;
+    margin: 0 0 12px 0;
+    font-size: 1.1rem;
+    font-weight: 700;
     color: var(--text-primary);
+}
+
+.static-page a {
+    color: var(--color-accent, #f97316);
+    text-decoration: none;
+    transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.static-page a:hover {
+    text-decoration: underline;
+    opacity: 0.9;
+}
+
+.static-page-empty {
+    background: var(--bg-surface);
+    border-radius: var(--radius-card, 20px);
+    padding: 24px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    text-align: center;
+    color: var(--text-secondary);
 }
 
 .static-page-card p {
@@ -215,7 +238,8 @@
 .static-page-coming-soon {
     background: var(--bg-surface);
     border-radius: var(--radius-card, 20px);
-    padding: 32px;
+    padding: 24px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
     display: flex;
     flex-direction: column;
     gap: 8px;

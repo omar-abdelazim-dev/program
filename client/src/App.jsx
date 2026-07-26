@@ -18,6 +18,7 @@ import ContactPage from './components/ContactPage';
 import HelpPage from './components/HelpPage';
 import PrivacyPage from './components/PrivacyPage';
 import MobileAppPage from './components/MobileAppPage';
+import TermsPage from './components/TermsPage';
 import FullPageLoader from './components/FullPageLoader';
 
 export default function App() {
@@ -194,6 +195,7 @@ export default function App() {
       onLogout={handleLogout}
       cartCount={cart.length}
       notifications={notifications}
+      setNotifications={setNotifications}
       searchQuery={searchQuery}
       onSearchChange={setSearchQuery}
     >

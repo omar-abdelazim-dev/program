@@ -19,6 +19,14 @@ const lessonSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    attachmentUrl: {
+      type: String,
+      default: '',
+    },
+    attachmentTitle: {
+      type: String,
+      default: '',
+    },
     section: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Section',

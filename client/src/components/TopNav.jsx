@@ -7,6 +7,7 @@ export default function TopNav({
   onLogout,
   cartCount,
   notifications,
+  setNotifications,
   searchQuery,
   onSearchChange,
 }) {
@@ -100,7 +101,17 @@ export default function TopNav({
           </button>
 
           <div className="profile-dropdown" style={{ width: "320px" }}>
-            <div className="dropdown-name">Notifications</div>
+            <div className="dropdown-name" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>Notifications</span>
+              {notifications && notifications.length > 0 && (
+                <button 
+                  onClick={() => setNotifications([])}
+                  style={{ background: 'none', border: 'none', color: 'var(--color-accent)', cursor: 'pointer', fontSize: '0.8rem', padding: 0 }}
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
             <hr className="dropdown-divider" />
             {!notifications || notifications.length === 0 ? (
               <div
