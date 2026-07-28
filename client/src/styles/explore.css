@@ -1,0 +1,44 @@
+.explore-tabs {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  margin-bottom: 24px;
+  scrollbar-width: thin;
+}
+
+.explore-tab-btn {
+  flex: 0 0 auto;
+  padding: 9px 20px;
+  border-radius: 50px;
+  border: 1px solid var(--bg-surface);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.explore-tab-btn:hover {
+  color: var(--text-primary);
+}
+
+.explore-tab-btn.active {
+  background: linear-gradient(135deg, #f97316 0%, #fbbf24 100%);
+  border-color: transparent;
+  color: #ffffff;
+}
+
+.explore-instructor-row {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 32px;
+}
+
+.explore-instructor-row > * {
+  flex: 0 0 220px;
+}
