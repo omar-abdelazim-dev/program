@@ -274,13 +274,15 @@ input:focus {
 }
 
 .tooltip-link:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: transparent !important;
+    opacity: 0.8;
     color: var(--c-light);
 }
 
 .logout-link:hover {
     color: #ef4444;
-    background: rgba(239, 68, 68, 0.1);
+    background: transparent !important;
+    opacity: 0.8;
 }
 
 .nav-row-bottom {

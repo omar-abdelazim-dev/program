@@ -2184,9 +2184,9 @@ body.light-mode .strength-bar.strong {
 
 /* Solid color on hover */
 .dropdown-item:hover {
-    background-color: #2d253b;
-    /* Solid medium purple/grey */
+    background-color: transparent !important;
     color: #ffffff;
+    opacity: 0.8;
 }
 
 /* Solid color for active/selected item */
@@ -2687,7 +2687,8 @@ body:not(.light-mode) .analytics-card:hover {
 }
 
 .sys-btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.05) !important;
+    background: transparent !important;
+    opacity: 0.8;
     transform: translateY(-2px) !important;
 }
 

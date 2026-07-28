@@ -1,9 +1,11 @@
 import notyf from '../utils/notyf';
 import React, { useState } from 'react';
+import ConfirmModal from './ConfirmModal';
 
 
 export default function CurriculumBuilderTab({ courses = [], lessonsByCourse = {}, onOpenAddLesson, onOpenEditLesson, onEditCourse, onDeleteCourse }) {
   const [selectedCourseId, setSelectedCourseId] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const selectedCourse = courses.find(c => c._id === selectedCourseId);
   const selectedLessons = selectedCourseId ? (lessonsByCourse[selectedCourseId] || []) : [];
@@ -71,11 +73,7 @@ export default function CurriculumBuilderTab({ courses = [], lessonsByCourse = {
                     Edit Course
                   </button>
                   <button 
-                    onClick={() => {
-                      if(window.confirm('Are you sure you want to delete this course? This action cannot be undone.')) {
-                        onDeleteCourse(selectedCourseId);
-                      }
-                    }} 
+                    onClick={() => setShowDeleteModal(true)} 
                     style={{ width: 'auto', borderRadius: '24px', padding: '10px 24px', fontWeight: 600, background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', boxShadow: 'inset 0 4px 12px rgba(0, 0, 0, 0.3)', cursor: 'pointer', transition: 'all 0.2s' }}
                     onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'; e.currentTarget.style.boxShadow = 'inset 0 4px 12px rgba(0, 0, 0, 0.5)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
                     onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; e.currentTarget.style.boxShadow = 'inset 0 4px 12px rgba(0, 0, 0, 0.3)'; e.currentTarget.style.filter = 'none'; }}
@@ -136,6 +134,20 @@ export default function CurriculumBuilderTab({ courses = [], lessonsByCourse = {
         </div>
       </div>
 
+      <ConfirmModal 
+        isOpen={showDeleteModal}
+        title="Delete Course"
+        message="Are you sure you want to delete this course? This action cannot be undone."
+        confirmText="Delete Course"
+        cancelText="Cancel"
+        intent="danger"
+        onConfirm={() => {
+          onDeleteCourse(selectedCourseId);
+          setShowDeleteModal(false);
+          setSelectedCourseId(null);
+        }}
+        onCancel={() => setShowDeleteModal(false)}
+      />
     </div>
   );
 }

@@ -86,6 +86,10 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
 
   const handleSaveCourse = async (e) => {
     e.preventDefault();
+    if (!formData.title || !formData.description || formData.price === '' || formData.price === null || formData.price === undefined || !formData.category) {
+      setError('Please fill in all required fields (Title, Description, Price, Category).');
+      return;
+    }
     setSubmitting(true);
     setError('');
 
@@ -142,6 +146,10 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
 
   const handleSaveLesson = async (e) => {
     e.preventDefault();
+    if (!lessonData.title) {
+      setError('Please enter a lesson title.');
+      return;
+    }
     if (!videoFile && !editingLessonId) {
       setError('Please select a video file');
       return;
@@ -500,7 +508,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
             
             {error && <div className="error-message" style={{ marginBottom: '16px' }}>{error}</div>}
             
-            <form onSubmit={handleSaveCourse} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <form noValidate onSubmit={handleSaveCourse} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div className="input-group">
                 <label>Course Title</label>
                 <input required type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="e.g. Advanced React Patterns" />
@@ -530,8 +538,9 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                 </div>
               </div>
               <div className="input-group">
-                <label>Thumbnail Image</label>
+                <label>Thumbnail Image (Optional)</label>
                 <input type="file" accept="image/*" onChange={e => setThumbnailFile(e.target.files[0])} />
+                <div className="input-hint">Leave blank to use a default placeholder</div>
               </div>
               
               <div className="input-row" style={{ marginTop: '16px' }}>
@@ -552,7 +561,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
             <h2 style={{ margin: '0 0 24px 0' }}>{editingLessonId ? 'Edit Lesson' : 'Add Lesson'}</h2>
             {error && <div style={{ color: '#ef4444', marginBottom: '16px' }}>{error}</div>}
             
-            <form onSubmit={handleSaveLesson} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <form noValidate onSubmit={handleSaveLesson} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
                 <div className="input-group">
                   <label>Lesson Title</label>
