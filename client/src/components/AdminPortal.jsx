@@ -23,6 +23,7 @@ import AdminCourseManagementTab from "./AdminCourseManagementTab";
 import WebsiteManagement from "./WebsiteManagement/WebsiteManagement";
 import SystemManagement from "./SystemManagement";
 import FullPageLoader from "./FullPageLoader";
+import { useTranslation } from 'react-i18next';
 
 const ROLE_OPTIONS = ["student", "instructor", "admin"];
 const SIDEBAR_TAB_STEP = 44;
@@ -228,8 +229,14 @@ export default function AdminPortal({
   isLightMode,
 }) {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("dashboard_overview");
+  const { i18n } = useTranslation();
 
+  const toggleLanguage = () => {
+    const newLang = i18n.language === "en" ? "ar" : "en";
+    i18n.changeLanguage(newLang);
+  };
+
+  const [activeTab, setActiveTab] = useState("dashboard_overview");
   // Data States
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);

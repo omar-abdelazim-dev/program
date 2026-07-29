@@ -6,6 +6,7 @@ import studentLogo from "../assets/logo.png";
 import Footer from "./Footer";
 import "../styles/student-layout.css";
 import "../styles/static-pages.css";
+import { useTranslation } from 'react-i18next';
 
 // The Course model's category field is freeform text; these are the only
 // values actually in use in the database today (see Course.category).
@@ -26,6 +27,12 @@ export default function StudentLayout({
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { i18n } = useTranslation();
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language === "en" ? "ar" : "en";
+    i18n.changeLanguage(newLang);
+  };
   
   const showSearch = location.pathname === '/student' || location.pathname === '/student/dashboard';
 
@@ -222,6 +229,20 @@ export default function StudentLayout({
           </div>
 
           <div className="header-right">
+            {/* Language Toggle */}
+            <button
+              className="utility-icon-btn"
+              onClick={toggleLanguage}
+              aria-label="Toggle language"
+              style={{
+                fontWeight: '600',
+                fontSize: '0.9rem',
+                fontFamily: 'Inter, sans-serif'
+              }}
+            >
+              {i18n.language === "ar" ? "EN" : "عربي"}
+            </button>
+
             <button
               className="utility-icon-btn theme-toggle-btn"
               onClick={toggleTheme}

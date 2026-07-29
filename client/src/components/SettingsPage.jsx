@@ -250,13 +250,13 @@ function AccountSection({ user, setUser, onLogout }) {
         <p className="settings-section-desc" style={{ color: 'var(--text-secondary)', margin: 0 }}>Manage your account details and security.</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px' }}>
         <form onSubmit={handleSaveDetails} className="solid-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', height: '100%' }}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: '700', margin: 0, color: 'var(--text-primary)' }}>Account Information</h3>
           {detailsError && <div className="settings-message settings-message-error" style={{ color: '#ef4444', padding: '12px', background: 'rgba(239,68,68,0.1)', borderRadius: '8px' }}>{detailsError}</div>}
           {detailsSuccess && <div className="settings-message settings-message-success" style={{ color: '#10B981', padding: '12px', background: 'rgba(16,185,129,0.1)', borderRadius: '8px' }}>{detailsSuccess}</div>}
           
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Email Address</label>
             <input type="email" className="solid-input" value={email} onChange={(e) => setEmail(e.target.value)} required />
@@ -302,7 +302,7 @@ function AccountSection({ user, setUser, onLogout }) {
           <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Current Password</label>
           <input type="password" className="solid-input" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="Enter your current password" required />
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>New Password</label>
             <input type="password" className="solid-input" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Enter a new password" required minLength={6} />

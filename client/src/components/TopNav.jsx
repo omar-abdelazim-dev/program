@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 export default function TopNav({
   user,
@@ -11,6 +12,13 @@ export default function TopNav({
   searchQuery,
   onSearchChange,
 }) {
+  const { i18n } = useTranslation();
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language === "en" ? "ar" : "en";
+    i18n.changeLanguage(newLang);
+  };
+
   // Note: activeTab and setActiveTab props are no longer needed here
   // as the navigation tabs have moved to the Sidebar component.
 
@@ -42,6 +50,20 @@ export default function TopNav({
 
       {/* RIGHT: Utilities & Profile */}
       <div className="header-right">
+        {/* Language Toggle */}
+        <button
+          className="utility-icon-btn"
+          onClick={toggleLanguage}
+          aria-label="Toggle language"
+          style={{
+            fontWeight: '600',
+            fontSize: '0.9rem',
+            fontFamily: 'Inter, sans-serif'
+          }}
+        >
+          {i18n.language === "ar" ? "EN" : "عربي"}
+        </button>
+
         {/* Theme Toggle */}
         <button
           className="utility-icon-btn"

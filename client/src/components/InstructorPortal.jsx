@@ -14,6 +14,7 @@ import SettingsPage from './SettingsPage';
 import InstructorFinancialsTab from './InstructorFinancialsTab';
 import InstructorReviewsTab from './InstructorReviewsTab';
 import { notyf } from './WebsiteManagement/SharedUI';
+import { useTranslation } from 'react-i18next';
 
 export default function InstructorPortal({ user, setUser, onLogout, toggleTheme, isLightMode }) {
   const navigate = useNavigate();
@@ -23,6 +24,12 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
   const [lessonsByCourse, setLessonsByCourse] = useState({});
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const { i18n } = useTranslation();
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language === "en" ? "ar" : "en";
+    i18n.changeLanguage(newLang);
+  };
 
   // Modals
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -289,6 +296,20 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
           </div>
 
           <div className="header-right">
+            {/* Language Toggle */}
+            <button
+              className="utility-icon-btn"
+              onClick={toggleLanguage}
+              aria-label="Toggle language"
+              style={{
+                fontWeight: '600',
+                fontSize: '0.9rem',
+                fontFamily: 'Inter, sans-serif'
+              }}
+            >
+              {i18n.language === "ar" ? "EN" : "عربي"}
+            </button>
+
             <button
               className="utility-icon-btn theme-toggle-btn"
               onClick={toggleTheme}
