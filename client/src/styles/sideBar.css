@@ -52,8 +52,8 @@ body {
     align-items: center;
     height: 64px;
     margin-bottom: 24px;
-    padding-left: 4px;
-    transition: padding-left .3s ease;
+    padding-inline-start: 4px;
+    transition: padding-inline-start .3s ease;
 }
 
 /* Full wordmark — visible when expanded */
@@ -110,7 +110,7 @@ body {
     font-weight: 500;
     cursor: pointer;
     transition: background .18s, color .18s, padding .3s;
-    text-align: left;
+    text-align: start;
     white-space: nowrap;
     overflow: hidden;
 }
@@ -125,8 +125,8 @@ body {
     overflow: hidden;
     max-width: 200px;
     opacity: 1;
-    margin-left: 0;
-    transition: opacity .3s, max-width .3s, margin-left .3s;
+    margin-inline-start: 0;
+    transition: opacity .3s, max-width .3s, margin-inline-start .3s;
 }
 
 .sideBarButton:hover {
@@ -185,8 +185,8 @@ body {
     overflow: hidden;
     max-width: 200px;
     opacity: 1;
-    margin-left: 0;
-    transition: opacity .3s, max-width .3s, margin-left .3s;
+    margin-inline-start: 0;
+    transition: opacity .3s, max-width .3s, margin-inline-start .3s;
 }
 
 .profile-name {
@@ -226,13 +226,13 @@ body {
 ══════════════════════════════════ */
 .sideBar.collapsed {
     width: var(--sidebar-cw);
-    padding-left: 8px;
-    padding-right: 8px;
+    padding-inline-start: 8px;
+    padding-inline-end: 8px;
 }
 
 /* Nudge to center the 38px PM icon in 40px content area */
 .sideBar.collapsed .name {
-    padding-left: 0;
+    padding-inline-start: 0;
 }
 
 /* Hide full logo */
@@ -266,7 +266,7 @@ body {
 .sideBar.collapsed .btn-label {
     opacity: 0;
     max-width: 0;
-    margin-left: -13px;
+    margin-inline-start: -13px;
 }
 
 .sideBar.collapsed .profile-card {
@@ -282,7 +282,7 @@ body {
 .sideBar.collapsed .profile-info {
     opacity: 0;
     max-width: 0;
-    margin-left: -11px;
+    margin-inline-start: -11px;
 }
 
 /* Tooltips */
@@ -293,7 +293,7 @@ body {
 .sideBar.collapsed .sideBarButton::after {
     content: attr(data-tooltip);
     position: absolute;
-    left: calc(100% + 12px);
+    inset-inline-start: calc(100% + 12px);
     top: 50%;
     transform: translateY(-50%);
     background: #2D3748;

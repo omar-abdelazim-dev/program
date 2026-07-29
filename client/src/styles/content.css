@@ -381,7 +381,7 @@ body.light-mode .continue-card {
     border-radius: 4px;
     background: rgba(255, 255, 255, 0.02);
     border: none;
-    text-align: left;
+    text-align: start;
 }
 
 .admin-sidebar-group-label {
@@ -451,7 +451,7 @@ body.light-mode .continue-card {
     z-index: 1;
     height: 40px;
     padding: 0 14px;
-    text-align: left;
+    text-align: start;
     background: transparent !important;
     border: none !important;
     outline: none !important;
@@ -482,7 +482,7 @@ body.light-mode .continue-card {
     font-weight: 600 !important;
     background-color: transparent !important;
     box-shadow: none !important;
-    padding-left: 25px;
+    padding-inline-start: 25px;
 }
 
 /* Hide legacy indicator if it exists to prevent overlapping bugs */
@@ -993,7 +993,7 @@ body.light-mode .cc-logo-box {
 .cc-thumb-badge {
     position: absolute;
     bottom: 10px;
-    left: 10px;
+    inset-inline-start: 10px;
     display: inline-flex;
     align-items: center;
     padding: 4px 10px;
@@ -1279,7 +1279,7 @@ body.light-mode .cc-star--empty {
     padding-bottom: 8px;
     position: relative;
     z-index: 1;
-    padding-right: 10px 10px 10px 10px;
+    padding-inline-end: 10px 10px 10px 10px;
 }
 
 
@@ -1295,7 +1295,7 @@ body.light-mode .cc-star--empty {
     z-index: 1;
     transition: all 0.3s ease;
     margin-top: 16px;
-    margin-left: 25px;
+    margin-inline-start: 25px;
     margin-bottom: 27px;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -1626,7 +1626,7 @@ body.light-mode .progress-bar-container {
     position: absolute;
     top: 4px;
     bottom: 4px;
-    left: 4px;
+    inset-inline-start: 4px;
     width: calc(50% - 4px);
     background: var(--bg-surface);
     border: 2px solid var(--color-accent);
@@ -1695,7 +1695,7 @@ body.light-mode .progress-bar-container {
     position: absolute;
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15) 15%, rgba(255, 255, 255, 0.15) 85%, transparent);
     top: 20px;
-    left: calc(50% + 24px);
+    inset-inline-start: calc(50% + 24px);
     width: calc(100% - 48px);
     height: 2px;
     z-index: 0;
@@ -1709,7 +1709,7 @@ body.light-mode .step:not(:last-child)::after {
     content: '';
     position: absolute;
     top: 20px;
-    left: calc(50% + 24px);
+    inset-inline-start: calc(50% + 24px);
     width: 0;
     height: 2px;
     background: linear-gradient(90deg, transparent, #4ade80 15%, #4ade80 85%, transparent);
@@ -1825,7 +1825,7 @@ body.light-mode .step:not(:last-child)::after {
 
 .password-toggle {
     position: absolute;
-    right: 14px;
+    inset-inline-end: 14px;
     background: transparent;
     border: none;
     color: #9ca3af;
@@ -1900,7 +1900,7 @@ body.light-mode .strength-bar.strong {
     font-size: 0.75rem;
     color: var(--c-sub);
     min-width: 60px;
-    text-align: right;
+    text-align: end;
 }
 
 /* Icon Inputs */
@@ -1913,7 +1913,7 @@ body.light-mode .strength-bar.strong {
 
 .icon-input-wrapper .input-icon {
     position: absolute;
-    left: 14px;
+    inset-inline-start: 14px;
     color: var(--c-sub);
     pointer-events: none;
     z-index: 2;
@@ -1922,7 +1922,7 @@ body.light-mode .strength-bar.strong {
 .icon-input-wrapper input,
 .icon-input-wrapper select,
 .icon-input-wrapper.custom-select-trigger {
-    padding-left: 46px !important;
+    padding-inline-start: 46px !important;
 }
 
 /* Vision / Goals */
@@ -1953,7 +1953,7 @@ body.light-mode .strength-bar.strong {
     font-size: 0.65rem;
     padding: 2px 8px;
     border-radius: 12px;
-    margin-left: 8px;
+    margin-inline-start: 8px;
     vertical-align: middle;
 }
 
@@ -2009,7 +2009,7 @@ body.light-mode .strength-bar.strong {
 .smart-textarea-wrapper .char-count {
     position: absolute;
     bottom: 12px;
-    right: 12px;
+    inset-inline-end: 12px;
     font-size: 0.75rem;
     color: var(--c-sub);
 }
@@ -2041,7 +2041,7 @@ body.light-mode .strength-bar.strong {
 .auth-form .icon-input-wrapper input,
 .auth-form .icon-input-wrapper select,
 .auth-form .icon-input-wrapper.custom-select-trigger {
-    padding-left: 46px !important;
+    padding-inline-start: 46px !important;
 }
 
 .phone-input-wrapper {
@@ -2072,8 +2072,8 @@ body.light-mode .strength-bar.strong {
     color: var(--text-h);
     font-size: 0.95rem;
     font-weight: 600;
-    padding-right: 8px;
-    margin-right: 8px;
+    padding-inline-end: 8px;
+    margin-inline-end: 8px;
     border-right: 1px solid var(--border);
     white-space: nowrap;
     user-select: none;
@@ -2091,7 +2091,7 @@ body.light-mode .strength-bar.strong {
 }
 
 .auth-form .password-input-wrapper input {
-    padding-right: 48px;
+    padding-inline-end: 48px;
 }
 
 .auth-form select option {
@@ -2145,7 +2145,7 @@ body.light-mode .strength-bar.strong {
 
 .custom-select-chevron {
     position: absolute;
-    right: 14px;
+    inset-inline-end: 14px;
     color: var(--c-sub);
     transition: transform 0.3s;
 }
@@ -2157,7 +2157,7 @@ body.light-mode .strength-bar.strong {
 .custom-select-dropdown {
     position: absolute;
     top: calc(100% + 4px);
-    left: 0;
+    inset-inline-start: 0;
     width: 100%;
     background: var(--bg-surface);
     backdrop-filter: blur(20px);
@@ -2359,7 +2359,7 @@ body.light-mode .custom-select-value.placeholder {
     color: #fff;
     padding: 8px 16px;
     border-radius: 8px;
-    margin-right: 12px;
+    margin-inline-end: 12px;
     cursor: pointer;
     font-weight: 700;
     font-family: inherit;
@@ -2379,7 +2379,7 @@ body.light-mode .custom-select-value.placeholder {
 }
 
 .forgot-password {
-    text-align: right;
+    text-align: end;
     font-size: 0.8rem;
     background: linear-gradient(135deg, #f97316 0%, #fbbf24 100%);
     -webkit-background-clip: text;
@@ -2909,7 +2909,7 @@ body.light-mode .admin-sidebar-tab:hover {
 body.light-mode .admin-sidebar-tab.active {
     color: #fff !important;
     background: transparent !important;
-    padding-left: 25px;
+    padding-inline-start: 25px;
 }
 
 body.light-mode .admin-sidebar-collapse-btn {
@@ -3090,7 +3090,7 @@ body.light-mode .pending-item {
     color: var(--c-orange);
     flex-shrink: 0;
     min-width: 24px;
-    text-align: right;
+    text-align: end;
 }
 
 /* ── Responsive breakpoints ────────────────────────────────────────────────── */
@@ -3181,7 +3181,7 @@ body.light-mode .pending-item {
     color: var(--text-h);
     font-size: 0.9rem;
     cursor: pointer;
-    text-align: left;
+    text-align: start;
     display: flex;
     align-items: center;
     gap: 8px;
