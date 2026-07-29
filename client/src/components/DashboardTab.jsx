@@ -27,7 +27,7 @@ const InProgressCard = ({
           style={
             course.thumbnailUrl
               ? { backgroundImage: `url(${course.thumbnailUrl})` }
-              : { background: "var(--bg-main)", boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)" }
+              : { background: "var(--bg-main)", boxShadow: "var(--inner-shadow)" }
           }
         />
         <div className="course-content">
@@ -130,7 +130,7 @@ const CompletedCard = ({
           style={
             course.thumbnailUrl
               ? { backgroundImage: `url(${course.thumbnailUrl})` }
-              : { background: "var(--bg-main)", boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)" }
+              : { background: "var(--bg-main)", boxShadow: "var(--inner-shadow)" }
           }
         />
         <div className="course-content">

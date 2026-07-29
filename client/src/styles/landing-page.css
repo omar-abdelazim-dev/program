@@ -9,7 +9,7 @@
   --color-instructor-end: #fbbf24;
   --radius-card: 20px;
   --radius-btn: 50px;
-  --shadow-down: 0px 10px 30px rgba(0, 0, 0, 0.15);
+  --shadow-down: var(--outer-shadow);
 
   min-height: 100vh;
   overflow: hidden;
@@ -302,15 +302,15 @@
 }
 
 .landing-button--student:hover {
-  box-shadow: 0 8px 30px rgba(156, 163, 175, 0.3);
+  box-shadow: var(--outer-shadow);
 }
 
 .landing-button--instructor:hover {
-  box-shadow: 0 8px 30px rgba(249, 115, 22, 0.4);
+  box-shadow: var(--outer-shadow);
 }
 
 .landing-button--community:hover {
-  box-shadow: 0 8px 30px rgba(249, 115, 22, 0.4);
+  box-shadow: var(--outer-shadow);
 }
 
 .landing-button:focus-visible,

@@ -24,7 +24,7 @@ export default function InstructorAnalyticsTab({ courses = [], stats = [], timeS
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
         
         {/* Revenue over Time */}
-        <div className="glass-card no-border animate-entrance" style={{ padding: '24px', background: 'var(--bg-surface)', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)' }}>
+        <div className="glass-card no-border animate-entrance" style={{ padding: '24px', background: 'var(--bg-surface)', boxShadow: 'var(--outer-shadow)' }}>
           <h3 style={{ fontSize: '1.2rem', marginBottom: '24px', color: 'var(--text-h)' }}>Revenue over Time</h3>
           <div style={{ width: '100%', height: '350px' }}>
             <ResponsiveContainer>
@@ -50,7 +50,7 @@ export default function InstructorAnalyticsTab({ courses = [], stats = [], timeS
                 <XAxis dataKey="name" stroke="var(--c-sub)" tick={{fill: 'var(--c-sub)'}} tickLine={false} axisLine={false} />
                 <YAxis width={80} stroke="var(--c-sub)" tick={{fill: 'var(--c-sub)'}} tickLine={false} axisLine={false} tickFormatter={(value) => `EGP ${value}`} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: 'var(--bg-main)', border: 'none', borderRadius: '8px', color: 'var(--text-h)', boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5), 0 8px 32px rgba(0, 0, 0, 0.3)' }}
+                  contentStyle={{ backgroundColor: 'var(--bg-main)', border: 'none', borderRadius: '8px', color: 'var(--text-h)', boxShadow: 'var(--inner-shadow), var(--outer-shadow)' }}
                   itemStyle={{ backgroundImage: 'linear-gradient(135deg, #f97316 0%, #fbbf24 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: 600 }}
                 />
                 <Area type="monotone" dataKey="revenue" stroke="url(#line-gradient)" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" filter="url(#glow-orange)" />
@@ -60,7 +60,7 @@ export default function InstructorAnalyticsTab({ courses = [], stats = [], timeS
         </div>
 
         {/* Student Growth */}
-        <div className="glass-card no-border animate-entrance" style={{ padding: '24px', background: 'var(--bg-surface)', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)' }}>
+        <div className="glass-card no-border animate-entrance" style={{ padding: '24px', background: 'var(--bg-surface)', boxShadow: 'var(--outer-shadow)' }}>
           <h3 style={{ fontSize: '1.2rem', marginBottom: '24px', color: 'var(--text-h)' }}>Student Growth</h3>
           <div style={{ width: '100%', height: '350px' }}>
             <ResponsiveContainer>
@@ -86,7 +86,7 @@ export default function InstructorAnalyticsTab({ courses = [], stats = [], timeS
                 <XAxis dataKey="name" stroke="var(--c-sub)" tick={{fill: 'var(--c-sub)'}} tickLine={false} axisLine={false} />
                 <YAxis width={80} stroke="var(--c-sub)" tick={{fill: 'var(--c-sub)'}} tickLine={false} axisLine={false} allowDecimals={false} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: 'var(--bg-main)', border: 'none', borderRadius: '8px', color: 'var(--text-h)', boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5), 0 8px 32px rgba(0, 0, 0, 0.3)' }}
+                  contentStyle={{ backgroundColor: 'var(--bg-main)', border: 'none', borderRadius: '8px', color: 'var(--text-h)', boxShadow: 'var(--inner-shadow), var(--outer-shadow)' }}
                   itemStyle={{ backgroundImage: 'linear-gradient(135deg, #f97316 0%, #fbbf24 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: 600 }}
                 />
                 <Area type="monotone" dataKey="students" stroke="url(#line-gradient-growth)" strokeWidth={3} fillOpacity={1} fill="url(#colorGrowth)" dot={{ fill: 'var(--bg)', stroke: '#f97316', strokeWidth: 2, r: 4 }} activeDot={{ r: 6, fill: '#fbbf24' }} filter="url(#glow-line)" />
@@ -97,7 +97,7 @@ export default function InstructorAnalyticsTab({ courses = [], stats = [], timeS
       </div>
 
       {/* Performance Table */}
-      <div className="glass-card no-border animate-entrance" style={{ padding: '24px', overflow: 'hidden', background: 'var(--bg-surface)', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)' }}>
+      <div className="glass-card no-border animate-entrance" style={{ padding: '24px', overflow: 'hidden', background: 'var(--bg-surface)', boxShadow: 'var(--outer-shadow)' }}>
         <h3 style={{ fontSize: '1.2rem', marginBottom: '24px', color: 'var(--text-h)' }}>Per-Course Performance</h3>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 4px', textAlign: 'left' }}>

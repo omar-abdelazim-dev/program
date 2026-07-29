@@ -134,7 +134,7 @@ input:focus {
 }
 
 .nav-search input:focus {
-    box-shadow: 0 8px 20px rgba(79, 70, 229, 0.12);
+    box-shadow: var(--outer-shadow);
     border-color: transparent;
 }
 
@@ -146,7 +146,6 @@ input:focus {
 }
 
 .nav-icon-btn {
-    background: transparent;
     color: var(--c-sub);
     width: 40px;
     height: 40px;
@@ -206,15 +205,16 @@ input:focus {
 }
 
 .nav-avatar {
-    width: 42px;
-    height: 42px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    background: var(--bg-main);
+    background: var(--bg-surface);
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    color: #fff;
+    color: var(--text-primary);
+    box-shadow: var(--outer-shadow);
     transition: border-color 0.2s;
 }
 
@@ -356,7 +356,7 @@ input:focus {
 /* --- LIGHT MODE OVERRIDES --- */
 /* ========================================================= */
 body.light-mode {
-    --c-bg: #e5e7eb;
+    --c-bg: #FAF7F2;
     /* Soft silver background */
     --c-card: rgba(255, 255, 255, 0.7);
     --c-light: #1f2937;
@@ -370,7 +370,7 @@ body.light-mode .glass-card,
 body.light-mode .logo-icon,
 body.light-mode .profile-tooltip {
     background-color: rgba(255, 255, 255, 0.95);
-    border-color: rgba(0, 0, 0, 0.05);
+    border-color: transparent !important;
     box-shadow: var(--shadow);
 }
 
@@ -392,9 +392,8 @@ body.light-mode .nav-search input:focus {
 
 body.light-mode .top-nav,
 body.light-mode .learning-glass {
-    background-color: rgba(255, 255, 255, 0.7);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-    box-shadow: var(--shadow);
+    background-color: var(--c-bg) !important;
+    border: 1px solid transparent !important;
 }
 
 body.light-mode .glass-btn {

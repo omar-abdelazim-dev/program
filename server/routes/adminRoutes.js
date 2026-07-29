@@ -1,7 +1,7 @@
 import express from 'express';
 import {
   getStats, getRecentActivity, getRevenueAnalytics, getUsers, toggleBlockUser, changeUserRole,
-  softDeleteUser, restoreUser, getTransactions, getPendingPayouts
+  softDeleteUser, restoreUser, getTransactions, getPendingPayouts, getAllLessons, approveLesson, rejectLesson
 } from '../controllers/adminController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 import { validateUserIdParam, validateRoleChange } from '../validators/adminValidators.js';
@@ -22,6 +22,9 @@ router.delete('/users/:id/soft-delete', validateUserIdParam, softDeleteUser);
 router.patch('/users/:id/restore', validateUserIdParam, restoreUser);
 router.get('/transactions', getTransactions);
 router.get('/payouts', getPendingPayouts);
+router.get('/lessons', getAllLessons);
+router.patch('/lessons/:id/approve', approveLesson);
+router.patch('/lessons/:id/reject', rejectLesson);
 
 export default router;
 

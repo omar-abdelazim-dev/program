@@ -121,7 +121,7 @@ export default function CheckoutPage({ cart = [], setCart, setNotifications, isC
         </svg>
         <h2 style={{ fontSize: '2rem', marginBottom: '16px' }}>Your Cart is Empty</h2>
         <p style={{ color: 'var(--c-sub)', marginBottom: '32px' }}>Looks like you haven't added any courses to your cart yet.</p>
-        <Link to="/student" className="solid-btn" style={{ padding: '12px 32px', textDecoration: 'none', color: '#fff', background: 'linear-gradient(135deg, #f97316 0%, #fbbf24 100%)', boxShadow: '0 4px 14px rgba(249, 115, 22, 0.4)', borderRadius: '50px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600', width: 'auto', marginTop: 0, transition: 'transform 0.1s ease' }}>
+        <Link to="/student" className="solid-btn" style={{ padding: '12px 32px', textDecoration: 'none', color: '#fff', background: 'linear-gradient(135deg, #f97316 0%, #fbbf24 100%)', boxShadow: 'var(--outer-shadow)', borderRadius: '50px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600', width: 'auto', marginTop: 0, transition: 'transform 0.1s ease' }}>
           Explore Courses
         </Link>
       </div>

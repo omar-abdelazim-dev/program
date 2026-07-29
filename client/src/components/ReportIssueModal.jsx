@@ -127,7 +127,7 @@ export default function ReportIssueModal({ isOpen, course, onClose, onSubmit }) 
                   opacity: tabIndicatorStyle.opacity,
                   background: '#131219',
                   borderRadius: '12px',
-                  boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5)',
+                  boxShadow: 'var(--inner-shadow)',
                   transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
                   zIndex: 0
                 }}
@@ -174,7 +174,7 @@ export default function ReportIssueModal({ isOpen, course, onClose, onSubmit }) 
                 background: "rgba(59, 130, 246, 0.05)",
                 border: "1px solid rgba(59, 130, 246, 0.2)",
                 borderRadius: "12px",
-                boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)",
+                boxShadow: "var(--inner-shadow)",
               }}
             >
               <div
@@ -239,7 +239,7 @@ export default function ReportIssueModal({ isOpen, course, onClose, onSubmit }) 
                 background: "rgba(249, 115, 22, 0.05)",
                 border: "1px solid rgba(249, 115, 22, 0.2)",
                 borderRadius: "12px",
-                boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)",
+                boxShadow: "var(--inner-shadow)",
               }}
             >
               <div
@@ -323,16 +323,16 @@ export default function ReportIssueModal({ isOpen, course, onClose, onSubmit }) 
                 fontSize: "0.95rem",
                 outline: "none",
                 transition: "all 0.2s ease",
-                boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)",
+                boxShadow: "var(--inner-shadow)",
               }}
               onFocus={(e) => {
                 e.target.style.borderColor = "var(--color-accent)";
-                e.target.style.boxShadow = "inset 0 4px 12px rgba(0,0,0,0.5), 0 0 0 3px rgba(249, 115, 22, 0.2)";
+                e.target.style.boxShadow = "var(--inner-shadow), 0 0 0 3px rgba(249, 115, 22, 0.2)";
                 e.target.style.outline = "none";
               }}
               onBlur={(e) => {
                 e.target.style.borderColor = "var(--border)";
-                e.target.style.boxShadow = "inset 0 4px 12px rgba(0,0,0,0.5)";
+                e.target.style.boxShadow = "var(--inner-shadow)";
                 e.target.style.outline = "none";
               }}
             />
