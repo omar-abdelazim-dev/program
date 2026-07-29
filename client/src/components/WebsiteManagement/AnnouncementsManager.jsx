@@ -89,14 +89,14 @@ export default function AnnouncementsManager({ user }) {
       </div>
 
       <div className="solid-card" style={{ padding: '32px', marginBottom: '32px' }}>
-        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 4px', textAlign: 'left' }}>
+        <table className="admin-table" style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 4px', textAlign: 'left' }}>
           <thead>
-            <tr style={{ background: 'rgba(0, 0, 0, 0.2)', color: 'var(--c-sub)', boxShadow: 'inset 0 4px 12px rgba(0, 0, 0, 0.5)', borderRadius: '12px' }}>
-              <th style={{ padding: '16px', fontWeight: 600, borderTopLeftRadius: '12px', borderBottomLeftRadius: '12px' }}>Announcement</th>
+            <tr style={{ borderBottom: '1px solid var(--border)' }}>
+              <th style={{ padding: '16px', fontWeight: 600, color: 'var(--c-sub)', fontSize: '0.85rem' }}>Announcement</th>
               <th style={{ padding: '16px', fontWeight: 600 }}>Audience</th>
               <th style={{ padding: '16px', fontWeight: 600 }}>Priority</th>
               <th style={{ padding: '16px', fontWeight: 600 }}>Status</th>
-              <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right', borderTopRightRadius: '12px', borderBottomRightRadius: '12px' }}>Actions</th>
+              <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right', color: 'var(--c-sub)', fontSize: '0.85rem' }}>Actions</th>
             </tr>
           </thead>
           <tbody>

@@ -502,3 +502,54 @@ export const getPendingPayouts = async (req, res) => {
     res.status(500).json({ message: 'Server error fetching payouts' });
   }
 };
+
+// @route   GET /api/admin/lessons
+// @access  Private (Admin/SuperAdmin)
+export const getAllLessons = async (req, res) => {
+  try {
+    const lessons = await Lesson.find()
+      .populate({
+        path: 'section',
+        populate: {
+          path: 'course',
+          select: 'title instructor status category',
+          populate: {
+            path: 'instructor',
+            select: 'name email',
+          },
+        },
+      })
+      .sort({ createdAt: -1 });
+    
+    res.status(200).json({ lessons });
+  } catch (error) {
+    console.error('Error fetching lessons:', error);
+    res.status(500).json({ message: 'Server error fetching lessons' });
+  }
+};
+
+// @route   PATCH /api/admin/lessons/:id/approve
+// @access  Private (Admin/SuperAdmin)
+export const approveLesson = async (req, res) => {
+  try {
+    const lesson = await Lesson.findByIdAndUpdate(req.params.id, { status: 'approved' }, { new: true });
+    if (!lesson) return res.status(404).json({ message: 'Lesson not found' });
+    res.status(200).json({ message: 'Lesson approved', lesson });
+  } catch (error) {
+    console.error('Error approving lesson:', error);
+    res.status(500).json({ message: 'Server error approving lesson' });
+  }
+};
+
+// @route   PATCH /api/admin/lessons/:id/reject
+// @access  Private (Admin/SuperAdmin)
+export const rejectLesson = async (req, res) => {
+  try {
+    const lesson = await Lesson.findByIdAndUpdate(req.params.id, { status: 'rejected' }, { new: true });
+    if (!lesson) return res.status(404).json({ message: 'Lesson not found' });
+    res.status(200).json({ message: 'Lesson rejected', lesson });
+  } catch (error) {
+    console.error('Error rejecting lesson:', error);
+    res.status(500).json({ message: 'Server error rejecting lesson' });
+  }
+};

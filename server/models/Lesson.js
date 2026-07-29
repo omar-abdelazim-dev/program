@@ -46,8 +46,8 @@ const lessonSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['draft', 'published', 'hidden', 'archived'],
-      default: 'draft',
+      enum: ['draft', 'published', 'hidden', 'archived', 'pending', 'approved', 'rejected'],
+      default: 'pending',
     },
     duration: {
       type: Number, // in minutes

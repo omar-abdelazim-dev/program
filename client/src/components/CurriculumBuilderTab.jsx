@@ -19,7 +19,7 @@ export default function CurriculumBuilderTab({ courses = [], lessonsByCourse = {
       <div style={{ display: 'flex', minHeight: '600px', gap: '24px' }}>
         
         {/* Left pane: Course List */}
-        <div className="glass-card no-border" style={{ width: '300px', background: 'var(--bg-surface)', border: 'none', padding: '24px', overflowY: 'auto', borderRadius: '24px', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)' }}>
+        <div className="glass-card no-border" style={{ width: '300px', background: 'var(--bg-surface)', border: 'none', padding: '24px', overflowY: 'auto', borderRadius: '24px', boxShadow: 'var(--outer-shadow)' }}>
           <h3 style={{ fontSize: '1.2rem', marginBottom: '24px', color: 'var(--text-h)' }}>Your Courses</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {courses.length === 0 ? (
@@ -36,7 +36,7 @@ export default function CurriculumBuilderTab({ courses = [], lessonsByCourse = {
                     cursor: 'pointer',
                     background: selectedCourseId === course._id ? 'var(--bg-main)' : 'transparent',
                     border: selectedCourseId === course._id ? '1px solid transparent' : '1px solid transparent',
-                    boxShadow: selectedCourseId === course._id ? 'inset 0 4px 12px rgba(0,0,0,0.5)' : 'none',
+                    boxShadow: selectedCourseId === course._id ? 'var(--inner-shadow)' : 'none',
                     transition: 'all 0.2s'
                   }}
                 >
@@ -66,25 +66,25 @@ export default function CurriculumBuilderTab({ courses = [], lessonsByCourse = {
                 <div style={{ display: 'flex', gap: '12px' }}>
                   <button 
                     onClick={() => onEditCourse(selectedCourse)} 
-                    style={{ width: 'auto', borderRadius: '24px', padding: '10px 24px', fontWeight: 600, background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: 'none', boxShadow: 'inset 0 4px 12px rgba(0, 0, 0, 0.3)', cursor: 'pointer', transition: 'all 0.2s' }}
-                    onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)'; e.currentTarget.style.boxShadow = 'inset 0 4px 12px rgba(0, 0, 0, 0.5)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
-                    onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'; e.currentTarget.style.boxShadow = 'inset 0 4px 12px rgba(0, 0, 0, 0.3)'; e.currentTarget.style.filter = 'none'; }}
+                    style={{ width: 'auto', borderRadius: '24px', padding: '10px 24px', fontWeight: 600, background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: 'none', boxShadow: 'var(--inner-shadow)', cursor: 'pointer', transition: 'all 0.2s' }}
+                    onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)'; e.currentTarget.style.boxShadow = 'var(--inner-shadow)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
+                    onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'; e.currentTarget.style.boxShadow = 'var(--inner-shadow)'; e.currentTarget.style.filter = 'none'; }}
                   >
                     Edit Course
                   </button>
                   <button 
                     onClick={() => setShowDeleteModal(true)} 
-                    style={{ width: 'auto', borderRadius: '24px', padding: '10px 24px', fontWeight: 600, background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', boxShadow: 'inset 0 4px 12px rgba(0, 0, 0, 0.3)', cursor: 'pointer', transition: 'all 0.2s' }}
-                    onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'; e.currentTarget.style.boxShadow = 'inset 0 4px 12px rgba(0, 0, 0, 0.5)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
-                    onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; e.currentTarget.style.boxShadow = 'inset 0 4px 12px rgba(0, 0, 0, 0.3)'; e.currentTarget.style.filter = 'none'; }}
+                    style={{ width: 'auto', borderRadius: '24px', padding: '10px 24px', fontWeight: 600, background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', boxShadow: 'var(--inner-shadow)', cursor: 'pointer', transition: 'all 0.2s' }}
+                    onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'; e.currentTarget.style.boxShadow = 'var(--inner-shadow)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
+                    onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; e.currentTarget.style.boxShadow = 'var(--inner-shadow)'; e.currentTarget.style.filter = 'none'; }}
                   >
                     Delete Course
                   </button>
                   <button 
                     onClick={() => onOpenAddLesson(selectedCourseId)} 
-                    style={{ width: 'auto', borderRadius: '24px', padding: '10px 24px', fontWeight: 700, background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: 'none', boxShadow: 'inset 0 4px 12px rgba(0, 0, 0, 0.3)', cursor: 'pointer', transition: 'all 0.2s' }}
-                    onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)'; e.currentTarget.style.boxShadow = 'inset 0 4px 12px rgba(0, 0, 0, 0.5)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
-                    onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'; e.currentTarget.style.boxShadow = 'inset 0 4px 12px rgba(0, 0, 0, 0.3)'; e.currentTarget.style.filter = 'none'; }}
+                    style={{ width: 'auto', borderRadius: '24px', padding: '10px 24px', fontWeight: 700, background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: 'none', boxShadow: 'var(--inner-shadow)', cursor: 'pointer', transition: 'all 0.2s' }}
+                    onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)'; e.currentTarget.style.boxShadow = 'var(--inner-shadow)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
+                    onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'; e.currentTarget.style.boxShadow = 'var(--inner-shadow)'; e.currentTarget.style.filter = 'none'; }}
                   >
                     + Add Lesson
                   </button>

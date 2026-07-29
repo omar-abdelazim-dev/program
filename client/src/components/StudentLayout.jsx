@@ -240,7 +240,7 @@ export default function StudentLayout({
                 fontFamily: 'Inter, sans-serif'
               }}
             >
-              {i18n.language === "ar" ? "EN" : "عربي"}
+              {i18n.language === "ar" ? "EN" : "AR"}
             </button>
 
             <button
@@ -410,12 +410,12 @@ export default function StudentLayout({
                 ) : (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    width="22"
-                    height="22"
+                    width="20"
+                    height="20"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
-                    strokeWidth="1.5"
+                    strokeWidth="1.8"
                   >
                     <circle cx="12" cy="8" r="4"></circle>
                     <path

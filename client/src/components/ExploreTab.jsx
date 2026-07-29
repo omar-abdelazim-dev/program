@@ -5,7 +5,7 @@ import CourseCard from "./CourseCard";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
-export default function ExploreTab({ user, searchQuery = "" }) {
+export default function ExploreTab({ user, searchQuery = "", isLightMode }) {
   const firstName = user?.name ? user.name.split(" ")[0] : "Student";
   // Category filtering now comes from the "Courses" nav dropdown (see
   // StudentLayout) via ?category=, rather than in-page filter buttons.
@@ -183,15 +183,15 @@ export default function ExploreTab({ user, searchQuery = "" }) {
                   fontWeight: "600",
                   transition: "all 0.2s ease",
                   display: "inline-block",
-                  boxShadow: "0px 4px 10px rgba(0,0,0,0.1)",
+                  boxShadow: "var(--outer-shadow)",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.1)";
+                  e.currentTarget.style.boxShadow = "var(--outer-shadow)";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = "none";
-                  e.currentTarget.style.boxShadow = "0px 4px 10px rgba(0,0,0,0.1)";
+                  e.currentTarget.style.boxShadow = "var(--outer-shadow)";
                 }}
               >
                 View all
@@ -253,6 +253,7 @@ export default function ExploreTab({ user, searchQuery = "" }) {
                     key={course._id || idx}
                     course={course}
                     idx={idx}
+                    isLightMode={isLightMode}
                   />
                 ))}
               </div>

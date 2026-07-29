@@ -169,7 +169,7 @@ export default function CommissionSlider({ value, onChange, disabled }) {
           border-radius: 50%;
           background: #fff;
           cursor: pointer;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+          box-shadow: var(--outer-shadow);
           border: 2px solid ${indicatorColor};
         }
       `}</style>

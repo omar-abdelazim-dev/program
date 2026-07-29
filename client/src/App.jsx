@@ -215,7 +215,7 @@ export default function App() {
     >
       <Routes>
         <Route path="/" element={<Navigate to="/student" replace />} />
-        <Route path="/student" element={<ExploreTab user={user} searchQuery={searchQuery} />} />
+        <Route path="/student" element={<ExploreTab user={user} searchQuery={searchQuery} isLightMode={isLightMode} />} />
         <Route path="/student/dashboard" element={<DashboardTab />} />
         <Route path="/student/settings" element={<SettingsPage user={user} setUser={setUser} isLightMode={isLightMode} toggleTheme={toggleTheme} onLogout={handleLogout} />} />
         <Route path="/course/:id" element={<CoursePage cart={cart} setCart={setCart} />} />

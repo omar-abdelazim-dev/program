@@ -29,20 +29,24 @@ const systemTabStyles = `
     color: #fff;
     transform: translateX(4px);
     background: var(--bg-main);
-    box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.5);
+    box-shadow: var(--inner-shadow);
   }
   .system-tab-btn.active {
-    background: var(--bg-main);
-    box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.5);
+    background: var(--c-bg);
+    box-shadow: var(--inner-shadow);
     color: #fff;
     font-weight: 600;
     transform: translateX(4px);
   }
   /* Light mode adjustments */
-  [data-theme="light"] .system-tab-btn:hover,
-  [data-theme="light"] .system-tab-btn.active {
-    background: rgba(0, 0, 0, 0.05);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  body.light-mode .system-tab-btn:not(.active):hover {
+    background: var(--bg-main) !important;
+    box-shadow: var(--inner-shadow);
+    color: var(--text-h);
+  }
+  body.light-mode .system-tab-btn.active {
+    background: var(--c-bg) !important;
+    box-shadow: var(--inner-shadow);
     color: var(--text-h);
   }
 `;
@@ -107,8 +111,8 @@ const ToggleSwitch = ({ label, checked, onChange, disabled }) => (
       <input type="checkbox" checked={checked} onChange={e => !disabled && onChange(e)} style={{ opacity: 0, width: 0, height: 0 }} disabled={disabled} />
       <span style={{
         position: 'absolute', cursor: disabled ? 'not-allowed' : 'pointer', top: 0, left: 0, right: 0, bottom: 0,
-        backgroundColor: checked ? '#f97316' : 'var(--bg-main)', transition: '.4s', borderRadius: '34px',
-        boxShadow: checked ? '0 0 12px rgba(249, 115, 22, 0.4)' : 'inset 0 2px 4px rgba(0,0,0,0.5)'
+        backgroundColor: checked ? '#f97316' : 'var(--c-bg)', transition: '.4s', borderRadius: '34px',
+        boxShadow: checked ? '0 0 12px rgba(249, 115, 22, 0.4)' : 'var(--inner-shadow)'
       }}>
         <span style={{
           position: 'absolute', content: '""', height: '18px', width: '18px', left: checked ? '22px' : '3px', bottom: '3px',
@@ -195,7 +199,7 @@ const SelectField = ({ label, value, onChange, options, disabled }) => {
             backdropFilter: 'blur(16px)',
             border: '1px solid var(--c-border-subtle)',
             borderRadius: '12px',
-            boxShadow: '0 12px 32px rgba(0,0,0,0.6)',
+            boxShadow: 'var(--outer-shadow)',
             zIndex: 100,
             overflow: 'hidden',
             maxHeight: '250px',
@@ -447,23 +451,115 @@ export default function SystemManagement({ user }) {
       );
       // Storage Tab
       case 'storage': return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', animation: 'fadeIn 0.3s' }}>
-          <div className="glass-card" style={{ padding: '24px' }}>
-            <h3 style={{ marginTop: 0, marginBottom: '24px', color: 'var(--text-h)' }}>Storage Information</h3>
-            <div style={{ display: 'flex', gap: '20px', marginBottom: '24px' }}>
-              <div style={{ flex: 1, background: 'rgba(59,130,246,0.1)', padding: '16px', borderRadius: '8px', border: '1px solid rgba(59,130,246,0.3)' }}>
-                <div style={{ fontSize: '0.85rem', color: 'var(--c-sub)', textTransform: 'uppercase' }}>Used Storage</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#3B82F6' }}>120 GB</div>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "20px",
+            animation: "fadeIn 0.3s",
+          }}
+        >
+          <div className="glass-card" style={{ padding: "24px" }}>
+            <h3
+              style={{
+                marginTop: 0,
+                marginBottom: "24px",
+                color: "var(--text-h)",
+              }}
+            >
+              Storage Information
+            </h3>
+            <div style={{ display: "flex", gap: "20px", marginBottom: "24px" }}>
+              <div
+                style={{
+                  boxShadow: "var(--inner-shadow)",
+                  flex: 1,
+                  background: "rgba(59,130,246,0.1)",
+                  padding: "16px",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(59,130,246,0.3)",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "0.85rem",
+                    color: "var(--c-sub)",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Used Storage
+                </div>
+                <div
+                  style={{
+                    fontSize: "1.5rem",
+                    fontWeight: 700,
+                    color: "#3B82F6",
+                  }}
+                >
+                  120 GB
+                </div>
               </div>
-              <div style={{ flex: 1, background: 'rgba(16,185,129,0.1)', padding: '16px', borderRadius: '8px', border: '1px solid rgba(16,185,129,0.3)' }}>
-                <div style={{ fontSize: '0.85rem', color: 'var(--c-sub)', textTransform: 'uppercase' }}>Available Storage</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#10B981' }}>380 GB</div>
+              <div
+                style={{
+                  boxShadow: "var(--inner-shadow)",
+                  flex: 1,
+                  background: "rgba(16,185,129,0.1)",
+                  padding: "16px",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(16,185,129,0.3)",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "0.85rem",
+                    color: "var(--c-sub)",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Available Storage
+                </div>
+                <div
+                  style={{
+                    fontSize: "1.5rem",
+                    fontWeight: 700,
+                    color: "#10B981",
+                  }}
+                >
+                  380 GB
+                </div>
               </div>
             </div>
-            
-            <InputField label="Cloud Provider" value={settings.storage.provider} disabled={true} />
-            <InputField label="Maximum Upload Size (MB)" type="number" value={settings.storage.maxUploadSizeMb} onChange={e => handleChange('storage', 'maxUploadSizeMb', e.target.value)} disabled={isFieldRestricted('storage', 'maxUploadSizeMb', isSuperAdmin)} />
-            <InputField label="Allowed File Types" value={settings.storage.allowedFileTypes} onChange={e => handleChange('storage', 'allowedFileTypes', e.target.value)} disabled={isFieldRestricted('storage', 'allowedFileTypes', isSuperAdmin)} />
+
+            <InputField
+              label="Cloud Provider"
+              value={settings.storage.provider}
+              disabled={true}
+            />
+            <InputField
+              label="Maximum Upload Size (MB)"
+              type="number"
+              value={settings.storage.maxUploadSizeMb}
+              onChange={(e) =>
+                handleChange("storage", "maxUploadSizeMb", e.target.value)
+              }
+              disabled={isFieldRestricted(
+                "storage",
+                "maxUploadSizeMb",
+                isSuperAdmin,
+              )}
+            />
+            <InputField
+              label="Allowed File Types"
+              value={settings.storage.allowedFileTypes}
+              onChange={(e) =>
+                handleChange("storage", "allowedFileTypes", e.target.value)
+              }
+              disabled={isFieldRestricted(
+                "storage",
+                "allowedFileTypes",
+                isSuperAdmin,
+              )}
+            />
           </div>
         </div>
       );
@@ -499,7 +595,7 @@ export default function SystemManagement({ user }) {
               )}
             </div>
             
-            <div style={{ marginTop: '24px', padding: '16px', background: 'var(--c-bg-dark)', borderRadius: '8px', border: '1px solid var(--c-border-subtle)' }}>
+            <div className="light-inner-shadow" style={{ marginTop: '24px', padding: '16px', background: 'var(--c-bg-dark)', borderRadius: '8px', border: '1px solid var(--c-border-subtle)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                 <span style={{ fontSize: '0.85rem', color: 'var(--c-sub)' }}>SMTP Connection: <strong style={{ color: '#10B981' }}>Connected</strong></span>
                 <span style={{ fontSize: '0.85rem', color: 'var(--c-sub)' }}>Last Test: {new Date().toLocaleTimeString()}</span>
@@ -652,14 +748,16 @@ export default function SystemManagement({ user }) {
           <button 
             onClick={handleSaveInit}
             disabled={!hasUnsavedChanges || saving || loadingConfig}
-            style={{ 
+            className=""
+            style={{
               padding: '10px 24px', 
-              background: hasUnsavedChanges ? '#3B82F6' : 'var(--c-bg-dark)', 
-              color: hasUnsavedChanges ? '#fff' : 'var(--c-sub)', 
-              border: hasUnsavedChanges ? 'none' : '1px solid var(--c-border-subtle)', 
+              background: '#3B82F6', 
+              color: '#fff', 
+              border: 'none', 
               borderRadius: '8px', fontWeight: 600, 
               cursor: (!hasUnsavedChanges || saving || loadingConfig) ? 'not-allowed' : 'pointer', 
               boxShadow: hasUnsavedChanges ? '0 4px 14px rgba(59,130,246,0.3)' : 'none',
+              opacity: (!hasUnsavedChanges || saving || loadingConfig) ? 0.5 : 1,
               transition: 'all 0.2s',
               display: 'flex', alignItems: 'center', gap: '8px'
             }}
