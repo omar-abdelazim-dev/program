@@ -3,7 +3,7 @@ import api from "../api/axios";
 import notyf from "../utils/notyf";
 import Spinner from "./Spinner";
 
-const AdminLessonsTab = ({ currentUser, onDashboardUpdate }) => {
+export function AdminLessonsTab({ currentUser, onDashboardUpdate }) {
   const [lessons, setLessons] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -509,14 +509,14 @@ const AdminLessonsTab = ({ currentUser, onDashboardUpdate }) => {
                             width: "40px",
                             height: "40px",
                             borderRadius: "8px",
-                            background: "var(--bg-main)",
+                            background: "var(--bg-main) !important",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
                             color: "#fff",
+                            boxShadow: "var(--inner-shadow) !important",
                             flexShrink: 0,
                           }}
-                          /**/ 
                         >
                           ▶
                         </div>
