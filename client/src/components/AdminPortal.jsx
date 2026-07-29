@@ -1330,13 +1330,13 @@ export default function AdminPortal({
 
             {visitedTabs.has("courses_all") && (
               <div style={{ display: activeTab === "courses_all" ? "block" : "none" }}>
-                <AdminCourseManagementTab currentUser={user} />
+                <AdminCourseManagementTab currentUser={user} onDashboardUpdate={fetchDashboardData} />
               </div>
             )}
 
             {visitedTabs.has("courses_lessons") && (
               <div style={{ display: activeTab === "courses_lessons" ? "block" : "none" }}>
-                <AdminLessonsTab currentUser={user} />
+                <AdminLessonsTab currentUser={user} onDashboardUpdate={fetchDashboardData} />
               </div>
             )}
 

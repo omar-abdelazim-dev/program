@@ -3,7 +3,7 @@ import api from "../api/axios";
 import notyf from "../utils/notyf";
 import Spinner from "./Spinner";
 
-const AdminLessonsTab = ({ currentUser }) => {
+const AdminLessonsTab = ({ currentUser, onDashboardUpdate }) => {
   const [lessons, setLessons] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -46,6 +46,7 @@ const AdminLessonsTab = ({ currentUser }) => {
       );
       if (activeLesson?._id === id)
         setActiveLesson({ ...activeLesson, status: "approved" });
+      if (onDashboardUpdate) onDashboardUpdate();
     } catch (error) {
       console.error(error);
       notyf.error("Failed to approve lesson");
@@ -61,6 +62,7 @@ const AdminLessonsTab = ({ currentUser }) => {
       );
       if (activeLesson?._id === id)
         setActiveLesson({ ...activeLesson, status: "rejected" });
+      if (onDashboardUpdate) onDashboardUpdate();
     } catch (error) {
       console.error(error);
       notyf.error("Failed to reject lesson");
@@ -507,13 +509,14 @@ const AdminLessonsTab = ({ currentUser }) => {
                             width: "40px",
                             height: "40px",
                             borderRadius: "8px",
-                            background: "var(--color-accent)",
+                            background: "var(--bg-main)",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
                             color: "#fff",
                             flexShrink: 0,
                           }}
+                          /**/ 
                         >
                           ▶
                         </div>

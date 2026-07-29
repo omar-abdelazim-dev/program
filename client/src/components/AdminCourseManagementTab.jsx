@@ -116,7 +116,7 @@ const CustomDropdown = ({ value, options, onChange, disabled, width = "100%" }) 
   );
 };
 
-export default function AdminCourseManagementTab({ currentUser }) {
+export default function AdminCourseManagementTab({ currentUser, onDashboardUpdate }) {
   const [courses, setCourses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -193,6 +193,7 @@ export default function AdminCourseManagementTab({ currentUser }) {
         await api.patch(`/courses/${id}/approve`);
         notyf.success('Course approved');
         setCourses(courses.map(c => c._id === id ? { ...c, status: 'published' } : c));
+        if (onDashboardUpdate) onDashboardUpdate();
     } catch (err) {
         notyf.error('Failed to approve course');
     } finally {
@@ -207,6 +208,7 @@ export default function AdminCourseManagementTab({ currentUser }) {
         await api.patch(`/courses/${id}/reject`, { reason: "Rejected by admin from" });
         notyf.success('Course rejected');
         setCourses(courses.map(c => c._id === id ? { ...c, status: 'rejected' } : c));
+        if (onDashboardUpdate) onDashboardUpdate();
     } catch (err) {
         notyf.error('Failed to reject course');
     } finally {
