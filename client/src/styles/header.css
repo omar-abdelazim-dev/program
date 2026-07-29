@@ -146,7 +146,7 @@ input:focus {
 }
 
 .nav-icon-btn {
-    background: transparent;
+    background: var(--bg-surface);
     color: var(--c-sub);
     width: 40px;
     height: 40px;
@@ -209,7 +209,7 @@ input:focus {
     width: 42px;
     height: 42px;
     border-radius: 50%;
-    background: var(--bg-main);
+    background: var(--bg-surface);
     display: flex;
     align-items: center;
     justify-content: center;

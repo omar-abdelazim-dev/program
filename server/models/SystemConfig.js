@@ -73,6 +73,46 @@ const systemConfigSchema = new mongoose.Schema(
       footerInfo: { type: String, default: '© 2026 Program' },
     },
 
+    landingPage: {
+      hero: {
+        eyebrow: { type: String, default: 'Education built around possibility' },
+        titlePart1: { type: String, default: 'Master Your Craft. ' },
+        titlePart2: { type: String, default: 'Share Your Expertise.' },
+        copy: { type: String, default: 'Program makes high-quality learning and teaching more accessible, so ambition—not access—sets the limit on what comes next.' },
+        studentCtaText: { type: String, default: 'Start Learning' },
+        studentCtaLink: { type: String, default: '/auth?mode=register&role=student' },
+        instructorCtaText: { type: String, default: 'Start Teaching' },
+        instructorCtaLink: { type: String, default: '/auth?mode=register&role=instructor' }
+      },
+      story: {
+        eyebrowLeft: { type: String, default: 'Who we are' },
+        titleLeft: { type: String, default: 'Learning should open doors for everyone.' },
+        copyLeft: { type: String, default: 'Program began with a simple belief: exceptional education should feel close, practical, and personal. We bring curious learners together with people who have the experience to guide them.' },
+        eyebrowRight: { type: String, default: 'Our vision' },
+        titleRight: { type: String, default: 'A global learning community powered by real expertise.' },
+        copyRight: { type: String, default: 'We are building a place where knowledge travels farther, instructors are rewarded for what they know, and every learner can turn a next step into lasting progress.' }
+      },
+      paths: {
+        eyebrow: { type: String, default: 'One community, two ways forward' },
+        title: { type: String, default: 'Choose the path that moves you.' },
+        copy: { type: String, default: 'Whether you are growing a skill set or growing an audience, Program is designed to help your work go further.' },
+        studentTitle: { type: String, default: 'Build skills that take you places.' },
+        studentCopy: { type: String, default: 'Find focused courses, learn at your pace, and make every completed lesson count.' },
+        studentCtaText: { type: String, default: 'Explore learning' },
+        studentCtaLink: { type: String, default: '/auth?mode=register&role=student' },
+        instructorTitle: { type: String, default: 'Teach what you know best.' },
+        instructorCopy: { type: String, default: 'Create courses easily, connect with students directly, and build a new revenue stream.' },
+        instructorCtaText: { type: String, default: 'Start teaching' },
+        instructorCtaLink: { type: String, default: '/auth?mode=register&role=instructor' }
+      },
+      colors: {
+        primaryText: { type: String, default: '#18181b' },
+        secondaryText: { type: String, default: '#71717a' },
+        accentStudent: { type: String, default: '#3b82f6' },
+        accentInstructor: { type: String, default: '#f59e0b' }
+      }
+    },
+
     maintenance: {
       isMaintenanceMode: { type: Boolean, default: false },
       message: { type: String, default: 'We are currently upgrading the system.' },

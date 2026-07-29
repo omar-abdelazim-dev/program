@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 // Reusable Animated Number component to match the existing design language
 const AnimatedNumber = ({ value }) => {
@@ -9,6 +10,7 @@ const AnimatedNumber = ({ value }) => {
 };
 
 const AdminStatisticsTab = ({ stats, revenueAnalytics, revenueAnalyticsLoading }) => {
+  const { t } = useTranslation();
   // Calculate dynamic values based on real data
   const totalRevenue = stats?.totalRevenue || revenueAnalytics?.totalRevenue || 410500;
   
@@ -29,7 +31,7 @@ const AdminStatisticsTab = ({ stats, revenueAnalytics, revenueAnalyticsLoading }
   if (revenueAnalyticsLoading && !stats) {
     return (
       <div style={{ padding: "40px", textAlign: "center", color: "var(--c-sub)" }}>
-        Loading statistics...
+        {t('admin.loading_statistics', 'Loading statistics...')}
       </div>
     );
   }
@@ -47,10 +49,10 @@ const AdminStatisticsTab = ({ stats, revenueAnalytics, revenueAnalyticsLoading }
             color: "var(--text-h)",
           }}
         >
-          Statistics
+          {t('admin.statistics', 'Statistics')}
         </h2>
         <div style={{ fontSize: "0.9rem", color: "var(--c-sub)" }}>
-          Financial summary of platform performance.
+          {t('admin.financial_summary_desc', 'Financial summary of platform performance.')}
         </div>
       </div>
 
@@ -65,7 +67,7 @@ const AdminStatisticsTab = ({ stats, revenueAnalytics, revenueAnalyticsLoading }
             marginBottom: "16px",
           }}
         >
-          FINANCIAL SUMMARY
+          {t('admin.financial_summary', 'FINANCIAL SUMMARY')}
         </div>
 
         {/* 5 Cards Grid */}
@@ -117,7 +119,7 @@ const AdminStatisticsTab = ({ stats, revenueAnalytics, revenueAnalyticsLoading }
                 marginBottom: "8px",
               }}
             >
-              <span>💰</span> Total Revenue
+              <span>💰</span> {t('admin.total_revenue', 'Total Revenue')}
             </div>
             <div
               style={{
@@ -163,7 +165,7 @@ const AdminStatisticsTab = ({ stats, revenueAnalytics, revenueAnalyticsLoading }
                 marginBottom: "8px",
               }}
             >
-              <span>🏢</span> Company Share (30%)
+              <span>🏢</span> {t('admin.company_share_percent', 'Company Share (30%)')}
             </div>
             <div
               style={{
@@ -209,7 +211,7 @@ const AdminStatisticsTab = ({ stats, revenueAnalytics, revenueAnalyticsLoading }
                 marginBottom: "8px",
               }}
             >
-              <span>👨‍🏫</span> Instructor Earnings
+              <span>👨‍🏫</span> {t('admin.instructor_earnings', 'Instructor Earnings')}
             </div>
             <div
               style={{
@@ -255,7 +257,7 @@ const AdminStatisticsTab = ({ stats, revenueAnalytics, revenueAnalyticsLoading }
                 marginBottom: "8px",
               }}
             >
-              <span>⏳</span> Outstanding Payouts
+              <span>⏳</span> {t('admin.outstanding_payouts', 'Outstanding Payouts')}
             </div>
             <div
               style={{
@@ -301,7 +303,7 @@ const AdminStatisticsTab = ({ stats, revenueAnalytics, revenueAnalyticsLoading }
                 marginBottom: "8px",
               }}
             >
-              <span>📊</span> Avg Revenue / Enrollment
+              <span>📊</span> {t('admin.avg_revenue_enrollment', 'Avg Revenue / Enrollment')}
             </div>
             <div
               style={{
@@ -328,7 +330,7 @@ const AdminStatisticsTab = ({ stats, revenueAnalytics, revenueAnalyticsLoading }
             color: "var(--text-h)",
           }}
         >
-          Revenue Distribution
+          {t('admin.revenue_distribution', 'Revenue Distribution')}
         </h3>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
@@ -343,7 +345,7 @@ const AdminStatisticsTab = ({ stats, revenueAnalytics, revenueAnalyticsLoading }
               }}
             >
               <span style={{ fontWeight: "600", color: "var(--text-h)" }}>
-                Company Share
+                {t('admin.company_share', 'Company Share')}
               </span>
               <span style={{ color: "var(--c-purple)" }}>
                 EGP {companyShare.toLocaleString()} (30%)
@@ -380,7 +382,7 @@ const AdminStatisticsTab = ({ stats, revenueAnalytics, revenueAnalyticsLoading }
               }}
             >
               <span style={{ fontWeight: "600", color: "var(--text-h)" }}>
-                Instructor Earnings
+                {t('admin.instructor_earnings', 'Instructor Earnings')}
               </span>
               <span style={{ color: "var(--c-orange)" }}>
                 EGP {instructorEarnings.toLocaleString()} (70%)
@@ -414,12 +416,11 @@ const AdminStatisticsTab = ({ stats, revenueAnalytics, revenueAnalyticsLoading }
             color: "var(--c-sub)",
           }}
         >
-          Platform commission is currently configured at{" "}
+          {t('admin.platform_commission_desc', 'Platform commission is currently configured at')} {" "}
           <span style={{ color: "var(--c-light)", fontWeight: "600" }}>
             30%
           </span>
-          . This rate is managed by the backend and reflected here
-          automatically.
+          . {t('admin.commission_rate_managed', 'This rate is managed by the backend and reflected here automatically.')}
         </div>
       </div>
     </div>
