@@ -24,6 +24,8 @@ export default function AdminAuthPage({ onLoginSuccess, isLightMode, toggleTheme
         setIsLoggingIn(false);
         return;
       }
+      localStorage.setItem('admin_token', response.data.token);
+      localStorage.setItem('admin_lang', i18n.language);
       onLoginSuccess(response.data.user);
     } catch (err) {
       setAuthError(err.response?.data?.message || 'Failed to login');

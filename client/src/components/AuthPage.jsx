@@ -91,6 +91,7 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
       setIsCreatingAccount(true);
       try {
         const response = await api.post('/auth/login', { email, password, rememberMe });
+        localStorage.setItem(`${response.data.user.role}_lang`, i18n.language);
         onLoginSuccess(response.data.user);
       } catch (err) {
         setAuthError(err.response?.data?.message || 'Failed to login');
@@ -131,6 +132,7 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
             selectedPills
           };
           const response = await api.post('/auth/register', payload);
+          localStorage.setItem(`${response.data.user.role}_lang`, i18n.language);
           onLoginSuccess(response.data.user);
         } catch (err) {
           setAuthError(err.response?.data?.message || 'Registration failed');

@@ -36,8 +36,8 @@ export const getPublicConfig = async (req, res) => {
       appearance: config.appearance,
       features: config.features,
       registration: {
-        studentRegistration: config.registration.studentRegistration,
-        instructorRegistration: config.registration.instructorRegistration
+        studentRegistration: config.registration?.studentRegistration ?? true,
+        instructorRegistration: config.registration?.instructorRegistration ?? true
       }
     });
   } catch (err) {
