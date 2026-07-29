@@ -315,7 +315,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                 fontFamily: 'Inter, sans-serif'
               }}
             >
-              {i18n.language === "ar" ? "EN" : "عربي"}
+              {i18n.language === "ar" ? "EN" : "AR"}
             </button>
 
             <button

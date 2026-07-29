@@ -248,7 +248,7 @@ export default function StudentLayout({
                 fontFamily: 'Inter, sans-serif'
               }}
             >
-              {i18n.language === "ar" ? "EN" : "عربي"}
+              {i18n.language === "ar" ? "EN" : "AR"}
             </button>
 
             <button
