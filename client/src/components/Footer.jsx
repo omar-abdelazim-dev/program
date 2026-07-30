@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../api/axios';
 
 const SOCIAL_LABELS = {
@@ -12,6 +13,7 @@ const SOCIAL_LABELS = {
 };
 
 export default function Footer() {
+  const { t } = useTranslation();
   const [socialLinks, setSocialLinks] = useState({});
 
   useEffect(() => {
@@ -26,26 +28,26 @@ export default function Footer() {
     <footer className="site-footer">
       <div className="site-footer-grid">
         <div className="site-footer-col">
-          <h4>Company</h4>
-          <Link to="/about">About Us</Link>
-          <Link to="/register?mode=register&role=instructor">Become an Instructor</Link>
+          <h4>{t('footer.company')}</h4>
+          <Link to="/about">{t('footer.about')}</Link>
+          <Link to="/register?mode=register&role=instructor">{t('footer.become_instructor')}</Link>
         </div>
 
         <div className="site-footer-col">
-          <h4>Support</h4>
-          <Link to="/contact">Contact Us</Link>
-          <Link to="/help">Help &amp; Support</Link>
+          <h4>{t('footer.support')}</h4>
+          <Link to="/contact">{t('footer.contact')}</Link>
+          <Link to="/help">{t('footer.help')}</Link>
         </div>
 
         <div className="site-footer-col">
-          <h4>Legal</h4>
-          <Link to="/terms">Terms of Service</Link>
-          <Link to="/privacy">Privacy Policy</Link>
+          <h4>{t('footer.legal')}</h4>
+          <Link to="/terms">{t('footer.terms')}</Link>
+          <Link to="/privacy">{t('footer.privacy')}</Link>
         </div>
 
         <div className="site-footer-col">
-          <h4>Get the App</h4>
-          <Link to="/mobile-app">Mobile App</Link>
+          <h4>{t('footer.get_app')}</h4>
+          <Link to="/mobile-app">{t('footer.mobile_app')}</Link>
         </div>
       </div>
 
@@ -59,7 +61,7 @@ export default function Footer() {
         </div>
       )}
 
-      <div className="site-footer-bottom">© {new Date().getFullYear()} Program. All rights reserved.</div>
+      <div className="site-footer-bottom">{t('footer.copyright', { year: new Date().getFullYear() })}</div>
     </footer>
   );
 }

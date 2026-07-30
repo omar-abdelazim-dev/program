@@ -3,8 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import FullPageLoader from './FullPageLoader';
 import '../styles/content.css';
+import { useTranslation } from 'react-i18next';
 
 export default function LearningPortal() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   
@@ -79,8 +81,8 @@ export default function LearningPortal() {
     }
   };
 
-  if (loading) return <FullPageLoader message="Loading Learning Portal..." />;
-  if (error) return <div style={{ padding: '100px', textAlign: 'center', color: 'red' }}>{error}</div>;
+  if (loading) return <FullPageLoader message={t('student.learning.loading_portal', 'Loading Learning Portal...')} />;
+  if (error) return <div style={{ padding: '100px', textAlign: 'center', color: 'red' }}>{t('student.learning.load_error', 'Failed to load learning portal.')}</div>;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
@@ -124,7 +126,7 @@ export default function LearningPortal() {
               {course?.title}
             </h1>
             <div style={{ color: "var(--c-sub)", fontSize: "0.9rem" }}>
-              {progressPercent}% Complete
+              {progressPercent}% {t('student.learning.complete', 'Complete')}
             </div>
           </div>
         </div>
@@ -215,7 +217,7 @@ export default function LearningPortal() {
                 style={{ width: "100%", height: "100%", objectFit: "contain" }}
               />
             ) : (
-              <div style={{ color: "white" }}>Video not available</div>
+              <div style={{ color: "white" }}>{t('student.learning.video_unavailable', 'Video not available')}</div>
             )}
           </div>
 
@@ -244,21 +246,21 @@ export default function LearningPortal() {
                 onClick={() => setActiveTab("overview")}
                 style={{ padding: 0, paddingBottom: "8px" }}
               >
-                Overview
+                {t('student.learning.overview', 'Overview')}
               </button>
               <button
                 className={`nav-tab ${activeTab === "qa" ? "active" : ""}`}
                 onClick={() => setActiveTab("qa")}
                 style={{ padding: 0, paddingBottom: "8px" }}
               >
-                Q&A
+                {t('student.learning.qa', 'Q&A')}
               </button>
               <button
                 className={`nav-tab ${activeTab === "attachments" ? "active" : ""}`}
                 onClick={() => setActiveTab("attachments")}
                 style={{ padding: 0, paddingBottom: "8px" }}
               >
-                Attachments
+                {t('student.learning.attachments', 'Attachments')}
               </button>
             </div>
 
@@ -271,11 +273,7 @@ export default function LearningPortal() {
                     marginBottom: "32px",
                   }}
                 >
-                  In this lesson, we will dive deep into the core concepts of
-                  Enterprise Architecture. You will learn how to structure
-                  large-scale applications so that they are maintainable,
-                  scalable, and easy for new developers to onboard onto. Make
-                  sure to download the attached cheat sheet before proceeding!
+                  {t('student.learning.lesson_placeholder', 'In this lesson, we will dive deep into the core concepts of Enterprise Architecture. You will learn how to structure large-scale applications so that they are maintainable, scalable, and easy for new developers to onboard onto. Make sure to download the attached cheat sheet before proceeding!')}
                 </p>
 
 
@@ -285,8 +283,7 @@ export default function LearningPortal() {
             {activeTab === "qa" && (
               <div>
                 <p style={{ color: "var(--c-sub)" }}>
-                  No questions have been asked yet. Be the first to start a
-                  discussion!
+                  {t('student.learning.no_questions', 'No questions have been asked yet. Be the first to start a discussion!')}
                 </p>
                 <button
                   className="sys-btn-secondary"
@@ -296,7 +293,7 @@ export default function LearningPortal() {
                     fontSize: "0.9rem",
                   }}
                 >
-                  Ask a Question
+                  {t('student.learning.ask_question', 'Ask a Question')}
                 </button>
               </div>
             )}
@@ -306,7 +303,7 @@ export default function LearningPortal() {
                 {activeLesson?.attachmentUrl ? (
                   <>
                     <h3 style={{ fontSize: "1.2rem", marginBottom: "16px" }}>
-                      Resources
+                      {t('student.learning.resources', 'Resources')}
                     </h3>
                     <div
                       className="saas-card"
@@ -348,7 +345,7 @@ export default function LearningPortal() {
                           <div
                             style={{ fontSize: "0.85rem", color: "var(--c-sub)" }}
                           >
-                            Document
+                            {t('student.learning.document', 'Document')}
                           </div>
                         </div>
                       </div>
@@ -368,7 +365,7 @@ export default function LearningPortal() {
                   </>
                 ) : (
                   <p style={{ color: "var(--c-sub)" }}>
-                    No attachments are available for this lesson.
+                    {t('student.learning.no_attachments', 'No attachments are available for this lesson.')}
                   </p>
                 )}
               </div>
@@ -394,7 +391,7 @@ export default function LearningPortal() {
                   cursor: "pointer",
                 }}
               >
-                Course Content
+                {t('student.learning.course_content', 'Course Content')}
                 <svg
                   width="16"
                   height="16"
@@ -500,7 +497,7 @@ export default function LearningPortal() {
                             <circle cx="12" cy="12" r="10"></circle>
                             <polyline points="12 6 12 12 16 14"></polyline>
                           </svg>
-                          Video
+                          {t('student.learning.video', 'Video')}
                         </div>
                       </div>
                     </div>

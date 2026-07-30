@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import logoDark from '../assets/logo-dark.png';
 import logoLight from '../assets/logo-light.png';
 
 export default function CourseCard({ course, idx = 0, isLightMode = false }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [imgError, setImgError] = useState(false);
 
   const {
@@ -110,11 +112,11 @@ export default function CourseCard({ course, idx = 0, isLightMode = false }) {
               {renderStars(averageRating ?? 0)}
               <span className="cc-rating-value">{(averageRating ?? 0).toFixed(1)}</span>
               <span className="cc-reviews-count">
-                ({reviewsCount.toLocaleString()} Reviews)
+                ({reviewsCount.toLocaleString()} {t('common.reviews', 'Reviews')})
               </span>
             </>
           ) : (
-            <span className="cc-no-reviews">No reviews yet</span>
+            <span className="cc-no-reviews">{t('common.no_reviews_yet', 'No reviews yet')}</span>
           )}
         </div>
 

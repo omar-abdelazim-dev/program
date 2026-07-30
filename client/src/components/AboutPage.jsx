@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import api from '../api/axios';
 
 export default function AboutPage() {
+  const { t } = useTranslation();
   const [about, setAbout] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -16,7 +18,7 @@ export default function AboutPage() {
 
   return (
     <div className="static-page">
-      <h1 className="static-page-title">About Us</h1>
+      <h1 className="static-page-title">{t('static_pages.about.title')}</h1>
 
       {isLoading ? (
         <div className="static-page-skeleton">
@@ -25,12 +27,12 @@ export default function AboutPage() {
           <div className="skeleton-line skeleton-shimmer" style={{ width: '70%' }} />
         </div>
       ) : !hasContent ? (
-        <p className="static-page-empty">This page hasn't been filled in yet — check back soon.</p>
+        <p className="static-page-empty">{t('static_pages.about.empty')}</p>
       ) : (
         <div className="static-page-body">
           {about.companyStory && (
             <section className="static-page-section">
-              <h2>Our Story</h2>
+              <h2>{t('static_pages.about.story')}</h2>
               <p>{about.companyStory}</p>
             </section>
           )}
@@ -39,13 +41,13 @@ export default function AboutPage() {
             <div className="static-page-grid-two">
               {about.mission && (
                 <section className="static-page-section">
-                  <h2>Mission</h2>
+                  <h2>{t('static_pages.about.mission')}</h2>
                   <p>{about.mission}</p>
                 </section>
               )}
               {about.vision && (
                 <section className="static-page-section">
-                  <h2>Vision</h2>
+                  <h2>{t('static_pages.about.vision')}</h2>
                   <p>{about.vision}</p>
                 </section>
               )}
@@ -54,7 +56,7 @@ export default function AboutPage() {
 
           {about.values?.length > 0 && (
             <section className="static-page-section">
-              <h2>Our Values</h2>
+              <h2>{t('static_pages.about.values')}</h2>
               <div className="static-page-grid-two">
                 {about.values.map((v, i) => (
                   <div key={i} className="static-page-card">
@@ -68,7 +70,7 @@ export default function AboutPage() {
 
           {about.timeline?.length > 0 && (
             <section className="static-page-section">
-              <h2>Our Journey</h2>
+              <h2>{t('static_pages.about.journey')}</h2>
               <div className="static-page-timeline">
                 {[...about.timeline]
                   .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
@@ -87,7 +89,7 @@ export default function AboutPage() {
 
           {about.teamMembers?.filter((m) => !m.isHidden).length > 0 && (
             <section className="static-page-section">
-              <h2>Meet the Team</h2>
+              <h2>{t('static_pages.about.team')}</h2>
               <div className="static-page-grid-three">
                 {about.teamMembers
                   .filter((m) => !m.isHidden)

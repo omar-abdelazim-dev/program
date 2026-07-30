@@ -2,10 +2,13 @@ import { useState, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import api from "../api/axios";
 import CourseCard from "./CourseCard";
+import { useTranslation } from "react-i18next";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
 export default function ExploreTab({ user, searchQuery = "" }) {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.dir() === 'rtl';
   const firstName = user?.name ? user.name.split(" ")[0] : "Student";
   // Category filtering now comes from the "Courses" nav dropdown (see
   // StudentLayout) via ?category=, rather than in-page filter buttons.
@@ -78,7 +81,9 @@ export default function ExploreTab({ user, searchQuery = "" }) {
               className="saas-page-title"
               style={{ color: "var(--text-primary)", marginBottom: "8px" }}
             >
-              {websiteContent?.homepage?.hero?.title
+              {isRTL && websiteContent?.homepage?.hero?.titleAr
+                ? websiteContent.homepage.hero.titleAr
+                : websiteContent?.homepage?.hero?.title
                 ? websiteContent.homepage.hero.title.replace(
                     "{name}",
                     firstName,
@@ -89,7 +94,9 @@ export default function ExploreTab({ user, searchQuery = "" }) {
               className="saas-description"
               style={{ color: "var(--text-secondary)", marginBottom: "0" }}
             >
-              {websiteContent?.homepage?.hero?.subtitle ||
+              {isRTL && websiteContent?.homepage?.hero?.subtitleAr
+                ? websiteContent.homepage.hero.subtitleAr
+                : websiteContent?.homepage?.hero?.subtitle ||
                 "Discover new skills, dive into hot topics, and learn from the industry's best instructors."}
             </p>
           </div>
@@ -104,7 +111,9 @@ export default function ExploreTab({ user, searchQuery = "" }) {
               fontWeight: "600",
             }}
           >
-            {websiteContent?.homepage?.hero?.primaryButtonText ||
+            {isRTL && websiteContent?.homepage?.hero?.primaryButtonTextAr
+              ? websiteContent.homepage.hero.primaryButtonTextAr
+              : websiteContent?.homepage?.hero?.primaryButtonText ||
               "Explore Catalog"}
           </button>
         </div>
@@ -168,7 +177,7 @@ export default function ExploreTab({ user, searchQuery = "" }) {
               }}
             >
               <h2 style={{ color: "var(--text-primary)", margin: 0, fontSize: "1.5rem" }}>
-                Recommended for You
+                {t('student.recommended_for_you', 'Recommended for You')}
               </h2>
               <a
                 href="#"
@@ -194,7 +203,7 @@ export default function ExploreTab({ user, searchQuery = "" }) {
                   e.currentTarget.style.boxShadow = "0px 4px 10px rgba(0,0,0,0.1)";
                 }}
               >
-                View all
+                {t('common.view_all', 'View all')}
               </a>
             </div>
 
@@ -215,7 +224,7 @@ export default function ExploreTab({ user, searchQuery = "" }) {
                   textDecoration: "none",
                 }}
               >
-                {currentCategory} ✕
+                {currentCategory === "All" ? t('student.all_courses', 'All Courses') : currentCategory} ✕
               </Link>
             )}
 

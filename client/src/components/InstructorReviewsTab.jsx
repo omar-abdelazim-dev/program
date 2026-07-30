@@ -145,7 +145,7 @@ export default function InstructorReviewsTab() {
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
             </svg>
           </div>
-          <h3 style={{ fontSize: '1.25rem', color: 'var(--text-h)', marginBottom: '8px', fontWeight: '600' }}>No reviews yet</h3>
+          <h3 style={{ fontSize: '1.25rem', color: 'var(--text-h)', marginBottom: '8px', fontWeight: '600' }}>{t('common.no_reviews_yet', 'No reviews yet')}</h3>
           <p style={{ color: 'var(--c-sub)', maxWidth: '400px', lineHeight: '1.6' }}>Once students review your courses, their ratings and feedback will appear here.</p>
         </div>
       ) : (

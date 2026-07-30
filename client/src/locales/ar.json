@@ -12,7 +12,8 @@
     "no_reviews_yet": "لا توجد تقييمات بعد",
     "instructor": "معلم",
     "student": "طالب",
-    "admin": "مشرف"
+    "admin": "مشرف",
+    "reviews": "تقييمات"
   },
   "nav": {
     "home": "الرئيسية",
@@ -37,7 +38,54 @@
     "continue_learning": "متابعة التعلم",
     "completed": "مكتمل",
     "certificates": "الشهادات",
-    "progress": "التقدم"
+    "progress": "التقدم",
+    "sidebar": {
+      "explore": "استكشف",
+      "my_courses": "دوراتي",
+      "dashboard": "لوحة التحكم",
+      "courses": "الدورات",
+      "browse_category": "تصفح حسب التصنيف",
+      "all_courses": "جميع الدورات",
+      "settings": "الإعدادات"
+    },
+    "nav": {
+      "search_placeholder": "ابحث عن دورات، دروس، مواضيع...",
+      "notifications": "الإشعارات",
+      "clear_all": "مسح الكل",
+      "no_notifications": "لا توجد إشعارات جديدة"
+    },
+    "learning": {
+      "loading_portal": "جاري تحميل بوابة التعلم...",
+      "load_error": "فشل تحميل بوابة التعلم.",
+      "complete": "مكتمل",
+      "video_unavailable": "الفيديو غير متوفر",
+      "overview": "نظرة عامة",
+      "qa": "أسئلة وأجوبة",
+      "attachments": "المرفقات",
+      "lesson_placeholder": "في هذا الدرس، سنتعمق في المفاهيم الأساسية. ستتعلم كيفية بناء تطبيقات واسعة النطاق بحيث تكون قابلة للصيانة والتطوير، وسهلة الانضمام للمطورين الجدد. تأكد من تنزيل ورقة المعلومات المرفقة قبل المتابعة!",
+      "no_questions": "لم يتم طرح أي أسئلة بعد. كن أول من يبدأ النقاش!",
+      "ask_question": "اطرح سؤالاً",
+      "resources": "الموارد",
+      "document": "مستند",
+      "no_attachments": "لا توجد مرفقات متاحة لهذا الدرس.",
+      "course_content": "محتوى الدورة",
+      "video": "فيديو",
+      "current_lesson": "الدرس الحالي",
+      "up_next": "التالي",
+      "min": "دقيقة",
+      "report_issue": "الإبلاغ عن مشكلة",
+      "share": "مشاركة",
+      "share_copied": "تم نسخ رابط المشاركة إلى الحافظة"
+    },
+    "loading_courses": "جاري تحميل دوراتك...",
+    "enrolled_courses": "الدورات المسجلة",
+    "completed_lessons": "الدروس المكتملة",
+    "courses_completed": "الدورات المكتملة",
+    "in_progress": "قيد التقدم",
+    "no_enrolled_courses": "لم تسجل في أي دورات بعد.",
+    "nothing_in_progress": "لا يوجد شيء قيد التقدم حالياً — عمل رائع في المتابعة!",
+    "explore_catalog": "استكشف الكتالوج",
+    "no_completed_courses": "لم تكمل أي دورات بعد. واصل التعلم!"
   },
   "instructor": {
     "dashboard_overview": "نظرة عامة",
@@ -135,7 +183,7 @@
     "email": "البريد الإلكتروني *",
     "password": "كلمة المرور *",
     "department": "القسم *",
-    "department_placeholder": "مثل: علوم الحاسب، الهندسة",
+    "department_placeholder": "e.g. Computer Science, Engineering",
     "other_department_placeholder": "اكتب اسم قسمك...",
     "college": "الكلية / المعهد *",
     "college_placeholder": "مثل: الهندسة",
@@ -184,5 +232,145 @@
       "year_5": "السنة الخامسة",
       "graduated": "خريج"
     }
+  },
+  "settings": {
+    "title": "الإعدادات",
+    "nav": {
+      "profile": "الملف الشخصي",
+      "appearance": "المظهر",
+      "account": "الحساب"
+    },
+    "profile": {
+      "title": "الملف الشخصي",
+      "success": "تم تحديث الملف الشخصي بنجاح.",
+      "error": "فشل في تحديث الملف الشخصي",
+      "change_picture": "تغيير الصورة",
+      "first_name": "الاسم الأول",
+      "first_name_placeholder": "مثال: أحمد",
+      "last_name": "الاسم الأخير",
+      "last_name_placeholder": "مثال: محمد",
+      "phone": "رقم الهاتف",
+      "phone_placeholder": "مثال: +1 234 567 890",
+      "bio": "نبذة / أهداف",
+      "bio_placeholder": "اكتب نبذة قصيرة أو أهدافك...",
+      "save": "حفظ التغييرات",
+      "saving": "جاري الحفظ..."
+    },
+    "account": {
+      "title": "الحساب",
+      "desc": "إدارة تفاصيل حسابك والأمان.",
+      "info_title": "معلومات الحساب",
+      "email": "البريد الإلكتروني",
+      "department": "القسم / الكلية",
+      "department_placeholder": "e.g. Computer Science, Engineering",
+      "course_provided": "الدورة المقدمة",
+      "course_provided_placeholder": "مثال: تطوير الويب 101",
+      "linkedin": "رابط لينكد إن",
+      "social": "مواقع تواصل أخرى / موقع شخصي",
+      "save": "حفظ معلومات الحساب",
+      "saving": "جاري الحفظ...",
+      "success": "تم تحديث تفاصيل الحساب بنجاح.",
+      "error": "فشل في تحديث تفاصيل الحساب",
+      "change_password_title": "تغيير كلمة المرور",
+      "current_password": "كلمة المرور الحالية",
+      "current_password_placeholder": "أدخل كلمة المرور الحالية",
+      "new_password": "كلمة المرور الجديدة",
+      "new_password_placeholder": "أدخل كلمة مرور جديدة",
+      "confirm_password": "تأكيد كلمة المرور الجديدة",
+      "confirm_password_placeholder": "أكد كلمة المرور الجديدة",
+      "update_password": "تحديث كلمة المرور",
+      "updating_password": "جاري التحديث...",
+      "password_mismatch": "كلمات المرور الجديدة غير متطابقة.",
+      "password_length": "يجب أن تتكون كلمة المرور الجديدة من 6 أحرف على الأقل.",
+      "password_success": "تم تحديث كلمة المرور بنجاح.",
+      "password_error": "فشل في تغيير كلمة المرور",
+      "sessions_title": "جلسات الأجهزة",
+      "sessions_desc": "تسجيل الخروج من بروجرام على هذا الجهاز. ستحتاج إلى تسجيل الدخول مرة أخرى للوصول إلى لوحة التحكم الخاصة بك.",
+      "logout": "تسجيل الخروج",
+      "danger_title": "احذر",
+      "danger_desc": "حذف حسابك وجميع بياناتك بشكل دائم. لا يمكن التراجع عن هذا الإجراء.",
+      "delete": "حذف الحساب"
+    },
+    "appearance": {
+      "title": "المظهر",
+      "desc": "اختر كيف يبدو بروجرام على هذا الجهاز.",
+      "dark": "داكن",
+      "light": "فاتح"
+    }
+  },
+  "footer": {
+    "company": "الشركة",
+    "about": "معلومات عنا",
+    "become_instructor": "أصبح مدرباً",
+    "support": "الدعم",
+    "contact": "اتصل بنا",
+    "help": "المساعدة والدعم",
+    "legal": "قانوني",
+    "terms": "شروط الخدمة",
+    "privacy": "سياسة الخصوصية",
+    "get_app": "احصل على التطبيق",
+    "mobile_app": "تطبيق الهاتف",
+    "copyright": "© {{year}} Program. جميع الحقوق محفوظة."
+  },
+  "static_pages": {
+    "about": {
+      "title": "معلومات عنا",
+      "empty": "لم يتم ملء هذه الصفحة بعد — تحقق مرة أخرى قريباً.",
+      "story": "قصتنا",
+      "mission": "مهمتنا",
+      "vision": "رؤيتنا",
+      "values": "قيمنا",
+      "journey": "رحلتنا",
+      "team": "فريق العمل"
+    },
+    "contact": {
+      "title": "اتصل بنا",
+      "support": "الدعم",
+      "business": "استفسارات الأعمال",
+      "phone": "الهاتف",
+      "address": "العنوان",
+      "hours": "ساعات العمل"
+    },
+    "help": {
+      "title": "المساعدة والدعم",
+      "intro": "لديك سؤال؟ تحقق من الأسئلة الشائعة أدناه، أو اتصل بنا مباشرة على",
+      "empty_faqs": "لم يتم نشر أسئلة شائعة بعد — راسلنا عبر البريد الإلكتروني وسنساعدك مباشرة."
+    },
+    "terms": {
+      "title": "شروط الخدمة",
+      "coming_soon": "يتم وضع اللمسات الأخيرة على شروط الخدمة الخاصة بنا وسيتم نشرها هنا قريباً.",
+      "contact_support": "في غضون ذلك، يمكن إرسال الأسئلة إلى فريق الدعم الخاص بنا عبر صفحة اتصل بنا."
+    },
+    "privacy": {
+      "title": "سياسة الخصوصية",
+      "coming_soon": "يتم وضع اللمسات الأخيرة على سياسة الخصوصية الخاصة بنا وسيتم نشرها هنا قريباً.",
+      "contact_support": "في غضون ذلك، يمكن إرسال الأسئلة إلى فريق الدعم الخاص بنا عبر صفحة اتصل بنا."
+    },
+    "mobile": {
+      "title": "تطبيق الهاتف",
+      "coming_soon": "نحن نعمل على تطبيقات الهواتف الذكية الخاصة بـ Program. قريباً.",
+      "works_in_browser": "في الوقت الحالي، يعمل Program بشكل رائع في متصفح هاتفك المحمول."
+    }
+  },
+  "course_page": {
+    "loading": "جاري تحميل تفاصيل الدورة...",
+    "fetch_error": "فشل في جلب الدورة",
+    "enroll_error": "فشل في التسجيل",
+    "back_dashboard": "العودة إلى لوحة القيادة",
+    "back_explore": "العودة إلى الاستكشاف",
+    "instructor_label": "المدرب",
+    "instructor_fallback": "المدرب",
+    "syllabus": "منهج الدورة",
+    "lessons_title": "الدروس",
+    "lesson_singular": "درس",
+    "lesson_plural": "دروس",
+    "no_lessons": "لم يتم إضافة دروس لهذه الدورة بعد.",
+    "free": "مجاناً",
+    "currency": "EGP",
+    "go_to_course": "الذهاب إلى الدورة",
+    "enrolling": "جاري التسجيل...",
+    "enroll_now": "سجل الآن",
+    "added_to_cart": "تمت الإضافة للسلة ✓",
+    "add_to_cart": "أضف للسلة"
   }
 }
