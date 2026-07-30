@@ -110,8 +110,8 @@
 .courses-nav-dropdown {
   position: absolute;
   top: 0;
-  left: 100%;
-  margin-left: 12px;
+  inset-inline-start: 100%;
+  margin-inline-start: 12px;
   background-color: var(--bg-surface);
   border: 2px solid var(--bg-main);
   border-radius: 12px;
@@ -228,7 +228,7 @@
 .notification-dot {
   position: absolute;
   top: 8px;
-  right: 10px;
+  inset-inline-end: 10px;
   width: 8px;
   height: 8px;
   background: #f97316 !important; /* Enforce orange */
@@ -239,7 +239,7 @@
 .cart-badge {
   position: absolute;
   top: -4px;
-  right: -4px;
+  inset-inline-end: -4px;
   background-color: #f97316;
   color: #fff;
   font-size: 0.7rem;
@@ -284,7 +284,7 @@
 .profile-dropdown {
   position: absolute;
   top: calc(100% + 8px);
-  right: 0;
+  inset-inline-end: 0;
   background-color: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -306,8 +306,8 @@
   content: "";
   position: absolute;
   top: -20px;
-  left: 0;
-  right: 0;
+  inset-inline-start: 0;
+  inset-inline-end: 0;
   height: 20px;
   background: transparent;
 }
@@ -340,7 +340,7 @@
   cursor: pointer;
   background: transparent;
   border: none;
-  text-align: left;
+  text-align: start;
   font-size: 0.9rem;
   width: 100%;
   display: flex;

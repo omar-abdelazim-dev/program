@@ -47,7 +47,7 @@ input:focus {
 .top-nav {
     position: fixed;
     top: 0;
-    left: 0;
+    inset-inline-start: 0;
     width: 100%;
     /* Glassmorphism Header */
     background-color: rgba(15, 17, 23, 0.7);
@@ -92,17 +92,17 @@ input:focus {
     letter-spacing: 1px;
 }
 
-/* Magic happens here: margin-right: auto pushes controls far right */
+/* Magic happens here: margin-inline-end: auto pushes controls far right */
 .nav-search {
     flex: 1;
     max-width: 500px;
     position: relative;
-    margin-right: auto;
+    margin-inline-end: auto;
 }
 
 .nav-search svg {
     position: absolute;
-    left: 14px;
+    inset-inline-start: 14px;
     top: 50%;
     transform: translateY(-50%);
     color: var(--c-sub);
@@ -173,7 +173,7 @@ input:focus {
 .theme-toggle-icon {
     position: absolute;
     top: 50%;
-    left: 50%;
+    inset-inline-start: 50%;
     opacity: 0;
     transform: translate(-50%, -50%) rotate(-90deg);
     transition: opacity 0.25s ease, transform 0.25s ease;
@@ -192,7 +192,7 @@ input:focus {
 .nav-dot {
     position: absolute;
     top: 8px;
-    right: 8px;
+    inset-inline-end: 8px;
     width: 8px;
     height: 8px;
     background: #ef4444;
@@ -221,7 +221,7 @@ input:focus {
 .profile-tooltip {
     position: absolute;
     top: 50px;
-    right: 0;
+    inset-inline-end: 0;
     /* Glassmorphism Background (Matches Header) */
     background-color: rgba(15, 17, 23, 0.95);
     /* Slightly more opaque than header for readability */
@@ -328,7 +328,7 @@ input:focus {
 .nav-indicator {
     position: absolute;
     bottom: 0;
-    left: 0;
+    inset-inline-start: 0;
     height: 3px;
     background: linear-gradient(90deg, var(--c-orange), var(--c-yellow));
     border-radius: 3px 3px 0 0;
@@ -438,8 +438,8 @@ body.light-mode .progress-bar-container {
     }
 
     .profile-tooltip {
-        right: 0;
-        left: auto;
+        inset-inline-end: 0;
+        inset-inline-start: auto;
     }
 }
 
