@@ -7,8 +7,11 @@ const websiteContentSchema = new mongoose.Schema(
     homepage: {
       hero: {
         title: { type: String, default: 'Learn Without Limits' },
+        titleAr: { type: String, default: 'تعلم بلا حدود' },
         subtitle: { type: String, default: 'Build skills with courses taught by world-class instructors.' },
+        subtitleAr: { type: String, default: 'اكتسب مهارات مع دورات يدرسها مدربون عالميون.' },
         primaryButtonText: { type: String, default: 'Explore Courses' },
+        primaryButtonTextAr: { type: String, default: 'استكشف الدورات' },
         primaryButtonUrl: { type: String, default: '/explore' },
         secondaryButtonText: { type: String, default: 'Become an Instructor' },
         secondaryButtonUrl: { type: String, default: '/instructor-signup' },
@@ -76,8 +79,10 @@ const websiteContentSchema = new mongoose.Schema(
       phoneNumbers: [{ label: String, number: String }],
       whatsappNumber: { type: String, default: '' },
       address: { type: String, default: '' },
+      addressAr: { type: String, default: '' },
       googleMapsUrl: { type: String, default: '' },
       businessHours: { type: String, default: 'Mon-Fri 9AM-5PM' },
+      businessHoursAr: { type: String, default: 'الإثنين - الجمعة 9 صباحاً - 5 مساءً' },
       socialMediaLinks: {
         facebook: { type: String, default: '' },
         instagram: { type: String, default: '' },
