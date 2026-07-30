@@ -3,6 +3,8 @@ import api from './api/axios';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import TopNav from './components/TopNav';
 import ExploreTab from './components/ExploreTab';
+import DiscoverTab from './components/DiscoverTab';
+import InstructorProfilePage from './components/InstructorProfilePage';
 import DashboardTab from './components/DashboardTab';
 import AuthPage from './components/AuthPage';
 import AdminAuthPage from './components/AdminAuthPage';
@@ -123,6 +125,10 @@ export default function App() {
     } else {
       navigate('/student');
     }
+    // Login/register responses only carry a minimal user object — hydrate
+    // the rest (major, college, etc.) right away instead of waiting for a
+    // page refresh to trigger the mount-time /auth/me fetch.
+    api.get('/auth/me').then((res) => setUser(res.data.user)).catch(() => {});
   };
 
   const handleLogout = async () => {
@@ -216,9 +222,11 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Navigate to="/student" replace />} />
         <Route path="/student" element={<ExploreTab user={user} searchQuery={searchQuery} />} />
+        <Route path="/student/explore" element={<DiscoverTab searchQuery={searchQuery} />} />
         <Route path="/student/dashboard" element={<DashboardTab />} />
         <Route path="/student/settings" element={<SettingsPage user={user} setUser={setUser} isLightMode={isLightMode} toggleTheme={toggleTheme} onLogout={handleLogout} />} />
         <Route path="/course/:id" element={<CoursePage cart={cart} setCart={setCart} />} />
+        <Route path="/instructor/:id" element={<InstructorProfilePage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/help" element={<HelpPage />} />

@@ -7,10 +7,6 @@ import Footer from "./Footer";
 import "../styles/student-layout.css";
 import "../styles/static-pages.css";
 
-// The Course model's category field is freeform text; these are the only
-// values actually in use in the database today (see Course.category).
-const COURSE_CATEGORIES = ["Business", "Data", "Design", "Development"];
-
 export default function StudentLayout({
   user,
   children,
@@ -27,10 +23,11 @@ export default function StudentLayout({
   const location = useLocation();
   const navigate = useNavigate();
   
-  const showSearch = location.pathname === '/student' || location.pathname === '/student/dashboard';
+  const showSearch = location.pathname === '/student' || location.pathname === '/student/dashboard' || location.pathname === '/student/explore';
 
   // Derive active tab from pathname
-  let activeTab = "explore";
+  let activeTab = "home";
+  if (location.pathname === "/student/explore") activeTab = "explore";
   if (location.pathname.includes("/my-courses")) activeTab = "my-courses";
   if (location.pathname.includes("/dashboard")) activeTab = "dashboard";
   if (location.pathname.includes("/settings")) activeTab = "settings";
@@ -62,9 +59,9 @@ export default function StudentLayout({
 
         <nav className="sidebar-nav-top">
           <button
-            className={`sidebar-icon-btn ${activeTab === "explore" ? "active" : ""}`}
+            className={`sidebar-icon-btn ${activeTab === "home" ? "active" : ""}`}
             onClick={() => navigate("/student")}
-            title="Explore"
+            title="Home"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -78,7 +75,7 @@ export default function StudentLayout({
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10"
               />
             </svg>
           </button>
@@ -128,36 +125,27 @@ export default function StudentLayout({
                 </svg>
               </button>
 
-              <div className="courses-nav-wrapper">
-                <button
-                  className={`sidebar-icon-btn ${activeTab === "explore" && location.search.includes("category=") ? "active" : ""}`}
-                  onClick={() => navigate("/student")}
-                  title="Courses"
+              <button
+                className={`sidebar-icon-btn ${activeTab === "explore" ? "active" : ""}`}
+                onClick={() => navigate("/student/explore")}
+                title="Explore"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                  </svg>
-                </button>
-                <div className="courses-nav-dropdown">
-                  <div className="courses-nav-dropdown-title">Browse by category</div>
-                  {COURSE_CATEGORIES.map((cat) => (
-                    <Link key={cat} to={`/student?category=${encodeURIComponent(cat)}`} className="courses-nav-dropdown-link">
-                      {cat}
-                    </Link>
-                  ))}
-                  <hr className="dropdown-divider" />
-                  <Link to="/student" className="courses-nav-dropdown-link">All Courses</Link>
-                </div>
-              </div>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+              </button>
             </>
           )}
         </nav>
