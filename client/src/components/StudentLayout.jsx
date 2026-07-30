@@ -87,7 +87,7 @@ export default function StudentLayout({
             <>
               <button
                 className={`sidebar-icon-btn ${activeTab === "my-courses" ? "active" : ""}`}
-                onClick={() => navigate("/student/my-courses")}
+                onClick={() => navigate("/student/dashboard")}
                 title="My Courses"
               >
                 <svg
