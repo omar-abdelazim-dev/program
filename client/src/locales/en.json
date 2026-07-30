@@ -46,7 +46,8 @@
       "courses": "Courses",
       "browse_category": "Browse by category",
       "all_courses": "All Courses",
-      "settings": "Settings"
+      "settings": "Settings",
+      "home": "Home"
     },
     "nav": {
       "search_placeholder": "Search courses, lessons, topics...",
@@ -85,7 +86,19 @@
     "no_enrolled_courses": "You haven't enrolled in any courses yet.",
     "nothing_in_progress": "Nothing in progress right now — nice work keeping up!",
     "explore_catalog": "Explore Catalog",
-    "no_completed_courses": "You haven't completed any courses yet. Keep learning!"
+    "no_completed_courses": "You haven't completed any courses yet. Keep learning!",
+    "home": {
+      "welcome_name": "Welcome back, {{name}}",
+      "subtitle_major": "Here's what's next in your {{major}} path.",
+      "subtitle_default": "Discover new skills, dive into hot topics, and learn from the industry's best instructors.",
+      "set_major_prompt": "Set your major in Settings to personalize your home feed with courses for your program.",
+      "set_major_link": "Set your major →",
+      "search_results_for": "Search results for \"{{query}}\"",
+      "no_results_for": "No courses found for \"{{query}}\".",
+      "semester_label": "{{major}} – Semester {{semester}}",
+      "no_major_courses": "No {{major}} courses are available yet. Check back soon.",
+      "no_courses_available": "No courses available yet."
+    }
   },
   "instructor": {
     "dashboard_overview": "Dashboard Overview",
@@ -289,7 +302,9 @@
       "logout": "Log out",
       "danger_title": "Danger Zone",
       "danger_desc": "Permanently delete your account and all of your data. This action cannot be undone.",
-      "delete": "Delete Account"
+      "delete": "Delete Account",
+      "major": "Major",
+      "major_placeholder": "Select your major"
     },
     "appearance": {
       "title": "Appearance",

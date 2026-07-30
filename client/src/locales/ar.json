@@ -46,7 +46,8 @@
       "courses": "الدورات",
       "browse_category": "تصفح حسب التصنيف",
       "all_courses": "جميع الدورات",
-      "settings": "الإعدادات"
+      "settings": "الإعدادات",
+      "home": "الرئيسية"
     },
     "nav": {
       "search_placeholder": "ابحث عن دورات، دروس، مواضيع...",
@@ -85,7 +86,19 @@
     "no_enrolled_courses": "لم تسجل في أي دورات بعد.",
     "nothing_in_progress": "لا يوجد شيء قيد التقدم حالياً — عمل رائع في المتابعة!",
     "explore_catalog": "استكشف الكتالوج",
-    "no_completed_courses": "لم تكمل أي دورات بعد. واصل التعلم!"
+    "no_completed_courses": "لم تكمل أي دورات بعد. واصل التعلم!",
+    "home": {
+      "welcome_name": "مرحبًا بعودتك، {{name}}",
+      "subtitle_major": "إليك ما ينتظرك في مسار {{major}}.",
+      "subtitle_default": "اكتشف مهارات جديدة، تعرّف على أحدث المواضيع، وتعلّم من أفضل المدربين في المجال.",
+      "set_major_prompt": "حدد تخصصك من الإعدادات لتخصيص صفحتك الرئيسية بمقررات برنامجك.",
+      "set_major_link": "حدد تخصصك ←",
+      "search_results_for": "نتائج البحث عن \"{{query}}\"",
+      "no_results_for": "لم يتم العثور على مقررات لـ \"{{query}}\".",
+      "semester_label": "{{major}} – الفصل الدراسي {{semester}}",
+      "no_major_courses": "لا توجد مقررات لتخصص {{major}} بعد. يرجى المراجعة لاحقًا.",
+      "no_courses_available": "لا توجد مقررات متاحة بعد."
+    }
   },
   "instructor": {
     "dashboard_overview": "نظرة عامة",
@@ -289,7 +302,9 @@
       "logout": "تسجيل الخروج",
       "danger_title": "احذر",
       "danger_desc": "حذف حسابك وجميع بياناتك بشكل دائم. لا يمكن التراجع عن هذا الإجراء.",
-      "delete": "حذف الحساب"
+      "delete": "حذف الحساب",
+      "major": "التخصص",
+      "major_placeholder": "اختر تخصصك"
     },
     "appearance": {
       "title": "المظهر",

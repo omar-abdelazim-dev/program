@@ -40,7 +40,7 @@ export const replyToQuestion = async (req, res) => {
 
     const question = await Question.findById(id).populate('course', 'instructor');
 
-    if (!question) {
+    if (!question || !question.course) {
       return res.status(404).json({ message: 'Question not found' });
     }
 

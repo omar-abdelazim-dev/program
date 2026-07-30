@@ -74,23 +74,44 @@ export default function HomepageManager({ user }) {
         <h3 style={{ fontSize: '1.2rem', fontWeight: '700', margin: 0, color: 'var(--text-primary)' }}>Hero Section</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <InputField
-            label="Hero Title"
+            label="Hero Title (English)"
             value={content?.hero?.title || ''}
             onChange={(e) => handleChange('hero', 'title', e.target.value)}
             placeholder="e.g. Ready to level up, {name}?"
           />
+          <InputField
+            label="Hero Title (Arabic)"
+            value={content?.hero?.titleAr || ''}
+            onChange={(e) => handleChange('hero', 'titleAr', e.target.value)}
+            placeholder="مثال: جاهز للارتقاء بمستواك؟"
+            style={{ direction: 'rtl', textAlign: 'right' }}
+          />
           <TextareaField
-            label="Hero Subtitle"
+            label="Hero Subtitle (English)"
             value={content?.hero?.subtitle || ''}
             onChange={(e) => handleChange('hero', 'subtitle', e.target.value)}
             rows={2}
           />
+          <TextareaField
+            label="Hero Subtitle (Arabic)"
+            value={content?.hero?.subtitleAr || ''}
+            onChange={(e) => handleChange('hero', 'subtitleAr', e.target.value)}
+            rows={2}
+            style={{ direction: 'rtl', textAlign: 'right' }}
+          />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
             <InputField
-              label="Primary Button Text"
+              label="Primary Button Text (English)"
               placeholder="e.g. Explore Courses"
               value={content?.hero?.primaryButtonText || ''}
               onChange={(e) => handleChange('hero', 'primaryButtonText', e.target.value)}
+            />
+            <InputField
+              label="Primary Button Text (Arabic)"
+              placeholder="مثال: استكشف الدورات"
+              value={content?.hero?.primaryButtonTextAr || ''}
+              onChange={(e) => handleChange('hero', 'primaryButtonTextAr', e.target.value)}
+              style={{ direction: 'rtl', textAlign: 'right' }}
             />
             <InputField
               label="Primary Button URL"
