@@ -27,8 +27,16 @@ export default function StudentLayout({
 
   const toggleLanguage = () => {
     const newLang = i18n.language === "en" ? "ar" : "en";
+    localStorage.setItem("student_lang", newLang);
     i18n.changeLanguage(newLang);
   };
+
+  useEffect(() => {
+    const savedLang = localStorage.getItem("student_lang");
+    if (savedLang && i18n.language !== savedLang) {
+      i18n.changeLanguage(savedLang);
+    }
+  }, []);
   
   const showSearch = location.pathname === '/student' || location.pathname === '/student/dashboard' || location.pathname === '/student/explore';
 
@@ -228,7 +236,7 @@ export default function StudentLayout({
                 fontFamily: 'Inter, sans-serif'
               }}
             >
-              {i18n.language === "ar" ? "EN" : "عربي"}
+              {i18n.language === "ar" ? "EN" : "AR"}
             </button>
 
             <button

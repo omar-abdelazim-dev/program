@@ -233,8 +233,16 @@ export default function AdminPortal({
 
   const toggleLanguage = () => {
     const newLang = i18n.language === "en" ? "ar" : "en";
+    localStorage.setItem("admin_lang", newLang);
     i18n.changeLanguage(newLang);
   };
+
+  useEffect(() => {
+    const savedLang = localStorage.getItem("admin_lang");
+    if (savedLang && i18n.language !== savedLang) {
+      i18n.changeLanguage(savedLang);
+    }
+  }, []);
 
   const [activeTab, setActiveTab] = useState("dashboard_overview");
   // Data States

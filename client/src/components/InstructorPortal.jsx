@@ -30,8 +30,16 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
 
   const toggleLanguage = () => {
     const newLang = i18n.language === "en" ? "ar" : "en";
+    localStorage.setItem("instructor_lang", newLang);
     i18n.changeLanguage(newLang);
   };
+
+  useEffect(() => {
+    const savedLang = localStorage.getItem("instructor_lang");
+    if (savedLang && i18n.language !== savedLang) {
+      i18n.changeLanguage(savedLang);
+    }
+  }, []);
 
   // Modals
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -309,7 +317,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                 fontFamily: 'Inter, sans-serif'
               }}
             >
-              {i18n.language === "ar" ? "EN" : "عربي"}
+              {i18n.language === "ar" ? "EN" : "AR"}
             </button>
 
             <button

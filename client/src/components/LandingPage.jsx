@@ -115,7 +115,7 @@ function BenefitList({ benefits, variant }) {
 
 export default function LandingPage() {
   return (
-    <div className="landing-page">
+    <div className="landing-page" dir="ltr">
       <header className="landing-hero">
         <div className="landing-hero__shapes" aria-hidden="true">
           <span className="landing-shape landing-shape--square" />
