@@ -1,10 +1,13 @@
+import { useTranslation } from 'react-i18next';
+
 export default function PrivacyPage() {
+  const { t } = useTranslation();
   return (
     <div className="static-page">
-      <h1 className="static-page-title">Privacy Policy</h1>
+      <h1 className="static-page-title">{t('static_pages.privacy.title')}</h1>
       <div className="static-page-coming-soon">
-        <p>Our Privacy Policy is being finalized and will be published here soon.</p>
-        <p>In the meantime, questions can be sent to our support team via the Contact page.</p>
+        <p>{t('static_pages.privacy.coming_soon')}</p>
+        <p>{t('static_pages.privacy.contact_support')}</p>
       </div>
     </div>
   );

@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../api/axios';
 import FullPageLoader from './FullPageLoader';
 
 export default function CoursePage({ cart = [], setCart }) {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -37,7 +39,7 @@ export default function CoursePage({ cart = [], setCart }) {
         }
       } catch (err) {
         if (err.code === 'ERR_CANCELED') return;
-        setError(err.response?.data?.message || 'Failed to fetch course');
+        setError(err.response?.data?.message || t('course_page.fetch_error'));
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
@@ -56,14 +58,14 @@ export default function CoursePage({ cart = [], setCart }) {
       if (err.response?.status === 409) {
         setIsEnrolled(true);
       } else {
-        setEnrollError(err.response?.data?.message || 'Failed to enroll');
+        setEnrollError(err.response?.data?.message || t('course_page.enroll_error'));
       }
     } finally {
       setIsEnrolling(false);
     }
   };
 
-  if (loading) return <FullPageLoader message="Loading course details..." />;
+  if (loading) return <FullPageLoader message={t('course_page.loading')} />;
   if (error) return <div style={{ padding: '100px', textAlign: 'center', color: '#ef4444', fontSize: '1.2rem' }}>{error}</div>;
   if (!course) return null;
 
@@ -74,7 +76,7 @@ export default function CoursePage({ cart = [], setCart }) {
       <div className="solid-card" style={{ padding: '40px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
         <button onClick={() => navigate(fromDashboard ? '/student/dashboard' : '/student')} className="back-arrow-btn" style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '0', marginBottom: '24px', fontSize: '0.95rem', fontWeight: '500' }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-          {fromDashboard ? 'Back to Dashboard' : 'Back to Explore'}
+          {fromDashboard ? t('course_page.back_dashboard') : t('course_page.back_explore')}
         </button>
         
         <span style={{ display: 'inline-flex', padding: '6px 14px', background: 'rgba(249, 115, 22, 0.1)', color: 'var(--color-accent)', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px', boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5)' }}>
@@ -106,8 +108,8 @@ export default function CoursePage({ cart = [], setCart }) {
               {(course.instructor?.name || '?').charAt(0).toUpperCase()}
             </div>
             <div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '600', marginBottom: '4px' }}>Instructor</div>
-              <div style={{ fontWeight: '700', fontSize: '1.2rem', color: 'var(--text-primary)' }}>{course.instructor?.name || 'Instructor'}</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '600', marginBottom: '4px' }}>{t('course_page.instructor_label')}</div>
+              <div style={{ fontWeight: '700', fontSize: '1.2rem', color: 'var(--text-primary)' }}>{course.instructor?.name || t('course_page.instructor_fallback')}</div>
             </div>
           </div>
 
@@ -118,20 +120,20 @@ export default function CoursePage({ cart = [], setCart }) {
                 onClick={() => setActiveTab('syllabus')}
                 style={{ paddingBottom: '16px', borderRadius: '0' }}
               >
-                Course Syllabus
+                {t('course_page.syllabus')}
               </button>
             </div>
 
             {activeTab === 'syllabus' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <h3 style={{ fontSize: '1.3rem', fontWeight: '700', margin: 0 }}>Lessons</h3>
-                  <span style={{ color: 'var(--text-secondary)', fontWeight: '600', fontSize: '0.9rem' }}>{lessons.length} lesson{lessons.length === 1 ? '' : 's'}</span>
+                  <h3 style={{ fontSize: '1.3rem', fontWeight: '700', margin: 0 }}>{t('course_page.lessons_title')}</h3>
+                  <span style={{ color: 'var(--text-secondary)', fontWeight: '600', fontSize: '0.9rem' }}>{lessons.length} {lessons.length === 1 ? t('course_page.lesson_singular') : t('course_page.lesson_plural')}</span>
                 </div>
 
                 {lessons.length === 0 ? (
                   <div style={{ padding: '32px', textAlign: 'center', background: 'var(--bg-main)', borderRadius: '12px', color: 'var(--text-secondary)', boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5)' }}>
-                    No lessons have been added to this course yet.
+                    {t('course_page.no_lessons')}
                   </div>
                 ) : lessons.map((lesson, i) => (
                   <div key={lesson._id} style={{ padding: '20px 24px', background: 'var(--bg-main)', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '16px', boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5)' }}>
@@ -156,7 +158,7 @@ export default function CoursePage({ cart = [], setCart }) {
 
           <div style={{ display: 'flex', alignItems: 'baseline', marginTop: '4px' }}>
             <h2 style={{ fontSize: '2.2rem', fontWeight: '800', margin: 0, color: 'var(--text-primary)' }}>
-              {course.price === 0 ? 'Free' : `EGP ${course.price}`}
+              {course.price === 0 ? t('course_page.free') : `${t('course_page.currency')} ${course.price}`}
             </h2>
           </div>
 
@@ -165,11 +167,11 @@ export default function CoursePage({ cart = [], setCart }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '8px' }}>
             {isEnrolled ? (
               <button onClick={() => navigate(`/learn/${course._id}`)} className="solid-btn" style={{ width: '100%', height: '54px', fontSize: '1.05rem', background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5)' }}>
-                Go to Course
+                {t('course_page.go_to_course')}
               </button>
             ) : (
               <button onClick={handleEnroll} disabled={isEnrolling} className="solid-btn" style={{ width: '100%', height: '54px', fontSize: '1.05rem', opacity: isEnrolling ? 0.7 : 1, cursor: isEnrolling ? 'not-allowed' : 'pointer' }}>
-                {isEnrolling ? 'Enrolling...' : 'Enroll Now'}
+                {isEnrolling ? t('course_page.enrolling') : t('course_page.enroll_now')}
               </button>
             )}
 
@@ -194,7 +196,7 @@ export default function CoursePage({ cart = [], setCart }) {
                   }
                 }}
               >
-                {cart.find(c => c._id === course._id) ? 'Added to Cart ✓' : 'Add to Cart'}
+                {cart.find(c => c._id === course._id) ? t('course_page.added_to_cart') : t('course_page.add_to_cart')}
               </button>
             )}
           </div>

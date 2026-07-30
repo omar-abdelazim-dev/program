@@ -23,7 +23,7 @@ export default function StudentLayout({
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const toggleLanguage = () => {
     const newLang = i18n.language === "en" ? "ar" : "en";
@@ -76,7 +76,7 @@ export default function StudentLayout({
           <button
             className={`sidebar-icon-btn ${activeTab === "home" ? "active" : ""}`}
             onClick={() => navigate("/student")}
-            title="Home"
+            title={t('student.sidebar.home', 'Home')}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -100,7 +100,7 @@ export default function StudentLayout({
               <button
                 className={`sidebar-icon-btn ${activeTab === "my-courses" ? "active" : ""}`}
                 onClick={() => navigate("/student/dashboard")}
-                title="My Courses"
+                title={t('student.sidebar.my_courses', 'My Courses')}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -122,7 +122,7 @@ export default function StudentLayout({
               <button
                 className={`sidebar-icon-btn ${activeTab === "dashboard" ? "active" : ""}`}
                 onClick={() => navigate("/student/dashboard")}
-                title="Dashboard"
+                title={t('student.sidebar.dashboard', 'Dashboard')}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -143,7 +143,7 @@ export default function StudentLayout({
               <button
                 className={`sidebar-icon-btn ${activeTab === "explore" ? "active" : ""}`}
                 onClick={() => navigate("/student/explore")}
-                title="Explore"
+                title={t('student.sidebar.explore', 'Explore')}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -169,7 +169,7 @@ export default function StudentLayout({
           <button
             className={`sidebar-icon-btn ${activeTab === "settings" ? "active" : ""}`}
             onClick={() => navigate("/student/settings")}
-            title="Settings"
+            title={t('student.sidebar.settings', 'Settings')}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -216,7 +216,7 @@ export default function StudentLayout({
                 </svg>
                 <input
                   type="text"
-                  placeholder="Search courses, lessons, topics..."
+                  placeholder={t('student.nav.search_placeholder', 'Search courses, lessons, topics...')}
                   value={searchQuery ?? ""}
                   onChange={(e) => onSearchChange?.(e.target.value)}
                 />
@@ -337,13 +337,13 @@ export default function StudentLayout({
 
               <div className="profile-dropdown" style={{ width: "320px" }}>
                 <div className="dropdown-name" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span>Notifications</span>
+                  <span>{t('student.nav.notifications', 'Notifications')}</span>
                   {notifications && notifications.length > 0 && (
                     <button 
                       onClick={() => setNotifications([])}
                       style={{ background: 'none', border: 'none', color: 'var(--color-accent)', cursor: 'pointer', fontSize: '0.8rem', padding: 0 }}
                     >
-                      Clear all
+                      {t('student.nav.clear_all', 'Clear all')}
                     </button>
                   )}
                 </div>
@@ -357,7 +357,7 @@ export default function StudentLayout({
                       fontSize: "0.9rem",
                     }}
                   >
-                    No new notifications
+                    {t('student.nav.no_notifications', 'No new notifications')}
                   </div>
                 ) : (
                   <div style={{ maxHeight: "300px", overflowY: "auto" }}>

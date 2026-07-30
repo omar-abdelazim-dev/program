@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import api from "../api/axios";
 import CourseCard from "./CourseCard";
+import { useTranslation } from "react-i18next";
 import { getMajor } from "../data/majors";
 import "../styles/home.css";
 
@@ -12,6 +13,8 @@ const SEARCH_DEBOUNCE_MS = 300;
 // scrollable row of suggested courses per semester. Category-driven
 // browsing lives on the separate /student/explore page now.
 export default function ExploreTab({ user, searchQuery = "" }) {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.dir() === 'rtl';
   const firstName = user?.name ? user.name.split(" ")[0] : "Student";
   const major = getMajor(user?.major);
 
@@ -115,18 +118,30 @@ export default function ExploreTab({ user, searchQuery = "" }) {
           }}
         >
           <div className="hero-content">
-            <h1 className="saas-page-title" style={{ color: "var(--text-primary)", marginBottom: "8px" }}>
-              {websiteContent?.homepage?.hero?.title
+            <h1
+              className="saas-page-title"
+              style={{ color: "var(--text-primary)", marginBottom: "8px" }}
+            >
+              {isRTL && websiteContent?.homepage?.hero?.titleAr
+                ? websiteContent.homepage.hero.titleAr
+                : websiteContent?.homepage?.hero?.title
                 ? websiteContent.homepage.hero.title.replace("{name}", firstName)
-                : `Welcome back, ${firstName}`}
+                : t('student.home.welcome_name', 'Welcome back, {{name}}', { name: firstName })}
             </h1>
-            <p className="saas-description" style={{ color: "var(--text-secondary)", marginBottom: "0" }}>
-              {major
-                ? `Here's what's next in your ${major.label} path.`
-                : websiteContent?.homepage?.hero?.subtitle ||
-                  "Discover new skills, dive into hot topics, and learn from the industry's best instructors."}
+            <p
+              className="saas-description"
+              style={{ color: "var(--text-secondary)", marginBottom: "0" }}
+            >
+              {isRTL && websiteContent?.homepage?.hero?.subtitleAr
+                ? websiteContent.homepage.hero.subtitleAr
+                : websiteContent?.homepage?.hero?.subtitle
+                ? websiteContent.homepage.hero.subtitle
+                : major
+                ? t('student.home.subtitle_major', "Here's what's next in your {{major}} path.", { major: major.label })
+                : t('student.home.subtitle_default', "Discover new skills, dive into hot topics, and learn from the industry's best instructors.")}
             </p>
           </div>
+
         </div>
       )}
 
@@ -154,8 +169,8 @@ export default function ExploreTab({ user, searchQuery = "" }) {
 
       {!major && !debouncedSearch && user?.role === 'student' && (
         <div className="home-major-prompt animate-entrance">
-          <span>Set your major in Settings to personalize your home feed with courses for your program.</span>
-          <Link to="/student/settings">Set your major →</Link>
+          <span>{t('student.home.set_major_prompt', 'Set your major in Settings to personalize your home feed with courses for your program.')}</span>
+          <Link to="/student/settings">{t('student.home.set_major_link', 'Set your major →')}</Link>
         </div>
       )}
 
@@ -164,7 +179,7 @@ export default function ExploreTab({ user, searchQuery = "" }) {
           {debouncedSearch ? (
             <section className="dashboard-section animate-entrance">
               <h2 style={{ color: "var(--text-primary)", margin: "0 0 20px 0", fontSize: "1.5rem" }}>
-                Search results for "{debouncedSearch}"
+                {t('student.home.search_results_for', 'Search results for "{{query}}"', { query: debouncedSearch })}
               </h2>
               {searchLoading ? skeletonGrid : searchResults.length > 0 ? (
                 <div className="cc-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "24px" }}>
@@ -174,7 +189,7 @@ export default function ExploreTab({ user, searchQuery = "" }) {
                 </div>
               ) : (
                 <p style={{ color: "var(--text-secondary)", padding: "32px 0", textAlign: "center" }}>
-                  No courses found for "{debouncedSearch}".
+                  {t('student.home.no_results_for', 'No courses found for "{{query}}".', { query: debouncedSearch })}
                 </p>
               )}
             </section>
@@ -186,7 +201,7 @@ export default function ExploreTab({ user, searchQuery = "" }) {
                 .filter((semester) => (semesterCourses[semester] || []).length > 0)
                 .map((semester) => (
                   <section key={semester} className="home-semester-section animate-entrance">
-                    <h2>{major.label} – Semester {semester}</h2>
+                    <h2>{t('student.home.semester_label', '{{major}} – Semester {{semester}}', { major: major.label, semester })}</h2>
                     <div className="home-semester-track">
                       {semesterCourses[semester].map((course, idx) => (
                         <CourseCard key={course._id || idx} course={course} idx={idx} />
@@ -196,13 +211,13 @@ export default function ExploreTab({ user, searchQuery = "" }) {
                 ))
             ) : (
               <p style={{ color: "var(--text-secondary)", padding: "32px 0", textAlign: "center" }}>
-                No {major.label} courses are available yet. Check back soon.
+                {t('student.home.no_major_courses', 'No {{major}} courses are available yet. Check back soon.', { major: major.label })}
               </p>
             )
           ) : (
             <section className="dashboard-section animate-entrance">
               <h2 style={{ color: "var(--text-primary)", margin: "0 0 20px 0", fontSize: "1.5rem" }}>
-                Recommended for You
+                {t('student.recommended_for_you', 'Recommended for You')}
               </h2>
               {fallbackLoading ? skeletonGrid : fallbackCourses.length > 0 ? (
                 <div className="cc-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "24px" }}>
@@ -212,7 +227,7 @@ export default function ExploreTab({ user, searchQuery = "" }) {
                 </div>
               ) : (
                 <p style={{ color: "var(--text-secondary)", padding: "32px 0", textAlign: "center" }}>
-                  No courses available yet.
+                  {t('student.home.no_courses_available', 'No courses available yet.')}
                 </p>
               )}
             </section>

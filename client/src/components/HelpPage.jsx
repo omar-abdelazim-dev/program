@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import api from '../api/axios';
 
+import { useTranslation } from 'react-i18next';
 export default function HelpPage() {
+  const { t } = useTranslation();
   const [faqs, setFaqs] = useState([]);
   const [supportEmail, setSupportEmail] = useState('support@program.com');
   const [isLoading, setIsLoading] = useState(true);
@@ -21,20 +23,19 @@ export default function HelpPage() {
 
   return (
     <div className="static-page">
-      <h1 className="static-page-title">Help &amp; Support</h1>
+      <h1 className="static-page-title">{t('static_pages.help.title')}</h1>
       <p className="static-page-intro">
-        Have a question? Check the FAQs below, or reach us directly at{' '}
-        <a href={`mailto:${supportEmail}`}>{supportEmail}</a>.
+        {t('static_pages.help.intro')} <a href={`mailto:${supportEmail}`}>{supportEmail}</a>.
       </p>
 
       {isLoading ? (
         <div className="static-page-skeleton">
-          <div className="skeleton-line skeleton-shimmer" style={{ width: '90%' }} />
-          <div className="skeleton-line skeleton-shimmer" style={{ width: '75%' }} />
-          <div className="skeleton-line skeleton-shimmer" style={{ width: '80%' }} />
+          <div className="skeleton-line skeleton-shimmer" style={{ width: '100%', height: '60px' }} />
+          <div className="skeleton-line skeleton-shimmer" style={{ width: '100%', height: '60px' }} />
+          <div className="skeleton-line skeleton-shimmer" style={{ width: '100%', height: '60px' }} />
         </div>
       ) : faqs.length === 0 ? (
-        <p className="static-page-empty">No FAQs published yet — email us and we'll help directly.</p>
+        <div className="static-page-empty">{t('static_pages.help.empty_faqs')}</div>
       ) : (
         <div className="static-page-faq-list">
           {faqs.map((f) => (

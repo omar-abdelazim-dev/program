@@ -12,7 +12,8 @@
     "no_reviews_yet": "No reviews yet",
     "instructor": "Instructor",
     "student": "Student",
-    "admin": "Admin"
+    "admin": "Admin",
+    "reviews": "Reviews"
   },
   "nav": {
     "home": "Home",
@@ -37,7 +38,67 @@
     "continue_learning": "Continue Learning",
     "completed": "Completed",
     "certificates": "Certificates",
-    "progress": "Progress"
+    "progress": "Progress",
+    "sidebar": {
+      "explore": "Explore",
+      "my_courses": "My Courses",
+      "dashboard": "Dashboard",
+      "courses": "Courses",
+      "browse_category": "Browse by category",
+      "all_courses": "All Courses",
+      "settings": "Settings",
+      "home": "Home"
+    },
+    "nav": {
+      "search_placeholder": "Search courses, lessons, topics...",
+      "notifications": "Notifications",
+      "clear_all": "Clear all",
+      "no_notifications": "No new notifications"
+    },
+    "learning": {
+      "loading_portal": "Loading Learning Portal...",
+      "load_error": "Failed to load learning portal.",
+      "complete": "Complete",
+      "video_unavailable": "Video not available",
+      "overview": "Overview",
+      "qa": "Q&A",
+      "attachments": "Attachments",
+      "lesson_placeholder": "In this lesson, we will dive deep into the core concepts of Enterprise Architecture. You will learn how to structure large-scale applications so that they are maintainable, scalable, and easy for new developers to onboard onto. Make sure to download the attached cheat sheet before proceeding!",
+      "no_questions": "No questions have been asked yet. Be the first to start a discussion!",
+      "ask_question": "Ask a Question",
+      "resources": "Resources",
+      "document": "Document",
+      "no_attachments": "No attachments are available for this lesson.",
+      "course_content": "Course Content",
+      "video": "Video",
+      "current_lesson": "Current Lesson",
+      "up_next": "Up Next",
+      "min": "min",
+      "report_issue": "Report issue",
+      "share": "Share",
+      "share_copied": "Share link copied to clipboard"
+    },
+    "loading_courses": "Loading your courses...",
+    "enrolled_courses": "Enrolled Courses",
+    "completed_lessons": "Completed Lessons",
+    "courses_completed": "Courses Completed",
+    "in_progress": "In Progress",
+    "no_enrolled_courses": "You haven't enrolled in any courses yet.",
+    "nothing_in_progress": "Nothing in progress right now — nice work keeping up!",
+    "explore_catalog": "Explore Catalog",
+    "no_completed_courses": "You haven't completed any courses yet. Keep learning!",
+    "home": {
+      "welcome_name": "Welcome back, {{name}}",
+      "subtitle_major": "Here's what's next in your {{major}} path.",
+      "subtitle_default": "Discover new skills, dive into hot topics, and learn from the industry's best instructors.",
+      "set_major_prompt": "Set your major in Settings to personalize your home feed with courses for your program.",
+      "set_major_link": "Set your major →",
+      "search_results_for": "Search results for \"{{query}}\"",
+      "no_results_for": "No courses found for \"{{query}}\".",
+      "semester_label": "{{major}} – Semester {{semester}}",
+      "no_major_courses": "No {{major}} courses are available yet. Check back soon.",
+      "no_courses_available": "No courses available yet."
+    }
   },
   "instructor": {
     "dashboard_overview": "Dashboard Overview",
@@ -184,5 +245,147 @@
       "year_5": "5th Year",
       "graduated": "Graduated"
     }
+  },
+  "settings": {
+    "title": "Settings",
+    "nav": {
+      "profile": "Profile",
+      "appearance": "Appearance",
+      "account": "Account"
+    },
+    "profile": {
+      "title": "Profile",
+      "success": "Profile updated successfully.",
+      "error": "Failed to update profile",
+      "change_picture": "Change picture",
+      "first_name": "First Name",
+      "first_name_placeholder": "e.g. John",
+      "last_name": "Last Name",
+      "last_name_placeholder": "e.g. Doe",
+      "phone": "Phone Number",
+      "phone_placeholder": "e.g. +1 234 567 890",
+      "bio": "Bio / Goals",
+      "bio_placeholder": "Write a short bio or your goals...",
+      "save": "Save changes",
+      "saving": "Saving..."
+    },
+    "account": {
+      "title": "Account",
+      "desc": "Manage your account details and security.",
+      "info_title": "Account Information",
+      "email": "Email Address",
+      "department": "Department / College",
+      "department_placeholder": "e.g. Computer Science, Engineering",
+      "course_provided": "Course Provided",
+      "course_provided_placeholder": "E.g. Web Development 101",
+      "linkedin": "LinkedIn URL",
+      "social": "Other Social / Website",
+      "save": "Save Account Info",
+      "saving": "Saving...",
+      "success": "Account details updated successfully.",
+      "error": "Failed to update account details",
+      "change_password_title": "Change Password",
+      "current_password": "Current Password",
+      "current_password_placeholder": "Enter your current password",
+      "new_password": "New Password",
+      "new_password_placeholder": "Enter a new password",
+      "confirm_password": "Confirm New Password",
+      "confirm_password_placeholder": "Confirm your new password",
+      "update_password": "Update password",
+      "updating_password": "Updating...",
+      "password_mismatch": "New passwords do not match.",
+      "password_length": "New password must be at least 6 characters.",
+      "password_success": "Password updated successfully.",
+      "password_error": "Failed to change password",
+      "sessions_title": "Device Sessions",
+      "sessions_desc": "Sign out of Program on this device. You will need to log back in to access your dashboard.",
+      "logout": "Log out",
+      "danger_title": "Danger Zone",
+      "danger_desc": "Permanently delete your account and all of your data. This action cannot be undone.",
+      "delete": "Delete Account",
+      "major": "Major",
+      "major_placeholder": "Select your major"
+    },
+    "appearance": {
+      "title": "Appearance",
+      "desc": "Choose how Program looks on this device.",
+      "dark": "Dark",
+      "light": "Light"
+    }
+  },
+  "footer": {
+    "company": "Company",
+    "about": "About Us",
+    "become_instructor": "Become an Instructor",
+    "support": "Support",
+    "contact": "Contact Us",
+    "help": "Help & Support",
+    "legal": "Legal",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "get_app": "Get the App",
+    "mobile_app": "Mobile App",
+    "copyright": "© {{year}} Program. All rights reserved."
+  },
+  "static_pages": {
+    "about": {
+      "title": "About Us",
+      "empty": "This page hasn't been filled in yet — check back soon.",
+      "story": "Our Story",
+      "mission": "Mission",
+      "vision": "Vision",
+      "values": "Our Values",
+      "journey": "Our Journey",
+      "team": "Meet the Team"
+    },
+    "contact": {
+      "title": "Contact Us",
+      "support": "Support",
+      "business": "Business Inquiries",
+      "phone": "Phone",
+      "address": "Address",
+      "hours": "Business Hours"
+    },
+    "help": {
+      "title": "Help & Support",
+      "intro": "Have a question? Check the FAQs below, or reach us directly at",
+      "empty_faqs": "No FAQs published yet — email us and we'll help directly."
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "coming_soon": "Our Terms of Service are being finalized and will be published here soon.",
+      "contact_support": "In the meantime, questions can be sent to our support team via the Contact page."
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "coming_soon": "Our Privacy Policy is being finalized and will be published here soon.",
+      "contact_support": "In the meantime, questions can be sent to our support team via the Contact page."
+    },
+    "mobile": {
+      "title": "Mobile App",
+      "coming_soon": "We're working on native mobile apps for Program. Coming soon.",
+      "works_in_browser": "For now, Program works great in your mobile browser."
+    }
+  },
+  "course_page": {
+    "loading": "Loading course details...",
+    "fetch_error": "Failed to fetch course",
+    "enroll_error": "Failed to enroll",
+    "back_dashboard": "Back to Dashboard",
+    "back_explore": "Back to Explore",
+    "instructor_label": "Instructor",
+    "instructor_fallback": "Instructor",
+    "syllabus": "Course Syllabus",
+    "lessons_title": "Lessons",
+    "lesson_singular": "lesson",
+    "lesson_plural": "lessons",
+    "no_lessons": "No lessons have been added to this course yet.",
+    "free": "Free",
+    "currency": "EGP",
+    "go_to_course": "Go to Course",
+    "enrolling": "Enrolling...",
+    "enroll_now": "Enroll Now",
+    "added_to_cart": "Added to Cart ✓",
+    "add_to_cart": "Add to Cart"
   }
 }
