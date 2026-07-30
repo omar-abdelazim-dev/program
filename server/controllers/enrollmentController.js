@@ -74,10 +74,15 @@ export const getMyEnrollments = async (req, res) => {
       })
       .sort({ updatedAt: -1 });
 
+    // Courses can be deleted while an enrollment still references them
+    // (deleteCourse intentionally leaves enrollments for history) — skip those
+    // rather than crashing on the null populated course.
+    const validEnrollments = enrollments.filter((enrollment) => enrollment.course);
+
     // Attach a computed progress percentage to each enrollment so the
     // frontend doesn't have to fetch lesson counts separately for every card.
     const withProgress = await Promise.all(
-      enrollments.map(async (enrollment) => {
+      validEnrollments.map(async (enrollment) => {
         // Fetch all lessons for the course (via its sections), sorted by order
         const sections = await Section.find({ course: enrollment.course._id });
         const sectionIds = sections.map(s => s._id);

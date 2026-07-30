@@ -3,6 +3,7 @@ import notyf from '../utils/notyf';
 import api from '../api/axios';
 import ThreeDotMenu from "./common/ThreeDotMenu";
 import FullPageLoader from './FullPageLoader';
+import { useTranslation } from 'react-i18next';
 
 
 const StarIcon = ({ filled }) => (
@@ -41,6 +42,7 @@ const StarRating = ({ rating, size = 18 }) => (
 );
 
 export default function InstructorReviewsTab() {
+  const { t } = useTranslation();
   const [reviews, setReviews] = useState([]);
   const [averageRating, setAverageRating] = useState(0);
   const [totalReviews, setTotalReviews] = useState(0);
@@ -54,7 +56,7 @@ export default function InstructorReviewsTab() {
       setTotalReviews(res.data.totalReviews || 0);
     } catch (err) {
       console.error(err);
-      notyf.error('Failed to load reviews');
+      notyf.error(t('instructor.notyf.load_reviews_failed'));
     } finally {
       setLoading(false);
     }
@@ -67,16 +69,16 @@ export default function InstructorReviewsTab() {
   const handleReport = async (reviewId) => {
     try {
       await api.patch(`/reviews/${reviewId}/report`);
-      notyf.success('Review reported to admins');
+      notyf.success(t('instructor.notyf.review_reported'));
       fetchReviews();
     } catch (err) {
       console.error(err);
-      notyf.error(err.response?.data?.message || 'Failed to report review');
+      notyf.error(err.response?.data?.message || t('instructor.notyf.review_report_failed', 'Failed to report review'));
     }
   };
 
   if (loading) {
-    return <FullPageLoader message="Loading reviews..." fullScreen={false} />;
+    return <FullPageLoader message={t('instructor.reviews.loading_reviews')} fullScreen={false} />;
   }
 
   return (
@@ -123,10 +125,15 @@ export default function InstructorReviewsTab() {
               marginBottom: '4px',
             }}
           >
-            Overall Rating
+            {t('instructor.reviews.overall_rating')}
           </div>
           <div style={{ fontSize: '1.1rem', color: 'var(--text-h)' }}>
-            Based on <strong>{totalReviews}</strong> student{totalReviews !== 1 ? 's' : ''} review{totalReviews !== 1 ? 's' : ''}
+            {t('instructor.reviews.based_on_reviews', { count: totalReviews }).split(totalReviews).map((part, index, array) => (
+              <React.Fragment key={index}>
+                {part}
+                {index < array.length - 1 && <strong>{totalReviews}</strong>}
+              </React.Fragment>
+            ))}
           </div>
         </div>
       </div>
@@ -145,8 +152,8 @@ export default function InstructorReviewsTab() {
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
             </svg>
           </div>
-          <h3 style={{ fontSize: '1.25rem', color: 'var(--text-h)', marginBottom: '8px', fontWeight: '600' }}>No reviews yet</h3>
-          <p style={{ color: 'var(--c-sub)', maxWidth: '400px', lineHeight: '1.6' }}>Once students review your courses, their ratings and feedback will appear here.</p>
+          <h3 style={{ fontSize: '1.25rem', color: 'var(--text-h)', marginBottom: '8px', fontWeight: '600' }}>{t('instructor.reviews.no_reviews_yet')}</h3>
+          <p style={{ color: 'var(--c-sub)', maxWidth: '400px', lineHeight: '1.6' }}>{t('instructor.reviews.no_reviews_desc')}</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>

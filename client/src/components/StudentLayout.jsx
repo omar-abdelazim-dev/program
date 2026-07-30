@@ -6,10 +6,7 @@ import studentLogo from "../assets/logo.png";
 import Footer from "./Footer";
 import "../styles/student-layout.css";
 import "../styles/static-pages.css";
-
-// The Course model's category field is freeform text; these are the only
-// values actually in use in the database today (see Course.category).
-const COURSE_CATEGORIES = ["Business", "Data", "Design", "Development"];
+import { useTranslation } from 'react-i18next';
 
 export default function StudentLayout({
   user,
@@ -26,11 +23,26 @@ export default function StudentLayout({
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language === "en" ? "ar" : "en";
+    localStorage.setItem("student_lang", newLang);
+    i18n.changeLanguage(newLang);
+  };
+
+  useEffect(() => {
+    const savedLang = localStorage.getItem("student_lang");
+    if (savedLang && i18n.language !== savedLang) {
+      i18n.changeLanguage(savedLang);
+    }
+  }, []);
   
-  const showSearch = location.pathname === '/student' || location.pathname === '/student/dashboard';
+  const showSearch = location.pathname === '/student' || location.pathname === '/student/dashboard' || location.pathname === '/student/explore';
 
   // Derive active tab from pathname
-  let activeTab = "explore";
+  let activeTab = "home";
+  if (location.pathname === "/student/explore") activeTab = "explore";
   if (location.pathname.includes("/my-courses")) activeTab = "my-courses";
   if (location.pathname.includes("/dashboard")) activeTab = "dashboard";
   if (location.pathname.includes("/settings")) activeTab = "settings";
@@ -62,9 +74,9 @@ export default function StudentLayout({
 
         <nav className="sidebar-nav-top">
           <button
-            className={`sidebar-icon-btn ${activeTab === "explore" ? "active" : ""}`}
+            className={`sidebar-icon-btn ${activeTab === "home" ? "active" : ""}`}
             onClick={() => navigate("/student")}
-            title="Explore"
+            title={t('student.sidebar.home', 'Home')}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -78,7 +90,7 @@ export default function StudentLayout({
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10"
               />
             </svg>
           </button>
@@ -87,8 +99,8 @@ export default function StudentLayout({
             <>
               <button
                 className={`sidebar-icon-btn ${activeTab === "my-courses" ? "active" : ""}`}
-                onClick={() => navigate("/student/my-courses")}
-                title="My Courses"
+                onClick={() => navigate("/student/dashboard")}
+                title={t('student.sidebar.my_courses', 'My Courses')}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -110,7 +122,7 @@ export default function StudentLayout({
               <button
                 className={`sidebar-icon-btn ${activeTab === "dashboard" ? "active" : ""}`}
                 onClick={() => navigate("/student/dashboard")}
-                title="Dashboard"
+                title={t('student.sidebar.dashboard', 'Dashboard')}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -128,36 +140,27 @@ export default function StudentLayout({
                 </svg>
               </button>
 
-              <div className="courses-nav-wrapper">
-                <button
-                  className={`sidebar-icon-btn ${activeTab === "explore" && location.search.includes("category=") ? "active" : ""}`}
-                  onClick={() => navigate("/student")}
-                  title="Courses"
+              <button
+                className={`sidebar-icon-btn ${activeTab === "explore" ? "active" : ""}`}
+                onClick={() => navigate("/student/explore")}
+                title={t('student.sidebar.explore', 'Explore')}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                  </svg>
-                </button>
-                <div className="courses-nav-dropdown">
-                  <div className="courses-nav-dropdown-title">Browse by category</div>
-                  {COURSE_CATEGORIES.map((cat) => (
-                    <Link key={cat} to={`/student?category=${encodeURIComponent(cat)}`} className="courses-nav-dropdown-link">
-                      {cat}
-                    </Link>
-                  ))}
-                  <hr className="dropdown-divider" />
-                  <Link to="/student" className="courses-nav-dropdown-link">All Courses</Link>
-                </div>
-              </div>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+              </button>
             </>
           )}
         </nav>
@@ -166,7 +169,7 @@ export default function StudentLayout({
           <button
             className={`sidebar-icon-btn ${activeTab === "settings" ? "active" : ""}`}
             onClick={() => navigate("/student/settings")}
-            title="Settings"
+            title={t('student.sidebar.settings', 'Settings')}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -213,7 +216,7 @@ export default function StudentLayout({
                 </svg>
                 <input
                   type="text"
-                  placeholder="Search courses, lessons, topics..."
+                  placeholder={t('student.nav.search_placeholder', 'Search courses, lessons, topics...')}
                   value={searchQuery ?? ""}
                   onChange={(e) => onSearchChange?.(e.target.value)}
                 />
@@ -222,6 +225,20 @@ export default function StudentLayout({
           </div>
 
           <div className="header-right">
+            {/* Language Toggle */}
+            <button
+              className="utility-icon-btn"
+              onClick={toggleLanguage}
+              aria-label="Toggle language"
+              style={{
+                fontWeight: '600',
+                fontSize: '0.9rem',
+                fontFamily: 'Inter, sans-serif'
+              }}
+            >
+              {i18n.language === "ar" ? "EN" : "AR"}
+            </button>
+
             <button
               className="utility-icon-btn theme-toggle-btn"
               onClick={toggleTheme}
@@ -320,13 +337,13 @@ export default function StudentLayout({
 
               <div className="profile-dropdown" style={{ width: "320px" }}>
                 <div className="dropdown-name" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span>Notifications</span>
+                  <span>{t('student.nav.notifications', 'Notifications')}</span>
                   {notifications && notifications.length > 0 && (
                     <button 
                       onClick={() => setNotifications([])}
                       style={{ background: 'none', border: 'none', color: 'var(--color-accent)', cursor: 'pointer', fontSize: '0.8rem', padding: 0 }}
                     >
-                      Clear all
+                      {t('student.nav.clear_all', 'Clear all')}
                     </button>
                   )}
                 </div>
@@ -340,7 +357,7 @@ export default function StudentLayout({
                       fontSize: "0.9rem",
                     }}
                   >
-                    No new notifications
+                    {t('student.nav.no_notifications', 'No new notifications')}
                   </div>
                 ) : (
                   <div style={{ maxHeight: "300px", overflowY: "auto" }}>

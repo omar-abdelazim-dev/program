@@ -4,8 +4,10 @@ import {
   PieChart, Pie, Cell,
   ComposedChart, Bar, Line
 } from 'recharts';
+import { useTranslation } from 'react-i18next';
 
 const AdminAnalyticsTab = ({ revenueAnalytics, revenueAnalyticsLoading }) => {
+  const { t } = useTranslation();
   const [timeFilter, setTimeFilter] = useState('Last Year');
   const [isLightMode, setIsLightMode] = useState(
     () => document.body.classList.contains('light-mode')
@@ -56,8 +58,8 @@ const AdminAnalyticsTab = ({ revenueAnalytics, revenueAnalyticsLoading }) => {
   const totalInstructor = filteredSeries.reduce((s, i) => s + i.instructorEarnings, 0);
 
   const pieData = [
-    { name: 'Company Share',       value: totalCompany,    color: '#8b5cf6' },
-    { name: 'Instructor Earnings', value: totalInstructor, color: '#f97316' },
+    { name: t('admin.company_share', 'Company Share'), value: totalCompany, color: '#8b5cf6' },
+    { name: t('admin.instructor_earnings', 'Instructor Earnings'), value: totalInstructor, color: '#f97316' }
   ];
 
   if (revenueAnalyticsLoading) {
@@ -135,8 +137,8 @@ const AdminAnalyticsTab = ({ revenueAnalytics, revenueAnalyticsLoading }) => {
       {/* Header & Filters */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h2 style={{ fontSize: '1.8rem', margin: '0 0 4px 0', color: 'var(--text-h)' }}>Analytics</h2>
-          <div style={{ fontSize: '0.9rem', color: 'var(--c-sub)' }}>Financial performance over time.</div>
+          <h2 style={{ fontSize: "1.8rem", margin: "0 0 8px 0", color: "var(--text-h)" }}>{t('admin.financial_analytics', 'Financial Analytics')}</h2>
+          <div style={{ fontSize: "0.95rem", color: "var(--c-sub)" }}>{t('admin.financial_analytics_desc', 'Deep dive into revenue, payouts, and platform growth.')}</div>
         </div>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           {['Last 7 Days', 'Last 30 Days', 'Last 6 Months', 'Last Year'].map(filter => {
@@ -183,17 +185,17 @@ const AdminAnalyticsTab = ({ revenueAnalytics, revenueAnalyticsLoading }) => {
       <div className="glass-card stat-card" style={{ padding: '24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
           <div>
-            <h3 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', color: 'var(--text-h)' }}>Monthly Revenue vs Company Share</h3>
-            <div style={{ fontSize: '0.85rem', color: 'var(--c-sub)' }}>Comparing total platform revenue with company earnings month over month.</div>
+            <h3 style={{ margin: "0 0 4px 0", fontSize: "1.1rem", color: "var(--text-h)" }}>{t('admin.monthly_revenue_vs_company', 'Monthly Revenue vs Company Share')}</h3>
+            <div style={{ fontSize: "0.85rem", color: "var(--c-sub)" }}>{t('admin.monthly_revenue_vs_company_desc', 'Comparing total platform revenue with company earnings month over month.')}</div>
           </div>
           <div style={{ display: 'flex', gap: '16px', fontSize: '0.85rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <div style={{ width: '16px', height: '2px', background: '#10b981' }} />
-              <span style={{ color: 'var(--c-sub)' }}>Total Revenue</span>
+              <div style={{ width: '16px', height: '2px', background: '#10b981' }}></div>
+              <span style={{ color: 'var(--c-sub)' }}>{t('admin.total_revenue', 'Total Revenue')}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <div style={{ width: '16px', height: '2px', background: '#8b5cf6', borderBottom: '2px dashed #8b5cf6' }} />
-              <span style={{ color: 'var(--c-sub)' }}>Company Share</span>
+              <div style={{ width: '16px', height: '2px', background: '#8b5cf6', borderBottom: '2px dashed #8b5cf6' }}></div>
+              <span style={{ color: 'var(--c-sub)' }}>{t('admin.company_share', 'Company Share')}</span>
             </div>
           </div>
         </div>
@@ -227,8 +229,8 @@ const AdminAnalyticsTab = ({ revenueAnalytics, revenueAnalyticsLoading }) => {
         {/* Revenue Distribution – Pie Chart */}
         <div className="glass-card stat-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
           <div>
-            <h3 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', color: 'var(--text-h)' }}>Revenue Distribution</h3>
-            <div style={{ fontSize: '0.85rem', color: 'var(--c-sub)' }}>How revenue is split between the company (30%) and instructors.</div>
+            <h3 style={{ margin: "0 0 4px 0", fontSize: "1.1rem", color: "var(--text-h)" }}>{t('admin.revenue_distribution', 'Revenue Distribution')}</h3>
+            <div style={{ fontSize: "0.85rem", color: "var(--c-sub)" }}>{t('admin.revenue_distribution_desc', 'How revenue is split between the company (30%) and instructors.')}</div>
           </div>
 
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '40px', marginTop: '20px' }}>
@@ -261,19 +263,17 @@ const AdminAnalyticsTab = ({ revenueAnalytics, revenueAnalyticsLoading }) => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', fontWeight: '600', color: 'var(--text-h)' }}>
-                  <div style={{ width: '12px', height: '12px', borderRadius: '2px', background: '#8b5cf6' }} />
-                  Company Share
+                  <div style={{ width: '12px', height: '12px', borderRadius: '2px', background: '#8b5cf6' }}></div>
+                  {t('admin.company_share', 'Company Share')}
                 </div>
                 <div style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#8b5cf6', margin: '4px 0 0 20px' }}>
                   EGP {totalCompany.toLocaleString()}
                 </div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--c-sub)', margin: '2px 0 0 20px' }}>30.0% of total revenue</div>
               </div>
-
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', fontWeight: '600', color: 'var(--text-h)' }}>
-                  <div style={{ width: '12px', height: '12px', borderRadius: '2px', background: '#f97316' }} />
-                  Instructor Earnings
+                  <div style={{ width: '12px', height: '12px', borderRadius: '2px', background: '#f97316' }}></div>
+                  {t('admin.instructor_earnings', 'Instructor Earnings')}
                 </div>
                 <div style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#f97316', margin: '4px 0 0 20px' }}>
                   EGP {totalInstructor.toLocaleString()}
@@ -288,8 +288,8 @@ const AdminAnalyticsTab = ({ revenueAnalytics, revenueAnalyticsLoading }) => {
         <div className="glass-card stat-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
             <div>
-              <h3 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', color: 'var(--text-h)' }}>Financial Growth</h3>
-              <div style={{ fontSize: '0.85rem', color: 'var(--c-sub)' }}>Monthly revenue (bars) and month-over-month growth percentage (line).</div>
+              <h3 style={{ margin: "0 0 4px 0", fontSize: "1.1rem", color: "var(--text-h)" }}>{t('admin.revenue_growth', 'Revenue Growth Trend')}</h3>
+              <div style={{ fontSize: "0.85rem", color: "var(--c-sub)" }}>{t('admin.revenue_growth_desc', 'Month-over-month percentage growth in total revenue.')}</div>
             </div>
             <div style={{ display: 'flex', gap: '16px', fontSize: '0.85rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>

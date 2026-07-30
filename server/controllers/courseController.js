@@ -10,7 +10,7 @@ import fs from 'fs';
 // @access  Private (instructor only)
 export const createCourse = async (req, res) => {
   try {
-    const { title, description, price, category, thumbnailUrl } = req.body;
+    const { title, description, price, category, major, semester, thumbnailUrl } = req.body;
 
     if (!title || !description || price === undefined || !category) {
       return res.status(400).json({ message: 'Title, description, price, and category are required' });
@@ -21,6 +21,8 @@ export const createCourse = async (req, res) => {
       description,
       price,
       category,
+      major: major || '',
+      semester: semester !== undefined && semester !== '' ? semester : undefined,
       thumbnailUrl: thumbnailUrl || '',
       instructor: req.user.id, // taken from the verified JWT, never trust a client-sent instructor ID
       status: 'pending', // every new course starts pending — never trust the client to set this either
@@ -188,15 +190,27 @@ export const getInstructorStats = async (req, res) => {
 // courses; pending/rejected courses must never leak here.
 export const getApprovedCourses = async (req, res) => {
   try {
-    const { search, category, page, limit } = req.query;
+    const { search, category, major, semester, page, limit } = req.query;
 
     const filter = { status: 'approved' };
     if (category) filter.category = category;
-    if (search) filter.title = { $regex: escapeRegex(search), $options: 'i' }; // simple case-insensitive title search
+    if (major) filter.major = major;
+    if (semester) filter.semester = parseInt(semester, 10);
+
+    if (search) {
+      // Match either the course title or the instructor's name — lets the
+      // Explore search bar cover both course and instructor lookups.
+      const regex = { $regex: escapeRegex(search), $options: 'i' };
+      const matchingInstructors = await mongoose.model('User').find({ name: regex }).select('_id');
+      filter.$or = [
+        { title: regex },
+        { instructor: { $in: matchingInstructors.map((u) => u._id) } },
+      ];
+    }
 
     if (page === undefined && limit === undefined) {
       const courses = await Course.find(filter)
-        .populate('instructor', 'name') // include instructor's name, nothing more sensitive
+        .populate('instructor', 'name avatarUrl') // include instructor's name + avatar, nothing more sensitive
         .sort({ createdAt: -1 });
 
       return res.status(200).json({ courses });
@@ -211,7 +225,7 @@ export const getApprovedCourses = async (req, res) => {
     const [totalItems, courses] = await Promise.all([
       Course.countDocuments(filter),
       Course.find(filter)
-        .populate('instructor', 'name')
+        .populate('instructor', 'name avatarUrl')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limitNum)
@@ -344,8 +358,8 @@ export const rejectCourse = async (req, res) => {
 // @access  Private (instructor only)
 export const updateCourse = async (req, res) => {
   try {
-    const { title, description, price, category, thumbnailUrl } = req.body;
-    
+    const { title, description, price, category, major, semester, thumbnailUrl } = req.body;
+
     const course = await Course.findById(req.params.id);
     if (!course) {
       return res.status(404).json({ message: 'Course not found' });
@@ -359,6 +373,8 @@ export const updateCourse = async (req, res) => {
     course.description = description || course.description;
     course.price = price !== undefined ? price : course.price;
     course.category = category || course.category;
+    if (major !== undefined) course.major = major;
+    if (semester !== undefined) course.semester = semester === '' ? undefined : semester;
     if (thumbnailUrl !== undefined) {
       course.thumbnailUrl = thumbnailUrl;
     }

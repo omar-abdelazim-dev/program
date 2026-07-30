@@ -53,7 +53,7 @@
 
 .landing-shape--square {
   top: 150px;
-  left: max(4vw, 28px);
+  inset-inline-start: max(4vw, 28px);
   width: 120px;
   height: 120px;
   border: 2px solid #2B2A3D;
@@ -61,7 +61,7 @@
 }
 
 .landing-shape--circle {
-  right: max(6vw, 42px);
+  inset-inline-end: max(6vw, 42px);
   bottom: 90px;
   width: 190px;
   height: 190px;
@@ -72,7 +72,7 @@
 
 .landing-shape--triangle {
   top: 105px;
-  right: 23%;
+  inset-inline-end: 23%;
   width: 0;
   height: 0;
   background: transparent;
@@ -84,7 +84,7 @@
 
 .landing-shape--bar {
   bottom: 175px;
-  left: 17%;
+  inset-inline-start: 17%;
   width: 220px;
   height: 30px;
   background: #1F1E2C;
@@ -150,7 +150,7 @@
   content: '';
   position: absolute;
   bottom: -3px;
-  left: 0;
+  inset-inline-start: 0;
   width: 0;
   height: 2px;
   background: var(--color-instructor);
@@ -344,7 +344,7 @@
 }
 
 .landing-story__column {
-  padding-right: 30px;
+  padding-inline-end: 30px;
 }
 
 .landing-story__column--vision {
@@ -637,13 +637,13 @@
 
   .landing-shape--square {
     top: 116px;
-    left: -38px;
+    inset-inline-start: -38px;
     width: 94px;
     height: 94px;
   }
 
   .landing-shape--circle {
-    right: -72px;
+    inset-inline-end: -72px;
     bottom: 68px;
     width: 146px;
     height: 146px;
@@ -651,13 +651,13 @@
 
   .landing-shape--triangle {
     top: 91px;
-    right: 11%;
+    inset-inline-end: 11%;
     transform: scale(0.7) rotate(-18deg);
   }
 
   .landing-shape--bar {
     bottom: 138px;
-    left: 8%;
+    inset-inline-start: 8%;
     width: 152px;
   }
 

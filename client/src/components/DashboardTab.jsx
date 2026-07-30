@@ -1,5 +1,6 @@
 import notyf from "../utils/notyf";
 import { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import FullPageLoader from './FullPageLoader';
@@ -12,6 +13,7 @@ const InProgressCard = ({
   onViewCourse,
   openReportModal,
 }) => {
+  const { t } = useTranslation();
   const course = enrollment.course;
   const instructor = course.instructor;
 
@@ -33,7 +35,7 @@ const InProgressCard = ({
         <div className="course-content">
           <h3 className="course-title">{course.title}</h3>
           <p className="course-instructor">
-            {instructor?.name || "Instructor"}
+            {instructor?.name || t('common.instructor', 'Instructor')}
           </p>
           <div className="course-progress">
             <div className="progress-bar-container course-progress-bar">
@@ -46,7 +48,7 @@ const InProgressCard = ({
               ></div>
             </div>
             <div className="progress-text-row course-progress-meta">
-              <span>{enrollment.progressPercent}% Complete</span>
+              <span>{enrollment.progressPercent}% {t('student.completed', 'Complete')}</span>
             </div>
           </div>
         </div>
@@ -57,13 +59,13 @@ const InProgressCard = ({
           className="solid-card" 
           style={{boxShadow: 'none',}}
           >
-            <span className="lesson-label">Current Lesson</span>
+            <span className="lesson-label">{t('student.learning.current_lesson', 'Current Lesson')}</span>
             <h4 className="lesson-title">
-              {enrollment.currentLesson?.title || "Up Next"}
+              {enrollment.currentLesson?.title || t('student.learning.up_next', 'Up Next')}
             </h4>
             <span className="lesson-duration">
               {enrollment.currentLesson?.duration
-                ? `${enrollment.currentLesson.duration} min`
+                ? `${enrollment.currentLesson.duration} ${t('student.learning.min', 'min')}`
                 : ""}
             </span>
           </div>
@@ -76,11 +78,11 @@ const InProgressCard = ({
               onOpen(course._id);
             }}
           >
-            Continue Learning
+            {t('student.continue_learning', 'Continue Learning')}
           </button>
           <ThreeDotMenu
             options={[
-              { label: "Report issue", action: () => openReportModal(course) },
+              { label: t('student.learning.report_issue', 'Report issue'), action: () => openReportModal(course) },
             ]}
           />
         </div>
@@ -95,6 +97,7 @@ const CompletedCard = ({
   onViewCourse,
   openReportModal,
 }) => {
+  const { t } = useTranslation();
   const course = enrollment.course;
   const instructor = course.instructor;
 
@@ -136,13 +139,13 @@ const CompletedCard = ({
         <div className="course-content">
           <h3 className="course-title">{course.title}</h3>
           <p className="course-instructor">
-            {instructor?.name || "Instructor"}
+            {instructor?.name || t('common.instructor', 'Instructor')}
           </p>
           <div
             className="completion-badge"
             style={{ color: "var(--color-accent)" }}
           >
-            100% Complete
+            100% {t('student.completed', 'Complete')}
           </div>
         </div>
       </div>
@@ -151,14 +154,14 @@ const CompletedCard = ({
           <ThreeDotMenu
             options={[
               {
-                label: "Share",
+                label: t('student.learning.share', 'Share'),
                 action: () =>
                   notyf.open({
                     type: "info",
-                    message: "Share link copied to clipboard",
+                    message: t('student.learning.share_copied', 'Share link copied to clipboard'),
                   }),
               },
-              { label: "Report issue", action: () => openReportModal(course) },
+              { label: t('student.learning.report_issue', 'Report issue'), action: () => openReportModal(course) },
             ]}
           />
         </div>
@@ -168,6 +171,7 @@ const CompletedCard = ({
 };
 
 export default function DashboardTab() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [enrollments, setEnrollments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -234,7 +238,7 @@ export default function DashboardTab() {
     return () => clearTimeout(timer);
   }, [activeSubTab, loading, enrollments]);
 
-  if (loading) return <FullPageLoader message="Loading your courses..." fullScreen={false} />;
+  if (loading) return <FullPageLoader message={t('student.loading_courses', 'Loading your courses...')} fullScreen={false} />;
   if (error) return <p style={{ color: "#ef4444" }}>{error}</p>;
 
   const completedLessonCount = enrollments.reduce(
@@ -255,7 +259,7 @@ export default function DashboardTab() {
             {enrollments.length}
           </div>
           <div className="stat-label dashboard-stat-label">
-            Enrolled Courses
+            {t('student.enrolled_courses', 'Enrolled Courses')}
           </div>
         </div>
         <div className="stat-card dashboard-stat-card solid-card">
@@ -263,7 +267,7 @@ export default function DashboardTab() {
             {completedLessonCount}
           </div>
           <div className="stat-label dashboard-stat-label">
-            Completed Lessons
+            {t('student.completed_lessons', 'Completed Lessons')}
           </div>
         </div>
         <div className="stat-card dashboard-stat-card solid-card">
@@ -271,7 +275,7 @@ export default function DashboardTab() {
             {completed.length}
           </div>
           <div className="stat-label dashboard-stat-label">
-            Courses Completed
+            {t('student.courses_completed', 'Courses Completed')}
           </div>
         </div>
       </div>
@@ -298,16 +302,16 @@ export default function DashboardTab() {
             <button
               className={`dashboard-tab ${activeSubTab === "in_progress" ? "active" : ""}`}
               onClick={() => setActiveSubTab("in_progress")}
-              data-text={`In Progress (${inProgress.length})`}
+              data-text={`${t('student.in_progress', 'In Progress')} (${inProgress.length})`}
             >
-              In Progress ({inProgress.length})
+              {t('student.in_progress', 'In Progress')} ({inProgress.length})
             </button>
             <button
               className={`dashboard-tab ${activeSubTab === "completed" ? "active" : ""}`}
               onClick={() => setActiveSubTab("completed")}
-              data-text={`Completed (${completed.length})`}
+              data-text={`${t('student.completed', 'Completed')} (${completed.length})`}
             >
-              Completed ({completed.length})
+              {t('student.completed', 'Completed')} ({completed.length})
             </button>
           </div>
 
@@ -328,8 +332,8 @@ export default function DashboardTab() {
                   >
                     <p>
                       {enrollments.length === 0
-                        ? "You haven't enrolled in any courses yet."
-                        : "Nothing in progress right now — nice work keeping up!"}
+                        ? t('student.no_enrolled_courses', "You haven't enrolled in any courses yet.")
+                        : t('student.nothing_in_progress', "Nothing in progress right now — nice work keeping up!")}
                     </p>
                     {enrollments.length === 0 && (
                       <button
@@ -337,7 +341,7 @@ export default function DashboardTab() {
                         style={{ marginTop: "16px" }}
                         onClick={() => navigate("/student")}
                       >
-                        Explore Catalog
+                        {t('student.explore_catalog', 'Explore Catalog')}
                       </button>
                     )}
                   </div>
@@ -370,7 +374,7 @@ export default function DashboardTab() {
                       color: "var(--text-secondary)",
                     }}
                   >
-                    <p>You haven't completed any courses yet. Keep learning!</p>
+                    <p>{t('student.no_completed_courses', "You haven't completed any courses yet. Keep learning!")}</p>
                   </div>
                 ) : (
                   <div className="dash-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '24px' }}>

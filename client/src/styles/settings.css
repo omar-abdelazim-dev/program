@@ -2,7 +2,7 @@
 
 .settings-page {
     width: 100%;
-    text-align: left;
+    text-align: start;
     padding-bottom: 40px;
 }
 
@@ -27,7 +27,7 @@
 }
 
 .settings-nav-item {
-    text-align: left;
+    text-align: start;
     background: transparent;
     border: none;
     border-radius: 10px;

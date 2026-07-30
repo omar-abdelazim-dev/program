@@ -23,7 +23,9 @@ import AdminCourseManagementTab from "./AdminCourseManagementTab";
 import AdminLessonsTab from "./AdminLessonsTab";
 import WebsiteManagement from "./WebsiteManagement/WebsiteManagement";
 import SystemManagement from "./SystemManagement";
+import AdminLandingPageTab from "./AdminLandingPageTab";
 import FullPageLoader from "./FullPageLoader";
+import { useTranslation } from 'react-i18next';
 
 const ROLE_OPTIONS = ["student", "instructor", "admin"];
 const SIDEBAR_TAB_STEP = 44;
@@ -238,6 +240,20 @@ export default function AdminPortal({
     setVisitedTabs((prev) => { const s = new Set(prev); s.add(tab); return s; });
     setActiveTabRaw(tab);
   };
+  const { t, i18n } = useTranslation();
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language === "en" ? "ar" : "en";
+    localStorage.setItem("admin_lang", newLang);
+    i18n.changeLanguage(newLang);
+  };
+
+  useEffect(() => {
+    const savedLang = localStorage.getItem("admin_lang");
+    if (savedLang && i18n.language !== savedLang) {
+      i18n.changeLanguage(savedLang);
+    }
+  }, []);
 
   // Data States
   const [stats, setStats] = useState(null);
@@ -566,13 +582,11 @@ export default function AdminPortal({
     );
   }
 
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-main)' }}>
-        <FullPageLoader message="Loading Admin Portal..." />
-      </div>
-    );
-  }
+  if (loading) return (
+    <div data-role="admin" style={{ background: 'var(--bg-main)', minHeight: '100vh', width: '100%' }}>
+      <FullPageLoader message="Loading Admin Portal..." />
+    </div>
+  );
 
   const menuGroups =
     user?.role === "superadmin"
@@ -609,6 +623,7 @@ export default function AdminPortal({
           {
             title: "Website Management",
             items: [
+              { id: "web_landing_cms", label: "Landing Page CMS" },
               { id: "web_home", label: "Homepage" },
               { id: "web_about", label: "About" },
               { id: "web_faq", label: "FAQ" },
@@ -1343,6 +1358,12 @@ export default function AdminPortal({
             {visitedTabs.has("financial_payouts") && (
               <div style={{ display: activeTab === "financial_payouts" ? "block" : "none" }}>
                 <AdminPayoutsTab />
+              </div>
+            )}
+
+            {visitedTabs.has("web_landing_cms") && (
+              <div style={{ display: activeTab === "web_landing_cms" ? "block" : "none" }}>
+                <AdminLandingPageTab />
               </div>
             )}
 

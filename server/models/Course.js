@@ -24,6 +24,16 @@ const courseSchema = new mongoose.Schema(
       required: [true, 'Category is required'],
       trim: true,
     },
+    // Optional curriculum tagging so the personalized Home page can group
+    // this course under "{major} - Semester {semester}". Left unset for
+    // courses that aren't part of a specific major's curriculum.
+    major: {
+      type: String,
+      default: '',
+    },
+    semester: {
+      type: Number,
+    },
     instructor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

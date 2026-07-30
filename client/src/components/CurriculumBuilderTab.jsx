@@ -1,9 +1,11 @@
 import notyf from '../utils/notyf';
 import React, { useState } from 'react';
 import ConfirmModal from './ConfirmModal';
+import { useTranslation } from 'react-i18next';
 
 
 export default function CurriculumBuilderTab({ courses = [], lessonsByCourse = {}, onOpenAddLesson, onOpenEditLesson, onEditCourse, onDeleteCourse }) {
+  const { t } = useTranslation();
   const [selectedCourseId, setSelectedCourseId] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
@@ -11,7 +13,7 @@ export default function CurriculumBuilderTab({ courses = [], lessonsByCourse = {
   const selectedLessons = selectedCourseId ? (lessonsByCourse[selectedCourseId] || []) : [];
 
   const handleTogglePublish = () => {
-    notyf.success('Lesson updated successfully');
+    notyf.success(t('instructor.notyf.lesson_updated'));
   };
 
   return (
@@ -20,10 +22,10 @@ export default function CurriculumBuilderTab({ courses = [], lessonsByCourse = {
         
         {/* Left pane: Course List */}
         <div className="glass-card no-border" style={{ width: '300px', background: 'var(--bg-surface)', border: 'none', padding: '24px', overflowY: 'auto', borderRadius: '24px', boxShadow: 'var(--outer-shadow)' }}>
-          <h3 style={{ fontSize: '1.2rem', marginBottom: '24px', color: 'var(--text-h)' }}>Your Courses</h3>
+          <h3 style={{ fontSize: '1.2rem', marginBottom: '24px', color: 'var(--text-h)' }}>{t('instructor.dashboard.my_courses')}</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {courses.length === 0 ? (
-              <p style={{ color: 'var(--c-sub)', fontSize: '0.9rem' }}>No courses created yet.</p>
+              <p style={{ color: 'var(--c-sub)', fontSize: '0.9rem' }}>{t('instructor.curriculum.no_course_selected')}</p>
             ) : (
               courses.map(course => (
                 <div 
@@ -54,14 +56,15 @@ export default function CurriculumBuilderTab({ courses = [], lessonsByCourse = {
         <div style={{ flex: 1, padding: '32px', display: 'flex', flexDirection: 'column' }}>
           {!selectedCourseId ? (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--c-sub)' }}>
-              Select a course from the left to manage its curriculum.
+              {/* Translated Select a course */}
+              {t('instructor.curriculum.select_course')}
             </div>
           ) : (
             <div className="animate-entrance">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
                 <div>
                   <h2 style={{ fontSize: '1.8rem', margin: 0, color: 'var(--text-h)' }}>{selectedCourse?.title}</h2>
-                  <p style={{ color: 'var(--c-sub)', margin: '4px 0 0 0' }}>Manage lessons and content</p>
+                  <p style={{ color: 'var(--c-sub)', margin: '4px 0 0 0' }}>{t('instructor.curriculum.manage_lessons')}</p>
                 </div>
                 <div style={{ display: 'flex', gap: '12px' }}>
                   <button 
@@ -70,7 +73,8 @@ export default function CurriculumBuilderTab({ courses = [], lessonsByCourse = {
                     onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)'; e.currentTarget.style.boxShadow = 'var(--inner-shadow)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
                     onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'; e.currentTarget.style.boxShadow = 'var(--inner-shadow)'; e.currentTarget.style.filter = 'none'; }}
                   >
-                    Edit Course
+                    {/* Translated Edit Course */}
+                    {t('instructor.dashboard.actions.edit')}
                   </button>
                   <button 
                     onClick={() => setShowDeleteModal(true)} 
@@ -78,7 +82,8 @@ export default function CurriculumBuilderTab({ courses = [], lessonsByCourse = {
                     onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'; e.currentTarget.style.boxShadow = 'var(--inner-shadow)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
                     onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; e.currentTarget.style.boxShadow = 'var(--inner-shadow)'; e.currentTarget.style.filter = 'none'; }}
                   >
-                    Delete Course
+                    {/* Translated Delete Course */}
+                    {t('instructor.dashboard.actions.delete')}
                   </button>
                   <button 
                     onClick={() => onOpenAddLesson(selectedCourseId)} 
@@ -86,7 +91,8 @@ export default function CurriculumBuilderTab({ courses = [], lessonsByCourse = {
                     onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)'; e.currentTarget.style.boxShadow = 'var(--inner-shadow)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
                     onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'; e.currentTarget.style.boxShadow = 'var(--inner-shadow)'; e.currentTarget.style.filter = 'none'; }}
                   >
-                    + Add Lesson
+                    {/* Translated Add Lesson */}
+                    {t('instructor.curriculum.add_lesson')}
                   </button>
                 </div>
               </div>
@@ -94,7 +100,8 @@ export default function CurriculumBuilderTab({ courses = [], lessonsByCourse = {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {selectedLessons.length === 0 ? (
                   <div style={{ padding: '32px', textAlign: 'center', border: '1px dashed var(--border)', borderRadius: '12px', color: 'var(--c-sub)' }}>
-                    No lessons in this course yet. Click '+ Add New Lesson' to get started.
+                    {/* Translated No lessons */}
+                    {t('instructor.curriculum.no_lessons')}
                   </div>
                 ) : (
                   selectedLessons.map((lesson, index) => (
@@ -136,10 +143,10 @@ export default function CurriculumBuilderTab({ courses = [], lessonsByCourse = {
 
       <ConfirmModal 
         isOpen={showDeleteModal}
-        title="Delete Course"
-        message="Are you sure you want to delete this course? This action cannot be undone."
-        confirmText="Delete Course"
-        cancelText="Cancel"
+        title={t('instructor.dashboard.actions.delete')}
+        message={t('instructor.curriculum.delete_course_confirm')}
+        confirmText={t('instructor.dashboard.actions.delete')}
+        cancelText={t('instructor.create_course.cancel')}
         intent="danger"
         onConfirm={() => {
           onDeleteCourse(selectedCourseId);

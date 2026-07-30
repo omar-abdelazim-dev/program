@@ -36,9 +36,10 @@ export const getPublicConfig = async (req, res) => {
       appearance: config.appearance,
       features: config.features,
       registration: {
-        studentRegistration: config.registration.studentRegistration,
-        instructorRegistration: config.registration.instructorRegistration
-      }
+        studentRegistration: config.registration?.studentRegistration ?? true,
+        instructorRegistration: config.registration?.instructorRegistration ?? true
+      },
+      landingPage: config.landingPage
     });
   } catch (err) {
     console.error(err);
@@ -58,7 +59,7 @@ export const updateConfigSection = async (req, res) => {
     // Since we don't have isSuperAdmin on User model yet, we'll assume req.user.isSuperAdmin exists, or we check if they are trying to update restricted sections.
     // For MVP, we will allow 'admin' to update 'general', 'appearance', 'notifications' without being super admin.
     
-    const restrictedSections = ['financial', 'security', 'registration', 'api', 'features', 'ai', 'audit', 'maintenance', 'backup'];
+    const restrictedSections = ['financial', 'security', 'registration', 'api', 'features', 'ai', 'audit', 'maintenance', 'backup', 'landingPage'];
     
     // Enforce superadmin role for restricted sections
     if (restrictedSections.includes(section) && req.user.role !== 'superadmin') {
@@ -67,17 +68,31 @@ export const updateConfigSection = async (req, res) => {
 
     const config = await getGlobalConfig();
     
-    if (!config[section]) {
+    // Initialize section if missing but valid in schema
+    const validSections = ['general', 'financial', 'registration', 'security', 'storage', 'email', 'notifications', 'appearance', 'landingPage'];
+    if (!config.get(section) && validSections.includes(section)) {
+        config.set(section, {});
+    }
+
+    if (!config.get(section)) {
       return res.status(400).json({ message: 'Invalid configuration section' });
     }
 
     // Keep old values for audit logging
-    const oldValues = { ...config[section].toObject() };
+    const sectionData = config.get(section);
+    const oldValues = { ...(sectionData.toObject ? sectionData.toObject() : sectionData) };
     
     // Apply updates
-    for (const key in updates) {
-      if (config[section][key] !== undefined) {
-        config[section][key] = updates[key];
+    // For nested schema structures like 'landingPage' which contain multiple nested objects
+    // (hero, story, paths, colors), we need to do a shallow merge of the top-level keys
+    // to ensure Mongoose accurately registers the paths as modified using config.set()
+    if (section === 'landingPage') {
+      config.set(section, { ...oldValues, ...updates });
+    } else {
+      for (const key in updates) {
+        if (typeof updates[key] !== 'undefined') {
+          sectionData[key] = updates[key];
+        }
       }
     }
     
@@ -89,7 +104,7 @@ export const updateConfigSection = async (req, res) => {
       action: `Updated ${section} configuration`,
       changedBy: req.user.id,
       oldValue: oldValues,
-      newValue: config[section].toObject(),
+      newValue: config.get(section).toObject(),
       module: 'System Management',
     });
 

@@ -40,7 +40,7 @@ export const reportReview = async (req, res) => {
   try {
     const review = await Review.findById(req.params.id).populate('course', 'instructor');
 
-    if (!review) {
+    if (!review || !review.course) {
       return res.status(404).json({ message: 'Review not found' });
     }
 
