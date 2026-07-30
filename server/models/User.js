@@ -57,6 +57,9 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // Student's field of study, set at registration and editable in Settings.
+    // Drives the personalized Home page's semester sections.
+    major: { type: String, default: '' },
     university: { type: String, default: '' },
     college: { type: String, default: '' },
     year: { type: String, default: '' },

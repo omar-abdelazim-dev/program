@@ -27,7 +27,7 @@ export const checkEmail = async (req, res) => {
 // @access  Public
 export const register = async (req, res) => {
   try {
-    const { name, email, password, role, phone, university, college, year, track, providedCourses, linkedinUrl, socialUrl, goalsText, selectedPills } = req.body;
+    const { name, email, password, role, phone, major, university, college, year, track, providedCourses, linkedinUrl, socialUrl, goalsText, selectedPills } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Name, email, and password are required' });
@@ -58,9 +58,9 @@ export const register = async (req, res) => {
       return res.status(403).json({ message: 'Only .edu email addresses are allowed to register.' });
     }
 
-    const user = await User.create({ 
+    const user = await User.create({
       name, email, password, role: safeRole, phone: phone || '',
-      university, college, year, track, providedCourses, linkedinUrl, socialUrl, goalsText, selectedPills
+      major, university, college, year, track, providedCourses, linkedinUrl, socialUrl, goalsText, selectedPills
     });
 
     await generateTokenAndSetCookie(res, user._id);
@@ -202,7 +202,7 @@ export const getMe = async (req, res) => {
 // @access  Private — a user editing their own name/email/avatar (Settings page)
 export const updateProfile = async (req, res) => {
   try {
-    const { name, lastName, email, avatarUrl, college, providedCourses, linkedinUrl, socialUrl, phone, university, goalsText } = req.body;
+    const { name, lastName, email, avatarUrl, college, major, providedCourses, linkedinUrl, socialUrl, phone, university, goalsText } = req.body;
     const user = await User.findById(req.user.id);
 
     if (!user) {
@@ -229,6 +229,7 @@ export const updateProfile = async (req, res) => {
     }
 
     if (college !== undefined) user.college = college;
+    if (major !== undefined) user.major = major;
     if (providedCourses !== undefined) user.providedCourses = providedCourses;
     if (linkedinUrl !== undefined) user.linkedinUrl = linkedinUrl;
     if (socialUrl !== undefined) user.socialUrl = socialUrl;
@@ -248,6 +249,7 @@ export const updateProfile = async (req, res) => {
         role: user.role,
         avatarUrl: user.avatarUrl,
         college: user.college,
+        major: user.major,
         providedCourses: user.providedCourses,
         linkedinUrl: user.linkedinUrl,
         socialUrl: user.socialUrl,
