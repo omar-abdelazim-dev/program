@@ -3,6 +3,7 @@ import api from "../api/axios";
 import notyf from "../utils/notyf";
 import { createPortal } from "react-dom";
 import Spinner from "./Spinner";
+import { useTranslation } from 'react-i18next';
 
 // Generic custom dropdown component to match the system's dark theme
 const CustomDropdown = ({ value, options, onChange, disabled, width = "100%" }) => {
@@ -117,6 +118,7 @@ const CustomDropdown = ({ value, options, onChange, disabled, width = "100%" }) 
 };
 
 export default function AdminCourseManagementTab({ currentUser }) {
+  const { t } = useTranslation();
   const [courses, setCourses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -246,21 +248,21 @@ export default function AdminCourseManagementTab({ currentUser }) {
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }} className="animate-entrance">
       {/* Header and Metrics */}
       <div>
-        <h2 style={{ fontSize: "1.8rem", margin: "0 0 8px 0", color: "var(--text-h)" }}>Course Management</h2>
-        <div style={{ fontSize: "0.95rem", color: "var(--c-sub)", marginBottom: "24px" }}>Manage, review, and organize platform courses.</div>
+        <h2 style={{ fontSize: "1.8rem", margin: "0 0 8px 0", color: "var(--text-h)" }}>{t('admin.course_management', 'Course Management')}</h2>
+        <div style={{ fontSize: "0.95rem", color: "var(--c-sub)", marginBottom: "24px" }}>{t('admin.manage_courses_desc', 'Manage, review, and organize platform courses.')}</div>
         
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px" }}>
             {/* KPI Cards (Reusing existing glass-card stat-card styles) */}
             <div className="glass-card stat-card overview-stat-purple" style={{ padding: '24px', display: 'flex', flexDirection: 'column', transition: 'all 0.2s ease' }}>
-                <div style={{ color: 'var(--c-sub)', fontSize: '0.85rem', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '8px' }}>Total Courses</div>
+                <div style={{ color: 'var(--c-sub)', fontSize: '0.85rem', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '8px' }}>{t('admin.total_courses', 'Total Courses')}</div>
                 <div style={{ color: 'var(--text-h)', fontSize: '2rem', fontWeight: '700', margin: '0' }}>{totalCourses}</div>
             </div>
             <div className="glass-card stat-card overview-stat-green" style={{ padding: '24px', display: 'flex', flexDirection: 'column', transition: 'all 0.2s ease' }}>
-                <div style={{ color: 'var(--c-sub)', fontSize: '0.85rem', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '8px' }}>Approved</div>
+                <div style={{ color: 'var(--c-sub)', fontSize: '0.85rem', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '8px' }}>{t('admin.approved', 'Approved')}</div>
                 <div style={{ color: 'var(--text-h)', fontSize: '2rem', fontWeight: '700', margin: '0' }}>{approvedCourses}</div>
             </div>
             <div className="glass-card stat-card overview-stat-orange" style={{ padding: '24px', display: 'flex', flexDirection: 'column', transition: 'all 0.2s ease' }}>
-                <div style={{ color: 'var(--c-sub)', fontSize: '0.85rem', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '8px' }}>Pending Review</div>
+                <div style={{ color: 'var(--c-sub)', fontSize: '0.85rem', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '8px' }}>{t('admin.pending_review', 'Pending Review')}</div>
                 <div style={{ color: 'var(--text-h)', fontSize: '2rem', fontWeight: '700', margin: '0' }}>{pendingCourses}</div>
             </div>
         </div>
@@ -276,7 +278,7 @@ export default function AdminCourseManagementTab({ currentUser }) {
             </svg>
             <input
               type="text"
-              placeholder="Search courses..."
+              placeholder={t('admin.search_courses', 'Search courses...')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setIsSearchFocused(true)}
@@ -379,12 +381,12 @@ export default function AdminCourseManagementTab({ currentUser }) {
         <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
           <thead>
             <tr style={{ background: "rgba(255,255,255,0.02)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-              <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>Course</th>
-              <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>Category</th>
-              <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>Price</th>
-              <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>Status</th>
-              <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>Last Updated</th>
-              <th style={{ padding: "16px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem", textAlign: "right" }}>Action</th>
+              <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>{t('instructor.course_title', 'Course')}</th>
+              <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>{t('instructor.category', 'Category')}</th>
+              <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>{t('instructor.price', 'Price')}</th>
+              <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>{t('common.status', 'Status')}</th>
+              <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>{t('admin.last_updated', 'Last Updated')}</th>
+              <th style={{ padding: "16px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem", textAlign: "right" }}>{t('admin.action', 'Action')}</th>
             </tr>
           </thead>
           <tbody>

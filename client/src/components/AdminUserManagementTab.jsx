@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import api from "../api/axios";
 import notyf from "../utils/notyf";
 import { createPortal } from "react-dom";
+import { useTranslation } from 'react-i18next';
 
 // Generic custom dropdown component to match the system's dark theme
 const CustomDropdown = ({ value, options, onChange, disabled, width = "100%" }) => {
@@ -149,6 +150,7 @@ export default function AdminUserManagementTab({
   fetchUsers,
   currentUser
 }) {
+  const { t } = useTranslation();
   const [activeRole, setActiveRole] = useState("student");
   const [accountStatus, setAccountStatus] = useState("All Statuses");
   const [verification, setVerification] = useState("All");
@@ -307,8 +309,8 @@ export default function AdminUserManagementTab({
       {/* Header and Search */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
-          <h2 style={{ fontSize: "1.8rem", margin: "0 0 8px 0", color: "var(--text-h)" }}>User Management</h2>
-          <div style={{ fontSize: "0.95rem", color: "var(--c-sub)" }}>Manage platform accounts, roles, and statuses.</div>
+          <h2 style={{ fontSize: "1.8rem", margin: "0 0 8px 0", color: "var(--text-h)" }}>{t('admin.user_management', 'User Management')}</h2>
+          <div style={{ fontSize: "0.95rem", color: "var(--c-sub)" }}>{t('admin.manage_accounts_roles', 'Manage platform accounts, roles, and statuses.')}</div>
         </div>
         <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
           <div className="nav-search" style={{ width: "320px", position: "relative" }}>
@@ -318,7 +320,7 @@ export default function AdminUserManagementTab({
             </svg>
             <input
               type="text"
-              placeholder="Search by name, email, or ID..."
+              placeholder={t('admin.search_placeholder', 'Search by name, email, or ID...')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setIsSearchFocused(true)}
@@ -354,7 +356,7 @@ export default function AdminUserManagementTab({
             onMouseEnter={e => { if(!showFilters) { e.target.style.background = "rgba(255,255,255,0.05)"; e.target.style.color = "var(--c-light)"; } }}
             onMouseLeave={e => { if(!showFilters) { e.target.style.background = "var(--bg-surface)"; e.target.style.color = "var(--c-sub)"; } }}
           >
-            Filters
+            {t('common.filters', 'Filters')}
           </button>
         </div>
       </div>
@@ -382,7 +384,7 @@ export default function AdminUserManagementTab({
             transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
           }}>
           <div style={{ display: "flex", flexDirection: "column", gap: "8px", minWidth: "220px" }}>
-            <label style={{ fontSize: "0.75rem", fontWeight: "600", color: "var(--c-sub)", letterSpacing: "0.5px" }}>ACCOUNT STATUS</label>
+            <label style={{ fontSize: "0.75rem", fontWeight: "600", color: "var(--c-sub)", letterSpacing: "0.5px" }}>{t('admin.account_status', 'ACCOUNT STATUS')}</label>
             <CustomDropdown 
               value={accountStatus}
               options={["All Statuses", "Active", "Suspended", "Deleted"]}
@@ -391,7 +393,7 @@ export default function AdminUserManagementTab({
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "8px", minWidth: "220px" }}>
-            <label style={{ fontSize: "0.75rem", fontWeight: "600", color: "var(--c-sub)", letterSpacing: "0.5px" }}>VERIFICATION</label>
+            <label style={{ fontSize: "0.75rem", fontWeight: "600", color: "var(--c-sub)", letterSpacing: "0.5px" }}>{t('admin.verification', 'VERIFICATION')}</label>
             <CustomDropdown 
               value={verification}
               options={["All", "Verified", "Unverified"]}
@@ -420,7 +422,7 @@ export default function AdminUserManagementTab({
             onMouseEnter={e => e.target.style.background = "rgba(239, 68, 68, 0.2)"}
             onMouseLeave={e => e.target.style.background = "rgba(239, 68, 68, 0.1)"}
           >
-            Clear All Filters
+            {t('common.clear_all', 'Clear All Filters')}
           </button>
           </div>
         </div>
@@ -429,10 +431,10 @@ export default function AdminUserManagementTab({
       {/* Role Tabs */}
       <div style={{ display: "flex", gap: "12px" }}>
         {[
-          { id: "student", label: "Students" },
-          { id: "instructor", label: "Instructors" },
-          { id: "admin", label: "Admins" },
-          ...(currentUser?.role === 'superadmin' ? [{ id: "superadmin", label: "Super Admins" }] : [])
+          { id: "student", label: t('admin.students', 'Students') },
+          { id: "instructor", label: t('admin.instructors', 'Instructors') },
+          { id: "admin", label: t('admin.admins', 'Admins') },
+          ...(currentUser?.role === 'superadmin' ? [{ id: "superadmin", label: t('admin.superadmins', 'Super Admins') }] : [])
         ].map(tab => {
           const isActive = activeRole === tab.id;
           const roleStyle = getRoleColor(tab.id);
@@ -487,7 +489,7 @@ export default function AdminUserManagementTab({
           animation: "fadeIn 0.2s ease"
         }}>
           <div style={{ fontWeight: "600", color: "var(--text-h)" }}>
-            {selectedIds.size} users selected
+            {t('admin.selected_count', '{{count}} users selected', { count: selectedIds.size })}
           </div>
           <div style={{ display: "flex", gap: "12px" }}>
             <button 
@@ -503,7 +505,7 @@ export default function AdminUserManagementTab({
               onMouseEnter={e => e.target.style.background = "rgba(16,185,129,0.2)"}
               onMouseLeave={e => e.target.style.background = "rgba(16,185,129,0.1)"}
             >
-              Activate
+              {t('admin.activate', 'Activate')}
             </button>
             <button 
               onClick={() => handleBulkAction("suspend")}
@@ -518,7 +520,7 @@ export default function AdminUserManagementTab({
               onMouseEnter={e => e.target.style.background = "rgba(249,115,22,0.2)"}
               onMouseLeave={e => e.target.style.background = "rgba(249,115,22,0.1)"}
             >
-              Suspend
+              {t('admin.suspend', 'Suspend')}
             </button>
             <button 
               onClick={() => notyf.success("Exporting CSV...")}
@@ -532,7 +534,7 @@ export default function AdminUserManagementTab({
               onMouseEnter={e => e.target.style.background = "rgba(255,255,255,0.1)"}
               onMouseLeave={e => e.target.style.background = "rgba(255,255,255,0.05)"}
             >
-              Export CSV
+              {t('admin.export_csv', 'Export CSV')}
             </button>
             <button 
               onClick={() => handleBulkAction("delete")}
@@ -547,7 +549,7 @@ export default function AdminUserManagementTab({
               onMouseEnter={e => e.target.style.background = "rgba(239,68,68,0.2)"}
               onMouseLeave={e => e.target.style.background = "rgba(239,68,68,0.1)"}
             >
-              Delete
+              {t('admin.delete', 'Delete')}
             </button>
           </div>
         </div>
@@ -566,11 +568,11 @@ export default function AdminUserManagementTab({
                   style={{ cursor: "pointer", width: "16px", height: "16px", accentColor: "#4f46e5" }}
                 />
               </th>
-              <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>User</th>
-              <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>Role</th>
-              <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>Status</th>
-              <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>Registered</th>
-              <th style={{ padding: "16px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem", textAlign: "right" }}>Action</th>
+              <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>{t('admin.name', 'User')}</th>
+              <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>{t('admin.role', 'Role')}</th>
+              <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>{t('common.status', 'Status')}</th>
+              <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>{t('admin.registered', 'Registered')}</th>
+              <th style={{ padding: "16px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem", textAlign: "right" }}>{t('admin.action', 'Action')}</th>
             </tr>
           </thead>
           <tbody>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const AnimatedNumber = ({ value }) => {
   return <span>{value.toLocaleString()}</span>;
@@ -34,6 +35,7 @@ const GrowthBadge = ({ growth }) => {
 };
 
 const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
+  const { t } = useTranslation();
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
@@ -43,9 +45,9 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return t('admin.good_morning', 'Good morning');
+    if (hour < 18) return t('admin.good_afternoon', 'Good afternoon');
+    return t('admin.good_evening', 'Good evening');
   };
 
   const safeTotalRevenue = stats?.totalRevenue || 7900;
@@ -70,10 +72,10 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
           <h2 style={{ fontSize: "1.8rem", margin: "0 0 4px 0", color: "var(--text-h)" }}>
             {getGreeting()}, {user?.name?.split(' ')[0] || 'Admin'} 👋
           </h2>
-          <div style={{ fontSize: "0.9rem", color: "var(--c-sub)" }}>Here's what's happening on your platform today.</div>
+          <div style={{ fontSize: "0.9rem", color: "var(--c-sub)" }}>{t('admin.whats_happening', "Here's what's happening on your platform today.")}</div>
         </div>
         <div style={{ textAlign: 'right', fontSize: '0.8rem', color: 'var(--c-sub)' }}>
-          <div>Last refreshed</div>
+          <div>{t('admin.last_refreshed', 'Last refreshed')}</div>
           <div style={{ fontWeight: '600', color: 'var(--text-h)', marginTop: '2px' }}>
             {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </div>
@@ -93,27 +95,27 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
         {/* Total Revenue */}
         <div className="glass-card stat-card overview-stat-green" style={{ display: 'flex', flexDirection: 'column', padding: '24px', position: 'relative', transition: 'all 0.2s ease' }}>
           <div style={{ position: 'absolute', top: '16px', right: '16px', color: 'var(--c-sub)', fontSize: '0.9rem' }}>→</div>
-          <div className="stat-label" style={{ marginBottom: '4px' }}>Total Revenue</div>
+          <div className="stat-label" style={{ marginBottom: '4px' }}>{t('admin.total_revenue', 'Total Revenue')}</div>
           <div style={{ color: "#10B981", fontSize: '2.4rem', fontWeight: '800', lineHeight: '1.1' }}>
             EGP <AnimatedNumber value={safeTotalRevenue} />
           </div>
-          <div style={{ color: 'var(--c-sub)', fontSize: '0.85rem', marginTop: '8px' }}>Growth data unavailable</div>
+          <div style={{ color: 'var(--c-sub)', fontSize: '0.85rem', marginTop: '8px' }}>{t('admin.growth_unavailable', 'Growth data unavailable')}</div>
 
           <div style={{ margin: '20px 0', borderTop: '1px solid rgba(255,255,255,0.05)' }}></div>
 
           <div style={{ fontSize: '0.75rem', letterSpacing: '1px', color: 'var(--c-sub)', textTransform: 'uppercase', marginBottom: '6px', fontWeight: '600' }}>
-            COMPANY SHARE (30%)
+            {t('admin.company_share_percent', 'COMPANY SHARE (30%)')}
           </div>
           <div style={{ color: '#10B981', fontSize: '1.3rem', fontWeight: '700' }}>
             EGP <AnimatedNumber value={safeTotalRevenue * 0.3} />
           </div>
 
-          <div style={{ color: 'var(--c-sub)', fontSize: '0.8rem', marginTop: '16px' }}>Updated just now</div>
+          <div style={{ color: 'var(--c-sub)', fontSize: '0.8rem', marginTop: '16px' }}>{t('admin.updated_just_now', 'Updated just now')}</div>
         </div>
 
         {/* Students */}
         <div className="glass-card stat-card overview-stat-white" style={{ padding: '24px', display: 'flex', flexDirection: 'column', transition: 'all 0.2s ease' }}>
-          <div className="stat-label">Students</div>
+          <div className="stat-label">{t('admin.students', 'Students')}</div>
           <div style={{ fontSize: '2.4rem', fontWeight: '800', color: 'var(--text-h)', lineHeight: '1.1', marginTop: '4px' }}>
             <AnimatedNumber value={safeStudents} />
           </div>
@@ -124,7 +126,7 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
 
         {/* Instructors */}
         <div className="glass-card stat-card overview-stat-orange" style={{ padding: '24px', display: 'flex', flexDirection: 'column', transition: 'all 0.2s ease' }}>
-          <div className="stat-label">Instructors</div>
+          <div className="stat-label">{t('admin.instructors', 'Instructors')}</div>
           <div style={{ fontSize: '2.4rem', fontWeight: '800', color: '#f97316', lineHeight: '1.1', marginTop: '4px' }}>
             <AnimatedNumber value={safeInstructors} />
           </div>
@@ -138,7 +140,7 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
         {user?.role === "superadmin" && (
           <div className="glass-card stat-card overview-stat-red" style={{ padding: '24px', display: 'flex', flexDirection: 'column', transition: 'all 0.2s ease' }}>
-            <div className="stat-label">Super Admins</div>
+            <div className="stat-label">{t('admin.superadmins', 'Super Admins')}</div>
             <div style={{ fontSize: '2.4rem', fontWeight: '800', color: '#ef4444', lineHeight: '1.1', marginTop: '4px' }}>
               <AnimatedNumber value={safeSuperAdmins} />
             </div>
@@ -148,7 +150,7 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
           </div>
         )}
         <div className="glass-card stat-card overview-stat-purple" style={{ padding: '24px', display: 'flex', flexDirection: 'column', transition: 'all 0.2s ease' }}>
-          <div className="stat-label">Admins</div>
+          <div className="stat-label">{t('admin.admins', 'Admins')}</div>
           <div style={{ fontSize: '2.4rem', fontWeight: '800', color: '#8b5cf6', lineHeight: '1.1', marginTop: '4px' }}>
             <AnimatedNumber value={safeAdmins} />
           </div>
@@ -163,8 +165,8 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
         {/* Enrollments by Category */}
         <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-h)' }}>Enrollments by Category</h3>
-            <span style={{ fontSize: '0.85rem', color: 'var(--c-sub)' }}>{totalEnrollments} total</span>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-h)' }}>{t('admin.enrollments_by_category', 'Enrollments by Category')}</h3>
+            <span style={{ fontSize: '0.85rem', color: 'var(--c-sub)' }}>{totalEnrollments} {t('admin.total', 'total')}</span>
           </div>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -190,15 +192,15 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
 
         {/* Pending Actions */}
         <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
-          <h3 style={{ margin: "0 0 24px 0", fontSize: '1.1rem', color: 'var(--text-h)' }}>Pending Actions</h3>
+          <h3 style={{ margin: "0 0 24px 0", fontSize: '1.1rem', color: 'var(--text-h)' }}>{t('admin.pending_actions', 'Pending Actions')}</h3>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
             <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12"></polyline>
               </svg>
             </div>
-            <div style={{ fontWeight: '600', color: '#10b981', marginBottom: '4px' }}>Everything is up to date.</div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--c-sub)' }}>No actions require attention.</div>
+            <div style={{ fontWeight: '600', color: '#10b981', marginBottom: '4px' }}>{t('admin.up_to_date', 'Everything is up to date.')}</div>
+            <div style={{ fontSize: '0.85rem', color: 'var(--c-sub)' }}>{t('admin.no_actions_attention', 'No actions require attention.')}</div>
           </div>
         </div>
       </div>
@@ -207,7 +209,7 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
         {/* Platform Health */}
         <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
-          <h3 style={{ margin: "0 0 24px 0", fontSize: '1.1rem', color: 'var(--text-h)' }}>Platform Health</h3>
+          <h3 style={{ margin: "0 0 24px 0", fontSize: '1.1rem', color: 'var(--text-h)' }}>{t('admin.platform_health', 'Platform Health')}</h3>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '20px 0' }}>
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--c-sub)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '16px' }}>
               <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
@@ -216,14 +218,14 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
               <line x1="6" y1="18" x2="6.01" y2="18"></line>
             </svg>
             <div style={{ fontSize: '0.9rem', color: 'var(--c-sub)', marginBottom: '16px' }}>
-              Health monitoring endpoint not yet connected.
+              {t('admin.health_not_connected', 'Health monitoring endpoint not yet connected.')}
             </div>
             <button style={{ 
               background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', 
               color: 'var(--c-sub)', fontSize: '0.75rem', letterSpacing: '1px', 
               padding: '6px 16px', borderRadius: '99px', cursor: 'not-allowed'
             }}>
-              PENDING INTEGRATION
+              {t('admin.pending_integration', 'PENDING INTEGRATION')}
             </button>
           </div>
         </div>
@@ -231,12 +233,12 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
         {/* Recent Activity Mini */}
         <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', position: 'relative' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-h)' }}>Recent Activity</h3>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-h)' }}>{t('admin.recent_activity', 'Recent Activity')}</h3>
             <button 
               onClick={() => setActiveTab('dashboard_activity')}
               style={{ background: 'none', border: 'none', color: 'var(--c-orange)', fontSize: '0.85rem', cursor: 'pointer', fontWeight: '500' }}
             >
-              View All →
+              {t('admin.view_all', 'View All')} →
             </button>
           </div>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '20px 0' }}>
@@ -245,14 +247,14 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
               <polyline points="12 6 12 12 16 14"></polyline>
             </svg>
             <div style={{ fontSize: '0.9rem', color: 'var(--c-sub)', marginBottom: '16px' }}>
-              No recent activity to display.
+              {t('admin.no_recent_activity', 'No recent activity to display.')}
             </div>
             <button style={{ 
               background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', 
               color: 'var(--c-sub)', fontSize: '0.75rem', letterSpacing: '1px', 
               padding: '6px 16px', borderRadius: '99px', cursor: 'not-allowed'
             }}>
-              PENDING INTEGRATION
+              {t('admin.pending_integration', 'PENDING INTEGRATION')}
             </button>
           </div>
         </div>

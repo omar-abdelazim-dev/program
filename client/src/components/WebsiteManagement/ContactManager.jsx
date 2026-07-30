@@ -108,12 +108,27 @@ export default function ContactManager({ user }) {
             value={content?.businessHours || ""}
             onChange={(e) => handleChange("businessHours", e.target.value)}
           />
+          <InputField
+            label="Business Hours (Arabic)"
+            value={content?.businessHoursAr || ""}
+            onChange={(e) => handleChange("businessHoursAr", e.target.value)}
+            dir="rtl"
+          />
           <div style={{ gridColumn: "1 / -1" }}>
             <TextareaField
               label="Physical Address"
               value={content?.address || ""}
               onChange={(e) => handleChange("address", e.target.value)}
               rows={2}
+            />
+          </div>
+          <div style={{ gridColumn: "1 / -1" }}>
+            <TextareaField
+              label="Physical Address (Arabic)"
+              value={content?.addressAr || ""}
+              onChange={(e) => handleChange("addressAr", e.target.value)}
+              rows={2}
+              dir="rtl"
             />
           </div>
           <div style={{ gridColumn: "1 / -1" }}>

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useConfig } from '../context/ConfigContext';
 import logoDark from '../assets/logo-dark.png';
 import '../styles/landing-page.css';
 
@@ -114,8 +115,54 @@ function BenefitList({ benefits, variant }) {
 }
 
 export default function LandingPage() {
+  const { config } = useConfig();
+  const c = config?.landingPage || {
+    hero: {
+      eyebrow: 'Education built around possibility',
+      titlePart1: 'Master Your Craft. ',
+      titlePart2: 'Share Your Expertise.',
+      copy: 'Program makes high-quality learning and teaching more accessible, so ambition—not access—sets the limit on what comes next.',
+      studentCtaText: 'Start Learning',
+      studentCtaLink: '/auth?mode=register&role=student',
+      instructorCtaText: 'Start Teaching',
+      instructorCtaLink: '/auth?mode=register&role=instructor'
+    },
+    story: {
+      eyebrowLeft: 'Who we are',
+      titleLeft: 'Learning should open doors for everyone.',
+      copyLeft: 'Program began with a simple belief: exceptional education should feel close, practical, and personal. We bring curious learners together with people who have the experience to guide them.',
+      eyebrowRight: 'Our vision',
+      titleRight: 'A global learning community powered by real expertise.',
+      copyRight: 'We are building a place where knowledge travels farther, instructors are rewarded for what they know, and every learner can turn a next step into lasting progress.'
+    },
+    paths: {
+      eyebrow: 'One community, two ways forward',
+      title: 'Choose the path that moves you.',
+      copy: 'Whether you are growing a skill set or growing an audience, Program is designed to help your work go further.',
+      studentTitle: 'Build skills that take you places.',
+      studentCopy: 'Find focused courses, learn at your pace, and make every completed lesson count.',
+      studentCtaText: 'Explore learning',
+      studentCtaLink: '/auth?mode=register&role=student',
+      instructorTitle: 'Turn what you know into impact.',
+      instructorCopy: 'Create a course experience that reflects your expertise and reaches learners ready for it.',
+      instructorCtaText: 'Start teaching',
+      instructorCtaLink: '/auth?mode=register&role=instructor'
+    },
+    colors: {
+      primaryText: '#18181b',
+      secondaryText: '#71717a',
+      accentStudent: '#3b82f6',
+      accentInstructor: '#f59e0b'
+    }
+  };
+
   return (
-    <div className="landing-page" dir="ltr">
+    <div className="landing-page" dir="ltr" style={{
+      '--landing-primary-text': c.colors.primaryText,
+      '--landing-secondary-text': c.colors.secondaryText,
+      '--landing-accent-student': c.colors.accentStudent,
+      '--landing-accent-instructor': c.colors.accentInstructor
+    }}>
       <header className="landing-hero">
         <div className="landing-hero__shapes" aria-hidden="true">
           <span className="landing-shape landing-shape--square" />
@@ -137,17 +184,17 @@ export default function LandingPage() {
         </nav>
 
         <div className="landing-hero__content landing-shell">
-          <p className="landing-eyebrow">Education built around possibility</p>
-          <h1>Master Your Craft. <span>Share Your Expertise.</span></h1>
+          <p className="landing-eyebrow">{c.hero.eyebrow}</p>
+          <h1>{c.hero.titlePart1} <span>{c.hero.titlePart2}</span></h1>
           <p className="landing-hero__copy">
-            Program makes high-quality learning and teaching more accessible, so ambition—not access—sets the limit on what comes next.
+            {c.hero.copy}
           </p>
           <div className="landing-hero__actions">
-            <Link className="landing-button landing-button--student" to="/auth?mode=register&role=student">
-              Start Learning <ArrowIcon />
+            <Link className="landing-button landing-button--student" to={c.hero.studentCtaLink}>
+              {c.hero.studentCtaText} <ArrowIcon />
             </Link>
-            <Link className="landing-button landing-button--instructor" to="/auth?mode=register&role=instructor">
-              Start Teaching <ArrowIcon />
+            <Link className="landing-button landing-button--instructor" to={c.hero.instructorCtaLink}>
+              {c.hero.instructorCtaText} <ArrowIcon />
             </Link>
           </div>
         </div>
@@ -157,18 +204,18 @@ export default function LandingPage() {
         <section className="landing-story" id="our-story" aria-labelledby="story-title">
           <div className="landing-story__grid landing-shell">
             <article className="landing-story__column">
-              <p className="landing-eyebrow landing-eyebrow--student">Who we are</p>
-              <h2 id="story-title">Learning should open doors for everyone.</h2>
+              <p className="landing-eyebrow landing-eyebrow--student">{c.story.eyebrowLeft}</p>
+              <h2 id="story-title">{c.story.titleLeft}</h2>
               <p>
-                Program began with a simple belief: exceptional education should feel close, practical, and personal. We bring curious learners together with people who have the experience to guide them.
+                {c.story.copyLeft}
               </p>
             </article>
 
             <article className="landing-story__column landing-story__column--vision">
-              <p className="landing-eyebrow landing-eyebrow--instructor">Our vision</p>
-              <h2>A global learning community powered by real expertise.</h2>
+              <p className="landing-eyebrow landing-eyebrow--instructor">{c.story.eyebrowRight}</p>
+              <h2>{c.story.titleRight}</h2>
               <p>
-                We are building a place where knowledge travels farther, instructors are rewarded for what they know, and every learner can turn a next step into lasting progress.
+                {c.story.copyRight}
               </p>
             </article>
           </div>
@@ -177,9 +224,9 @@ export default function LandingPage() {
         <section className="landing-paths" id="your-path" aria-labelledby="paths-title">
           <div className="landing-shell">
             <div className="landing-section-heading">
-              <p className="landing-eyebrow">One community, two ways forward</p>
-              <h2 id="paths-title">Choose the path that moves you.</h2>
-              <p>Whether you are growing a skill set or growing an audience, Program is designed to help your work go further.</p>
+              <p className="landing-eyebrow">{c.paths.eyebrow}</p>
+              <h2 id="paths-title">{c.paths.title}</h2>
+              <p>{c.paths.copy}</p>
             </div>
 
             <div className="landing-paths__grid">
@@ -188,11 +235,11 @@ export default function LandingPage() {
                   <span className="landing-path-card__badge landing-path-card__badge--student">For students</span>
                   <span className="landing-path-card__symbol landing-path-card__symbol--student" aria-hidden="true"><BookIcon /></span>
                 </div>
-                <h3>Build skills that take you places.</h3>
-                <p className="landing-path-card__intro">Find focused courses, learn at your pace, and make every completed lesson count.</p>
+                <h3>{c.paths.studentTitle}</h3>
+                <p className="landing-path-card__intro">{c.paths.studentCopy}</p>
                 <BenefitList benefits={studentBenefits} variant="student" />
-                <Link className="landing-path-card__link landing-path-card__link--student" to="/auth?mode=register&role=student">
-                  Explore learning <ArrowIcon />
+                <Link className="landing-path-card__link landing-path-card__link--student" to={c.paths.studentCtaLink}>
+                  {c.paths.studentCtaText} <ArrowIcon />
                 </Link>
               </article>
 
@@ -201,11 +248,11 @@ export default function LandingPage() {
                   <span className="landing-path-card__badge landing-path-card__badge--instructor">For instructors</span>
                   <span className="landing-path-card__symbol landing-path-card__symbol--instructor" aria-hidden="true"><SparkIcon /></span>
                 </div>
-                <h3>Turn what you know into impact.</h3>
-                <p className="landing-path-card__intro">Create a course experience that reflects your expertise and reaches learners ready for it.</p>
+                <h3>{c.paths.instructorTitle}</h3>
+                <p className="landing-path-card__intro">{c.paths.instructorCopy}</p>
                 <BenefitList benefits={instructorBenefits} variant="instructor" />
-                <Link className="landing-path-card__link landing-path-card__link--instructor" to="/auth?mode=register&role=instructor">
-                  Start teaching <ArrowIcon />
+                <Link className="landing-path-card__link landing-path-card__link--instructor" to={c.paths.instructorCtaLink}>
+                  {c.paths.instructorCtaText} <ArrowIcon />
                 </Link>
               </article>
             </div>

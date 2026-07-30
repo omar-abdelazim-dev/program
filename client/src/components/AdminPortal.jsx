@@ -22,6 +22,7 @@ import AdminUserManagementTab from "./AdminUserManagementTab";
 import AdminCourseManagementTab from "./AdminCourseManagementTab";
 import WebsiteManagement from "./WebsiteManagement/WebsiteManagement";
 import SystemManagement from "./SystemManagement";
+import AdminLandingPageTab from "./AdminLandingPageTab";
 import FullPageLoader from "./FullPageLoader";
 import { useTranslation } from 'react-i18next';
 
@@ -229,7 +230,7 @@ export default function AdminPortal({
   isLightMode,
 }) {
   const navigate = useNavigate();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const toggleLanguage = () => {
     const newLang = i18n.language === "en" ? "ar" : "en";
@@ -608,6 +609,7 @@ export default function AdminPortal({
           {
             title: "Website Management",
             items: [
+              { id: "web_landing_cms", label: "Landing Page CMS" },
               { id: "web_home", label: "Homepage" },
               { id: "web_about", label: "About" },
               { id: "web_faq", label: "FAQ" },
@@ -1343,6 +1345,9 @@ export default function AdminPortal({
 
             {activeTab === "financial_payouts" && <AdminPayoutsTab />}
 
+            {activeTab === "web_landing_cms" && (
+              <AdminLandingPageTab />
+            )}
             {activeTab === "web_home" && (
               <WebsiteManagement user={user} subTab="home" />
             )}
