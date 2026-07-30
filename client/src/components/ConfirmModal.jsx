@@ -52,7 +52,7 @@ export default function ConfirmModal({ isOpen, title, message, onConfirm, onCanc
             onClick={onConfirm}
             style={{
               background: intent === 'primary' ? 'linear-gradient(135deg, var(--c-orange), var(--c-yellow))' : 'linear-gradient(135deg, #ef4444, #b91c1c)',
-              boxShadow: intent === 'primary' ? '0 4px 15px rgba(249, 115, 22, 0.3)' : '0 4px 15px rgba(239, 68, 68, 0.3)',
+              boxShadow: 'inset 0 4px 12px rgba(0, 0, 0, 0.5)',
               flex: 1,
               margin: 0
             }}

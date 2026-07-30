@@ -3247,13 +3247,13 @@ body .no-border {
 }
 
 .analytics-row:hover td:first-child {
-    border-top-left-radius: 16px;
-    border-bottom-left-radius: 16px;
+    border-start-start-radius: 16px;
+    border-end-start-radius: 16px;
 }
 
 .analytics-row:hover td:last-child {
-    border-top-right-radius: 16px;
-    border-bottom-right-radius: 16px;
+    border-start-end-radius: 16px;
+    border-end-end-radius: 16px;
 }
 
 

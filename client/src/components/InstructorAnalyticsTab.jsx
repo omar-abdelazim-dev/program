@@ -1,7 +1,9 @@
 import React from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { useTranslation } from 'react-i18next';
 
 export default function InstructorAnalyticsTab({ courses = [], stats = [], timeSeries = [] }) {
+  const { t } = useTranslation();
   // Use backend stats where available
   const coursePerformanceData = courses.map(course => {
     const courseStat = stats.find(s => s.id === course._id) || {};
@@ -15,8 +17,22 @@ export default function InstructorAnalyticsTab({ courses = [], stats = [], timeS
   });
 
   // Use backend time series data
-  const revenueData = timeSeries;
-  const studentGrowthData = timeSeries;
+  const monthMap = {
+    'Jan': t('common.months.jan', 'Jan'),
+    'Feb': t('common.months.feb', 'Feb'),
+    'Mar': t('common.months.mar', 'Mar'),
+    'Apr': t('common.months.apr', 'Apr'),
+    'May': t('common.months.may', 'May'),
+    'Jun': t('common.months.jun', 'Jun'),
+    'Jul': t('common.months.jul', 'Jul'),
+    'Aug': t('common.months.aug', 'Aug'),
+    'Sep': t('common.months.sep', 'Sep'),
+    'Oct': t('common.months.oct', 'Oct'),
+    'Nov': t('common.months.nov', 'Nov'),
+    'Dec': t('common.months.dec', 'Dec')
+  };
+  const revenueData = timeSeries.map(item => ({ ...item, name: monthMap[item.name] || item.name }));
+  const studentGrowthData = revenueData;
   return (
     <div data-role="instructor" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
       
@@ -25,7 +41,7 @@ export default function InstructorAnalyticsTab({ courses = [], stats = [], timeS
         
         {/* Revenue over Time */}
         <div className="glass-card no-border animate-entrance" style={{ padding: '24px', background: 'var(--bg-surface)', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)' }}>
-          <h3 style={{ fontSize: '1.2rem', marginBottom: '24px', color: 'var(--text-h)' }}>Revenue over Time</h3>
+          <h3 style={{ fontSize: '1.2rem', marginBottom: '24px', color: 'var(--text-h)' }}>{t('instructor.analytics.revenue_over_time')}</h3>
           <div style={{ width: '100%', height: '350px' }}>
             <ResponsiveContainer>
               <AreaChart data={revenueData} margin={{ top: 20, right: 20, left: 0, bottom: 5 }}>
@@ -53,7 +69,7 @@ export default function InstructorAnalyticsTab({ courses = [], stats = [], timeS
                   contentStyle={{ backgroundColor: 'var(--bg-main)', border: 'none', borderRadius: '8px', color: 'var(--text-h)', boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5), 0 8px 32px rgba(0, 0, 0, 0.3)' }}
                   itemStyle={{ backgroundImage: 'linear-gradient(135deg, #f97316 0%, #fbbf24 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: 600 }}
                 />
-                <Area type="monotone" dataKey="revenue" stroke="url(#line-gradient)" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" filter="url(#glow-orange)" />
+                <Area type="monotone" dataKey="revenue" name={t('instructor.analytics.revenue', 'revenue')} stroke="url(#line-gradient)" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" filter="url(#glow-orange)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -61,7 +77,7 @@ export default function InstructorAnalyticsTab({ courses = [], stats = [], timeS
 
         {/* Student Growth */}
         <div className="glass-card no-border animate-entrance" style={{ padding: '24px', background: 'var(--bg-surface)', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)' }}>
-          <h3 style={{ fontSize: '1.2rem', marginBottom: '24px', color: 'var(--text-h)' }}>Student Growth</h3>
+          <h3 style={{ fontSize: '1.2rem', marginBottom: '24px', color: 'var(--text-h)' }}>{t('instructor.analytics.active_students')}</h3>
           <div style={{ width: '100%', height: '350px' }}>
             <ResponsiveContainer>
               <AreaChart data={studentGrowthData} margin={{ top: 20, right: 20, left: 0, bottom: 5 }}>
@@ -89,7 +105,7 @@ export default function InstructorAnalyticsTab({ courses = [], stats = [], timeS
                   contentStyle={{ backgroundColor: 'var(--bg-main)', border: 'none', borderRadius: '8px', color: 'var(--text-h)', boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5), 0 8px 32px rgba(0, 0, 0, 0.3)' }}
                   itemStyle={{ backgroundImage: 'linear-gradient(135deg, #f97316 0%, #fbbf24 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: 600 }}
                 />
-                <Area type="monotone" dataKey="students" stroke="url(#line-gradient-growth)" strokeWidth={3} fillOpacity={1} fill="url(#colorGrowth)" dot={{ fill: 'var(--bg)', stroke: '#f97316', strokeWidth: 2, r: 4 }} activeDot={{ r: 6, fill: '#fbbf24' }} filter="url(#glow-line)" />
+                <Area type="monotone" dataKey="students" name={t('instructor.analytics.students', 'students')} stroke="url(#line-gradient-growth)" strokeWidth={3} fillOpacity={1} fill="url(#colorGrowth)" dot={{ fill: 'var(--bg)', stroke: '#f97316', strokeWidth: 2, r: 4 }} activeDot={{ r: 6, fill: '#fbbf24' }} filter="url(#glow-line)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -98,21 +114,21 @@ export default function InstructorAnalyticsTab({ courses = [], stats = [], timeS
 
       {/* Performance Table */}
       <div className="glass-card no-border animate-entrance" style={{ padding: '24px', overflow: 'hidden', background: 'var(--bg-surface)', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)' }}>
-        <h3 style={{ fontSize: '1.2rem', marginBottom: '24px', color: 'var(--text-h)' }}>Per-Course Performance</h3>
+        <h3 style={{ fontSize: '1.2rem', marginBottom: '24px', color: 'var(--text-h)' }}>{t('instructor.analytics.enrollments_by_course')}</h3>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 4px', textAlign: 'left' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--c-sub)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                <th style={{ padding: '16px', fontWeight: '600' }}>Course Title</th>
-                <th style={{ padding: '16px', fontWeight: '600' }}>Total Enrolled</th>
-                <th style={{ padding: '16px', fontWeight: '600' }}>Completion Rate</th>
-                <th style={{ padding: '16px', fontWeight: '600' }}>Total Revenue</th>
+                <th style={{ padding: '16px', fontWeight: '600' }}>{t('instructor.dashboard.table.course')}</th>
+                <th style={{ padding: '16px', fontWeight: '600' }}>{t('instructor.analytics.total_enrollments')}</th>
+                <th style={{ padding: '16px', fontWeight: '600' }}>{t('instructor.analytics.course_completion_rate')}</th>
+                <th style={{ padding: '16px', fontWeight: '600' }}>{t('instructor.analytics.total_revenue')}</th>
               </tr>
             </thead>
             <tbody>
               {coursePerformanceData.map(course => (
                 <tr key={course.id} className="analytics-row" style={{ backgroundColor: 'transparent', transition: 'all 0.3s' }}>
-                  <td style={{ padding: '16px', fontWeight: '600', color: 'var(--text-h)', borderBottom: '1px solid var(--border)', borderTopLeftRadius: '16px', borderBottomLeftRadius: '16px' }}>{course.title}</td>
+                  <td style={{ padding: '16px', fontWeight: '600', color: 'var(--text-h)', borderBottom: '1px solid var(--border)', borderStartStartRadius: '16px', borderEndStartRadius: '16px' }}>{course.title}</td>
                   <td style={{ padding: '16px', borderBottom: '1px solid var(--border)' }}>{course.enrolled}</td>
                   <td style={{ padding: '16px', borderBottom: '1px solid var(--border)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -122,7 +138,7 @@ export default function InstructorAnalyticsTab({ courses = [], stats = [], timeS
                       <span style={{ fontSize: '0.85rem', fontWeight: '500', width: '40px' }}>{course.completionRate}</span>
                     </div>
                   </td>
-                  <td style={{ padding: '16px', fontWeight: '700', backgroundImage: 'linear-gradient(135deg, #f97316 0%, #fbbf24 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', borderBottom: '1px solid var(--border)', borderTopRightRadius: '16px', borderBottomRightRadius: '16px' }}>{course.revenue}</td>
+                  <td style={{ padding: '16px', fontWeight: '700', backgroundImage: 'linear-gradient(135deg, #f97316 0%, #fbbf24 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', borderBottom: '1px solid var(--border)', borderStartEndRadius: '16px', borderEndEndRadius: '16px' }}>{course.revenue}</td>
                 </tr>
               ))}
             </tbody>
