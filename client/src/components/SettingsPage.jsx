@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import api from '../api/axios';
 import CustomSelect from './CustomSelect';
 import { useTranslation } from 'react-i18next';
+import { MAJORS } from '../data/majors';
 
 const DEPARTMENTS = [
   "Computer Science", "Information Technology", "Software Engineering", 
@@ -183,6 +184,7 @@ function AccountSection({ user, setUser, onLogout }) {
   const { t } = useTranslation();
   const [email, setEmail] = useState(user?.email || '');
   const [college, setCollege] = useState(user?.college || '');
+  const [major, setMajor] = useState(user?.major || '');
   const [providedCourses, setProvidedCourses] = useState(user?.providedCourses || '');
   const [linkedinUrl, setLinkedinUrl] = useState(user?.linkedinUrl || '');
   const [socialUrl, setSocialUrl] = useState(user?.socialUrl || '');
@@ -207,6 +209,7 @@ function AccountSection({ user, setUser, onLogout }) {
       const res = await api.patch('/auth/profile', {
         email,
         college,
+        major,
         providedCourses,
         linkedinUrl,
         socialUrl
@@ -277,6 +280,17 @@ function AccountSection({ user, setUser, onLogout }) {
               onChange={setCollege}
             />
           </div>
+            {user?.role === 'student' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>{t('settings.account.major', 'Major')}</label>
+                <CustomSelect
+                  options={MAJORS.map(m => ({ value: m.id, label: m.label }))}
+                  value={major}
+                  onChange={setMajor}
+                  placeholder={t('settings.account.major_placeholder', 'Select your major')}
+                />
+              </div>
+            )}
             {user?.role === 'instructor' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', gridColumn: '1 / -1' }}>
                 <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>{t('settings.account.course_provided', 'Course Provided')}</label>

@@ -5,6 +5,7 @@ import logoLight from '../assets/logo-light.png';
 import api from '../api/axios';
 
 import CustomSelect from './CustomSelect';
+import { MAJORS } from '../data/majors';
 
 export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
   const { t, i18n } = useTranslation();
@@ -32,6 +33,7 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
   const [college, setCollege] = useState('');
   const [year, setYear] = useState('');
   const [track, setTrack] = useState('');
+  const [major, setMajor] = useState('');
   const [providedCourses, setProvidedCourses] = useState('');
   const [linkedinUrl, setLinkedinUrl] = useState('');
   const [socialUrl, setSocialUrl] = useState('');
@@ -125,6 +127,7 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
             year,
             college,
             track,
+            major,
             providedCourses,
             linkedinUrl,
             socialUrl,
@@ -294,6 +297,7 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
                             ]}
                             value={department}
                             onChange={setDepartment}
+                            placeholder={t('auth.department_placeholder')}
                             icon={<svg className="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>}
                           />
                         </div>
@@ -340,6 +344,17 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
                               <svg className="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
                               <input type="text" placeholder={t('auth.track_placeholder')} required value={track} onChange={(e) => setTrack(e.target.value)} />
                             </div>
+                          </div>
+
+                          <div className="input-group">
+                            <label>Major *</label>
+                            <CustomSelect
+                              options={MAJORS.map(m => ({ value: m.id, label: m.label }))}
+                              value={major}
+                              onChange={setMajor}
+                              placeholder="Select your major"
+                              icon={<svg className="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>}
+                            />
                           </div>
                         </>
                       ) : (

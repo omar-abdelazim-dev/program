@@ -97,7 +97,13 @@ export default function CoursePage({ cart = [], setCart }) {
         {/* Left Column: Details */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
           
-          <div className="solid-card" style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div
+            className="solid-card"
+            style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '16px', cursor: course.instructor?._id ? 'pointer' : 'default' }}
+            onClick={() => course.instructor?._id && navigate(`/instructor/${course.instructor._id}`)}
+            role={course.instructor?._id ? 'button' : undefined}
+            tabIndex={course.instructor?._id ? 0 : undefined}
+          >
             <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'var(--bg-main)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '1.4rem', color: 'var(--text-primary)', border: '1px solid var(--border)' }}>
               {(course.instructor?.name || '?').charAt(0).toUpperCase()}
             </div>

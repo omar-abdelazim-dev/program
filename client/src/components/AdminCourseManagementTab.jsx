@@ -359,10 +359,7 @@ export default function AdminCourseManagementTab({ currentUser }) {
           return (
           <button
             key={tab.id}
-            onClick={() => {
-              setActiveStatus(tab.id);
-              setSelectedIds(new Set());
-            }}
+            onClick={() => setActiveStatus(tab.id)}
             style={{
               padding: "10px 24px", borderRadius: "99px", fontSize: "0.9rem", fontWeight: "500", cursor: "pointer", transition: "all 0.2s",
               border: "none",

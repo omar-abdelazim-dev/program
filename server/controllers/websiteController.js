@@ -38,9 +38,18 @@ export const updateWebsiteContent = async (req, res) => {
       content = new WebsiteContent({ isGlobal: true });
     }
 
-    if (homepage) content.homepage = homepage;
-    if (about) content.about = about;
-    if (contact) content.contact = contact;
+    if (homepage) {
+      content.homepage = homepage;
+      content.markModified('homepage');
+    }
+    if (about) {
+      content.about = about;
+      content.markModified('about');
+    }
+    if (contact) {
+      content.contact = contact;
+      content.markModified('contact');
+    }
 
     await content.save();
     res.json(content);

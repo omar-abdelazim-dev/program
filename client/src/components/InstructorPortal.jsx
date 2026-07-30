@@ -14,6 +14,8 @@ import SettingsPage from './SettingsPage';
 import InstructorFinancialsTab from './InstructorFinancialsTab';
 import InstructorReviewsTab from './InstructorReviewsTab';
 import { notyf } from './WebsiteManagement/SharedUI';
+import { EXPLORE_CATEGORIES } from '../data/exploreCategories';
+import { MAJORS, getMajor } from '../data/majors';
 import { useTranslation } from 'react-i18next';
 
 export default function InstructorPortal({ user, setUser, onLogout, toggleTheme, isLightMode }) {
@@ -46,7 +48,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
   const [selectedCourseId, setSelectedCourseId] = useState(null);
 
   // Form states
-  const [formData, setFormData] = useState({ title: '', description: '', price: '', category: '' });
+  const [formData, setFormData] = useState({ title: '', description: '', price: '', category: '', major: '', semester: '' });
   const [thumbnailFile, setThumbnailFile] = useState(null);
 
   const [editingLessonId, setEditingLessonId] = useState(null);
@@ -138,7 +140,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
       
       setShowCreateModal(false);
       setEditingCourse(null);
-      setFormData({ title: '', description: '', price: '', category: '' });
+      setFormData({ title: '', description: '', price: '', category: '', major: '', semester: '' });
       setThumbnailFile(null);
       fetchMyCourses();
     } catch (err) {
@@ -403,7 +405,9 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                     title: course.title,
                     description: course.description,
                     price: course.price,
-                    category: course.category
+                    category: course.category,
+                    major: course.major || '',
+                    semester: course.semester || ''
                   });
                   setThumbnailFile(null);
                   setShowCreateModal(true);
@@ -470,7 +474,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
               {/* Translated My Courses header */}
               <h2 style={{ fontSize: '2rem', margin: 0, color: 'var(--text-h)' }}>{t('instructor.dashboard.my_courses')}</h2>
               <button 
-                onClick={() => { setError(''); setEditingCourse(null); setFormData({ title: '', description: '', price: '', category: '' }); setShowCreateModal(true); }} 
+                onClick={() => { setError(''); setEditingCourse(null); setFormData({ title: '', description: '', price: '', category: '', major: '', semester: '' }); setShowCreateModal(true); }} 
                 style={{ width: 'auto', borderRadius: '24px', padding: '10px 24px', fontWeight: 700, background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: 'none', boxShadow: 'inset 0 4px 12px rgba(0, 0, 0, 0.3)', cursor: 'pointer', transition: 'all 0.2s' }}
                 onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)'; e.currentTarget.style.boxShadow = 'inset 0 4px 12px rgba(0, 0, 0, 0.5)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
                 onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'; e.currentTarget.style.boxShadow = 'inset 0 4px 12px rgba(0, 0, 0, 0.3)'; e.currentTarget.style.filter = 'none'; }}
@@ -572,16 +576,37 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                 </div>
                 <div className="input-group">
                   <label>{t('instructor.create_course.form.category')}</label>
-                  <CustomSelect 
-                    value={formData.category} 
+                  <CustomSelect
+                    value={formData.category}
                     onChange={val => setFormData({...formData, category: val})}
-                    placeholder="--"
-                    options={[
-                      { value: "Development", label: "Development" },
-                      { value: "Design", label: "Design" },
-                      { value: "Business", label: "Business" },
-                      { value: "Data", label: "Data" }
-                    ]}
+                    placeholder={t('instructor.create_course.form.category_placeholder', 'Select a category')}
+                    options={EXPLORE_CATEGORIES.map(c => ({ value: c, label: c }))}
+                  />
+                </div>
+              </div>
+              <div className="input-row">
+                <div className="input-group">
+                  <label>{t('instructor.create_course.form.major', 'Major (Optional)')}</label>
+                  <CustomSelect
+                    value={formData.major}
+                    onChange={val => setFormData({...formData, major: val, semester: ''})}
+                    placeholder={t('instructor.create_course.form.major_placeholder', "Not part of a major's curriculum")}
+                    options={MAJORS.map(m => ({ value: m.id, label: m.label }))}
+                  />
+                  <div className="input-hint">{t('instructor.create_course.form.major_hint', "Lets this course appear on the Home page's major/semester sections.")}</div>
+                </div>
+                <div className="input-group">
+                  <label>{t('instructor.create_course.form.semester', 'Semester (Optional)')}</label>
+                  <CustomSelect
+                    value={formData.semester ? String(formData.semester) : ''}
+                    onChange={val => setFormData({...formData, semester: val})}
+                    placeholder={formData.major ? t('instructor.create_course.form.semester_placeholder', 'Select a semester') : t('instructor.create_course.form.semester_placeholder_no_major', 'Select a major first')}
+                    options={
+                      getMajor(formData.major)
+                        ? Array.from({ length: getMajor(formData.major).semesters }, (_, i) => i + 1)
+                            .map(n => ({ value: String(n), label: t('instructor.create_course.form.semester_n', 'Semester {{n}}', { n }) }))
+                        : []
+                    }
                   />
                 </div>
               </div>
@@ -607,7 +632,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
           <div className="solid-card animate-entrance" style={{ width: '100%', maxWidth: '700px', padding: '32px' }}>
             {/* Translated Add Lesson Modal Title */}
-            <h2 style={{ margin: '0 0 24px 0' }}>{editingLessonId ? t('instructor.curriculum.edit_lesson') || 'Edit Lesson' : t('instructor.curriculum.add_lesson')}</h2>
+            <h2 style={{ margin: '0 0 24px 0' }}>{editingLessonId ? t('instructor.curriculum.edit_lesson', 'Edit Lesson') : t('instructor.curriculum.add_lesson')}</h2>
             {error && <div style={{ color: '#ef4444', marginBottom: '16px' }}>{error}</div>}
             
             <form noValidate onSubmit={handleSaveLesson} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>

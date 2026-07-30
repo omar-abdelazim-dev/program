@@ -60,7 +60,8 @@
       "courses": "الدورات",
       "browse_category": "تصفح حسب التصنيف",
       "all_courses": "جميع الدورات",
-      "settings": "الإعدادات"
+      "settings": "الإعدادات",
+      "home": "الرئيسية"
     },
     "nav": {
       "search_placeholder": "ابحث عن دورات، دروس، مواضيع...",
@@ -99,7 +100,19 @@
     "no_enrolled_courses": "لم تسجل في أي دورات بعد.",
     "nothing_in_progress": "لا يوجد شيء قيد التقدم حالياً — عمل رائع في المتابعة!",
     "explore_catalog": "استكشف الكتالوج",
-    "no_completed_courses": "لم تكمل أي دورات بعد. واصل التعلم!"
+    "no_completed_courses": "لم تكمل أي دورات بعد. واصل التعلم!",
+    "home": {
+      "welcome_name": "مرحبًا بعودتك، {{name}}",
+      "subtitle_major": "إليك ما ينتظرك في مسار {{major}}.",
+      "subtitle_default": "اكتشف مهارات جديدة، تعرّف على أحدث المواضيع، وتعلّم من أفضل المدربين في المجال.",
+      "set_major_prompt": "حدد تخصصك من الإعدادات لتخصيص صفحتك الرئيسية بمقررات برنامجك.",
+      "set_major_link": "حدد تخصصك ←",
+      "search_results_for": "نتائج البحث عن \"{{query}}\"",
+      "no_results_for": "لم يتم العثور على مقررات لـ \"{{query}}\".",
+      "semester_label": "{{major}} – الفصل الدراسي {{semester}}",
+      "no_major_courses": "لا توجد مقررات لتخصص {{major}} بعد. يرجى المراجعة لاحقًا.",
+      "no_courses_available": "لا توجد مقررات متاحة بعد."
+    }
   },
   "instructor": {
     "loading": "جاري تحميل بوابة المدرب...",
@@ -160,7 +173,15 @@
         "description": "الوصف",
         "price": "السعر",
         "category": "الفئة",
-        "thumbnail": "صورة مصغرة"
+        "thumbnail": "صورة مصغرة",
+        "category_placeholder": "اختر تصنيفًا",
+        "major": "التخصص (اختياري)",
+        "major_placeholder": "غير مرتبط بمنهج تخصص معين",
+        "major_hint": "يتيح ظهور هذا المقرر في أقسام التخصص/الفصل الدراسي بالصفحة الرئيسية.",
+        "semester": "الفصل الدراسي (اختياري)",
+        "semester_placeholder": "اختر فصلًا دراسيًا",
+        "semester_placeholder_no_major": "اختر تخصصًا أولًا",
+        "semester_n": "الفصل الدراسي {{n}}"
       },
       "cancel": "إلغاء",
       "save": "حفظ الدورة",
@@ -190,7 +211,8 @@
       "manage_lessons": "إدارة الدروس والمحتوى",
       "ph_lesson_title": "مثال: مقدمة إلى الحالة",
       "ph_attachment_title": "مثال: ملف PDF مرجعي",
-      "delete_course_confirm": "هل أنت متأكد أنك تريد حذف هذه الدورة؟ لا يمكن التراجع عن هذا الإجراء."
+      "delete_course_confirm": "هل أنت متأكد أنك تريد حذف هذه الدورة؟ لا يمكن التراجع عن هذا الإجراء.",
+      "edit_lesson": "تعديل الدرس"
     },
     "analytics": {
       "title": "لوحة التحليلات",
@@ -460,7 +482,9 @@
       "logout": "تسجيل الخروج",
       "danger_title": "احذر",
       "danger_desc": "حذف حسابك وجميع بياناتك بشكل دائم. لا يمكن التراجع عن هذا الإجراء.",
-      "delete": "حذف الحساب"
+      "delete": "حذف الحساب",
+      "major": "التخصص",
+      "major_placeholder": "اختر تخصصك"
     },
     "appearance": {
       "title": "المظهر",
