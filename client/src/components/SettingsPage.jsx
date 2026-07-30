@@ -31,7 +31,7 @@ export default function SettingsPage({ user, setUser, isLightMode, toggleTheme, 
             <div style={{
               position: 'absolute', left: '24px', right: '24px', height: '48px',
               background: 'var(--bg-main)', borderRadius: '8px',
-              boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5)',
+              boxShadow: 'var(--inner-shadow)',
               transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               transform: `translateY(${SECTIONS.findIndex(s => s.id === activeSection) * (48 + 8)}px)`,
               pointerEvents: 'none', zIndex: 0
@@ -141,7 +141,26 @@ function ProfileSection({ user, setUser }) {
           )}
         </div>
         <div>
-          <button type="button" className="solid-btn" style={{ background: 'var(--bg-main)', border: '2px solid transparent', color: 'var(--text-primary)', boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5)' }} onClick={() => fileInputRef.current?.click()}>
+          <button
+            type="button"
+            className="solid-btn"
+            style={{
+              background: 'var(--bg-main)',
+              border: '2px solid transparent',
+              color: 'var(--text-primary)',
+              boxShadow: 'var(--inner-shadow)',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = '#ffffff';
+              e.target.style.boxShadow = '0 0 15px rgba(255,255,255,1), var(--outer-shadow)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'var(--bg-main)';
+              e.target.style.boxShadow = 'var(--inner-shadow)';
+            }}
+            onClick={() => fileInputRef.current?.click()}
+          >
             {t('settings.profile.change_picture', 'Change picture')}
           </button>
           <input
@@ -338,7 +357,7 @@ function AccountSection({ user, setUser, onLogout }) {
       <div className="solid-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', height: '100%' }}>
         <h3 style={{ fontSize: '1.1rem', fontWeight: '700', margin: 0, color: 'var(--text-primary)' }}>{t('settings.account.sessions_title', 'Device Sessions')}</h3>
         <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>{t('settings.account.sessions_desc', 'Sign out of Program on this device. You will need to log back in to access your dashboard.')}</p>
-        <button type="button" className="solid-btn" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5)', alignSelf: 'flex-start', width: 'auto', padding: '10px 24px', marginTop: 'auto', borderRadius: '50px', transition: 'all 0.2s ease', cursor: 'pointer' }} 
+        <button type="button" className="solid-btn" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', boxShadow: 'var(--inner-shadow)', alignSelf: 'flex-start', width: 'auto', padding: '10px 24px', marginTop: 'auto', borderRadius: '50px', transition: 'all 0.2s ease', cursor: 'pointer' }}
           onMouseEnter={e => { e.target.style.background = "rgba(239,68,68,0.2)"; }}
           onMouseLeave={e => { e.target.style.background = "rgba(239,68,68,0.1)"; }}
           onClick={onLogout}>
@@ -349,7 +368,7 @@ function AccountSection({ user, setUser, onLogout }) {
       <div className="solid-card" style={{ background: 'rgba(239, 68, 68, 0.05)', display: 'flex', flexDirection: 'column', gap: '16px', height: '100%' }}>
         <h3 style={{ fontSize: '1.1rem', fontWeight: '700', margin: 0, color: '#ef4444' }}>{t('settings.account.danger_title', 'Danger Zone')}</h3>
         <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>{t('settings.account.danger_desc', 'Permanently delete your account and all of your data. This action cannot be undone.')}</p>
-        <button type="button" className="solid-btn" style={{ background: '#ef4444', color: '#fff', border: 'none', boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5)', alignSelf: 'flex-start', width: 'auto', padding: '10px 24px', marginTop: 'auto', borderRadius: '50px', transition: 'all 0.2s ease', cursor: 'pointer' }}
+        <button type="button" className="solid-btn" style={{ background: '#ef4444', color: '#fff', border: 'none', boxShadow: 'var(--inner-shadow)', alignSelf: 'flex-start', width: 'auto', padding: '10px 24px', marginTop: 'auto', borderRadius: '50px', transition: 'all 0.2s ease', cursor: 'pointer' }}
           onMouseEnter={e => { e.target.style.background = "#f87171"; }}
           onMouseLeave={e => { e.target.style.background = "#ef4444"; }}>
           {t('settings.account.delete', 'Delete Account')}
@@ -372,7 +391,7 @@ function AppearanceSection({ isLightMode, toggleTheme }) {
         <div style={{
           position: 'absolute', top: 0, bottom: 0, width: 'calc(50% - 8px)',
           background: 'var(--bg-main)', borderRadius: '12px', border: 'none',
-          boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5)',
+          boxShadow: 'var(--inner-shadow)',
           transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           transform: isLightMode ? (isRTL ? 'translateX(calc(-100% - 16px))' : 'translateX(calc(100% + 16px))') : 'translateX(0)',
           pointerEvents: 'none', zIndex: 0

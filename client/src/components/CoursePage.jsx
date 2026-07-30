@@ -79,7 +79,7 @@ export default function CoursePage({ cart = [], setCart }) {
           {fromDashboard ? t('course_page.back_dashboard') : t('course_page.back_explore')}
         </button>
         
-        <span style={{ display: 'inline-flex', padding: '6px 14px', background: 'rgba(249, 115, 22, 0.1)', color: 'var(--color-accent)', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px', boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5)' }}>
+        <span style={{ display: 'inline-flex', padding: '6px 14px', background: 'rgba(249, 115, 22, 0.1)', color: 'var(--color-accent)', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px', boxShadow: 'var(--inner-shadow)' }}>
           {course.category}
         </span>
         
@@ -132,12 +132,12 @@ export default function CoursePage({ cart = [], setCart }) {
                 </div>
 
                 {lessons.length === 0 ? (
-                  <div style={{ padding: '32px', textAlign: 'center', background: 'var(--bg-main)', borderRadius: '12px', color: 'var(--text-secondary)', boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5)' }}>
+                  <div style={{ padding: '32px', textAlign: 'center', background: 'var(--bg-main)', borderRadius: '12px', color: 'var(--text-secondary)', boxShadow: 'var(--inner-shadow)' }}>
                     {t('course_page.no_lessons')}
                   </div>
                 ) : lessons.map((lesson, i) => (
-                  <div key={lesson._id} style={{ padding: '20px 24px', background: 'var(--bg-main)', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '16px', boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5)' }}>
-                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--bg-surface)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '0.9rem', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+                  <div key={lesson._id} style={{ padding: '20px 24px', background: 'var(--bg-main)', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '16px', boxShadow: 'var(--inner-shadow)' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--bg-surface)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '0.9rem', boxShadow: 'var(--outer-shadow)' }}>
                       {i + 1}
                     </div>
                     <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '600', color: 'var(--text-primary)' }}>{lesson.title}</h4>
@@ -166,7 +166,7 @@ export default function CoursePage({ cart = [], setCart }) {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '8px' }}>
             {isEnrolled ? (
-              <button onClick={() => navigate(`/learn/${course._id}`)} className="solid-btn" style={{ width: '100%', height: '54px', fontSize: '1.05rem', background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5)' }}>
+              <button onClick={() => navigate(`/learn/${course._id}`)} className="solid-btn" style={{ width: '100%', height: '54px', fontSize: '1.05rem', background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', boxShadow: 'var(--inner-shadow)' }}>
                 {t('course_page.go_to_course')}
               </button>
             ) : (

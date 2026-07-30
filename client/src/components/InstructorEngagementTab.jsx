@@ -132,12 +132,11 @@ export default function InstructorEngagementTab({ courses = [] }) {
 
       {activeTab === 'qa' && (
         <div className="glass-card no-border animate-entrance" style={{ padding: '40px', borderRadius: '24px', background: 'var(--bg-surface)', border: 'none' }}>
-          {/* Translated Student Questions */}
-          <h2 style={{ fontSize: '1.75rem', marginBottom: '32px', fontWeight: '700', backgroundImage: 'linear-gradient(135deg, #ffffff 0%, #a1a1aa 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{t('instructor.engagement.title')}</h2>
+          <h2 style={{ fontSize: '1.75rem', marginBottom: '32px', fontWeight: '700', color: 'var(--text-h)' }}>{t('instructor.engagement.title')}</h2>
           {loading ? (
             <div style={{ color: 'var(--c-sub)' }}>{t('instructor.engagement.loading_questions')}</div>
           ) : questions.length === 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 32px', textAlign: 'center', background: 'var(--bg-main)', borderRadius: '16px', border: 'none', boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.2)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 32px', textAlign: 'center', background: 'var(--bg-main)', borderRadius: '16px', border: 'none', boxShadow: 'var(--inner-shadow)' }}>
               <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(249, 115, 22, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="url(#orange-gradient)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <defs>
@@ -209,7 +208,7 @@ export default function InstructorEngagementTab({ courses = [] }) {
 
       {activeTab === 'announcements' && (
         <div className="glass-card animate-entrance" style={{ padding: '40px', borderRadius: '24px', maxWidth: '800px', background: 'var(--bg-surface)' }}>
-          <h2 style={{ fontSize: '1.75rem', marginBottom: '12px', fontWeight: '700', backgroundImage: 'linear-gradient(135deg, #ffffff 0%, #a1a1aa 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{t('instructor.engagement.new_announcement')}</h2>
+          <h2 style={{ fontSize: '1.75rem', marginBottom: '12px', fontWeight: '700', color: 'var(--text-h)' }}>{t('instructor.engagement.new_announcement')}</h2>
           <p style={{ color: 'var(--c-sub)', marginBottom: '32px' }}>{t('instructor.engagement.send_notification')}</p>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>

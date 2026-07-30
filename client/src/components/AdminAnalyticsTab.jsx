@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell,
@@ -9,111 +9,131 @@ import { useTranslation } from 'react-i18next';
 const AdminAnalyticsTab = ({ revenueAnalytics, revenueAnalyticsLoading }) => {
   const { t } = useTranslation();
   const [timeFilter, setTimeFilter] = useState('Last Year');
-  
+  const [isLightMode, setIsLightMode] = useState(
+    () => document.body.classList.contains('light-mode')
+  );
+
+  // Keep isLightMode in sync when user toggles the theme
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsLightMode(document.body.classList.contains('light-mode'));
+    });
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+
+  // ── Derived chart tokens ────────────────────────────────────────────────────
+  const tooltipBg    = 'var(--bg-main)';
+  const tooltipText  = isLightMode ? '#1f2937'              : '#ffffff';
+  const gridStroke   = isLightMode ? 'rgba(0,0,0,0.07)'    : 'rgba(255,255,255,0.05)';
+  const cursorFill   = isLightMode ? 'rgba(0,0,0,0.04)'    : 'rgba(255,255,255,0.03)';
+  const cursorStroke = isLightMode ? 'rgba(0,0,0,0.15)'    : 'rgba(255,255,255,0.1)';
+  const dotBg        = isLightMode ? '#f3f4f6'              : '#11131a';
+  const tooltipShadow = 'var(--inner-shadow)';
+  const tooltipBorder = 'none';
+
+  // ── Data ────────────────────────────────────────────────────────────────────
   const rawSeries = revenueAnalytics?.series || [];
-  
-  // Create full series with calculated fields
+
   const fullSeries = useMemo(() => {
     return rawSeries.map((item, index) => {
-      const companyShare = item.revenue * 0.3;
+      const companyShare      = item.revenue * 0.3;
       const instructorEarnings = item.revenue * 0.7;
-      
       let growth = 0;
       if (index > 0 && rawSeries[index - 1].revenue > 0) {
         growth = ((item.revenue - rawSeries[index - 1].revenue) / rawSeries[index - 1].revenue) * 100;
       }
-
-      return {
-        ...item,
-        companyShare,
-        instructorEarnings,
-        growth: parseFloat(growth.toFixed(1))
-      };
+      return { ...item, companyShare, instructorEarnings, growth: parseFloat(growth.toFixed(1)) };
     });
   }, [rawSeries]);
 
-  // Apply time filter
   const filteredSeries = useMemo(() => {
-    if (timeFilter === 'Last 7 Days') {
-      return fullSeries.slice(-2); // Show last 2 months to ensure we have a line instead of a dot
-    } else if (timeFilter === 'Last 30 Days') {
-      return fullSeries.slice(-2);
-    } else if (timeFilter === 'Last 6 Months') {
-      return fullSeries.slice(-6);
-    }
+    if (timeFilter === 'Last 7 Days')   return fullSeries.slice(-2);
+    if (timeFilter === 'Last 30 Days')  return fullSeries.slice(-2);
+    if (timeFilter === 'Last 6 Months') return fullSeries.slice(-6);
     return fullSeries;
   }, [fullSeries, timeFilter]);
 
-  // Aggregate for Pie Chart
-  const totalCompany = filteredSeries.reduce((sum, item) => sum + item.companyShare, 0);
-  const totalInstructor = filteredSeries.reduce((sum, item) => sum + item.instructorEarnings, 0);
-  
+  const totalCompany    = filteredSeries.reduce((s, i) => s + i.companyShare, 0);
+  const totalInstructor = filteredSeries.reduce((s, i) => s + i.instructorEarnings, 0);
+
   const pieData = [
     { name: t('admin.company_share', 'Company Share'), value: totalCompany, color: '#8b5cf6' },
     { name: t('admin.instructor_earnings', 'Instructor Earnings'), value: totalInstructor, color: '#f97316' }
   ];
 
   if (revenueAnalyticsLoading) {
-    return <div style={{ padding: "40px", textAlign: "center", color: "var(--c-sub)" }}>Loading analytics...</div>;
+    return <div style={{ padding: '40px', textAlign: 'center', color: 'var(--c-sub)' }}>Loading analytics...</div>;
   }
 
-  // Custom tooltips
+  // ── Custom Tooltips ─────────────────────────────────────────────────────────
+  const TooltipBox = ({ children }) => (
+    <div style={{
+      background: tooltipBg,
+      border: tooltipBorder,
+      boxShadow: tooltipShadow,
+      padding: '12px',
+      borderRadius: '8px',
+      minWidth: '200px',
+    }}>
+      {children}
+    </div>
+  );
+
   const CustomAreaTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div style={{ background: '#11131a', border: 'none', boxShadow: 'inset 0 4px 12px rgba(0, 0, 0, 0.5)', padding: '12px', borderRadius: '8px', minWidth: '200px' }}>
-          <div style={{ fontWeight: '600', marginBottom: '8px', color: '#fff' }}>{label}</div>
-          {payload.map((entry, index) => {
-            let displayColor = entry.color;
-            if (entry.name === 'Revenue') displayColor = '#10B981';
-            if (entry.name === 'Company Share') displayColor = '#8b5cf6';
-            if (entry.name === 'Growth') displayColor = '#facc15';
-            
-            return (
-              <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', fontSize: '0.9rem' }}>
-                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: displayColor }}></div>
-                <span style={{ color: 'var(--c-sub)' }}>{entry.name}:</span>
-                <span style={{ color: displayColor, fontWeight: '600' }}>
-                  EGP {entry.value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      );
-    }
-    return null;
+    if (!active || !payload?.length) return null;
+    return (
+      <TooltipBox>
+        <div style={{ fontWeight: '600', marginBottom: '8px', color: tooltipText }}>{label}</div>
+        {payload.map((entry, index) => {
+          let color = entry.color;
+          if (entry.name === 'Revenue')       color = '#10B981';
+          if (entry.name === 'Company Share') color = '#8b5cf6';
+          if (entry.name === 'Growth')        color = '#facc15';
+          return (
+            <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', fontSize: '0.9rem' }}>
+              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: color }} />
+              <span style={{ color: 'var(--c-sub)' }}>{entry.name}:</span>
+              <span style={{ color, fontWeight: '600' }}>
+                EGP {entry.value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+              </span>
+            </div>
+          );
+        })}
+      </TooltipBox>
+    );
   };
 
   const CustomComposedTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div style={{ background: '#11131a', border: 'none', boxShadow: 'inset 0 4px 12px rgba(0, 0, 0, 0.5)', padding: '12px', borderRadius: '8px', minWidth: '180px' }}>
-          <div style={{ fontWeight: '600', marginBottom: '8px', color: '#fff' }}>{label}</div>
-          {payload.map((entry, index) => {
-            let displayColor = entry.color;
-            if (entry.name === 'Revenue') displayColor = '#10B981';
-            if (entry.name === 'Company Share') displayColor = '#8b5cf6';
-            if (entry.name === 'Growth') displayColor = '#facc15';
-
-            return (
-              <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', fontSize: '0.9rem' }}>
-                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: displayColor }}></div>
-                <span style={{ color: 'var(--c-sub)' }}>{entry.name}:</span>
-                <span style={{ color: displayColor, fontWeight: '600' }}>
-                  {entry.name === 'Growth' ? `${entry.value > 0 ? '+' : ''}${entry.value}%` : `EGP ${entry.value.toLocaleString()}`}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      );
-    }
-    return null;
+    if (!active || !payload?.length) return null;
+    return (
+      <TooltipBox>
+        <div style={{ fontWeight: '600', marginBottom: '8px', color: tooltipText }}>{label}</div>
+        {payload.map((entry, index) => {
+          let color = entry.color;
+          if (entry.name === 'Revenue')       color = '#10B981';
+          if (entry.name === 'Company Share') color = '#8b5cf6';
+          if (entry.name === 'Growth')        color = '#facc15';
+          return (
+            <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', fontSize: '0.9rem' }}>
+              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: color }} />
+              <span style={{ color: 'var(--c-sub)' }}>{entry.name}:</span>
+              <span style={{ color, fontWeight: '600' }}>
+                {entry.name === 'Growth'
+                  ? `${entry.value > 0 ? '+' : ''}${entry.value}%`
+                  : `EGP ${entry.value.toLocaleString()}`}
+              </span>
+            </div>
+          );
+        })}
+      </TooltipBox>
+    );
   };
 
+  // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }} className="animate-entrance">
+
       {/* Header & Filters */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
         <div>
@@ -128,28 +148,30 @@ const AdminAnalyticsTab = ({ revenueAnalytics, revenueAnalyticsLoading }) => {
                 key={filter}
                 onClick={() => setTimeFilter(filter)}
                 style={{
-                  padding: "6px 16px",
-                  borderRadius: "99px",
-                  fontSize: "0.85rem",
-                  fontWeight: "500",
-                  cursor: "pointer",
-                  transition: "all 0.2s ease",
-                  border: "none",
-                  background: isActive ? "rgba(239, 68, 68, 0.2)" : "var(--bg-surface)",
-                  color: isActive ? "#f87171" : "var(--c-sub)",
-                  boxShadow: isActive ? "inset 0 4px 12px rgba(0,0,0,0.5)" : "0 4px 12px rgba(0,0,0,0.15)"
+                  padding: '6px 16px',
+                  borderRadius: '99px',
+                  fontSize: '0.85rem',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  border: 'none',
+                  background: 'var(--bg-surface)',
+                  color: isActive ? 'var(--text-h)' : 'var(--c-sub)',
+                  boxShadow: isActive
+                    ? 'var(--inner-shadow)'
+                    : 'var(--outer-shadow)',
                 }}
-                onMouseEnter={e => { 
-                  if(!isActive) {
-                    e.target.style.background = "rgba(255,255,255,0.05)";
-                    e.target.style.color = "var(--c-light)";
-                  } 
+                onMouseEnter={e => {
+                  if (!isActive) {
+                    e.target.style.boxShadow = 'var(--inner-shadow)';
+                    e.target.style.color = 'var(--text-h)';
+                  }
                 }}
-                onMouseLeave={e => { 
-                  if(!isActive) {
-                    e.target.style.background = "var(--bg-surface)";
-                    e.target.style.color = "var(--c-sub)";
-                  } 
+                onMouseLeave={e => {
+                  if (!isActive) {
+                    e.target.style.boxShadow = 'var(--outer-shadow)';
+                    e.target.style.color = 'var(--c-sub)';
+                  }
                 }}
               >
                 {filter}
@@ -159,7 +181,7 @@ const AdminAnalyticsTab = ({ revenueAnalytics, revenueAnalyticsLoading }) => {
         </div>
       </div>
 
-      {/* Monthly Revenue vs Company Share Area Chart */}
+      {/* Monthly Revenue vs Company Share – Area Chart */}
       <div className="glass-card stat-card" style={{ padding: '24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
           <div>
@@ -178,61 +200,57 @@ const AdminAnalyticsTab = ({ revenueAnalytics, revenueAnalyticsLoading }) => {
           </div>
         </div>
 
-        <div style={{ width: "100%", height: 300 }}>
+        <div style={{ width: '100%', height: 300 }}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={filteredSeries} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorRevenueFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10B981" stopOpacity={0.2} />
+                  <stop offset="5%"  stopColor="#10B981" stopOpacity={0.2} />
                   <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="colorCompanyFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.2} />
+                  <stop offset="5%"  stopColor="#8b5cf6" stopOpacity={0.2} />
                   <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: "var(--c-sub)", fontSize: 11 }} dy={10} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fill: "var(--c-sub)", fontSize: 11 }} tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v)} width={45} />
-              <Tooltip content={<CustomAreaTooltip />} cursor={{ stroke: "rgba(255,255,255,0.1)", strokeWidth: 1, strokeDasharray: "4 3" }} />
-              
-              <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#10B981" strokeWidth={2} fillOpacity={1} fill="url(#colorRevenueFill)" activeDot={{ r: 5, fill: "#10B981", stroke: "#11131a", strokeWidth: 2 }} />
-              <Area type="monotone" dataKey="companyShare" name="Company Share" stroke="#8b5cf6" strokeWidth={2} strokeDasharray="5 5" fillOpacity={1} fill="url(#colorCompanyFill)" activeDot={{ r: 5, fill: "#8b5cf6", stroke: "#11131a", strokeWidth: 2 }} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridStroke} />
+              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: 'var(--c-sub)', fontSize: 11 }} dy={10} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--c-sub)', fontSize: 11 }} tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} width={45} />
+              <Tooltip content={<CustomAreaTooltip />} cursor={{ stroke: cursorStroke, strokeWidth: 1, strokeDasharray: '4 3' }} />
+              <Area type="monotone" dataKey="revenue"      name="Revenue"       stroke="#10B981" strokeWidth={2} fillOpacity={1} fill="url(#colorRevenueFill)" activeDot={{ r: 5, fill: '#10B981', stroke: dotBg, strokeWidth: 2 }} />
+              <Area type="monotone" dataKey="companyShare" name="Company Share" stroke="#8b5cf6" strokeWidth={2} strokeDasharray="5 5" fillOpacity={1} fill="url(#colorCompanyFill)" activeDot={{ r: 5, fill: '#8b5cf6', stroke: dotBg, strokeWidth: 2 }} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
-        
-        {/* Revenue Distribution Pie Chart */}
+
+        {/* Revenue Distribution – Pie Chart */}
         <div className="glass-card stat-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
           <div>
             <h3 style={{ margin: "0 0 4px 0", fontSize: "1.1rem", color: "var(--text-h)" }}>{t('admin.revenue_distribution', 'Revenue Distribution')}</h3>
             <div style={{ fontSize: "0.85rem", color: "var(--c-sub)" }}>{t('admin.revenue_distribution_desc', 'How revenue is split between the company (30%) and instructors.')}</div>
           </div>
-          
+
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '40px', marginTop: '20px' }}>
             <div style={{ position: 'relative', width: '180px', height: '180px' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={2}
-                    dataKey="value"
-                    stroke="none"
-                  >
+                  <Pie data={pieData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={2} dataKey="value" stroke="none">
                     {pieData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip 
-                    formatter={(value) => `EGP ${value.toLocaleString()}`}
-                    contentStyle={{ background: '#11131a', border: 'none', boxShadow: 'inset 0 4px 12px rgba(0, 0, 0, 0.5)', borderRadius: '8px', color: '#fff' }}
+                  <Tooltip
+                    formatter={value => `EGP ${value.toLocaleString()}`}
+                    contentStyle={{
+                      background: tooltipBg,
+                      border: tooltipBorder,
+                      boxShadow: tooltipShadow,
+                      borderRadius: '8px',
+                      color: tooltipText,
+                    }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -266,7 +284,7 @@ const AdminAnalyticsTab = ({ revenueAnalytics, revenueAnalyticsLoading }) => {
           </div>
         </div>
 
-        {/* Financial Growth Composed Chart */}
+        {/* Financial Growth – Composed Chart */}
         <div className="glass-card stat-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
             <div>
@@ -275,33 +293,31 @@ const AdminAnalyticsTab = ({ revenueAnalytics, revenueAnalyticsLoading }) => {
             </div>
             <div style={{ display: 'flex', gap: '16px', fontSize: '0.85rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <div style={{ width: '12px', height: '12px', borderRadius: '2px', background: 'rgba(16, 185, 129, 0.3)', border: '1px solid rgba(16, 185, 129, 0.5)' }}></div>
+                <div style={{ width: '12px', height: '12px', borderRadius: '2px', background: 'rgba(16,185,129,0.3)', border: '1px solid rgba(16,185,129,0.5)' }} />
                 <span style={{ color: 'var(--c-sub)' }}>Monthly Revenue</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <div style={{ width: '16px', height: '2px', background: '#facc15' }}></div>
+                <div style={{ width: '16px', height: '2px', background: '#facc15' }} />
                 <span style={{ color: 'var(--c-sub)' }}>Growth %</span>
               </div>
             </div>
           </div>
 
-          <div style={{ width: "100%", height: 260, flex: 1 }}>
+          <div style={{ width: '100%', height: 260, flex: 1 }}>
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={filteredSeries} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: "var(--c-sub)", fontSize: 11 }} dy={10} />
-                
-                <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fill: "var(--c-sub)", fontSize: 11 }} tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v)} width={45} />
-                <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fill: "var(--c-sub)", fontSize: 11 }} tickFormatter={(v) => `${v}%`} width={45} />
-                
-                <Tooltip content={<CustomComposedTooltip />} cursor={{ fill: "rgba(255,255,255,0.03)" }} />
-                
-                <Bar yAxisId="left" dataKey="revenue" name="Revenue" fill="rgba(16, 185, 129, 0.25)" stroke="rgba(16, 185, 129, 0.5)" radius={[4, 4, 0, 0]} />
-                <Line yAxisId="right" type="monotone" dataKey="growth" name="Growth" stroke="#facc15" strokeWidth={2} dot={{ r: 4, fill: "#11131a", stroke: "#facc15", strokeWidth: 2 }} activeDot={{ r: 6, fill: "#facc15", stroke: "#11131a", strokeWidth: 2 }} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridStroke} />
+                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: 'var(--c-sub)', fontSize: 11 }} dy={10} />
+                <YAxis yAxisId="left"  axisLine={false} tickLine={false} tick={{ fill: 'var(--c-sub)', fontSize: 11 }} tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} width={45} />
+                <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fill: 'var(--c-sub)', fontSize: 11 }} tickFormatter={v => `${v}%`} width={45} />
+                <Tooltip content={<CustomComposedTooltip />} cursor={{ fill: cursorFill }} />
+                <Bar  yAxisId="left"  dataKey="revenue" name="Revenue" fill="rgba(16,185,129,0.25)" stroke="rgba(16,185,129,0.5)" radius={[4, 4, 0, 0]} />
+                <Line yAxisId="right" type="monotone" dataKey="growth" name="Growth" stroke="#facc15" strokeWidth={2} dot={{ r: 4, fill: dotBg, stroke: '#facc15', strokeWidth: 2 }} activeDot={{ r: 6, fill: '#facc15', stroke: dotBg, strokeWidth: 2 }} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
         </div>
+
       </div>
     </div>
   );

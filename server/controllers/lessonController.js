@@ -45,6 +45,7 @@ export const addLesson = async (req, res) => {
       attachmentTitle: attachmentTitle || '',
       section: section._id,
       order: existingCount + 1,
+      status: 'pending'
     });
 
     res.status(201).json({ lesson });

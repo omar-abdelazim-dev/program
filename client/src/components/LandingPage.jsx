@@ -268,7 +268,7 @@ export default function LandingPage() {
           <Link className="landing-button landing-button--community" to="/auth?mode=register">
             Join Program <CheckIcon />
           </Link>
-          <small>© {new Date().getFullYear()} Program. Built by Students. Powered by Purpose.</small>
+          <small>© {new Date().getFullYear()} Program. Bulilt by Students. Powered by Purpose.</small>
         </div>
       </footer>
     </div>

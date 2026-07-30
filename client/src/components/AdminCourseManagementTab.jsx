@@ -35,8 +35,8 @@ const CustomDropdown = ({ value, options, onChange, disabled, width = "100%" }) 
           border: isOpen ? "1px solid #f97316" : "1px solid transparent",
           borderRadius: "10px",
           boxShadow: isOpen 
-            ? "0 10px 30px rgba(0,0,0,0.15), 0 0 0 3px rgba(249, 115, 22, 0.2)"
-            : "inset 0 4px 12px rgba(0,0,0,0.5)",
+            ? "var(--outer-shadow), 0 0 0 3px rgba(249, 115, 22, 0.2)"
+            : "var(--inner-shadow)",
           color: "var(--c-light)",
           cursor: disabled ? "not-allowed" : "pointer",
           opacity: disabled ? 0.5 : 1,
@@ -62,7 +62,7 @@ const CustomDropdown = ({ value, options, onChange, disabled, width = "100%" }) 
           display: "flex",
           flexDirection: "column",
           gap: "4px",
-          boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.5)",
+          boxShadow: "var(--outer-shadow)",
           maxHeight: "250px",
           overflowY: "auto"
         }}>
@@ -76,7 +76,7 @@ const CustomDropdown = ({ value, options, onChange, disabled, width = "100%" }) 
               style={{
                 padding: "10px 12px",
                 background: value === opt ? "var(--bg-main)" : "transparent",
-                boxShadow: value === opt ? "inset 0 4px 12px rgba(0,0,0,0.5)" : "none",
+                boxShadow: value === opt ? "var(--inner-shadow)" : "none",
                 border: "none",
                 textAlign: "left",
                 cursor: "pointer",
@@ -94,7 +94,7 @@ const CustomDropdown = ({ value, options, onChange, disabled, width = "100%" }) 
               onMouseEnter={(e) => {
                 if (value !== opt) {
                   e.target.style.background = "var(--bg-main)";
-                  e.target.style.boxShadow = "inset 0 4px 12px rgba(0,0,0,0.5)";
+                  e.target.style.boxShadow = "var(--inner-shadow)";
                   e.target.style.color = "var(--c-light)";
                   e.target.style.WebkitTextFillColor = "var(--c-light)";
                 }
@@ -117,7 +117,7 @@ const CustomDropdown = ({ value, options, onChange, disabled, width = "100%" }) 
   );
 };
 
-export default function AdminCourseManagementTab({ currentUser }) {
+export default function AdminCourseManagementTab({ currentUser, onDashboardUpdate }) {
   const { t } = useTranslation();
   const [courses, setCourses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -131,9 +131,8 @@ export default function AdminCourseManagementTab({ currentUser }) {
   const [sidePanelCourseId, setSidePanelCourseId] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Future backend pagination states
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(20);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -196,6 +195,7 @@ export default function AdminCourseManagementTab({ currentUser }) {
         await api.patch(`/courses/${id}/approve`);
         notyf.success('Course approved');
         setCourses(courses.map(c => c._id === id ? { ...c, status: 'published' } : c));
+        if (onDashboardUpdate) onDashboardUpdate();
     } catch (err) {
         notyf.error('Failed to approve course');
     } finally {
@@ -207,9 +207,10 @@ export default function AdminCourseManagementTab({ currentUser }) {
     try {
         setIsProcessing(true);
         // Note: original reject required a reason, using a hardcoded string as fallback for now
-        await api.patch(`/courses/${id}/reject`, { reason: "Rejected by admin from bulk UI" });
+        await api.patch(`/courses/${id}/reject`, { reason: "Rejected by admin from" });
         notyf.success('Course rejected');
         setCourses(courses.map(c => c._id === id ? { ...c, status: 'rejected' } : c));
+        if (onDashboardUpdate) onDashboardUpdate();
     } catch (err) {
         notyf.error('Failed to reject course');
     } finally {
@@ -236,6 +237,17 @@ export default function AdminCourseManagementTab({ currentUser }) {
 
     return true;
   });
+
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, activeStatus, categoryFilter]);
+
+  // Pagination Logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentCourses = visibleCourses.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(visibleCourses.length / itemsPerPage);
 
   // Calculate metrics (matches Course.status's real enum)
   const totalCourses = courses.length;
@@ -288,8 +300,8 @@ export default function AdminCourseManagementTab({ currentUser }) {
                 border: isSearchFocused ? "1px solid #f97316" : "1px solid transparent",
                 borderRadius: "99px",
                 boxShadow: isSearchFocused 
-                  ? "0 10px 30px rgba(0,0,0,0.15), 0 0 0 3px rgba(249, 115, 22, 0.2)"
-                  : "0 4px 12px rgba(0,0,0,0.15)",
+                  ? "var(--outer-shadow), 0 0 0 3px rgba(249, 115, 22, 0.2)"
+                  : "var(--outer-shadow)",
                 paddingLeft: "42px", // keep space for the search icon
                 outline: "none",
                 transition: "all 0.3s ease",
@@ -305,7 +317,7 @@ export default function AdminCourseManagementTab({ currentUser }) {
               border: "none",
               padding: "10px 20px", borderRadius: "99px",
               cursor: "pointer", fontSize: "0.9rem", transition: "all 0.2s ease",
-              boxShadow: showFilters ? "inset 0 4px 12px rgba(0,0,0,0.5)" : "0px 4px 10px rgba(0, 0, 0, 0.5)"
+              boxShadow: showFilters ? "var(--inner-shadow)" : "var(--outer-shadow)"
             }}
             onMouseEnter={e => { if(!showFilters) { e.target.style.background = "rgba(255,255,255,0.05)"; e.target.style.color = "var(--c-light)"; } }}
             onMouseLeave={e => { if(!showFilters) { e.target.style.background = "var(--bg-surface)"; e.target.style.color = "var(--c-sub)"; } }}
@@ -318,7 +330,7 @@ export default function AdminCourseManagementTab({ currentUser }) {
       {/* Filters Bar */}
       {showFilters && (
         <div style={{ 
-          background: "var(--bg-surface)", border: "none", boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.5)",
+          background: "var(--bg-surface)", border: "none", boxShadow: "var(--outer-shadow)",
           borderRadius: "12px", padding: "20px 24px", display: "flex", alignItems: "flex-end", gap: "24px",
           animation: "fadeIn 0.2s ease"
         }}>
@@ -335,7 +347,7 @@ export default function AdminCourseManagementTab({ currentUser }) {
             onClick={clearFilters}
             style={{ 
               background: "rgba(239, 68, 68, 0.1)",
-              border: "none", boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)",
+              border: "none", boxShadow: "var(--inner-shadow)",
               color: "#ef4444", padding: "12px 20px", borderRadius: "10px",
               cursor: "pointer", fontSize: "0.9rem", fontWeight: "500", transition: "all 0.2s"
             }}
@@ -348,7 +360,7 @@ export default function AdminCourseManagementTab({ currentUser }) {
       )}
 
       {/* Status Tabs */}
-      <div style={{ display: "flex", gap: "12px", overflowX: "auto", paddingBottom: "4px" }}>
+      <div style={{ display: "flex", gap: "12px", overflowX: "auto", paddingBottom: "20px", paddingLeft: "10px" }}>
         {[
           { id: "all", label: "All Courses" },
           { id: "approved", label: "Approved" },
@@ -363,13 +375,13 @@ export default function AdminCourseManagementTab({ currentUser }) {
             style={{
               padding: "10px 24px", borderRadius: "99px", fontSize: "0.9rem", fontWeight: "500", cursor: "pointer", transition: "all 0.2s",
               border: "none",
-              background: isActive ? statusStyle.bg : "rgba(255,255,255,0.03)",
-              color: isActive ? statusStyle.text : "var(--c-sub)",
-              boxShadow: isActive ? "inset 0 4px 12px rgba(0,0,0,0.5)" : "none",
+              background: "var(--bg-surface)",
+              color: isActive ? "var(--text-h)" : "var(--c-sub)",
+              boxShadow: isActive ? "var(--inner-shadow)" : "var(--outer-shadow)",
               whiteSpace: "nowrap"
             }}
-            onMouseEnter={e => { if(!isActive) e.target.style.background = "rgba(255,255,255,0.08)"; }}
-            onMouseLeave={e => { if(!isActive) e.target.style.background = "rgba(255,255,255,0.03)"; }}
+            onMouseEnter={e => { if(!isActive) e.target.style.boxShadow = "var(--inner-shadow)"; }}
+            onMouseLeave={e => { if(!isActive) e.target.style.boxShadow = "var(--outer-shadow)"; }}
           >
             {tab.label}
           </button>
@@ -377,8 +389,8 @@ export default function AdminCourseManagementTab({ currentUser }) {
       </div>
 
       {/* Data Table */}
-      <div className="glass-card" style={{ background: "var(--bg-surface)", border: "none", boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.5)", borderRadius: "12px", overflow: "hidden", marginTop: "4px" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+      <div className="glass-card" style={{ background: "var(--bg-surface)", border: "none", boxShadow: "var(--outer-shadow)", borderRadius: "12px", overflow: "hidden", marginTop: "4px", width: "100%" }}>
+        <table className="admin-table" style={{ width: "100%", borderCollapse: "separate", borderSpacing: "0 4px", textAlign: "left" }}>
           <thead>
             <tr style={{ background: "rgba(255,255,255,0.02)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
               <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>{t('instructor.course_title', 'Course')}</th>
@@ -396,21 +408,15 @@ export default function AdminCourseManagementTab({ currentUser }) {
                         <Spinner size="small" label="Loading courses..." />
                     </td>
                 </tr>
-            ) : visibleCourses.length === 0 ? (
+            ) : currentCourses.length === 0 ? (
               <tr>
                 <td colSpan="7" style={{ padding: "40px", textAlign: "center", color: "var(--c-sub)" }}>
                   No courses found matching criteria.
                 </td>
               </tr>
             ) : (
-              visibleCourses.map(c => (
-                <tr
-                  key={c._id}
-                  style={{
-                    borderBottom: "1px solid rgba(255,255,255,0.03)",
-                    transition: "background 0.2s"
-                  }}
-                >
+              currentCourses.map(c => (
+                <tr key={c._id} className="hover-row">
                   <td style={{ padding: "16px 24px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                       {/* Thumbnail Placeholder if no real image */}
@@ -436,7 +442,7 @@ export default function AdminCourseManagementTab({ currentUser }) {
                     <span style={{ 
                       background: getStatusColor(c.status).bg, border: "none",
                       color: getStatusColor(c.status).text, padding: "4px 10px", borderRadius: "99px",
-                      boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)",
+                      boxShadow: "var(--inner-shadow)",
                       fontSize: "0.75rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.5px"
                     }}>
                       {c.status || 'unknown'}
@@ -450,7 +456,7 @@ export default function AdminCourseManagementTab({ currentUser }) {
                       onClick={() => setSidePanelCourseId(c._id)}
                       style={{ 
                         background: "rgba(255,255,255,0.03)", border: "none",
-                        boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)",
+                        boxShadow: "var(--inner-shadow)",
                         color: "var(--c-light)", padding: "6px 14px", borderRadius: "8px",
                         fontSize: "0.85rem", cursor: "pointer", transition: "all 0.2s"
                       }}
@@ -465,6 +471,86 @@ export default function AdminCourseManagementTab({ currentUser }) {
             )}
           </tbody>
         </table>
+
+        {/* Pagination Controls */}
+        {!isLoading && totalPages > 1 && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginTop: "auto",
+              paddingTop: "24px",
+              borderTop: "1px solid var(--c-border-subtle)",
+            }}
+          >
+            <span style={{ color: "var(--c-sub)", fontSize: "0.9rem" }}>
+              Showing {indexOfFirstItem + 1} to{" "}
+              {Math.min(indexOfLastItem, visibleCourses.length)} of{" "}
+              {visibleCourses.length} courses
+            </span>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: "8px",
+                  background:
+                    currentPage === 1 ? "transparent" : "var(--c-bg-subtle)",
+                  color:
+                    currentPage === 1
+                      ? "var(--c-border-subtle)"
+                      : "var(--c-light)",
+                  border: "1px solid var(--c-border-subtle)",
+                  cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                  fontWeight: "500",
+                  transition: "all 0.2s",
+                }}
+              >
+                Previous
+              </button>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "0 12px",
+                  color: "var(--text-h)",
+                  fontWeight: "600",
+                  fontSize: "0.95rem",
+                }}
+              >
+                Page {currentPage} of {totalPages}
+              </div>
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: "8px",
+                  background:
+                    currentPage === totalPages
+                      ? "transparent"
+                      : "var(--c-bg-subtle)",
+                  color:
+                    currentPage === totalPages
+                      ? "var(--c-border-subtle)"
+                      : "var(--c-light)",
+                  border: "1px solid var(--c-border-subtle)",
+                  cursor:
+                    currentPage === totalPages ? "not-allowed" : "pointer",
+                  fontWeight: "500",
+                  transition: "all 0.2s",
+                }}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Side Panel Overlay */}
@@ -477,14 +563,14 @@ export default function AdminCourseManagementTab({ currentUser }) {
           <div style={{ 
             position: "relative", width: "450px", height: "100%", 
             background: "var(--bg-surface)", borderLeft: "1px solid rgba(255,255,255,0.05)",
-            boxShadow: "-10px 0 40px rgba(0,0,0,0.5)", padding: "24px", display: "flex", flexDirection: "column", gap: "24px",
+            boxShadow: "var(--outer-shadow)", padding: "24px", display: "flex", flexDirection: "column", gap: "24px",
             overflowY: "auto", animation: "slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
           }}>
             <button 
               onClick={() => setSidePanelCourseId(null)}
               style={{
                 background: "rgba(255,255,255,0.05)", border: "none", color: "var(--c-sub)",
-                boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)",
+                boxShadow: "var(--inner-shadow)",
                 padding: "6px 12px", borderRadius: "99px", width: "fit-content",
                 display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "0.8rem", transition: "all 0.2s"
               }}
@@ -508,7 +594,7 @@ export default function AdminCourseManagementTab({ currentUser }) {
                   <span style={{ 
                     background: getStatusColor(sidePanelCourse.status).bg, border: "none",
                     color: getStatusColor(sidePanelCourse.status).text, padding: "2px 8px", borderRadius: "99px",
-                    boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)",
+                    boxShadow: "var(--inner-shadow)",
                     fontSize: "0.7rem", fontWeight: "600", textTransform: "uppercase"
                   }}>
                     {sidePanelCourse.status}
@@ -569,7 +655,7 @@ export default function AdminCourseManagementTab({ currentUser }) {
                             onClick={() => handleApprove(sidePanelCourse._id)}
                             disabled={isProcessing}
                             style={{
-                            flex: 1, background: "rgba(16,185,129,0.1)", border: "none", boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)",
+                            flex: 1, background: "rgba(16,185,129,0.1)", border: "none", boxShadow: "var(--inner-shadow)",
                             color: "#10b981", padding: "12px", borderRadius: "10px", cursor: isProcessing ? "not-allowed" : "pointer", fontSize: "0.9rem",
                             transition: "all 0.2s", opacity: isProcessing ? 0.5 : 1
                             }}
@@ -582,7 +668,7 @@ export default function AdminCourseManagementTab({ currentUser }) {
                             onClick={() => handleReject(sidePanelCourse._id)}
                             disabled={isProcessing}
                             style={{
-                            flex: 1, background: "rgba(239,68,68,0.1)", border: "none", boxShadow: "inset 0 4px 12px rgba(0,0,0,0.5)",
+                            flex: 1, background: "rgba(239,68,68,0.1)", border: "none", boxShadow: "var(--inner-shadow)",
                             color: "#ef4444", padding: "12px", borderRadius: "10px", cursor: isProcessing ? "not-allowed" : "pointer", fontSize: "0.9rem",
                             transition: "all 0.2s", opacity: isProcessing ? 0.5 : 1
                             }}

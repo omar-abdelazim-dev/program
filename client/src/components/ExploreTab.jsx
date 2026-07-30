@@ -12,7 +12,7 @@ const SEARCH_DEBOUNCE_MS = 300;
 // personalizes the feed by the student's major, showing one horizontally
 // scrollable row of suggested courses per semester. Category-driven
 // browsing lives on the separate /student/explore page now.
-export default function ExploreTab({ user, searchQuery = "" }) {
+export default function ExploreTab({ user, searchQuery = "", isLightMode }) {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.dir() === 'rtl';
   const firstName = user?.name ? user.name.split(" ")[0] : "Student";
@@ -184,7 +184,7 @@ export default function ExploreTab({ user, searchQuery = "" }) {
               {searchLoading ? skeletonGrid : searchResults.length > 0 ? (
                 <div className="cc-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "24px" }}>
                   {searchResults.map((course, idx) => (
-                    <CourseCard key={course._id || idx} course={course} idx={idx} />
+                    <CourseCard key={course._id || idx} course={course} idx={idx} isLightMode={isLightMode} />
                   ))}
                 </div>
               ) : (
@@ -204,7 +204,7 @@ export default function ExploreTab({ user, searchQuery = "" }) {
                     <h2>{t('student.home.semester_label', '{{major}} – Semester {{semester}}', { major: major.label, semester })}</h2>
                     <div className="home-semester-track">
                       {semesterCourses[semester].map((course, idx) => (
-                        <CourseCard key={course._id || idx} course={course} idx={idx} />
+                        <CourseCard key={course._id || idx} course={course} idx={idx} isLightMode={isLightMode} />
                       ))}
                     </div>
                   </section>
@@ -222,7 +222,7 @@ export default function ExploreTab({ user, searchQuery = "" }) {
               {fallbackLoading ? skeletonGrid : fallbackCourses.length > 0 ? (
                 <div className="cc-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "24px" }}>
                   {fallbackCourses.map((course, idx) => (
-                    <CourseCard key={course._id || idx} course={course} idx={idx} />
+                    <CourseCard key={course._id || idx} course={course} idx={idx} isLightMode={isLightMode} />
                   ))}
                 </div>
               ) : (

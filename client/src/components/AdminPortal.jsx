@@ -20,6 +20,7 @@ import AdminAnalyticsTab from "./AdminAnalyticsTab";
 import AdminOverviewTab from "./AdminOverviewTab";
 import AdminUserManagementTab from "./AdminUserManagementTab";
 import AdminCourseManagementTab from "./AdminCourseManagementTab";
+import AdminLessonsTab from "./AdminLessonsTab";
 import WebsiteManagement from "./WebsiteManagement/WebsiteManagement";
 import SystemManagement from "./SystemManagement";
 import AdminLandingPageTab from "./AdminLandingPageTab";
@@ -230,6 +231,15 @@ export default function AdminPortal({
   isLightMode,
 }) {
   const navigate = useNavigate();
+  const [activeTab, setActiveTabRaw] = useState("dashboard_overview");
+  // Tracks which tabs have been visited at least once — components are only
+  // mounted on first visit and kept alive forever after (no re-fetches).
+  const [visitedTabs, setVisitedTabs] = useState(() => new Set(["dashboard_overview"]));
+
+  const setActiveTab = (tab) => {
+    setVisitedTabs((prev) => { const s = new Set(prev); s.add(tab); return s; });
+    setActiveTabRaw(tab);
+  };
   const { t, i18n } = useTranslation();
 
   const toggleLanguage = () => {
@@ -245,12 +255,12 @@ export default function AdminPortal({
     }
   }, []);
 
-  const [activeTab, setActiveTab] = useState("dashboard_overview");
   // Data States
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [pendingCourses, setPendingCourses] = useState([]);
+  const [pendingLessonsCount, setPendingLessonsCount] = useState(0);
   const [activity, setActivity] = useState([]);
   const [activityLoading, setActivityLoading] = useState(true);
   const [revenueAnalytics, setRevenueAnalytics] = useState(null);
@@ -296,12 +306,15 @@ export default function AdminPortal({
 
   const fetchDashboardData = async () => {
     try {
-      const [statsRes, pendingRes] = await Promise.all([
+      const [statsRes, pendingRes, lessonsRes] = await Promise.all([
         api.get("/admin/stats"),
         api.get("/courses/pending"),
+        api.get("/admin/lessons")
       ]);
       setStats(statsRes.data);
       setPendingCourses(pendingRes.data.courses || []);
+      const pLessons = (lessonsRes.data.lessons || []).filter(l => l.status === 'pending');
+      setPendingLessonsCount(pLessons.length);
     } catch (err) {
       console.error(err);
     } finally {
@@ -353,43 +366,46 @@ export default function AdminPortal({
     }
   };
 
+  // Guard: redirect non-admins
   useEffect(() => {
     if (user?.role !== "admin" && user?.role !== "superadmin") {
       navigate("/");
-      return;
     }
+  }, [user, navigate]);
 
-    setLoading(true);
-    if (activeTab.startsWith("dashboard") || activeTab.startsWith("courses")) {
-      fetchDashboardData();
-    } else if (activeTab.startsWith("users")) {
-      fetchUsers(searchQuery);
-    } else if (activeTab === "enrollment") {
-      fetchTransactions();
-    } else {
-      setLoading(false);
-    }
+  // Fetch dashboard stats + pending courses once on mount
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
 
-    if (activeTab === "dashboard_activity") {
-      fetchActivity();
-    }
+  // Fetch users once on mount
+  useEffect(() => {
+    fetchUsers(searchQuery);
+  }, []);
 
-    if (
-      activeTab === "dashboard_stats" ||
-      activeTab === "dashboard_analytics"
-    ) {
-      fetchRevenueAnalytics();
-    }
-  }, [user, navigate, activeTab]);
+  // Fetch transactions once on mount
+  useEffect(() => {
+    fetchTransactions();
+  }, []);
 
-  // Debounced Search — trigger only for users tabs
+  // Fetch recent activity once on mount
+  useEffect(() => {
+    fetchActivity();
+  }, []);
+
+  // Fetch revenue analytics once on mount
+  useEffect(() => {
+    fetchRevenueAnalytics();
+  }, []);
+
+  // Debounced Search — only re-fetches users when search query changes
   useEffect(() => {
     if (!activeTab.startsWith("users")) return;
     const delay = setTimeout(() => {
       fetchUsers(searchQuery);
     }, 400);
     return () => clearTimeout(delay);
-  }, [searchQuery, activeTab, showDeletedUsers]);
+  }, [searchQuery, showDeletedUsers]);
 
   // No longer needed: visibleUsers is handled by AdminUserManagementTab
   const visibleUsers = users;
@@ -670,13 +686,6 @@ export default function AdminPortal({
             title: "Reports",
             items: [{ id: "reports", label: "Reports" }],
           },
-          {
-            title: "Profile",
-            items: [
-              { id: "profile_my", label: "My Profile" },
-              { id: "profile_password", label: "Change Password" },
-            ],
-          },
         ];
 
   return (
@@ -687,7 +696,7 @@ export default function AdminPortal({
         display: "flex",
         flexDirection: "row",
         height: "100vh",
-        backgroundColor: isLightMode ? undefined : "var(--bg-main)",
+        backgroundColor: "var(--bg-main)",
       }}
     >
       {/* Sidebar */}
@@ -757,13 +766,13 @@ export default function AdminPortal({
                 </span>
                 <span className="admin-sidebar-group-label">{group.title}</span>
                 {group.title === "Course Management" &&
-                  pendingCourses.length > 0 && (
+                  (pendingCourses.length + pendingLessonsCount) > 0 && (
                     <span
                       className="admin-sidebar-badge"
                       style={{ marginLeft: "8px", marginRight: "8px" }}
-                      aria-label={`${pendingCourses.length} pending courses`}
+                      aria-label={`${pendingCourses.length + pendingLessonsCount} pending items`}
                     >
-                      {pendingCourses.length}
+                      {pendingCourses.length + pendingLessonsCount}
                     </span>
                   )}
                 <svg
@@ -800,13 +809,13 @@ export default function AdminPortal({
                       height: "40px",
                       top: `${activeIndex * 44}px`, // 40px tab height + 4px gap
                       opacity: activeIndex >= 0 ? 1 : 0,
-                      backgroundColor: "var(--bg-main)",
+                      backgroundColor: "var(--c-bg)",
                       borderRadius: "12px",
                       transition:
                         "top 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease",
                       zIndex: 0,
                       pointerEvents: "none",
-                      boxShadow: "inset 0 4px 12px rgba(0, 0, 0, 0.5)",
+                      boxShadow: "var(--inner-shadow)",
                     }}
                   />
                   {group.items.map((tab) => {
@@ -831,11 +840,16 @@ export default function AdminPortal({
                         <span className="admin-sidebar-tab-short">
                           {tab.short}
                         </span>
-                        {/* {tab.id === "courses_pending" && pendingCourses.length > 0 && (
-                          <span className="admin-sidebar-badge">
-                            {pendingCourses.length}
+                        {tab.id.startsWith("courses_") && (
+                          <span className="admin-sidebar-badge" style={{ 
+                            marginLeft: 'auto',
+                            opacity: (tab.id === "courses_all" ? pendingCourses.length : tab.id === "courses_lessons" ? pendingLessonsCount : 0) > 0 ? 1 : 0.5,
+                            background: (tab.id === "courses_all" ? pendingCourses.length : tab.id === "courses_lessons" ? pendingLessonsCount : 0) > 0 ? 'var(--color-accent)' : 'var(--bg-surface)',
+                            color: (tab.id === "courses_all" ? pendingCourses.length : tab.id === "courses_lessons" ? pendingLessonsCount : 0) > 0 ? '#fff' : 'var(--text)',
+                          }}>
+                            {tab.id === "courses_all" ? pendingCourses.length : tab.id === "courses_lessons" ? pendingLessonsCount : 0}
                           </span>
-                        )} */}
+                        )}
                       </button>
                     );
                   })}
@@ -867,7 +881,7 @@ export default function AdminPortal({
             alignItems: "center",
             padding: "0 24px",
             height: "70px",
-            backgroundColor: isLightMode ? undefined : "var(--bg-main)",
+            backgroundColor: "var(--bg-main)",
           }}
         >
           <div className="nav-logo">
@@ -935,12 +949,12 @@ export default function AdminPortal({
                 ) : (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    width="22"
-                    height="22"
+                    width="20"
+                    height="20"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
-                    strokeWidth="1.5"
+                    strokeWidth="1.8"
                   >
                     <circle cx="12" cy="8" r="4"></circle>
                     <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"></path>
@@ -975,29 +989,30 @@ export default function AdminPortal({
         {/* Main Content Area */}
         <div style={{ flex: 1, padding: "32px 48px", overflowY: "auto" }}>
           <div
-            key={activeTab}
             className="admin-content-panel"
             style={{
               maxWidth: "100%",
               margin: "40px auto",
             }}
           >
-            {activeTab === "dashboard_overview" && stats && (
-              <AdminOverviewTab
-                stats={stats}
-                user={user}
-                setActiveTab={setActiveTab}
-              />
+            {visitedTabs.has("dashboard_overview") && stats && (
+              <div style={{ display: activeTab === "dashboard_overview" ? "block" : "none" }}>
+                <AdminOverviewTab
+                  stats={stats}
+                  user={user}
+                  setActiveTab={setActiveTab}
+                />
+              </div>
             )}
 
-            {activeTab === "dashboard_activity" && (
+            <div style={{ display: activeTab === "dashboard_activity" ? "block" : "none" }}>
               <div
                 style={{
                   display: "flex",
                   flexDirection: "column",
                   gap: "24px",
-                }}
-              >
+                }}>
+
                 <div
                   style={{
                     display: "flex",
@@ -1074,13 +1089,11 @@ export default function AdminPortal({
                             cursor: "pointer",
                             transition: "all 0.2s ease",
                             border: "none",
-                            background: isActive
-                              ? roleStyle.bg
-                              : "var(--bg-surface)",
-                            color: isActive ? roleStyle.text : "var(--c-sub)",
+                            background: "var(--bg-surface)",
+                            color: isActive ? "var(--text-h)" : "var(--c-sub)",
                             boxShadow: isActive
-                              ? `inset 0 4px 12px rgba(0,0,0,0.5)`
-                              : "0 4px 12px rgba(0,0,0,0.15)",
+                              ? "var(--inner-shadow)"
+                              : "var(--outer-shadow)",
                           }}
                           onMouseEnter={(e) => {
                             if (!isActive) {
@@ -1157,8 +1170,8 @@ export default function AdminPortal({
                               padding: "12px",
                               background: "var(--bg-main)",
                               boxShadow: isLightMode
-                                ? "inset 0 4px 12px rgba(0, 0, 0, 0.05)"
-                                : "inset 0 4px 12px rgba(0, 0, 0, 0.5)",
+                                ? "var(--inner-shadow)"
+                                : "var(--inner-shadow)",
                               borderRadius: "8px",
                             }}
                           >
@@ -1198,34 +1211,40 @@ export default function AdminPortal({
                   )}
                 </div>
               </div>
+            </div>
+
+            {visitedTabs.has("dashboard_stats") && (
+              <div style={{ display: activeTab === "dashboard_stats" ? "block" : "none" }}>
+                <AdminStatisticsTab
+                  stats={stats}
+                  revenueAnalytics={revenueAnalytics}
+                  revenueAnalyticsLoading={revenueAnalyticsLoading}
+                />
+              </div>
             )}
 
-            {activeTab === "dashboard_stats" && (
-              <AdminStatisticsTab
-                stats={stats}
-                revenueAnalytics={revenueAnalytics}
-                revenueAnalyticsLoading={revenueAnalyticsLoading}
-              />
+            {visitedTabs.has("dashboard_analytics") && (
+              <div style={{ display: activeTab === "dashboard_analytics" ? "block" : "none" }}>
+                <AdminAnalyticsTab
+                  revenueAnalytics={revenueAnalytics}
+                  revenueAnalyticsLoading={revenueAnalyticsLoading}
+                />
+              </div>
             )}
 
-            {activeTab === "dashboard_analytics" && (
-              <AdminAnalyticsTab
-                revenueAnalytics={revenueAnalytics}
-                revenueAnalyticsLoading={revenueAnalyticsLoading}
-              />
-            )}
+            {visitedTabs.has("users") || [...visitedTabs].some(t => t.startsWith("users")) ? (
+              <div style={{ display: activeTab.startsWith("users") ? "block" : "none" }}>
+                <AdminUserManagementTab
+                  users={users}
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                  fetchUsers={fetchUsers}
+                  currentUser={user}
+                />
+              </div>
+            ) : null}
 
-            {activeTab.startsWith("users") && (
-              <AdminUserManagementTab
-                users={users}
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                fetchUsers={fetchUsers}
-                currentUser={user}
-              />
-            )}
-
-            {activeTab === "enrollment" && (
+            <div style={{ display: activeTab === "enrollment" ? "block" : "none" }}>
               <div
                 style={{
                   display: "flex",
@@ -1236,15 +1255,9 @@ export default function AdminPortal({
                 <h2 style={{ fontSize: "1.8rem", margin: 0 }}>
                   Financial Transactions
                 </h2>
-                <div className="glass-card" style={{ overflow: "hidden" }}>
-                  <table
-                    style={{
-                      width: "100%",
-                      borderCollapse: "collapse",
-                      textAlign: "left",
-                    }}
-                  >
-                    <thead style={{ background: "var(--c-border-subtle)" }}>
+                <div className="glass-card" style={{ overflow: "hidden", width: "100%" }}>
+                  <table className="admin-table" style={{ width: "100%", borderCollapse: "separate", borderSpacing: "0 4px", textAlign: "left" }}>
+                    <thead>
                       <tr>
                         <th
                           style={{
@@ -1301,15 +1314,8 @@ export default function AdminPortal({
                         </tr>
                       ) : (
                         transactions.map((t) => (
-                          <tr
-                            key={t._id}
-                            style={{
-                              borderTop: "1px solid var(--c-border-subtle)",
-                            }}
-                          >
-                            <td
-                              style={{ padding: "16px", color: "var(--c-sub)" }}
-                            >
+                          <tr key={t._id}>
+                            <td style={{ padding: "16px" }}>
                               {new Date(t.createdAt).toLocaleDateString()}
                             </td>
                             <td style={{ padding: "16px" }}>
@@ -1335,37 +1341,68 @@ export default function AdminPortal({
                   </table>
                 </div>
               </div>
+            </div>
+
+            {visitedTabs.has("courses_all") && (
+              <div style={{ display: activeTab === "courses_all" ? "block" : "none" }}>
+                <AdminCourseManagementTab currentUser={user} onDashboardUpdate={fetchDashboardData} />
+              </div>
             )}
 
-            {activeTab === "courses_all" && (
-              <AdminCourseManagementTab currentUser={user} />
+            {visitedTabs.has("courses_lessons") && (
+              <div style={{ display: activeTab === "courses_lessons" ? "block" : "none" }}>
+                <AdminLessonsTab currentUser={user} onDashboardUpdate={fetchDashboardData} />
+              </div>
             )}
 
-            {activeTab === "financial_payouts" && <AdminPayoutsTab />}
-
-            {activeTab === "web_landing_cms" && (
-              <AdminLandingPageTab />
-            )}
-            {activeTab === "web_home" && (
-              <WebsiteManagement user={user} subTab="home" />
-            )}
-            {activeTab === "web_about" && (
-              <WebsiteManagement user={user} subTab="about" />
-            )}
-            {activeTab === "web_faq" && (
-              <WebsiteManagement user={user} subTab="faq" />
-            )}
-            {activeTab === "web_contact" && (
-              <WebsiteManagement user={user} subTab="contact" />
-            )}
-            {activeTab === "web_testimonials" && (
-              <WebsiteManagement user={user} subTab="testimonials" />
-            )}
-            {activeTab === "announcements" && (
-              <WebsiteManagement user={user} subTab="announcements" />
+            {visitedTabs.has("financial_payouts") && (
+              <div style={{ display: activeTab === "financial_payouts" ? "block" : "none" }}>
+                <AdminPayoutsTab />
+              </div>
             )}
 
-            {activeTab === "settings" && <SystemManagement user={user} />}
+            {visitedTabs.has("web_landing_cms") && (
+              <div style={{ display: activeTab === "web_landing_cms" ? "block" : "none" }}>
+                <AdminLandingPageTab />
+              </div>
+            )}
+
+            {visitedTabs.has("web_home") && (
+              <div style={{ display: activeTab === "web_home" ? "block" : "none" }}>
+                <WebsiteManagement user={user} subTab="home" />
+              </div>
+            )}
+            {visitedTabs.has("web_about") && (
+              <div style={{ display: activeTab === "web_about" ? "block" : "none" }}>
+                <WebsiteManagement user={user} subTab="about" />
+              </div>
+            )}
+            {visitedTabs.has("web_faq") && (
+              <div style={{ display: activeTab === "web_faq" ? "block" : "none" }}>
+                <WebsiteManagement user={user} subTab="faq" />
+              </div>
+            )}
+            {visitedTabs.has("web_contact") && (
+              <div style={{ display: activeTab === "web_contact" ? "block" : "none" }}>
+                <WebsiteManagement user={user} subTab="contact" />
+              </div>
+            )}
+            {visitedTabs.has("web_testimonials") && (
+              <div style={{ display: activeTab === "web_testimonials" ? "block" : "none" }}>
+                <WebsiteManagement user={user} subTab="testimonials" />
+              </div>
+            )}
+            {visitedTabs.has("announcements") && (
+              <div style={{ display: activeTab === "announcements" ? "block" : "none" }}>
+                <WebsiteManagement user={user} subTab="announcements" />
+              </div>
+            )}
+
+            {visitedTabs.has("settings") && (
+              <div style={{ display: activeTab === "settings" ? "block" : "none" }}>
+                <SystemManagement user={user} />
+              </div>
+            )}
           </div>
         </div>
       </div>

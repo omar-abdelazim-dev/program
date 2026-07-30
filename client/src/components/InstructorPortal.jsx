@@ -364,7 +364,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                 title={t('instructor.nav.settings')}
                 aria-label={t('instructor.nav.settings')}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
                   <circle cx="12" cy="8" r="4"></circle>
                   <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"></path>
                 </svg>
@@ -474,10 +474,10 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
               {/* Translated My Courses header */}
               <h2 style={{ fontSize: '2rem', margin: 0, color: 'var(--text-h)' }}>{t('instructor.dashboard.my_courses')}</h2>
               <button 
-                onClick={() => { setError(''); setEditingCourse(null); setFormData({ title: '', description: '', price: '', category: '', major: '', semester: '' }); setShowCreateModal(true); }} 
-                style={{ width: 'auto', borderRadius: '24px', padding: '10px 24px', fontWeight: 700, background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: 'none', boxShadow: 'inset 0 4px 12px rgba(0, 0, 0, 0.3)', cursor: 'pointer', transition: 'all 0.2s' }}
-                onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)'; e.currentTarget.style.boxShadow = 'inset 0 4px 12px rgba(0, 0, 0, 0.5)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
-                onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'; e.currentTarget.style.boxShadow = 'inset 0 4px 12px rgba(0, 0, 0, 0.3)'; e.currentTarget.style.filter = 'none'; }}
+                onClick={() => { setError(''); setEditingCourse(null); setFormData({ title: '', description: '', price: '', category: '', major: '', semester: '' }); setShowCreateModal(true); }}
+                style={{ width: 'auto', borderRadius: '24px', padding: '10px 24px', fontWeight: 700, background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: 'none', boxShadow: 'var(--inner-shadow)', cursor: 'pointer', transition: 'all 0.2s' }}
+                onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)'; e.currentTarget.style.boxShadow = 'var(--inner-shadow)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
+                onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'; e.currentTarget.style.boxShadow = 'var(--inner-shadow)'; e.currentTarget.style.filter = 'none'; }}
               >
                 {/* Translated Create New Course button */}
                 {t('instructor.dashboard.create_course')}

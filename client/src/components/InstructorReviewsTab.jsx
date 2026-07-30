@@ -94,7 +94,7 @@ export default function InstructorReviewsTab() {
           gap: '32px',
           background: 'var(--bg-surface)',
           border: 'none',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)'
+          boxShadow: 'var(--outer-shadow)'
         }}
       >
         <div style={{ textAlign: 'center' }}>
@@ -140,7 +140,7 @@ export default function InstructorReviewsTab() {
 
       {/* Review Feed */}
       {reviews.length === 0 ? (
-        <div className="glass-card no-border animate-entrance" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 32px', textAlign: 'center', background: 'var(--bg-surface)', border: 'none', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)' }}>
+        <div className="glass-card no-border animate-entrance" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 32px', textAlign: 'center', background: 'var(--bg-surface)', border: 'none', boxShadow: 'var(--outer-shadow)' }}>
           <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(249, 115, 22, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="url(#star-gradient)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <defs>

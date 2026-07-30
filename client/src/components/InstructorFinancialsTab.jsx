@@ -85,7 +85,7 @@ export default function InstructorFinancialsTab({ user }) {
   return (
     <div className="animate-entrance" style={{ maxWidth: '1000px', margin: '0 auto' }}>
       {/* Current Balance Card */}
-      <div className="stat-card glass-card no-border" style={{ padding: '32px', marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '24px', background: 'var(--bg-surface)', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)' }}>
+      <div className="stat-card glass-card no-border" style={{ padding: '32px', marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '24px', background: 'var(--bg-surface)', boxShadow: 'var(--outer-shadow)' }}>
         <div>
           {/* Translated Available Balance */}
           <div className="stat-label" style={{ color: 'var(--c-sub)', marginBottom: '8px', fontSize: '1rem' }}>{t('instructor.financials.available_balance')}</div>
@@ -102,8 +102,7 @@ export default function InstructorFinancialsTab({ user }) {
       </div>
 
       {/* Earnings Ledger */}
-      <div className="glass-card no-border" style={{ padding: '24px', overflow: 'hidden', background: 'var(--bg-surface)', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)' }}>
-        {/* Translated Transaction History */}
+      <div className="glass-card no-border" style={{ padding: '24px', overflow: 'hidden', background: 'var(--bg-surface)', boxShadow: 'var(--outer-shadow)' }}>
         <h3 style={{ fontSize: '1.2rem', marginBottom: '24px', color: 'var(--text-h)' }}>{t('instructor.financials.payout_history')}</h3>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 4px', textAlign: 'left' }}>
