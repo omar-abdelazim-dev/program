@@ -3,9 +3,11 @@ import React, { useState, useEffect } from 'react';
 import CustomSelect from './CustomSelect';
 import Spinner from './Spinner';
 import api from '../api/axios';
+import { useTranslation } from 'react-i18next';
 
 
 export default function InstructorFinancialsTab({ user }) {
+  const { t, i18n } = useTranslation();
   const [showPayoutModal, setShowPayoutModal] = useState(false);
   const [payoutAmount, setPayoutAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
@@ -25,7 +27,7 @@ export default function InstructorFinancialsTab({ user }) {
       setTransactions(res.data.transactions || []);
     } catch (err) {
       console.error(err);
-      notyf.error('Failed to load financials');
+      notyf.error(t('instructor.notyf.load_financials_failed'));
     } finally {
       setLoading(false);
     }
@@ -39,15 +41,15 @@ export default function InstructorFinancialsTab({ user }) {
     e.preventDefault();
     if (!payoutAmount || !paymentMethod) return;
     if (paymentMethod === 'vodafone_cash' && !vodafoneNumber) {
-      notyf.error('Vodafone Cash number is required');
+      notyf.error(t('instructor.notyf.vodafone_required'));
       return;
     }
     if (paymentMethod === 'bank_transfer' && !bankAccount) {
-      notyf.error('Bank account number or IBAN is required');
+      notyf.error(t('instructor.notyf.bank_required'));
       return;
     }
     if (paymentMethod === 'instapay' && !instapayAccount) {
-      notyf.error('InstaPay handle or mobile number is required');
+      notyf.error(t('instructor.notyf.instapay_required'));
       return;
     }
     
@@ -64,11 +66,11 @@ export default function InstructorFinancialsTab({ user }) {
       setVodafoneNumber(user?.phone || '');
       setBankAccount('');
       setInstapayAccount('');
-      notyf.success('Payout request submitted for review');
+      notyf.success(t('instructor.notyf.payout_requested'));
       fetchFinancials(); // refresh balance and ledger
     } catch (err) {
       console.error(err);
-      notyf.error(err.response?.data?.message || 'Failed to request payout');
+      notyf.error(err.response?.data?.message || t('instructor.notyf.payout_failed', 'Failed to request payout'));
     } finally {
       setIsSubmitting(false);
     }
@@ -85,7 +87,8 @@ export default function InstructorFinancialsTab({ user }) {
       {/* Current Balance Card */}
       <div className="stat-card glass-card no-border" style={{ padding: '32px', marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '24px', background: 'var(--bg-surface)', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)' }}>
         <div>
-          <div className="stat-label" style={{ color: 'var(--c-sub)', marginBottom: '8px', fontSize: '1rem' }}>Available Payout Balance</div>
+          {/* Translated Available Balance */}
+          <div className="stat-label" style={{ color: 'var(--c-sub)', marginBottom: '8px', fontSize: '1rem' }}>{t('instructor.financials.available_balance')}</div>
           <div className="stat-value" style={{ fontSize: '2.5rem', color: 'var(--text-h)', fontWeight: 800 }}>EGP {availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
         </div>
         <button 
@@ -93,37 +96,45 @@ export default function InstructorFinancialsTab({ user }) {
           style={{ padding: '12px 32px', fontSize: '1.1rem' }}
           onClick={() => setShowPayoutModal(true)}
         >
-          Request Payout
+          {/* Translated Request Payout */}
+          {t('instructor.financials.request_payout')}
         </button>
       </div>
 
       {/* Earnings Ledger */}
       <div className="glass-card no-border" style={{ padding: '24px', overflow: 'hidden', background: 'var(--bg-surface)', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)' }}>
-        <h3 style={{ fontSize: '1.2rem', marginBottom: '24px', color: 'var(--text-h)' }}>Transaction History</h3>
+        {/* Translated Transaction History */}
+        <h3 style={{ fontSize: '1.2rem', marginBottom: '24px', color: 'var(--text-h)' }}>{t('instructor.financials.payout_history')}</h3>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 4px', textAlign: 'left' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--c-sub)' }}>
-                <th style={{ padding: '16px', fontWeight: 600 }}>Date</th>
-                <th style={{ padding: '16px', fontWeight: 600 }}>Description</th>
-                <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>Amount</th>
-                <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>Status</th>
+                <th style={{ padding: '16px', fontWeight: 600 }}>{t('instructor.financials.date')}</th>
+                <th style={{ padding: '16px', fontWeight: 600 }}>{t('instructor.financials.description')}</th>
+                <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>{t('instructor.financials.amount')}</th>
+                <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>{t('instructor.financials.status')}</th>
               </tr>
             </thead>
             <tbody>
               {transactions.length === 0 ? (
                 <tr>
                   <td colSpan="4" style={{ padding: '24px', textAlign: 'center', color: 'var(--c-sub)' }}>
-                    {loading ? <Spinner size="small" label="Loading..." /> : 'No transactions yet. Start selling courses to see your ledger grow!'}
+                    {/* Translated No History */}
+                    {loading ? <Spinner size="small" label="Loading..." /> : t('instructor.financials.no_history')}
                   </td>
                 </tr>
               ) : (
                 transactions.map((tx) => (
                   <tr key={tx._id} className="analytics-row" style={{ backgroundColor: 'transparent', transition: 'all 0.3s' }}>
-                    <td style={{ padding: '16px', color: 'var(--text)', borderBottom: '1px solid var(--border)', borderTopLeftRadius: '16px', borderBottomLeftRadius: '16px' }}>
-                      {new Date(tx.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                    <td style={{ padding: '16px', color: 'var(--text)', borderBottom: '1px solid var(--border)', borderStartStartRadius: '16px', borderEndStartRadius: '16px' }}>
+                      {new Date(tx.createdAt).toLocaleDateString(i18n.language === 'ar' ? 'ar-EG' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                     </td>
-                    <td style={{ padding: '16px', color: 'var(--text-h)', fontWeight: 500, borderBottom: '1px solid var(--border)' }}>{tx.description}</td>
+                    <td style={{ padding: '16px', color: 'var(--text-h)', fontWeight: 500, borderBottom: '1px solid var(--border)' }}>
+                      {tx.description
+                        .replace('Course Sale - ', t('instructor.financials.course_sale_prefix'))
+                        .replace('Payout Request - ', t('instructor.financials.payout_request_prefix'))
+                        .replace(' (Rejected)', t('instructor.financials.rejected_suffix'))}
+                    </td>
                     <td style={tx.amount > 0 ? {
                       padding: '16px', 
                       textAlign: 'right', 
@@ -141,11 +152,13 @@ export default function InstructorFinancialsTab({ user }) {
                     }}>
                       {tx.amount > 0 ? '+ ' : '- '}EGP {Math.abs(tx.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
-                    <td style={{ padding: '16px', textAlign: 'right', borderBottom: '1px solid var(--border)', borderTopRightRadius: '16px', borderBottomRightRadius: '16px' }}>
+                    <td style={{ padding: '16px', textAlign: 'right', borderBottom: '1px solid var(--border)', borderStartEndRadius: '16px', borderEndEndRadius: '16px' }}>
                       <span className="status-badge" style={{
                         color: tx.status === 'cleared' ? '#10b981' : tx.status === 'rejected' ? '#ef4444' : '#f59e0b',
                       }}>
-                        {tx.status}
+                        {tx.status === 'cleared' ? t('instructor.financials.status_cleared') : 
+                         tx.status === 'rejected' ? t('instructor.financials.status_rejected') : 
+                         t('instructor.financials.status_pending')}
                       </span>
                     </td>
                   </tr>

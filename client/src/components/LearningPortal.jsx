@@ -81,7 +81,11 @@ export default function LearningPortal() {
     }
   };
 
-  if (loading) return <FullPageLoader message={t('student.learning.loading_portal', 'Loading Learning Portal...')} />;
+  if (loading) return (
+    <div data-role="student" style={{ background: 'var(--bg-main)', minHeight: '100vh', width: '100%' }}>
+      <FullPageLoader message={t('student.learning.loading_portal', 'Loading Learning Portal...')} />
+    </div>
+  );
   if (error) return <div style={{ padding: '100px', textAlign: 'center', color: 'red' }}>{t('student.learning.load_error', 'Failed to load learning portal.')}</div>;
 
   return (

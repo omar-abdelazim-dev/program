@@ -566,13 +566,11 @@ export default function AdminPortal({
     );
   }
 
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-main)' }}>
-        <FullPageLoader message="Loading Admin Portal..." />
-      </div>
-    );
-  }
+  if (loading) return (
+    <div data-role="admin" style={{ background: 'var(--bg-main)', minHeight: '100vh', width: '100%' }}>
+      <FullPageLoader message="Loading Admin Portal..." />
+    </div>
+  );
 
   const menuGroups =
     user?.role === "superadmin"
