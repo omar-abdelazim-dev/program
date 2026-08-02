@@ -3,6 +3,7 @@ import api from "../api/axios";
 import CourseCard from "./CourseCard";
 import InstructorCard from "./InstructorCard";
 import { EXPLORE_CATEGORIES, INSTRUCTORS_TAB, ALL_TAB } from "../data/exploreCategories";
+import { useTranslation } from "react-i18next";
 import "../styles/explore.css";
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -11,8 +12,8 @@ const TABS = [ALL_TAB, INSTRUCTORS_TAB, ...EXPLORE_CATEGORIES];
 // The Explore page — was the dead "Courses" sidebar tab. Category tabs +
 // search filter instantly, no navigation. The personalized, major-driven
 // feed lives on the Home page (ExploreTab.jsx) now.
-export default function DiscoverTab({ searchQuery = "" }) {
-  const [activeTab, setActiveTab] = useState(ALL_TAB);
+export default function DiscoverTab({ searchQuery = "", activeCategory: activeTab = ALL_TAB, isLightMode }) {
+  const { t } = useTranslation();
   const [debouncedSearch, setDebouncedSearch] = useState(searchQuery.trim());
 
   const [courses, setCourses] = useState([]);
@@ -65,26 +66,14 @@ export default function DiscoverTab({ searchQuery = "" }) {
     <div className="dashboard-grid">
       <div className="main-column" style={{ width: "100%" }}>
         <h1 className="saas-page-title" style={{ color: "var(--text-primary)", marginBottom: "20px" }}>
-          Explore
+          {t('nav.explore', 'Explore')}
         </h1>
 
-        <div className="explore-tabs">
-          {TABS.map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              className={`explore-tab-btn ${activeTab === tab ? "active" : ""}`}
-              onClick={() => setActiveTab(tab)}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
 
         {showInstructorRow && (
           <section style={{ marginBottom: "8px" }}>
             <h2 style={{ color: "var(--text-primary)", fontSize: "1.1rem", margin: "0 0 16px 0" }}>
-              Instructors matching "{debouncedSearch}"
+              {t('student.instructors_matching', 'Instructors matching')} "{debouncedSearch}"
             </h2>
             <div className="explore-instructor-row">
               {instructors.map((instructor, idx) => (
@@ -96,42 +85,55 @@ export default function DiscoverTab({ searchQuery = "" }) {
 
         {activeTab === INSTRUCTORS_TAB ? (
           instructorsLoading ? (
-            <div className="cc-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "24px" }}>
+            <div className="cc-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 220px), 1fr))", gap: "24px" }}>
               {Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="cc-skeleton solid-card skeleton-shimmer" style={{ height: "220px" }} />
               ))}
             </div>
           ) : instructors.length > 0 ? (
-            <div className="cc-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "24px" }}>
+            <div className="cc-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 220px), 1fr))", gap: "24px" }}>
               {instructors.map((instructor, idx) => (
                 <InstructorCard key={instructor.id} instructor={instructor} idx={idx} />
               ))}
             </div>
           ) : (
             <p style={{ color: "var(--text-secondary)", padding: "32px 0", textAlign: "center" }}>
-              {debouncedSearch ? `No instructors found for "${debouncedSearch}".` : "No instructors yet."}
+              {debouncedSearch 
+                ? t('student.explore.no_instructors_for', 'No instructors found for "{{query}}".', { query: debouncedSearch }) 
+                : t('student.explore.no_instructors_yet', 'No instructors yet.')}
             </p>
           )
         ) : coursesLoading ? (
-          <div className="cc-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "24px" }}>
+          <div className="cc-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))", gap: "24px" }}>
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="cc-skeleton solid-card skeleton-shimmer" style={{ height: "320px" }} />
             ))}
           </div>
         ) : courses.length > 0 ? (
-          <div className="cc-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "24px" }}>
+          <div className="cc-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))", gap: "24px" }}>
             {courses.map((course, idx) => (
-              <CourseCard key={course._id || idx} course={course} idx={idx} />
+              <CourseCard key={course._id || idx} course={course} idx={idx} isLightMode={isLightMode} />
             ))}
           </div>
         ) : (
           <p style={{ color: "var(--text-secondary)", padding: "32px 0", textAlign: "center" }}>
-            {debouncedSearch
-              ? `No courses found for "${debouncedSearch}"${activeTab !== ALL_TAB ? ` in ${activeTab}` : ""}.`
-              : `No courses found in ${activeTab}.`}
+            {(() => {
+              let translatedTab = activeTab;
+              if (activeTab === ALL_TAB) translatedTab = t('student.explore.all', 'All');
+              else if (activeTab === INSTRUCTORS_TAB) translatedTab = t('student.explore.instructors', 'Instructors');
+              else translatedTab = t(`categories.${activeTab.replace(/\s+/g, '_').toLowerCase()}`, activeTab);
+
+              if (debouncedSearch) {
+                return activeTab !== ALL_TAB 
+                  ? t('student.explore.no_courses_search_category', 'No courses found for "{{query}}" in {{category}}.', { query: debouncedSearch, category: translatedTab })
+                  : t('student.explore.no_courses_search', 'No courses found for "{{query}}".', { query: debouncedSearch });
+              }
+              return t('student.explore.no_courses_category', 'No courses found in {{category}}.', { category: translatedTab });
+            })()}
           </p>
         )}
       </div>
     </div>
   );
 }
+

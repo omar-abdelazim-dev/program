@@ -1,5 +1,6 @@
 import Enrollment from '../models/Enrollment.js';
 import Course from '../models/Course.js';
+import User from '../models/User.js';
 import Lesson from '../models/Lesson.js';
 import Transaction from '../models/Transaction.js';
 import Section from '../models/Section.js';
@@ -24,11 +25,20 @@ export const enroll = async (req, res) => {
       return res.status(409).json({ message: 'You are already enrolled in this course' });
     }
 
-    // Calculate financial distribution based on system config
-    const config = await getInternalConfig();
-    const commissionPercent = config?.financial?.commission || 15;
-    const platformCommission = (course.price * commissionPercent) / 100;
-    const instructorShare = course.price - platformCommission;
+    // Calculate financial distribution
+    const instructor = await User.findById(course.instructor);
+    let platformCommission = 0;
+    let instructorShare = 0;
+
+    if (instructor && instructor.isProgramInstructor) {
+      // Program instructors get an 85% cut, platform keeps 15%
+      instructorShare = course.price * 0.85;
+      platformCommission = course.price * 0.15;
+    } else {
+      // Normal instructors get a 70% cut, platform keeps 30%
+      instructorShare = course.price * 0.70;
+      platformCommission = course.price * 0.30;
+    }
 
     const enrollment = await Enrollment.create({ 
       student: req.user.id, 
@@ -38,12 +48,11 @@ export const enroll = async (req, res) => {
       instructorShare
     });
 
-    // Generate 70% revenue split transaction for the instructor
+    // Generate revenue split transaction for the instructor
     if (course.price > 0 && course.instructor) {
-      const instructorCut = course.price * 0.7;
       await Transaction.create({
         instructor: course.instructor,
-        amount: instructorCut,
+        amount: instructorShare,
         type: 'course_sale',
         status: 'cleared',
         description: `Course Sale - ${course.title}`,

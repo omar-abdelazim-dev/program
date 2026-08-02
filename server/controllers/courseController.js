@@ -210,7 +210,7 @@ export const getApprovedCourses = async (req, res) => {
 
     if (page === undefined && limit === undefined) {
       const courses = await Course.find(filter)
-        .populate('instructor', 'name avatarUrl') // include instructor's name + avatar, nothing more sensitive
+        .populate('instructor', 'name avatarUrl isProgramInstructor') // include instructor's name + avatar, nothing more sensitive
         .sort({ createdAt: -1 });
 
       return res.status(200).json({ courses });
@@ -225,7 +225,7 @@ export const getApprovedCourses = async (req, res) => {
     const [totalItems, courses] = await Promise.all([
       Course.countDocuments(filter),
       Course.find(filter)
-        .populate('instructor', 'name avatarUrl')
+        .populate('instructor', 'name avatarUrl isProgramInstructor')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limitNum)
@@ -244,7 +244,7 @@ export const getApprovedCourses = async (req, res) => {
 // Also allows the owning instructor or an admin to view a non-approved course.
 export const getCourseById = async (req, res) => {
   try {
-    const course = await Course.findById(req.params.id).populate('instructor', 'name');
+    const course = await Course.findById(req.params.id).populate('instructor', 'name isProgramInstructor');
 
     if (!course) {
       return res.status(404).json({ message: 'Course not found' });
@@ -281,7 +281,7 @@ export const getPendingCourses = async (req, res) => {
 
     if (page === undefined && limit === undefined) {
       const courses = await Course.find(filter)
-        .populate('instructor', 'name email')
+        .populate('instructor', 'name email isProgramInstructor')
         .sort({ createdAt: 1 }); // oldest first — first submitted, first reviewed
 
       return res.status(200).json({ courses });
@@ -296,7 +296,7 @@ export const getPendingCourses = async (req, res) => {
     const [totalItems, courses] = await Promise.all([
       Course.countDocuments(filter),
       Course.find(filter)
-        .populate('instructor', 'name email')
+        .populate('instructor', 'name email isProgramInstructor')
         .sort({ createdAt: 1 })
         .skip(skip)
         .limit(limitNum)

@@ -295,7 +295,7 @@ body {
     position: absolute;
     inset-inline-start: calc(100% + 12px);
     top: 50%;
-    transform: translateY(-50%);
+    transform: translate(10px, -50%);
     background: #2D3748;
     color: var(--text-primary);
     font-size: .8rem;
@@ -304,7 +304,8 @@ body {
     white-space: nowrap;
     pointer-events: none;
     opacity: 0;
-    transition: opacity .15s;
+    visibility: hidden;
+    transition: all 0.3s ease;
     z-index: 999;
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow);
@@ -312,6 +313,8 @@ body {
 
 .sideBar.collapsed .sideBarButton:hover::after {
     opacity: 1;
+    visibility: visible;
+    transform: translate(0, -50%);
 }
 
 /* ── LIGHT MODE ── */

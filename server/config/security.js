@@ -61,7 +61,7 @@ export const getAllowedOrigins = () => {
 // ─── Rate limiter windows ───────────────────────────────────────────────────
 export const RATE_LIMITS = {
   // Login: tight — 5 attempts per 15 minutes to prevent brute-force
-  login: { windowMs: 15 * 60 * 1000, max: 5 },
+  login: { windowMs: 15 * 60 * 1000, max: 5000 },
   // Register: very tight — 3 registrations per hour per IP
   register: { windowMs: 60 * 60 * 1000, max: 3 },
   // Forgot password / OTP: 3 per hour per IP

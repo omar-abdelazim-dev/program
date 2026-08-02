@@ -1,5 +1,6 @@
-import express from 'express';
+﻿import express from 'express';
 import {
+  toggleProgramInstructor,
   getStats, getRecentActivity, getRevenueAnalytics, getUsers, toggleBlockUser, changeUserRole,
   softDeleteUser, restoreUser, getTransactions, getPendingPayouts, getAllLessons, approveLesson, rejectLesson
 } from '../controllers/adminController.js';
@@ -18,6 +19,7 @@ router.get('/users', getUsers);
 // validateUserIdParam ensures :id is a valid MongoDB ObjectId before hitting the DB
 router.patch('/users/:id/block', validateUserIdParam, toggleBlockUser); // Keep for backwards compatibility
 router.patch('/users/:id/role', validateUserIdParam, validateRoleChange, changeUserRole);
+router.patch('/users/:id/program-instructor', validateUserIdParam, toggleProgramInstructor);
 router.delete('/users/:id/soft-delete', validateUserIdParam, softDeleteUser);
 router.patch('/users/:id/restore', validateUserIdParam, restoreUser);
 router.get('/transactions', getTransactions);
@@ -27,4 +29,3 @@ router.patch('/lessons/:id/approve', approveLesson);
 router.patch('/lessons/:id/reject', rejectLesson);
 
 export default router;
-

@@ -132,12 +132,17 @@ export const previewFinancials = async (req, res) => {
 
     // Calculate total revenue from enrollments
     const result = await Enrollment.aggregate([
-      { $group: { _id: null, total: { $sum: "$amountPaid" } } }
+      { $group: { 
+          _id: null, 
+          total: { $sum: "$amountPaid" },
+          companyShare: { $sum: "$platformCommission" },
+          instructorShare: { $sum: "$instructorShare" }
+        } 
+      }
     ]);
     const totalRevenue = result[0]?.total || 0;
-
-    const companyShare = (totalRevenue * commission) / 100;
-    const instructorShare = totalRevenue - companyShare;
+    const companyShare = result[0]?.companyShare || 0;
+    const instructorShare = result[0]?.instructorShare || 0;
 
     res.json({
       platformCommission: commission,

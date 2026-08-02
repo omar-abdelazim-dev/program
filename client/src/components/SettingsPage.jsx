@@ -4,13 +4,6 @@ import CustomSelect from './CustomSelect';
 import { useTranslation } from 'react-i18next';
 import { MAJORS } from '../data/majors';
 
-const DEPARTMENTS = [
-  "Computer Science", "Information Technology", "Software Engineering", 
-  "Electrical Engineering", "Mechanical Engineering", "Civil Engineering",
-  "Business Administration", "Accounting", "Marketing",
-  "Medicine", "Pharmacy", "Dentistry", "Architecture",
-  "Arts & Humanities", "Law", "Sciences", "Education"
-];
 
 const SECTIONS = [
   { id: 'profile', labelKey: 'settings.nav.profile', defaultLabel: 'Profile' },
@@ -24,8 +17,8 @@ export default function SettingsPage({ user, setUser, isLightMode, toggleTheme, 
 
   return (
     <div className="settings-page animate-entrance" style={{ width: '100%' }}>
-      <div className="settings-layout" style={{ display: 'grid', gridTemplateColumns: '250px 1fr', gap: '40px', alignItems: 'start' }}>
-        <div style={{ position: 'sticky', top: '24px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
+      <div className="settings-layout">
+        <div className="settings-nav-sidebar" style={{ position: 'sticky', top: '24px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
           <h1 style={{ fontSize: '2.5rem', fontWeight: '800', color: 'var(--text-primary)', margin: 0, paddingInlineStart: '24px' }}>{t('settings.title', 'Settings')}</h1>
           <nav className="settings-nav solid-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }}>
             <div style={{
@@ -146,18 +139,10 @@ function ProfileSection({ user, setUser }) {
             className="solid-btn"
             style={{
               background: 'var(--bg-main)',
-              border: '2px solid transparent',
+              border: '1px solid var(--border)',
               color: 'var(--text-primary)',
               boxShadow: 'var(--inner-shadow)',
               transition: 'all 0.3s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.background = '#ffffff';
-              e.target.style.boxShadow = '0 0 15px rgba(255,255,255,1), var(--outer-shadow)';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.background = 'var(--bg-main)';
-              e.target.style.boxShadow = 'var(--inner-shadow)';
             }}
             onClick={() => fileInputRef.current?.click()}
           >
@@ -227,7 +212,6 @@ function AccountSection({ user, setUser, onLogout }) {
     try {
       const res = await api.patch('/auth/profile', {
         email,
-        college,
         major,
         providedCourses,
         linkedinUrl,
@@ -277,27 +261,16 @@ function AccountSection({ user, setUser, onLogout }) {
         <p className="settings-section-desc" style={{ color: 'var(--text-secondary)', margin: 0 }}>{t('settings.account.desc', 'Manage your account details and security.')}</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, max(300px, calc(50% - 16px))), 1fr))', gap: '32px' }}>
         <form onSubmit={handleSaveDetails} className="solid-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', height: '100%' }}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: '700', margin: 0, color: 'var(--text-primary)' }}>{t('settings.account.info_title', 'Account Information')}</h3>
           {detailsError && <div className="settings-message settings-message-error" style={{ color: '#ef4444', padding: '12px', background: 'rgba(239,68,68,0.1)', borderRadius: '8px' }}>{detailsError}</div>}
           {detailsSuccess && <div className="settings-message settings-message-success" style={{ color: '#10B981', padding: '12px', background: 'rgba(16,185,129,0.1)', borderRadius: '8px' }}>{detailsSuccess}</div>}
           
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))', gap: '16px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>{t('settings.account.email', 'Email Address')}</label>
             <input type="email" className="solid-input" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>{t('settings.account.department', 'Department / College')}</label>
-            <CustomSelect 
-              options={[
-                ...DEPARTMENTS.map(d => ({ value: d, label: d })),
-                { value: 'Other', label: 'Other' }
-              ]}
-              value={college}
-              onChange={setCollege}
-            />
           </div>
             {user?.role === 'student' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -339,7 +312,7 @@ function AccountSection({ user, setUser, onLogout }) {
           <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>{t('settings.account.current_password', 'Current Password')}</label>
           <input type="password" className="solid-input" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder={t('settings.account.current_password_placeholder', 'Enter your current password')} required />
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '16px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>{t('settings.account.new_password', 'New Password')}</label>
             <input type="password" className="solid-input" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder={t('settings.account.new_password_placeholder', 'Enter a new password')} required minLength={6} />
@@ -444,3 +417,6 @@ function AppearanceSection({ isLightMode, toggleTheme }) {
     </div>
   );
 }
+
+
+

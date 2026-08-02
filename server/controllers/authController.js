@@ -152,6 +152,7 @@ export const login = async (req, res) => {
         email: user.email,
         role: user.role,
         avatarUrl: user.avatarUrl,
+        isProgramInstructor: user.isProgramInstructor, // Include Program instructor flag
       },
     });
   } catch (error) {
@@ -256,6 +257,7 @@ export const updateProfile = async (req, res) => {
         phone: user.phone,
         university: user.university,
         goalsText: user.goalsText,
+        isProgramInstructor: user.isProgramInstructor, // Include Program instructor flag
       },
     });
   } catch (error) {

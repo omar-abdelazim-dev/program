@@ -112,6 +112,17 @@
       "semester_label": "{{major}} – الفصل الدراسي {{semester}}",
       "no_major_courses": "لا توجد مقررات لتخصص {{major}} بعد. يرجى المراجعة لاحقًا.",
       "no_courses_available": "لا توجد مقررات متاحة بعد."
+    },
+    "instructors_matching": "المدربين المطابقين لـ",
+    "explore": {
+      "all": "الكل",
+      "instructors": "المحاضرون",
+      "select_category": "اختر الفئة",
+      "no_instructors_for": "لم يتم العثور على محاضرين باسم \"{{query}}\".",
+      "no_instructors_yet": "لا يوجد محاضرون بعد.",
+      "no_courses_search_category": "لم يتم العثور على دورات باسم \"{{query}}\" في {{category}}.",
+      "no_courses_search": "لم يتم العثور على دورات باسم \"{{query}}\".",
+      "no_courses_category": "لا توجد دورات في {{category}}."
     }
   },
   "instructor": {
@@ -424,7 +435,9 @@
       "year_4": "السنة الرابعة",
       "year_5": "السنة الخامسة",
       "graduated": "خريج"
-    }
+    },
+    "major": "التخصص",
+    "major_placeholder": "اختر تخصصك"
   },
   "settings": {
     "title": "الإعدادات",
@@ -567,5 +580,37 @@
     "enroll_now": "سجل الآن",
     "added_to_cart": "تمت الإضافة للسلة ✓",
     "add_to_cart": "أضف للسلة"
+  },
+  "categories": {
+    "computer_science": "علوم الحاسوب",
+    "web_development": "تطوير الويب",
+    "business": "أعمال",
+    "cybersecurity": "أمن سيبراني",
+    "ai": "ذكاء اصطناعي",
+    "data_science": "علم البيانات",
+    "anatomy": "علم التشريح",
+    "medicine": "الطب",
+    "design": "التصميم",
+    "marketing": "التسويق"
+  },
+  "majors": {
+    "Computer Science": "علوم الحاسوب",
+    "Information Technology": "تقنية المعلومات",
+    "Software Engineering": "هندسة البرمجيات",
+    "Electrical Engineering": "الهندسة الكهربائية",
+    "Mechanical Engineering": "الهندسة الميكانيكية",
+    "Civil Engineering": "الهندسة المدنية",
+    "Business Administration": "إدارة الأعمال",
+    "Accounting": "المحاسبة",
+    "Marketing": "التسويق",
+    "Design": "التصميم",
+    "Medicine": "الطب",
+    "Pharmacy": "الصيدلة",
+    "Dentistry": "طب الأسنان",
+    "Architecture": "الهندسة المعمارية",
+    "Arts & Humanities": "الفنون والعلوم الإنسانية",
+    "Law": "القانون",
+    "Sciences": "العلوم",
+    "Education": "التعليم"
   }
 }

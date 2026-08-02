@@ -91,7 +91,7 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
       `}</style>
 
       {/* Top Row Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '24px' }}>
         {/* Total Revenue */}
         <div className="glass-card stat-card overview-stat-green" style={{ display: 'flex', flexDirection: 'column', padding: '24px', position: 'relative', transition: 'all 0.2s ease' }}>
           <div style={{ position: 'absolute', top: '16px', right: '16px', color: 'var(--c-sub)', fontSize: '0.9rem' }}>→</div>
@@ -137,7 +137,7 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
       </div>
 
       {/* Second Row Cards (Admin counts) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '24px' }}>
         {user?.role === "superadmin" && (
           <div className="glass-card stat-card overview-stat-red" style={{ padding: '24px', display: 'flex', flexDirection: 'column', transition: 'all 0.2s ease' }}>
             <div className="stat-label">{t('admin.superadmins', 'Super Admins')}</div>
@@ -206,7 +206,7 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
       </div>
 
       {/* Bottom Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))', gap: '24px' }}>
         {/* Platform Health */}
         <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
           <h3 style={{ margin: "0 0 24px 0", fontSize: '1.1rem', color: 'var(--text-h)' }}>{t('admin.platform_health', 'Platform Health')}</h3>
@@ -264,3 +264,4 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
 };
 
 export default AdminOverviewTab;
+

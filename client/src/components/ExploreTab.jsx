@@ -88,7 +88,7 @@ export default function ExploreTab({ user, searchQuery = "", isLightMode }) {
   }, [debouncedSearch, major]);
 
   const skeletonGrid = (
-    <div className="cc-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "24px" }}>
+    <div className="cc-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))", gap: "24px" }}>
       {Array.from({ length: 4 }).map((_, i) => (
         <div key={i} className="cc-skeleton solid-card skeleton-shimmer" style={{ height: "320px" }} />
       ))}
@@ -182,7 +182,7 @@ export default function ExploreTab({ user, searchQuery = "", isLightMode }) {
                 {t('student.home.search_results_for', 'Search results for "{{query}}"', { query: debouncedSearch })}
               </h2>
               {searchLoading ? skeletonGrid : searchResults.length > 0 ? (
-                <div className="cc-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "24px" }}>
+                <div className="cc-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))", gap: "24px" }}>
                   {searchResults.map((course, idx) => (
                     <CourseCard key={course._id || idx} course={course} idx={idx} isLightMode={isLightMode} />
                   ))}
@@ -220,7 +220,7 @@ export default function ExploreTab({ user, searchQuery = "", isLightMode }) {
                 {t('student.recommended_for_you', 'Recommended for You')}
               </h2>
               {fallbackLoading ? skeletonGrid : fallbackCourses.length > 0 ? (
-                <div className="cc-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "24px" }}>
+                <div className="cc-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))", gap: "24px" }}>
                   {fallbackCourses.map((course, idx) => (
                     <CourseCard key={course._id || idx} course={course} idx={idx} isLightMode={isLightMode} />
                   ))}
@@ -237,3 +237,4 @@ export default function ExploreTab({ user, searchQuery = "", isLightMode }) {
     </>
   );
 }
+

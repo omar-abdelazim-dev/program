@@ -28,11 +28,8 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
   const [role, setRole] = useState(initialParams.get('role') === 'instructor' ? 'instructor' : 'student');
   
   // Step 2 Fields
-  const [department, setDepartment] = useState('');
-  const [otherDepartment, setOtherDepartment] = useState('');
   const [college, setCollege] = useState('');
   const [year, setYear] = useState('');
-  const [track, setTrack] = useState('');
   const [major, setMajor] = useState('');
   const [providedCourses, setProvidedCourses] = useState('');
   const [linkedinUrl, setLinkedinUrl] = useState('');
@@ -45,14 +42,6 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
   // Loading State
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
   const [authError, setAuthError] = useState('');
-
-  const DEPARTMENTS = [
-    "Computer Science", "Information Technology", "Software Engineering", 
-    "Electrical Engineering", "Mechanical Engineering", "Civil Engineering",
-    "Business Administration", "Accounting", "Marketing",
-    "Medicine", "Pharmacy", "Dentistry", "Architecture",
-    "Arts & Humanities", "Law", "Sciences", "Education"
-  ];
 
   const calculateStrength = (pass) => {
     if (!pass) return 0;
@@ -123,10 +112,8 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
         try {
           const payload = {
             name: `${firstName} ${lastName}`.trim(), email, password, role,
-            university: department === 'Other' ? otherDepartment : department,
             year,
             college,
-            track,
             major,
             providedCourses,
             linkedinUrl,
@@ -287,28 +274,6 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
                   {/* Step 2: Academic */}
                   {registerStep === 2 && (
                     <div className="step-content animate-entrance">
-                      <div className="input-group">
-                        <label>{t('auth.department')}</label>
-                        <div className="custom-select-container">
-                          <CustomSelect 
-                            options={[
-                              ...DEPARTMENTS.map(d => ({ value: d, label: d })),
-                              { value: 'Other', label: 'Other' }
-                            ]}
-                            value={department}
-                            onChange={setDepartment}
-                            placeholder={t('auth.department_placeholder')}
-                            icon={<svg className="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>}
-                          />
-                        </div>
-                      </div>
-                      
-                      {department === 'Other' && (
-                        <div className="input-group animate-entrance">
-                          <input type="text" placeholder={t('auth.other_department_placeholder')} value={otherDepartment} onChange={(e) => setOtherDepartment(e.target.value)} required />
-                        </div>
-                      )}
-
                       {role === 'student' ? (
                         <>
                           <div className="input-row">
@@ -339,20 +304,12 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
                           </div>
 
                           <div className="input-group">
-                            <label>{t('auth.track')}</label>
-                            <div className="icon-input-wrapper">
-                              <svg className="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-                              <input type="text" placeholder={t('auth.track_placeholder')} required value={track} onChange={(e) => setTrack(e.target.value)} />
-                            </div>
-                          </div>
-
-                          <div className="input-group">
-                            <label>Major *</label>
+                            <label>{t('auth.major')} *</label>
                             <CustomSelect
-                              options={MAJORS.map(m => ({ value: m.id, label: m.label }))}
+                              options={MAJORS.map(m => ({ value: m.id, label: t(`majors.${m.id}`) }))}
                               value={major}
                               onChange={setMajor}
-                              placeholder="Select your major"
+                              placeholder={t('auth.major_placeholder')}
                               icon={<svg className="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>}
                             />
                           </div>

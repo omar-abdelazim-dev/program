@@ -1,4 +1,4 @@
-import Transaction from '../models/Transaction.js';
+﻿import Transaction from '../models/Transaction.js';
 import User from '../models/User.js';
 import Course from '../models/Course.js';
 import Enrollment from '../models/Enrollment.js';
@@ -29,7 +29,7 @@ export const getStats = async (req, res) => {
         },
       },
       // preserveNullAndEmptyArrays: a course can be missing (e.g. deleted)
-      // — revenue still counts that enrollment, categoryCounts must not.
+      // â€” revenue still counts that enrollment, categoryCounts must not.
       { $unwind: { path: '$course', preserveNullAndEmptyArrays: true } },
       {
         $facet: {
@@ -95,7 +95,7 @@ export const getStats = async (req, res) => {
 // @route   GET /api/admin/revenue-analytics
 // @access  Private (Admin)
 // Real revenue + enrollment counts bucketed by month, for the last 12
-// months — no commission split or payout math, just what was actually
+// months â€” no commission split or payout math, just what was actually
 // paid (Enrollment.amountPaid), aggregated in Mongo. Zero-filled so months
 // with no enrollments still show up as a bar instead of a gap.
 export const getRevenueAnalytics = async (req, res) => {
@@ -160,7 +160,7 @@ export const getRecentActivity = async (req, res) => {
       .limit(5);
 
     const recentCourses = await Course.find()
-      .populate('instructor', 'name')
+      .populate('instructor', 'name isProgramInstructor')
       .populate('approvedBy', 'name role')
       .sort({ createdAt: -1 })
       .limit(5);
@@ -278,7 +278,7 @@ export const toggleBlockUser = async (req, res) => {
       return res.status(400).json({ message: 'Cannot block yourself' });
     }
 
-    // Only a superadmin can block/unblock another admin or superadmin —
+    // Only a superadmin can block/unblock another admin or superadmin â€”
     // otherwise any admin could lock every other admin/superadmin out of
     // the platform (blocked users are rejected on every subsequent request).
     if ((user.role === 'admin' || user.role === 'superadmin') && req.user.role !== 'superadmin') {
@@ -313,10 +313,10 @@ const ASSIGNABLE_ROLES = ['student', 'instructor', 'admin'];
 
 // @route   PATCH /api/admin/users/:id/role
 // @access  Private (Admin, Superadmin)
-// Unified role-change endpoint — replaces the old separate promote/demote
+// Unified role-change endpoint â€” replaces the old separate promote/demote
 // actions. 'superadmin' is deliberately not an assignable role here: that
 // tier stays untouchable through this endpoint in either direction, and a
-// plain admin can't change another admin's role — only a superadmin can.
+// plain admin can't change another admin's role â€” only a superadmin can.
 export const changeUserRole = async (req, res) => {
   try {
     const { id } = req.params;
@@ -370,7 +370,7 @@ export const changeUserRole = async (req, res) => {
 };
 
 // A user can't be suspended/deleted by anyone but a superadmin if they're an
-// admin/superadmin themselves, and never by (or targeting) themselves —
+// admin/superadmin themselves, and never by (or targeting) themselves â€”
 // mirrors the existing toggleBlockUser / changeUserRole guards above.
 const canModerate = (req, targetUser) => {
   if (!targetUser) return 'User not found';
@@ -382,7 +382,7 @@ const canModerate = (req, targetUser) => {
 
 // @route   DELETE /api/admin/users/:id/soft-delete
 // @access  Private (Admin)
-// Soft delete only — the record stays intact (Enrollment/Course references
+// Soft delete only â€” the record stays intact (Enrollment/Course references
 // aren't touched) but the user is hidden from admin lists and can't log in.
 export const softDeleteUser = async (req, res) => {
   try {
@@ -493,7 +493,7 @@ export const getTransactions = async (req, res) => {
 export const getPendingPayouts = async (req, res) => {
   try {
     const payouts = await Transaction.find({ type: 'payout_request' })
-      .populate('instructor', 'name email phone')
+      .populate('instructor', 'name email phone isProgramInstructor')
       .sort({ createdAt: -1 });
     
     res.status(200).json({ payouts });
@@ -551,5 +551,25 @@ export const rejectLesson = async (req, res) => {
   } catch (error) {
     console.error('Error rejecting lesson:', error);
     res.status(500).json({ message: 'Server error rejecting lesson' });
+  }
+};
+
+export const toggleProgramInstructor = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    if (user.role !== 'instructor') {
+      return res.status(400).json({ message: 'Only instructors can be program instructors' });
+    }
+    
+    user.isProgramInstructor = !user.isProgramInstructor;
+    await user.save();
+    
+    res.json({ message: `Instructor ${user.isProgramInstructor ? 'added to' : 'removed from'} program`, user });
+  } catch (error) {
+    console.error('Error toggling program instructor:', error);
+    res.status(500).json({ message: 'Server Error' });
   }
 };

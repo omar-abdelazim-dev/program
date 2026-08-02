@@ -8,6 +8,7 @@
   background: var(--bg-surface);
   color: var(--text-secondary);
   margin-bottom: 24px;
+  box-shadow: var(--outer-shadow);
 }
 
 .home-major-prompt a {

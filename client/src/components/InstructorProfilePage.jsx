@@ -5,7 +5,7 @@ import CourseCard from './CourseCard';
 import FullPageLoader from './FullPageLoader';
 import '../styles/instructor.css';
 
-export default function InstructorProfilePage() {
+export default function InstructorProfilePage({ isLightMode }) {
   const { id } = useParams();
   const [instructor, setInstructor] = useState(null);
   const [courses, setCourses] = useState([]);
@@ -72,9 +72,9 @@ export default function InstructorProfilePage() {
           Courses by {instructor.name}
         </h2>
         {courses.length > 0 ? (
-          <div className="cc-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
+          <div className="cc-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: '24px' }}>
             {courses.map((course, idx) => (
-              <CourseCard key={course._id || idx} course={course} idx={idx} />
+              <CourseCard key={course._id || idx} course={course} idx={idx} isLightMode={isLightMode} />
             ))}
           </div>
         ) : (
@@ -86,3 +86,4 @@ export default function InstructorProfilePage() {
     </div>
   );
 }
+

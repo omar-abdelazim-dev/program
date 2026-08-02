@@ -260,37 +260,37 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
         </div>
 
         <nav className="sidebar-nav-top">
-          <button className={`sidebar-icon-btn ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')} title={t('instructor.nav.dashboard')}>
+          <button className={`sidebar-icon-btn ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')} data-tooltip={t('instructor.nav.dashboard')}>
             {/* Added i18n to Dashboard tooltip title */}
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
             </svg>
           </button>
-          <button className={`sidebar-icon-btn ${activeTab === 'curriculum' ? 'active' : ''}`} onClick={() => setActiveTab('curriculum')} title={t('instructor.nav.curriculum')}>
+          <button className={`sidebar-icon-btn ${activeTab === 'curriculum' ? 'active' : ''}`} onClick={() => setActiveTab('curriculum')} data-tooltip={t('instructor.nav.curriculum')}>
             {/* Added i18n to Curriculum tooltip title */}
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
           </button>
-          <button className={`sidebar-icon-btn ${activeTab === 'engagement' ? 'active' : ''}`} onClick={() => setActiveTab('engagement')} title={t('instructor.nav.engagement')}>
+          <button className={`sidebar-icon-btn ${activeTab === 'engagement' ? 'active' : ''}`} onClick={() => setActiveTab('engagement')} data-tooltip={t('instructor.nav.engagement')}>
             {/* Added i18n to Engagement tooltip title */}
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
             </svg>
           </button>
-          <button className={`sidebar-icon-btn ${activeTab === 'reviews' ? 'active' : ''}`} onClick={() => setActiveTab('reviews')} title={t('instructor.nav.reviews')}>
+          <button className={`sidebar-icon-btn ${activeTab === 'reviews' ? 'active' : ''}`} onClick={() => setActiveTab('reviews')} data-tooltip={t('instructor.nav.reviews')}>
             {/* Added i18n to Reviews tooltip title */}
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
             </svg>
           </button>
-          <button className={`sidebar-icon-btn ${activeTab === 'analytics' ? 'active' : ''}`} onClick={() => setActiveTab('analytics')} title={t('instructor.nav.analytics')}>
+          <button className={`sidebar-icon-btn ${activeTab === 'analytics' ? 'active' : ''}`} onClick={() => setActiveTab('analytics')} data-tooltip={t('instructor.nav.analytics')}>
             {/* Added i18n to Analytics tooltip title */}
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
           </button>
-          <button className={`sidebar-icon-btn ${activeTab === 'financials' ? 'active' : ''}`} onClick={() => setActiveTab('financials')} title={t('instructor.nav.financials')}>
+          <button className={`sidebar-icon-btn ${activeTab === 'financials' ? 'active' : ''}`} onClick={() => setActiveTab('financials')} data-tooltip={t('instructor.nav.financials')}>
             {/* Added i18n to Financials tooltip title */}
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -299,7 +299,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
         </nav>
         
         <nav className="sidebar-nav-bottom">
-          <button className={`sidebar-icon-btn ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')} title={t('instructor.nav.settings')}>
+          <button className={`sidebar-icon-btn ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')} data-tooltip={t('instructor.nav.settings')}>
             {/* Added i18n to Settings tooltip title */}
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -314,8 +314,13 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
         {/* HEADER */}
         <header className="student-header">
           <div className="header-left">
-            {/* Translated the Instructor Portal title */}
-            <span style={{ fontSize: '1.2rem', color: 'var(--text-h)', fontWeight: 'bold' }}>{t('instructor.header.title')}</span>
+            {/* Translated the Instructor Portal title with optional Program badge */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '1.2rem', color: 'var(--text-h)', fontWeight: 'bold' }}>{t('instructor.header.title')}</span>
+              {user?.isProgramInstructor && (
+                <span className="program-badge-text" style={{ fontSize: '0.55rem', padding: '2px 8px' }}>PROGRAM</span>
+              )}
+            </div>
           </div>
 
           <div className="header-right">
@@ -361,7 +366,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
               <button 
                 className="utility-icon-btn" 
                 onClick={() => setActiveTab('settings')}
-                title={t('instructor.nav.settings')}
+                data-tooltip={t('instructor.nav.settings')}
                 aria-label={t('instructor.nav.settings')}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
@@ -446,7 +451,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
           ) : (
             <div className="animate-entrance">
             {/* STATS OVERVIEW */}
-            <div className="stats-grid animate-entrance" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '24px', marginBottom: '48px' }}>
+            <div className="stats-grid animate-entrance" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))', gap: '24px', marginBottom: '48px' }}>
               <div className="stat-card solid-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
                 {/* Translated Total Revenue */}
                 <div style={{ color: 'var(--text)', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>{t('instructor.analytics.total_revenue')}</div>
@@ -484,7 +489,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
               </button>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
             {courses.length === 0 ? (
               <div className="solid-card" style={{ padding: '40px', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px', gridColumn: '1 / -1' }}>
                 <p style={{ color: 'var(--text)', fontSize: '1.1rem', margin: 0 }}>
@@ -495,54 +500,180 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
               courses.map(course => {
                 const lessons = lessonsByCourse[course._id] || [];
                 return (
-                <div key={course._id} className="solid-card hover-glow" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-                      {course.thumbnailUrl ? (
-                        <img src={course.thumbnailUrl} alt={course.title} style={{ width: '120px', height: '80px', objectFit: 'cover', borderRadius: '8px' }} />
-                      ) : (
-                        <div style={{ width: '120px', height: '80px', background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', borderRadius: '8px' }}></div>
-                      )}
-                      <div>
-                        <h3 style={{ fontSize: '1.3rem', margin: '0 0 8px 0' }}>{course.title}</h3>
-                        <div style={{ color: 'var(--text)', fontSize: '0.95rem' }}>{t('instructor.dashboard.price')}: EGP {course.price} • {t('instructor.dashboard.category')}: {course.category}</div>
-                        <div style={{ marginTop: '8px', display: 'flex', gap: '8px', alignItems: 'center' }}>
-                          <span style={{
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                            fontSize: '0.8rem',
-                            fontWeight: 'bold',
-                            background: course.status === 'approved' ? 'rgba(16, 185, 129, 0.2)' : course.status === 'rejected' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(245, 158, 11, 0.2)',
-                            color: course.status === 'approved' ? '#10B981' : course.status === 'rejected' ? '#ef4444' : '#F59E0B'
-                          }}>
-                            {/* Translated Status Badges */}
-                            {t(`instructor.dashboard.status.${course.status}`) || course.status.toUpperCase()}
-                          </span>
-                          <span style={{ fontSize: '0.85rem', color: 'var(--text)' }}>
-                            {lessons.length === 0 ? t('instructor.dashboard.status.no_lessons_yet') : `${lessons.length} ${lessons.length === 1 ? t('instructor.dashboard.status.lesson') : t('instructor.dashboard.status.lessons')}`}
-                          </span>
-                        </div>
-                        {course.status === 'rejected' && course.rejectionReason && (
-                          <div style={{ marginTop: '8px', padding: '10px 12px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '8px', fontSize: '0.85rem', color: 'var(--text)', maxWidth: '480px' }}>
-                            <span style={{ color: '#ef4444', fontWeight: 600 }}>{t('instructor.dashboard.status.reason')}: </span>
-                            {course.rejectionReason}
-                          </div>
+                  <div
+                    key={course._id}
+                    className="solid-card hover-glow"
+                    style={{
+                      padding: "24px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "16px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "20px",
+                          alignItems: "center",
+                        }}
+                      >
+                        {course.thumbnailUrl ? (
+                          <img
+                            src={course.thumbnailUrl}
+                            alt={course.title}
+                            style={{
+                              width: "120px",
+                              height: "80px",
+                              objectFit: "cover",
+                              borderRadius: "8px",
+                            }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              width: "120px",
+                              height: "80px",
+                              background:
+                                "linear-gradient(135deg, #3B82F6, #8B5CF6)",
+                              borderRadius: "8px",
+                            }}
+                          ></div>
                         )}
+                        <div>
+                          <h3
+                            style={{ fontSize: "1.3rem", margin: "0 0 8px 0" }}
+                          >
+                            {course.title}
+                          </h3>
+                          <div
+                            style={{
+                              color: "var(--text)",
+                              fontSize: "0.95rem",
+                            }}
+                          >
+                            {t("instructor.dashboard.price")}: EGP{" "}
+                            {course.price} •{" "}
+                            {t("instructor.dashboard.category")}:{" "}
+                            {course.category}
+                          </div>
+                          <div
+                            style={{
+                              marginTop: "8px",
+                              display: "flex",
+                              gap: "8px",
+                              alignItems: "center",
+                            }}
+                          >
+                            <span
+                              style={{
+                                padding: "4px 8px",
+                                borderRadius: "4px",
+                                fontSize: "0.8rem",
+                                fontWeight: "bold",
+                                boxShadow: "var(--inner-shadow)",
+                                background:
+                                  course.status === "approved"
+                                    ? "rgba(16, 185, 129, 0.2)"
+                                    : course.status === "rejected"
+                                      ? "rgba(239, 68, 68, 0.2)"
+                                      : "rgba(245, 158, 11, 0.2)",
+                                color:
+                                  course.status === "approved"
+                                    ? "#10B981"
+                                    : course.status === "rejected"
+                                      ? "#ef4444"
+                                      : "#F59E0B",
+                              }}
+                            >
+                              {/* Translated Status Badges */}
+                              {t(
+                                `instructor.dashboard.status.${course.status}`,
+                              ) || course.status.toUpperCase()}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: "0.85rem",
+                                color: "var(--text)",
+                              }}
+                            >
+                              {lessons.length === 0
+                                ? t(
+                                    "instructor.dashboard.status.no_lessons_yet",
+                                  )
+                                : `${lessons.length} ${lessons.length === 1 ? t("instructor.dashboard.status.lesson") : t("instructor.dashboard.status.lessons")}`}
+                            </span>
+                          </div>
+                          {course.status === "rejected" &&
+                            course.rejectionReason && (
+                              <div
+                                style={{
+                                  boxShadow: "var(--inner-shadow)",
+                                  marginTop: "8px",
+                                  padding: "10px 12px",
+                                  background: "rgba(239, 68, 68, 0.08)",
+                                  border: "1px solid rgba(239, 68, 68, 0.25)",
+                                  borderRadius: "8px",
+                                  fontSize: "0.85rem",
+                                  color: "var(--text)",
+                                  maxWidth: "480px",
+                                }}
+                              >
+                                <span
+                                  style={{ color: "#ef4444", fontWeight: 600 }}
+                                >
+                                  {t("instructor.dashboard.status.reason")}
+                                  :{" "}
+                                </span>
+                                {course.rejectionReason}
+                              </div>
+                            )}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {lessons.length > 0 && (
-                    <div style={{ borderTop: '1px solid var(--border)', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {lessons.map(lesson => (
-                        <div key={lesson._id} style={{ display: 'flex', gap: '10px', alignItems: 'center', fontSize: '0.9rem', color: 'var(--text)' }}>
-                          <span style={{ minWidth: '20px', color: 'var(--text-h)', fontWeight: 600 }}>{lesson.order}.</span>
-                          <span>{lesson.title}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                    {lessons.length > 0 && (
+                      <div
+                        style={{
+                          borderTop: "1px solid var(--border)",
+                          paddingTop: "12px",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "6px",
+                        }}
+                      >
+                        {lessons.map((lesson) => (
+                          <div
+                            key={lesson._id}
+                            style={{
+                              display: "flex",
+                              gap: "10px",
+                              alignItems: "center",
+                              fontSize: "0.9rem",
+                              color: "var(--text)",
+                            }}
+                          >
+                            <span
+                              style={{
+                                minWidth: "20px",
+                                color: "var(--text-h)",
+                                fontWeight: 600,
+                              }}
+                            >
+                              {lesson.order}.
+                            </span>
+                            <span>{lesson.title}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 );
               })
             )}
@@ -636,7 +767,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
             {error && <div style={{ color: '#ef4444', marginBottom: '16px' }}>{error}</div>}
             
             <form noValidate onSubmit={handleSaveLesson} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '24px' }}>
                 <div className="input-group">
                   <label>{t('instructor.curriculum.lesson_title')}</label>
                   <input required type="text" value={lessonData.title} onChange={e => setLessonData({...lessonData, title: e.target.value})} placeholder={t('instructor.curriculum.ph_lesson_title')} />
@@ -674,3 +805,6 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
     </div>
   );
 }
+
+
+
