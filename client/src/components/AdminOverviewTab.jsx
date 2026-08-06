@@ -96,7 +96,7 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
         <div className="glass-card stat-card overview-stat-green" style={{ display: 'flex', flexDirection: 'column', padding: '24px', position: 'relative', transition: 'all 0.2s ease' }}>
           <div style={{ position: 'absolute', top: '16px', right: '16px', color: 'var(--c-sub)', fontSize: '0.9rem' }}>→</div>
           <div className="stat-label" style={{ marginBottom: '4px' }}>{t('admin.total_revenue', 'Total Revenue')}</div>
-          <div style={{ color: "#10B981", fontSize: '2.4rem', fontWeight: '800', lineHeight: '1.1' }}>
+          <div style={{ color: "#10B981", fontSize: '1.8rem', fontWeight: '800', lineHeight: '1.1' }}>
             EGP <AnimatedNumber value={safeTotalRevenue} />
           </div>
           <div style={{ color: 'var(--c-sub)', fontSize: '0.85rem', marginTop: '8px' }}>{t('admin.growth_unavailable', 'Growth data unavailable')}</div>
@@ -116,7 +116,7 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
         {/* Students */}
         <div className="glass-card stat-card overview-stat-white" style={{ padding: '24px', display: 'flex', flexDirection: 'column', transition: 'all 0.2s ease' }}>
           <div className="stat-label">{t('admin.students', 'Students')}</div>
-          <div style={{ fontSize: '2.4rem', fontWeight: '800', color: 'var(--text-h)', lineHeight: '1.1', marginTop: '4px' }}>
+          <div style={{ fontSize: '1.8rem', fontWeight: '800', color: 'var(--text-h)', lineHeight: '1.1', marginTop: '4px' }}>
             <AnimatedNumber value={safeStudents} />
           </div>
           <div style={{ marginTop: 'auto' }}>
@@ -127,7 +127,7 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
         {/* Instructors */}
         <div className="glass-card stat-card overview-stat-orange" style={{ padding: '24px', display: 'flex', flexDirection: 'column', transition: 'all 0.2s ease' }}>
           <div className="stat-label">{t('admin.instructors', 'Instructors')}</div>
-          <div style={{ fontSize: '2.4rem', fontWeight: '800', color: '#f97316', lineHeight: '1.1', marginTop: '4px' }}>
+          <div style={{ fontSize: '1.8rem', fontWeight: '800', color: '#f97316', lineHeight: '1.1', marginTop: '4px' }}>
             <AnimatedNumber value={safeInstructors} />
           </div>
           <div style={{ marginTop: 'auto' }}>
@@ -141,7 +141,7 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
         {user?.role === "superadmin" && (
           <div className="glass-card stat-card overview-stat-red" style={{ padding: '24px', display: 'flex', flexDirection: 'column', transition: 'all 0.2s ease' }}>
             <div className="stat-label">{t('admin.superadmins', 'Super Admins')}</div>
-            <div style={{ fontSize: '2.4rem', fontWeight: '800', color: '#ef4444', lineHeight: '1.1', marginTop: '4px' }}>
+            <div style={{ fontSize: '1.8rem', fontWeight: '800', color: '#ef4444', lineHeight: '1.1', marginTop: '4px' }}>
               <AnimatedNumber value={safeSuperAdmins} />
             </div>
             <div style={{ marginTop: 'auto' }}>
@@ -151,7 +151,7 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
         )}
         <div className="glass-card stat-card overview-stat-purple" style={{ padding: '24px', display: 'flex', flexDirection: 'column', transition: 'all 0.2s ease' }}>
           <div className="stat-label">{t('admin.admins', 'Admins')}</div>
-          <div style={{ fontSize: '2.4rem', fontWeight: '800', color: '#8b5cf6', lineHeight: '1.1', marginTop: '4px' }}>
+          <div style={{ fontSize: '1.8rem', fontWeight: '800', color: '#8b5cf6', lineHeight: '1.1', marginTop: '4px' }}>
             <AnimatedNumber value={safeAdmins} />
           </div>
           <div style={{ marginTop: 'auto' }}>

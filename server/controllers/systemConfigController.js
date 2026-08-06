@@ -104,7 +104,7 @@ export const updateConfigSection = async (req, res) => {
       action: `Updated ${section} configuration`,
       changedBy: req.user.id,
       oldValue: oldValues,
-      newValue: config.get(section).toObject(),
+      newValue: typeof config.get(section).toObject === 'function' ? config.get(section).toObject() : config.get(section),
       module: 'System Management',
     });
 

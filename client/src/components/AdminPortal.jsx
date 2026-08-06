@@ -695,8 +695,11 @@ export default function AdminPortal({
       style={{
         display: "flex",
         flexDirection: "row",
-        height: "100vh",
+        height: "133.333vh",
+        width: "133.333%",
         backgroundColor: "var(--bg-main)",
+        transform: "scale(0.75)",
+        transformOrigin: "top left",
       }}
     >
       {/* Sidebar */}
@@ -748,7 +751,8 @@ export default function AdminPortal({
           </button> */}
         </div>
 
-        {menuGroups.map((group, idx) => {
+        <div className="admin-sidebar-nav">
+          {menuGroups.map((group, idx) => {
           const isGroupExpanded = expandedGroup === group.title;
           const activeIndex = group.items.findIndex((t) =>
             isSidebarTabActive(t.id, activeTab),
@@ -858,6 +862,7 @@ export default function AdminPortal({
             </div>
           );
         })}
+        </div>
       </aside>
 
       <div

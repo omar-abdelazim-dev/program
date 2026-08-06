@@ -219,3 +219,23 @@ code {
   border-radius: 50% !important;
   overflow: hidden !important;
 }
+
+/* Scale down the entire Admin/Superadmin portal to 75% */
+body[data-role="admin"],
+body[data-role="superadmin"] {
+  overflow: hidden;
+}
+
+body[data-role="admin"] .page-wrapper,
+body[data-role="superadmin"] .page-wrapper {
+  transform: scale(0.75);
+  transform-origin: top left;
+  width: 133.333vw !important;
+  height: 133.333vh !important;
+}
+
+body[data-role="admin"] .notyf,
+body[data-role="superadmin"] .notyf {
+  transform: scale(0.75);
+  transform-origin: top right;
+}

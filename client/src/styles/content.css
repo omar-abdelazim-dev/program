@@ -308,8 +308,8 @@ body.light-mode .continue-card {
 
 /* --- Admin Sidebar --- */
 .admin-sidebar {
-    width: 280px;
-    min-width: 280px;
+    width: 240px;
+    min-width: 240px;
     border-radius: 0;
     border: none;
     border-right: 2px solid rgba(0, 0, 0, 0.5);
@@ -317,12 +317,24 @@ body.light-mode .continue-card {
     flex-direction: column;
     padding: 16px 12px 20px;
     gap: 12px;
-    overflow-y: auto;
+    overflow-y: hidden;
     overflow-x: hidden;
     transition: width 0.3s ease, min-width 0.3s ease, padding 0.3s ease;
     flex-shrink: 0;
     background-color: var(--bg-surface);
     box-shadow: var(--outer-shadow);
+}
+
+.admin-sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1;
+    /* Offset right padding to let scrollbar sit near the edge */
+    margin-right: -8px;
+    padding-right: 8px;
 }
 
 .admin-sidebar-header {
@@ -704,6 +716,7 @@ body.light-mode .continue-card {
     grid-template-columns: repeat(3, 1fr);
     gap: 24px;
     margin-top: 8px;
+    width: 90% !important;
 }
 
 @media (max-width: 1280px) {
@@ -747,7 +760,7 @@ body.light-mode .continue-card {
 .cc-thumb-wrap {
     position: relative;
     width: 100%;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 4 / 3;
     overflow: hidden;
     background-color: var(--bg-main);
     flex-shrink: 0;
