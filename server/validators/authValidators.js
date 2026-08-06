@@ -75,12 +75,17 @@ const newPasswordValidator = body('newPassword')
     return true;
   });
 
+// Letters (Latin or Arabic) and spaces only — rejects digits/symbols so a
+// name field can't be used to store arbitrary data.
+const NAME_PATTERN = /^[a-zA-Z؀-ۿ\s]*$/;
+
 // ─── Validate Register ───────────────────────────────────────────────────────
 export const validateRegister = [
   body('name')
     .trim()
     .notEmpty().withMessage('Name is required')
-    .isLength({ min: 2, max: 100 }).withMessage('Name must be between 2 and 100 characters'),
+    .isLength({ min: 2, max: 100 }).withMessage('Name must be between 2 and 100 characters')
+    .matches(NAME_PATTERN).withMessage('Name can only contain letters and spaces'),
 
   body('email')
     .trim()
@@ -136,6 +141,24 @@ export const validateCheckEmail = [
   handleValidationErrors,
 ];
 
+// ─── Validate Forgot Password ─────────────────────────────────────────────────
+export const validateForgotPassword = [
+  body('email')
+    .trim()
+    .notEmpty().withMessage('Email is required')
+    .isEmail().withMessage('Please provide a valid email address')
+    .normalizeEmail({ gmail_remove_dots: false }),
+
+  handleValidationErrors,
+];
+
+// ─── Validate Reset Password ─────────────────────────────────────────────────
+export const validateResetPassword = [
+  newPasswordValidator,
+
+  handleValidationErrors,
+];
+
 // ─── Validate Update Profile ─────────────────────────────────────────────────
 export const validateUpdateProfile = [
   body('name')
@@ -143,7 +166,8 @@ export const validateUpdateProfile = [
     .isString().withMessage('Name must be a string')
     .trim()
     .notEmpty().withMessage('Name cannot be empty')
-    .isLength({ min: 2, max: 100 }).withMessage('Name must be between 2 and 100 characters'),
+    .isLength({ min: 2, max: 100 }).withMessage('Name must be between 2 and 100 characters')
+    .matches(NAME_PATTERN).withMessage('Name can only contain letters and spaces'),
 
   body('email')
     .optional()

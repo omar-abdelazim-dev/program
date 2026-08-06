@@ -4,6 +4,7 @@ import User from '../models/User.js';
 import Lesson from '../models/Lesson.js';
 import Transaction from '../models/Transaction.js';
 import Section from '../models/Section.js';
+import PromoCode from '../models/PromoCode.js';
 import { getInternalConfig } from '../utils/configFetcher.js';
 
 // @route   POST /api/enrollments/:courseId
@@ -11,6 +12,7 @@ import { getInternalConfig } from '../utils/configFetcher.js';
 export const enroll = async (req, res) => {
   try {
     const { courseId } = req.params;
+    const { promoCode } = req.body;
 
     const course = await Course.findById(courseId);
     if (!course) {
@@ -29,19 +31,37 @@ export const enroll = async (req, res) => {
     const instructor = await User.findById(course.instructor);
     let platformCommission = 0;
     let instructorShare = 0;
+    let commissionRate;
+
+    // ADM-13: a promo/affiliate code tied to this course's (non-program)
+    // instructor grants the same fixed 85/15 split a program instructor gets.
+    const appliedPromo = promoCode
+      ? await PromoCode.findOne({ code: promoCode.toUpperCase().trim(), instructor: course.instructor, active: true })
+      : null;
 
     if (instructor && instructor.isProgramInstructor) {
-      // Program instructors get an 85% cut, platform keeps 15%
+      // Program instructors get a fixed 85% cut, platform keeps 15% —
+      // deliberately not admin-configurable, this is the flat benefit of
+      // program-instructor status.
       instructorShare = course.price * 0.85;
       platformCommission = course.price * 0.15;
+      commissionRate = 15;
+    } else if (appliedPromo) {
+      instructorShare = course.price * 0.85;
+      platformCommission = course.price * 0.15;
+      commissionRate = 15;
     } else {
-      // Normal instructors get a 70% cut, platform keeps 30%
-      instructorShare = course.price * 0.70;
-      platformCommission = course.price * 0.30;
+      // Everyone else keeps using the admin-configurable commission rate
+      // (System Management > Commission Slider), same as before this PR.
+      const config = await getInternalConfig();
+      const commissionPercent = config?.financial?.commission ?? 15;
+      platformCommission = (course.price * commissionPercent) / 100;
+      instructorShare = course.price - platformCommission;
+      commissionRate = commissionPercent;
     }
 
-    const enrollment = await Enrollment.create({ 
-      student: req.user.id, 
+    const enrollment = await Enrollment.create({
+      student: req.user.id,
       course: courseId,
       amountPaid: course.price,
       platformCommission,
@@ -56,7 +76,8 @@ export const enroll = async (req, res) => {
         type: 'course_sale',
         status: 'cleared',
         description: `Course Sale - ${course.title}`,
-        course: course._id
+        course: course._id,
+        commissionRate,
       });
     }
 

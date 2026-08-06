@@ -8,21 +8,24 @@ import fs from 'fs';
 
 // @route   POST /api/courses
 // @access  Private (instructor only)
+// title/description/price are validated by validateCreateCourse before this
+// runs; category is optional (INS-03 de-required it in favor of college).
 export const createCourse = async (req, res) => {
   try {
-    const { title, description, price, category, major, semester, thumbnailUrl } = req.body;
+    const { title, description, price, category, major, semester, college, thumbnailUrl } = req.body;
 
-    if (!title || !description || price === undefined || !category) {
-      return res.status(400).json({ message: 'Title, description, price, and category are required' });
+    if (!title || !description || price === undefined) {
+      return res.status(400).json({ message: 'Title, description, and price are required' });
     }
 
     const course = await Course.create({
       title,
       description,
       price,
-      category,
+      category: category || '',
       major: major || '',
       semester: semester !== undefined && semester !== '' ? semester : undefined,
+      college: college || '',
       thumbnailUrl: thumbnailUrl || '',
       instructor: req.user.id, // taken from the verified JWT, never trust a client-sent instructor ID
       status: 'pending', // every new course starts pending — never trust the client to set this either
@@ -190,12 +193,13 @@ export const getInstructorStats = async (req, res) => {
 // courses; pending/rejected courses must never leak here.
 export const getApprovedCourses = async (req, res) => {
   try {
-    const { search, category, major, semester, page, limit } = req.query;
+    const { search, category, major, semester, college, page, limit } = req.query;
 
     const filter = { status: 'approved' };
     if (category) filter.category = category;
     if (major) filter.major = major;
     if (semester) filter.semester = parseInt(semester, 10);
+    if (college) filter.college = college;
 
     if (search) {
       // Match either the course title or the instructor's name — lets the
@@ -251,7 +255,7 @@ export const getCourseById = async (req, res) => {
     }
 
     const isOwner = req.user && course.instructor._id.toString() === req.user.id.toString();
-    const isAdmin = req.user && req.user.role === 'admin';
+    const isAdmin = req.user && (req.user.role === 'admin' || req.user.role === 'superadmin');
 
     if (course.status !== 'approved' && !isOwner && !isAdmin) {
       return res.status(403).json({ message: 'This course is not yet available' });
@@ -355,26 +359,33 @@ export const rejectCourse = async (req, res) => {
 };
 
 // @route   PUT /api/courses/:id
-// @access  Private (instructor only)
+// @access  Private (owning instructor, or admin/superadmin for compliance edits)
+// price is intentionally never read from req.body here (INS-05) — once a
+// course is submitted, price can only change... it can't; it's fixed at
+// creation. Any price field sent in the request body is silently ignored,
+// both in the UI (which no longer renders the field) and here at the API
+// level, so the restriction can't be bypassed by calling the API directly.
 export const updateCourse = async (req, res) => {
   try {
-    const { title, description, price, category, major, semester, thumbnailUrl } = req.body;
+    const { title, description, category, major, semester, college, thumbnailUrl } = req.body;
 
     const course = await Course.findById(req.params.id);
     if (!course) {
       return res.status(404).json({ message: 'Course not found' });
     }
 
-    if (course.instructor.toString() !== req.user.id.toString()) {
+    const isOwner = course.instructor.toString() === req.user.id.toString();
+    const isAdmin = req.user.role === 'admin' || req.user.role === 'superadmin';
+    if (!isOwner && !isAdmin) {
       return res.status(403).json({ message: 'Not authorized to update this course' });
     }
 
     course.title = title || course.title;
     course.description = description || course.description;
-    course.price = price !== undefined ? price : course.price;
     course.category = category || course.category;
     if (major !== undefined) course.major = major;
     if (semester !== undefined) course.semester = semester === '' ? undefined : semester;
+    if (college !== undefined) course.college = college;
     if (thumbnailUrl !== undefined) {
       course.thumbnailUrl = thumbnailUrl;
     }
@@ -389,8 +400,49 @@ export const updateCourse = async (req, res) => {
   }
 };
 
+// @route   GET /api/courses/:id/enrollments
+// @access  Private (admin/superadmin) — lets the Course Management tab show
+// who's enrolled in an already-approved course.
+export const getCourseEnrollments = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    const enrollments = await Enrollment.find({ course: course._id })
+      .populate('student', 'name email avatarUrl')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({ enrollments });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error fetching course enrollments' });
+  }
+};
+
+// @route   PATCH /api/courses/:id/unpublish
+// @access  Private (admin/superadmin) — pulls a previously-approved course
+// out of the public catalog without deleting it; approveCourse can bring it
+// back later.
+export const unpublishCourse = async (req, res) => {
+  try {
+    const course = await Course.findByIdAndUpdate(req.params.id, { status: 'unpublished' }, { new: true });
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    res.status(200).json({ course });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error unpublishing course' });
+  }
+};
+
 // @route   DELETE /api/courses/:id
-// @access  Private (instructor only)
+// @access  Private (admin/superadmin only) — instructors can no longer delete
+// a course directly; they request deletion (see requestDeleteCourse) and an
+// admin performs the actual delete after review.
 export const deleteCourse = async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
@@ -398,21 +450,79 @@ export const deleteCourse = async (req, res) => {
       return res.status(404).json({ message: 'Course not found' });
     }
 
-    if (course.instructor.toString() !== req.user.id.toString()) {
-      return res.status(403).json({ message: 'Not authorized to delete this course' });
-    }
-
+    // Cleanup associated lessons and sections. Lessons are keyed off
+    // Section, not Course directly, so sections must be resolved first.
+    const sections = await Section.find({ course: course._id });
+    const sectionIds = sections.map((s) => s._id);
+    await Lesson.deleteMany({ section: { $in: sectionIds } });
+    await Section.deleteMany({ course: course._id });
     await Course.findByIdAndDelete(req.params.id);
-    
-    // Cleanup associated lessons and sections
-    await Lesson.deleteMany({ course: req.params.id });
-    await Section.deleteMany({ course: req.params.id });
-    // Enrollments generally shouldn't be deleted so students maintain history, 
+    // Enrollments generally shouldn't be deleted so students maintain history,
     // or they could be depending on business logic. We'll leave them or soft-delete.
 
     res.status(200).json({ message: 'Course deleted successfully' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error deleting course' });
+  }
+};
+
+// @route   PATCH /api/courses/:id/request-delete
+// @access  Private (instructor only, must own the course)
+export const requestDeleteCourse = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    if (course.instructor.toString() !== req.user.id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to request deletion of this course' });
+    }
+
+    if (course.deletionRequested) {
+      return res.status(409).json({ message: 'Deletion has already been requested for this course' });
+    }
+
+    course.deletionRequested = true;
+    await course.save();
+
+    res.status(200).json({ message: 'Deletion request submitted for admin review', course });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error requesting course deletion' });
+  }
+};
+
+// @route   GET /api/courses/deletion-requests
+// @access  Private (admin/superadmin) — feeds the Course Management tab's
+// deletion-request review queue.
+export const getDeletionRequests = async (req, res) => {
+  try {
+    const courses = await Course.find({ deletionRequested: true })
+      .populate('instructor', 'name email')
+      .sort({ updatedAt: -1 });
+
+    res.status(200).json({ courses });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error fetching deletion requests' });
+  }
+};
+
+// @route   PATCH /api/courses/:id/reject-deletion
+// @access  Private (admin/superadmin) — admin declines the request; the
+// course stays live and the instructor can request again later if needed.
+export const rejectDeletionRequest = async (req, res) => {
+  try {
+    const course = await Course.findByIdAndUpdate(req.params.id, { deletionRequested: false }, { new: true });
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    res.status(200).json({ message: 'Deletion request rejected', course });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error rejecting deletion request' });
   }
 };

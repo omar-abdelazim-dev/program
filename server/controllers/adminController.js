@@ -1,8 +1,9 @@
-﻿import Transaction from '../models/Transaction.js';
+import Transaction from '../models/Transaction.js';
 import User from '../models/User.js';
 import Course from '../models/Course.js';
 import Enrollment from '../models/Enrollment.js';
 import Lesson from '../models/Lesson.js';
+import PromoCode from '../models/PromoCode.js';
 import { escapeRegex } from '../utils/escapeRegex.js';
 import { logAudit } from '../utils/auditLogger.js';
 
@@ -14,6 +15,12 @@ export const getStats = async (req, res) => {
     const totalInstructors = await User.countDocuments({ role: 'instructor' });
     const totalAdmins = await User.countDocuments({ role: 'admin' });
     const totalSuperAdmins = await User.countDocuments({ role: 'superadmin' });
+
+    // Course Management tab header cards (ADM-05): Total Courses, Pending
+    // Courses, Pending Lessons.
+    const totalCourses = await Course.countDocuments();
+    const pendingCourses = await Course.countDocuments({ status: 'pending' });
+    const pendingLessons = await Lesson.countDocuments({ status: 'pending' });
 
     // Revenue total + per-category enrollment counts, computed in Mongo
     // instead of pulling every enrollment (with its populated course) into
@@ -29,7 +36,7 @@ export const getStats = async (req, res) => {
         },
       },
       // preserveNullAndEmptyArrays: a course can be missing (e.g. deleted)
-      // â€” revenue still counts that enrollment, categoryCounts must not.
+      // — revenue still counts that enrollment, categoryCounts must not.
       { $unwind: { path: '$course', preserveNullAndEmptyArrays: true } },
       {
         $facet: {
@@ -80,6 +87,9 @@ export const getStats = async (req, res) => {
       totalInstructors,
       totalAdmins,
       totalSuperAdmins,
+      totalCourses,
+      pendingCourses,
+      pendingLessons,
       totalRevenue,
       platformCommission,
       companyShare,
@@ -95,7 +105,7 @@ export const getStats = async (req, res) => {
 // @route   GET /api/admin/revenue-analytics
 // @access  Private (Admin)
 // Real revenue + enrollment counts bucketed by month, for the last 12
-// months â€” no commission split or payout math, just what was actually
+// months — no commission split or payout math, just what was actually
 // paid (Enrollment.amountPaid), aggregated in Mongo. Zero-filled so months
 // with no enrollments still show up as a bar instead of a gap.
 export const getRevenueAnalytics = async (req, res) => {
@@ -278,7 +288,7 @@ export const toggleBlockUser = async (req, res) => {
       return res.status(400).json({ message: 'Cannot block yourself' });
     }
 
-    // Only a superadmin can block/unblock another admin or superadmin â€”
+    // Only a superadmin can block/unblock another admin or superadmin —
     // otherwise any admin could lock every other admin/superadmin out of
     // the platform (blocked users are rejected on every subsequent request).
     if ((user.role === 'admin' || user.role === 'superadmin') && req.user.role !== 'superadmin') {
@@ -313,10 +323,10 @@ const ASSIGNABLE_ROLES = ['student', 'instructor', 'admin'];
 
 // @route   PATCH /api/admin/users/:id/role
 // @access  Private (Admin, Superadmin)
-// Unified role-change endpoint â€” replaces the old separate promote/demote
+// Unified role-change endpoint — replaces the old separate promote/demote
 // actions. 'superadmin' is deliberately not an assignable role here: that
 // tier stays untouchable through this endpoint in either direction, and a
-// plain admin can't change another admin's role â€” only a superadmin can.
+// plain admin can't change another admin's role — only a superadmin can.
 export const changeUserRole = async (req, res) => {
   try {
     const { id } = req.params;
@@ -370,7 +380,7 @@ export const changeUserRole = async (req, res) => {
 };
 
 // A user can't be suspended/deleted by anyone but a superadmin if they're an
-// admin/superadmin themselves, and never by (or targeting) themselves â€”
+// admin/superadmin themselves, and never by (or targeting) themselves —
 // mirrors the existing toggleBlockUser / changeUserRole guards above.
 const canModerate = (req, targetUser) => {
   if (!targetUser) return 'User not found';
@@ -382,7 +392,7 @@ const canModerate = (req, targetUser) => {
 
 // @route   DELETE /api/admin/users/:id/soft-delete
 // @access  Private (Admin)
-// Soft delete only â€” the record stays intact (Enrollment/Course references
+// Soft delete only — the record stays intact (Enrollment/Course references
 // aren't touched) but the user is hidden from admin lists and can't log in.
 export const softDeleteUser = async (req, res) => {
   try {
@@ -554,6 +564,116 @@ export const rejectLesson = async (req, res) => {
   }
 };
 
+// @route   POST /api/admin/enroll
+// @access  Private (Admin/SuperAdmin)
+// Manually enrolls a student in a course (e.g. comping access, resolving a
+// support ticket). No money changes hands, so the financial fields stay 0
+// rather than reusing the paid-enrollment commission-split logic.
+export const manualEnroll = async (req, res) => {
+  try {
+    const { studentId, courseId } = req.body;
+    if (!studentId || !courseId) {
+      return res.status(400).json({ message: 'studentId and courseId are required' });
+    }
+
+    const [student, course] = await Promise.all([User.findById(studentId), Course.findById(courseId)]);
+
+    if (!student || student.role !== 'student') {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    const enrollment = await Enrollment.create({
+      student: studentId,
+      course: courseId,
+      amountPaid: 0,
+      platformCommission: 0,
+      instructorShare: 0,
+    });
+
+    await logAudit({
+      action: 'MANUAL_ENROLLMENT',
+      module: 'admin',
+      userId: req.user.id,
+      targetId: enrollment._id,
+      targetModel: 'Enrollment',
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      severity: 'info',
+      metadata: { studentEmail: student.email, courseTitle: course.title },
+    });
+
+    res.status(201).json({ message: 'Student manually enrolled', enrollment });
+  } catch (error) {
+    // Duplicate-key error (code 11000): the unique student+course index
+    // caught it — same friendly message as the student-facing enroll route.
+    if (error.code === 11000) {
+      return res.status(409).json({ message: 'Student is already enrolled in this course' });
+    }
+    console.error('Error manually enrolling student:', error);
+    res.status(500).json({ message: 'Server error enrolling student' });
+  }
+};
+
+// @route   POST /api/admin/promo-codes
+// @access  Private (Admin/SuperAdmin) — issues an affiliate/promo code
+// (ADM-13) tied to a specific (typically non-program) instructor.
+export const createPromoCode = async (req, res) => {
+  try {
+    const { code, instructorId } = req.body;
+    if (!code || !instructorId) {
+      return res.status(400).json({ message: 'code and instructorId are required' });
+    }
+
+    const instructor = await User.findById(instructorId);
+    if (!instructor || instructor.role !== 'instructor') {
+      return res.status(404).json({ message: 'Instructor not found' });
+    }
+
+    const promo = await PromoCode.create({ code: code.toUpperCase().trim(), instructor: instructorId });
+    res.status(201).json({ message: 'Promo code created', promo });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({ message: 'That promo code already exists' });
+    }
+    console.error('Error creating promo code:', error);
+    res.status(500).json({ message: 'Server error creating promo code' });
+  }
+};
+
+// @route   GET /api/admin/promo-codes
+// @access  Private (Admin/SuperAdmin)
+export const getPromoCodes = async (req, res) => {
+  try {
+    const promoCodes = await PromoCode.find().populate('instructor', 'name email isProgramInstructor').sort({ createdAt: -1 });
+    res.status(200).json({ promoCodes });
+  } catch (error) {
+    console.error('Error fetching promo codes:', error);
+    res.status(500).json({ message: 'Server error fetching promo codes' });
+  }
+};
+
+// @route   PATCH /api/admin/promo-codes/:id/toggle
+// @access  Private (Admin/SuperAdmin)
+export const togglePromoCode = async (req, res) => {
+  try {
+    const promo = await PromoCode.findById(req.params.id);
+    if (!promo) {
+      return res.status(404).json({ message: 'Promo code not found' });
+    }
+
+    promo.active = !promo.active;
+    await promo.save();
+
+    res.status(200).json({ message: `Promo code ${promo.active ? 'activated' : 'deactivated'}`, promo });
+  } catch (error) {
+    console.error('Error toggling promo code:', error);
+    res.status(500).json({ message: 'Server error toggling promo code' });
+  }
+};
+
 export const toggleProgramInstructor = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -566,7 +686,19 @@ export const toggleProgramInstructor = async (req, res) => {
     
     user.isProgramInstructor = !user.isProgramInstructor;
     await user.save();
-    
+
+    await logAudit({
+      action: user.isProgramInstructor ? 'PROGRAM_INSTRUCTOR_ADDED' : 'PROGRAM_INSTRUCTOR_REMOVED',
+      module: 'admin',
+      userId: req.user.id,
+      targetId: user._id,
+      targetModel: 'User',
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      severity: 'warn',
+      metadata: { targetEmail: user.email },
+    });
+
     res.json({ message: `Instructor ${user.isProgramInstructor ? 'added to' : 'removed from'} program`, user });
   } catch (error) {
     console.error('Error toggling program instructor:', error);
