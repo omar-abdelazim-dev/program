@@ -100,11 +100,12 @@ export const updateConfigSection = async (req, res) => {
     clearConfigCache(); // Clear the internal cache so the backend picks up the new setting immediately
 
     // Create Audit Log
+    const newSectionData = config.get(section);
     await AuditLog.create({
       action: `Updated ${section} configuration`,
       changedBy: req.user.id,
       oldValue: oldValues,
-      newValue: config.get(section).toObject(),
+      newValue: { ...(newSectionData.toObject ? newSectionData.toObject() : newSectionData) },
       module: 'System Management',
     });
 
