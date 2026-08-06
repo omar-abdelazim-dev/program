@@ -31,13 +31,18 @@ export const enroll = async (req, res) => {
     let instructorShare = 0;
 
     if (instructor && instructor.isProgramInstructor) {
-      // Program instructors get an 85% cut, platform keeps 15%
+      // Program instructors get a fixed 85% cut, platform keeps 15% —
+      // deliberately not admin-configurable, this is the flat benefit of
+      // program-instructor status.
       instructorShare = course.price * 0.85;
       platformCommission = course.price * 0.15;
     } else {
-      // Normal instructors get a 70% cut, platform keeps 30%
-      instructorShare = course.price * 0.70;
-      platformCommission = course.price * 0.30;
+      // Everyone else keeps using the admin-configurable commission rate
+      // (System Management > Commission Slider), same as before this PR.
+      const config = await getInternalConfig();
+      const commissionPercent = config?.financial?.commission ?? 15;
+      platformCommission = (course.price * commissionPercent) / 100;
+      instructorShare = course.price - platformCommission;
     }
 
     const enrollment = await Enrollment.create({ 

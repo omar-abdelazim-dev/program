@@ -1,4 +1,4 @@
-﻿import mongoose from 'mongoose';
+import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { BCRYPT_ROUNDS } from '../config/security.js';
 
@@ -27,7 +27,7 @@ const userSchema = new mongoose.Schema(
       minlength: 8, // Applies to new passwords; existing hashes are unaffected.
       select: false, // Never return password field by default on queries.
     },
-    // Set whenever a password is changed â€” useful for audit trails and
+    // Set whenever a password is changed — useful for audit trails and
     // invalidating sessions that were issued before the password was rotated.
     passwordChangedAt: {
       type: Date,
@@ -49,7 +49,7 @@ const userSchema = new mongoose.Schema(
     },
     isBlocked: { type: Boolean, default: false },
     isProgramInstructor: { type: Boolean, default: false },
-    // Soft-delete flag â€” deleted users are hidden from admin lists by default
+    // Soft-delete flag — deleted users are hidden from admin lists by default
     // but the record (and any FK references from Enrollment/Course) is preserved.
     isDeleted: {
       type: Boolean,
@@ -74,14 +74,14 @@ const userSchema = new mongoose.Schema(
 // Runs automatically before a user document is saved.
 // We hash the password here (not in the controller) so it's IMPOSSIBLE to
 // accidentally save a plaintext password no matter where in the app you call
-// User.save() from â€” the safety lives with the model, not the caller.
+// User.save() from — the safety lives with the model, not the caller.
 userSchema.pre('save', async function (next) {
   // Only re-hash if the password field was actually changed
   // (otherwise updating a user's name would re-hash their already-hashed password).
   if (!this.isModified('password')) return next();
 
-  // BCRYPT_ROUNDS = 12 (per OWASP recommendation, â‰¥ 12 for bcrypt).
-  // Cost 12 adds ~250 ms per hash on a modern CPU â€” acceptable for auth,
+  // BCRYPT_ROUNDS = 12 (per OWASP recommendation, ≥ 12 for bcrypt).
+  // Cost 12 adds ~250 ms per hash on a modern CPU — acceptable for auth,
   // practically impractical for offline brute-force attacks.
   const salt = await bcrypt.genSalt(BCRYPT_ROUNDS);
   this.password = await bcrypt.hash(this.password, salt);
