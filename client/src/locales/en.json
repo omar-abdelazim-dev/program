@@ -612,5 +612,19 @@
     "Law": "Law",
     "Sciences": "Sciences",
     "Education": "Education"
+  },
+  "colleges": {
+    "engineering": "College of Engineering",
+    "computer_science": "College of Computer Science and Information Technology",
+    "business": "College of Business Administration",
+    "medicine": "College of Medicine",
+    "pharmacy": "College of Pharmacy",
+    "dentistry": "College of Dentistry",
+    "applied_medical": "College of Applied Medical Sciences",
+    "science": "College of Science",
+    "arts": "College of Arts and Humanities",
+    "education": "College of Education",
+    "law": "College of Law",
+    "architecture": "College of Architecture and Design"
   }
 }

@@ -1511,9 +1511,6 @@ body.light-mode .progress-bar-container {
     gap: 20px;
     text-align: center;
     padding: 20px;
-    position: sticky;
-    top: 50vh;
-    transform: translateY(-50%);
 }
 
 .auth-logo {
@@ -1957,9 +1954,11 @@ body.light-mode .strength-bar.strong {
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: var(--inner-shadow);
 }
 
 .badge-optional {
+    box-shadow: var(--inner-shadow);
     background: rgba(139, 92, 246, 0.2);
     color: #a78bfa;
     font-size: 0.65rem;
@@ -2005,11 +2004,6 @@ body.light-mode .strength-bar.strong {
 .smart-textarea-wrapper {
     position: relative;
     width: 100%;
-    background-color: var(--c-input-bg);
-    border: var(--c-border);
-    border-top: var(--c-border-top);
-    border-left: var(--c-border-left);
-    border-radius: 20px;
 }
 
 .smart-textarea-wrapper textarea {
@@ -2030,24 +2024,24 @@ body.light-mode .strength-bar.strong {
 .auth-form input,
 .auth-form select,
 .smart-textarea-wrapper textarea {
-    background: var(--code-bg);
-    border: 1px solid var(--border);
+    background: var(--bg-main);
+    border: 1px solid transparent;
     color: var(--text-h);
     padding: 12px;
     border-radius: 8px;
-    outline: none;
-    transition: border-color 0.3s;
-    font-family: inherit;
     font-size: 0.95rem;
+    transition: all 0.2s ease;
     width: 100%;
-    box-sizing: border-box;
+    outline: none;
+    box-shadow: var(--inner-shadow);
 }
 
 .auth-form input:focus,
 .auth-form select:focus,
 .smart-textarea-wrapper textarea:focus {
     border-color: #f97316 !important;
-    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15), var(--inner-shadow) !important;
+    background-color: var(--bg-main) !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(249, 115, 22, 0.2) !important;
 }
 
 /* Ensure icon inputs keep their specific padding despite the global override */
@@ -2126,6 +2120,7 @@ body.light-mode .strength-bar.strong {
 .custom-select-trigger {
     display: flex;
     align-items: center;
+    min-width: 0;
     padding: 12px 16px;
     background-color: var(--bg-main);
     border: 2px solid transparent;
@@ -2174,6 +2169,7 @@ body.light-mode .strength-bar.strong {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    padding-inline-end: 24px;
     font-size: 0.95rem;
 }
 
@@ -2361,6 +2357,7 @@ body.light-mode .custom-select-value.placeholder {
     display: flex;
     flex-direction: column;
     gap: 4px;
+    min-width: 0;
 }
 
 .input-group label {
@@ -2517,6 +2514,7 @@ body.light-mode .nav-icon-btn-auth {
     .auth-split-grid {
         grid-template-columns: 1fr;
         gap: 40px;
+        margin-top: 60px;
     }
 
     .auth-left {
