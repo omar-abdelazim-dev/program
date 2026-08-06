@@ -1,5 +1,5 @@
 import express from 'express';
-import { getConfig, updateConfigSection, previewFinancials, sendTestEmail, getPublicConfig } from '../controllers/systemConfigController.js';
+import { getConfig, updateConfigSection, previewFinancials, getPublicConfig } from '../controllers/systemConfigController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -20,8 +20,5 @@ router.route('/:section')
 
 router.route('/financial/preview')
   .post(previewFinancials);
-
-router.route('/email/test')
-  .post(sendTestEmail);
 
 export default router;

@@ -10,32 +10,45 @@ import {
   getInstructorStats,
   updateCourse,
   deleteCourse,
+  requestDeleteCourse,
+  getDeletionRequests,
+  rejectDeletionRequest,
+  getCourseEnrollments,
+  unpublishCourse,
 } from '../controllers/courseController.js';
 import { addLesson, getLessonContent, updateLesson } from '../controllers/lessonController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 import { optionalAuth } from '../middleware/optionalAuth.js';
+import { validateCreateCourse, validateUpdateCourse } from '../validators/courseValidators.js';
 
 const router = express.Router();
 
 // --- Public catalog ---
 router.get('/', getApprovedCourses);
 
-// --- Admin (must come before /:id so 'pending' isn't parsed as an id) ---
+// --- Admin (must come before /:id so 'pending'/'deletion-requests' aren't parsed as an id) ---
 router.get('/pending', protect, authorize('admin', 'superadmin'), getPendingCourses);
+router.get('/deletion-requests', protect, authorize('admin', 'superadmin'), getDeletionRequests);
 
 // --- Instructor ---
-router.post('/', protect, authorize('instructor'), createCourse);
+router.post('/', protect, authorize('instructor'), validateCreateCourse, createCourse);
 router.get('/mine', protect, authorize('instructor'), getMyCourses);
 router.get('/stats', protect, authorize('instructor'), getInstructorStats);
-router.put('/:id', protect, authorize('instructor'), updateCourse);
-router.delete('/:id', protect, authorize('instructor'), deleteCourse);
+router.patch('/:id/request-delete', protect, authorize('instructor'), requestDeleteCourse);
 router.post('/:courseId/lessons', protect, authorize('instructor'), addLesson);
 router.put('/:courseId/lessons/:lessonId', protect, authorize('instructor'), updateLesson);
 router.get('/:courseId/lessons/:lessonId', protect, getLessonContent);
 
+// --- Instructor (own course) or Admin/Superadmin (compliance edits) ---
+router.put('/:id', protect, authorize('instructor', 'admin', 'superadmin'), validateUpdateCourse, updateCourse);
+
 // --- Admin actions on a specific course ---
+router.get('/:id/enrollments', protect, authorize('admin', 'superadmin'), getCourseEnrollments);
+router.patch('/:id/unpublish', protect, authorize('admin', 'superadmin'), unpublishCourse);
+router.delete('/:id', protect, authorize('admin', 'superadmin'), deleteCourse);
 router.patch('/:id/approve', protect, authorize('admin', 'superadmin'), approveCourse);
 router.patch('/:id/reject', protect, authorize('admin', 'superadmin'), rejectCourse);
+router.patch('/:id/reject-deletion', protect, authorize('admin', 'superadmin'), rejectDeletionRequest);
 
 // --- Course details (public + owner/admin see extra) ---
 router.get('/:id', optionalAuth, getCourseById);

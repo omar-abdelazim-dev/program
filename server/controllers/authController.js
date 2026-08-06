@@ -1,8 +1,12 @@
+import crypto from 'crypto';
 import User from '../models/User.js';
 import generateTokenAndSetCookie from '../utils/generateToken.js';
 import { getInternalConfig } from '../utils/configFetcher.js';
 import { logAudit } from '../utils/auditLogger.js';
 import { checkPasswordPolicy } from '../validators/authValidators.js';
+import logger from '../utils/logger.js';
+
+const RESET_TOKEN_EXPIRY_MINUTES = 30;
 
 // @route   POST /api/auth/check-email
 // @access  Public
@@ -321,6 +325,94 @@ export const changePassword = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error changing password' });
+  }
+};
+
+// @route   POST /api/auth/forgot-password
+// @access  Public
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email: email?.toLowerCase() });
+
+    // Always respond identically whether or not the account exists —
+    // otherwise this endpoint becomes an email-enumeration oracle.
+    if (user) {
+      // Storing only a hash (not the raw token) means a database leak alone
+      // can't be used to reset the account — the raw token only ever exists
+      // in the emailed link. Overwriting the single stored token/expiry pair
+      // is also what invalidates any previous unexpired reset link.
+      const rawToken = crypto.randomBytes(32).toString('hex');
+      user.resetPasswordToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+      user.resetPasswordExpires = Date.now() + RESET_TOKEN_EXPIRY_MINUTES * 60 * 1000;
+      await user.save();
+
+      // No email provider is configured for this MVP — log the reset link
+      // the way a real provider's delivery would surface it, instead of
+      // emailing it.
+      const clientOrigin = (process.env.CLIENT_URL || 'http://localhost:5173').split(',')[0].trim();
+      const resetLink = `${clientOrigin}/reset-password/${rawToken}`;
+      logger.info(`Password reset requested for ${user.email}`, { resetLink, expiresInMinutes: RESET_TOKEN_EXPIRY_MINUTES });
+
+      await logAudit({
+        action: 'PASSWORD_RESET_REQUESTED',
+        module: 'auth',
+        userId: user._id,
+        targetId: user._id,
+        targetModel: 'User',
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+        severity: 'info',
+      });
+    }
+
+    res.status(200).json({ message: 'If an account with that email exists, a password reset link has been sent.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error processing password reset request' });
+  }
+};
+
+// @route   PATCH /api/auth/reset-password/:token
+// @access  Public
+export const resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { newPassword } = req.body;
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: Date.now() },
+    }).select('+resetPasswordToken +resetPasswordExpires');
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired reset token' });
+    }
+
+    // Just assign the plaintext new password — the model's pre('save') hook
+    // hashes it, same as register()/changePassword() above.
+    user.password = newPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    await logAudit({
+      action: 'PASSWORD_RESET_SUCCESS',
+      module: 'auth',
+      userId: user._id,
+      targetId: user._id,
+      targetModel: 'User',
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      severity: 'warn',
+    });
+
+    res.status(200).json({ message: 'Password has been reset successfully. You can now log in.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error resetting password' });
   }
 };
 

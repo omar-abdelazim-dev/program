@@ -49,6 +49,15 @@ const userSchema = new mongoose.Schema(
     },
     isBlocked: { type: Boolean, default: false },
     isProgramInstructor: { type: Boolean, default: false },
+    // Forgot-password flow (ADM-08): a single hashed token + expiry per user —
+    // requesting a new one overwrites the old one, which is what "invalidate
+    // any previous unexpired token" means in practice (only the newest ever
+    // matches what resetPassword hashes and compares against).
+    resetPasswordToken: { type: String, select: false },
+    resetPasswordExpires: { type: Date, select: false },
+    // Payout 2FA (INS-09): short-lived OTP hash, verified at payout-request time.
+    payoutOtpHash: { type: String, select: false },
+    payoutOtpExpires: { type: Date, select: false },
     // Soft-delete flag — deleted users are hidden from admin lists by default
     // but the record (and any FK references from Enrollment/Course) is preserved.
     isDeleted: {

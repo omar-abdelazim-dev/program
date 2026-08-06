@@ -2,7 +2,8 @@
 import {
   toggleProgramInstructor,
   getStats, getRecentActivity, getRevenueAnalytics, getUsers, toggleBlockUser, changeUserRole,
-  softDeleteUser, restoreUser, getTransactions, getPendingPayouts, getAllLessons, approveLesson, rejectLesson
+  softDeleteUser, restoreUser, getTransactions, getPendingPayouts, getAllLessons, approveLesson, rejectLesson,
+  manualEnroll, createPromoCode, getPromoCodes, togglePromoCode,
 } from '../controllers/adminController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 import { validateUserIdParam, validateRoleChange } from '../validators/adminValidators.js';
@@ -13,7 +14,9 @@ const router = express.Router();
 router.use(protect, authorize('admin', 'superadmin'));
 
 router.get('/stats', getStats);
-router.get('/activity', getRecentActivity);
+// Recent Activity is superadmin-only (ADM-02) — narrower than the router-wide
+// admin/superadmin gate above.
+router.get('/activity', authorize('superadmin'), getRecentActivity);
 router.get('/revenue-analytics', getRevenueAnalytics);
 router.get('/users', getUsers);
 // validateUserIdParam ensures :id is a valid MongoDB ObjectId before hitting the DB
@@ -24,6 +27,10 @@ router.delete('/users/:id/soft-delete', validateUserIdParam, softDeleteUser);
 router.patch('/users/:id/restore', validateUserIdParam, restoreUser);
 router.get('/transactions', getTransactions);
 router.get('/payouts', getPendingPayouts);
+router.post('/enroll', manualEnroll);
+router.post('/promo-codes', createPromoCode);
+router.get('/promo-codes', getPromoCodes);
+router.patch('/promo-codes/:id/toggle', togglePromoCode);
 router.get('/lessons', getAllLessons);
 router.patch('/lessons/:id/approve', approveLesson);
 router.patch('/lessons/:id/reject', rejectLesson);

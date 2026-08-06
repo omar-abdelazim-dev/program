@@ -33,7 +33,6 @@ export const getPublicConfig = async (req, res) => {
     // Only send safe frontend configuration settings
     res.json({
       general: config.general,
-      appearance: config.appearance,
       features: config.features,
       registration: {
         studentRegistration: config.registration?.studentRegistration ?? true,
@@ -60,16 +59,17 @@ export const updateConfigSection = async (req, res) => {
     // For MVP, we will allow 'admin' to update 'general', 'appearance', 'notifications' without being super admin.
     
     const restrictedSections = ['financial', 'security', 'registration', 'api', 'features', 'ai', 'audit', 'maintenance', 'backup', 'landingPage'];
-    
+
     // Enforce superadmin role for restricted sections
     if (restrictedSections.includes(section) && req.user.role !== 'superadmin') {
       return res.status(403).json({ message: 'Super Admin permission required to modify this section.' });
     }
 
     const config = await getGlobalConfig();
-    
+
     // Initialize section if missing but valid in schema
-    const validSections = ['general', 'financial', 'registration', 'security', 'storage', 'email', 'notifications', 'appearance', 'landingPage'];
+    // (ADM-14: email/notifications/appearance removed — those tabs no longer exist)
+    const validSections = ['general', 'financial', 'registration', 'security', 'storage', 'landingPage'];
     if (!config.get(section) && validSections.includes(section)) {
         config.set(section, {});
     }
@@ -155,26 +155,5 @@ export const previewFinancials = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error generating financial preview' });
-  }
-};
-
-// @route   POST /api/system/config/email/test
-// @access  Private
-export const sendTestEmail = async (req, res) => {
-  try {
-    const { recipient, subject, template } = req.body;
-    
-    if (!recipient) {
-      return res.status(400).json({ message: 'Recipient is required' });
-    }
-
-    // In a real app, we would use Nodemailer + SendGrid here
-    // For now, simulate success
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    res.json({ message: 'Test email sent successfully' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error sending test email' });
   }
 };

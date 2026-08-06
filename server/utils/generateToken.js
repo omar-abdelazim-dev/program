@@ -16,17 +16,18 @@ import { getInternalConfig } from './configFetcher.js';
 // browser restarts. The JWT itself is always valid for the same duration
 // either way; what changes is whether the *cookie* survives closing the
 // browser (maxAge set) or not (session cookie, no maxAge). Token duration
-// itself comes from SystemConfig (security.jwtExpiration), admin-configurable,
-// falling back to 7 days.
+// itself comes from SystemConfig (security.jwtExpiration), admin-configurable
+// in MINUTES (not days — a stolen 7-day token was a standing risk), falling
+// back to 60 minutes.
 const generateTokenAndSetCookie = async (res, userId, rememberMe = true) => {
   const config = await getInternalConfig();
-  const jwtExpirationDays = config?.security?.jwtExpiration || 7;
+  const jwtExpirationMinutes = config?.security?.jwtExpiration || 60;
 
   const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
-    expiresIn: `${jwtExpirationDays}d`,
+    expiresIn: `${jwtExpirationMinutes}m`,
   });
 
-  const maxAge = rememberMe ? jwtExpirationDays * 24 * 60 * 60 * 1000 : undefined; // configured duration, or a session cookie
+  const maxAge = rememberMe ? jwtExpirationMinutes * 60 * 1000 : undefined; // configured duration, or a session cookie
 
   res.cookie('token', token, {
     httpOnly: true, // JavaScript on the frontend can never read this cookie

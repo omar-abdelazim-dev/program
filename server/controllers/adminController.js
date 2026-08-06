@@ -3,6 +3,7 @@ import User from '../models/User.js';
 import Course from '../models/Course.js';
 import Enrollment from '../models/Enrollment.js';
 import Lesson from '../models/Lesson.js';
+import PromoCode from '../models/PromoCode.js';
 import { escapeRegex } from '../utils/escapeRegex.js';
 import { logAudit } from '../utils/auditLogger.js';
 
@@ -14,6 +15,12 @@ export const getStats = async (req, res) => {
     const totalInstructors = await User.countDocuments({ role: 'instructor' });
     const totalAdmins = await User.countDocuments({ role: 'admin' });
     const totalSuperAdmins = await User.countDocuments({ role: 'superadmin' });
+
+    // Course Management tab header cards (ADM-05): Total Courses, Pending
+    // Courses, Pending Lessons.
+    const totalCourses = await Course.countDocuments();
+    const pendingCourses = await Course.countDocuments({ status: 'pending' });
+    const pendingLessons = await Lesson.countDocuments({ status: 'pending' });
 
     // Revenue total + per-category enrollment counts, computed in Mongo
     // instead of pulling every enrollment (with its populated course) into
@@ -80,6 +87,9 @@ export const getStats = async (req, res) => {
       totalInstructors,
       totalAdmins,
       totalSuperAdmins,
+      totalCourses,
+      pendingCourses,
+      pendingLessons,
       totalRevenue,
       platformCommission,
       companyShare,
@@ -551,6 +561,116 @@ export const rejectLesson = async (req, res) => {
   } catch (error) {
     console.error('Error rejecting lesson:', error);
     res.status(500).json({ message: 'Server error rejecting lesson' });
+  }
+};
+
+// @route   POST /api/admin/enroll
+// @access  Private (Admin/SuperAdmin)
+// Manually enrolls a student in a course (e.g. comping access, resolving a
+// support ticket). No money changes hands, so the financial fields stay 0
+// rather than reusing the paid-enrollment commission-split logic.
+export const manualEnroll = async (req, res) => {
+  try {
+    const { studentId, courseId } = req.body;
+    if (!studentId || !courseId) {
+      return res.status(400).json({ message: 'studentId and courseId are required' });
+    }
+
+    const [student, course] = await Promise.all([User.findById(studentId), Course.findById(courseId)]);
+
+    if (!student || student.role !== 'student') {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    const enrollment = await Enrollment.create({
+      student: studentId,
+      course: courseId,
+      amountPaid: 0,
+      platformCommission: 0,
+      instructorShare: 0,
+    });
+
+    await logAudit({
+      action: 'MANUAL_ENROLLMENT',
+      module: 'admin',
+      userId: req.user.id,
+      targetId: enrollment._id,
+      targetModel: 'Enrollment',
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      severity: 'info',
+      metadata: { studentEmail: student.email, courseTitle: course.title },
+    });
+
+    res.status(201).json({ message: 'Student manually enrolled', enrollment });
+  } catch (error) {
+    // Duplicate-key error (code 11000): the unique student+course index
+    // caught it — same friendly message as the student-facing enroll route.
+    if (error.code === 11000) {
+      return res.status(409).json({ message: 'Student is already enrolled in this course' });
+    }
+    console.error('Error manually enrolling student:', error);
+    res.status(500).json({ message: 'Server error enrolling student' });
+  }
+};
+
+// @route   POST /api/admin/promo-codes
+// @access  Private (Admin/SuperAdmin) — issues an affiliate/promo code
+// (ADM-13) tied to a specific (typically non-program) instructor.
+export const createPromoCode = async (req, res) => {
+  try {
+    const { code, instructorId } = req.body;
+    if (!code || !instructorId) {
+      return res.status(400).json({ message: 'code and instructorId are required' });
+    }
+
+    const instructor = await User.findById(instructorId);
+    if (!instructor || instructor.role !== 'instructor') {
+      return res.status(404).json({ message: 'Instructor not found' });
+    }
+
+    const promo = await PromoCode.create({ code: code.toUpperCase().trim(), instructor: instructorId });
+    res.status(201).json({ message: 'Promo code created', promo });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({ message: 'That promo code already exists' });
+    }
+    console.error('Error creating promo code:', error);
+    res.status(500).json({ message: 'Server error creating promo code' });
+  }
+};
+
+// @route   GET /api/admin/promo-codes
+// @access  Private (Admin/SuperAdmin)
+export const getPromoCodes = async (req, res) => {
+  try {
+    const promoCodes = await PromoCode.find().populate('instructor', 'name email isProgramInstructor').sort({ createdAt: -1 });
+    res.status(200).json({ promoCodes });
+  } catch (error) {
+    console.error('Error fetching promo codes:', error);
+    res.status(500).json({ message: 'Server error fetching promo codes' });
+  }
+};
+
+// @route   PATCH /api/admin/promo-codes/:id/toggle
+// @access  Private (Admin/SuperAdmin)
+export const togglePromoCode = async (req, res) => {
+  try {
+    const promo = await PromoCode.findById(req.params.id);
+    if (!promo) {
+      return res.status(404).json({ message: 'Promo code not found' });
+    }
+
+    promo.active = !promo.active;
+    await promo.save();
+
+    res.status(200).json({ message: `Promo code ${promo.active ? 'activated' : 'deactivated'}`, promo });
+  } catch (error) {
+    console.error('Error toggling promo code:', error);
+    res.status(500).json({ message: 'Server error toggling promo code' });
   }
 };
 
