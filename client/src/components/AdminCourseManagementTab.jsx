@@ -59,13 +59,19 @@ const CustomDropdown = ({ value, options, onChange, disabled, width = "100%" }) 
           borderRadius: "12px",
           padding: "8px",
           zIndex: 100,
-          display: "flex",
-          flexDirection: "column",
-          gap: "4px",
           boxShadow: "var(--outer-shadow)",
-          maxHeight: "250px",
-          overflowY: "auto"
+          overflow: "hidden",
+          animation: "smoothDropdownEnter 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+          transformOrigin: "top"
         }}>
+          <div className="custom-select-options" style={{
+            padding: 0, paddingRight: "4px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "4px",
+            maxHeight: "250px",
+            overflowY: "auto"
+          }}>
           {options.map(opt => (
             <button
               key={opt}
@@ -111,6 +117,7 @@ const CustomDropdown = ({ value, options, onChange, disabled, width = "100%" }) 
               {opt}
             </button>
           ))}
+          </div>
         </div>
       )}
     </div>
@@ -263,7 +270,7 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
         <h2 style={{ fontSize: "1.8rem", margin: "0 0 8px 0", color: "var(--text-h)" }}>{t('admin.course_management', 'Course Management')}</h2>
         <div style={{ fontSize: "0.95rem", color: "var(--c-sub)", marginBottom: "24px" }}>{t('admin.manage_courses_desc', 'Manage, review, and organize platform courses.')}</div>
         
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 200px), 1fr))", gap: "16px" }}>
             {/* KPI Cards (Reusing existing glass-card stat-card styles) */}
             <div className="glass-card stat-card overview-stat-purple" style={{ padding: '24px', display: 'flex', flexDirection: 'column', transition: 'all 0.2s ease' }}>
                 <div style={{ color: 'var(--c-sub)', fontSize: '0.85rem', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '8px' }}>{t('admin.total_courses', 'Total Courses')}</div>
@@ -710,3 +717,4 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
     </div>
   );
 }
+

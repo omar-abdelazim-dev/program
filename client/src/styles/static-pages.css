@@ -11,7 +11,7 @@
 
 .site-footer-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
     gap: 24px;
     margin-bottom: 24px;
 }
@@ -112,13 +112,13 @@
 
 .static-page-grid-two {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
     gap: 20px;
 }
 
 .static-page-grid-three {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
     gap: 20px;
 }
 
@@ -301,3 +301,4 @@
     flex-direction: column;
     gap: 12px;
 }
+

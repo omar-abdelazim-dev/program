@@ -75,6 +75,7 @@ export default function App() {
   });
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [exploreCategory, setExploreCategory] = useState('All');
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -218,15 +219,17 @@ export default function App() {
       setNotifications={setNotifications}
       searchQuery={searchQuery}
       onSearchChange={setSearchQuery}
+      exploreCategory={exploreCategory}
+      onCategoryChange={setExploreCategory}
     >
       <Routes>
         <Route path="/" element={<Navigate to="/student" replace />} />
         <Route path="/student" element={<ExploreTab user={user} searchQuery={searchQuery} isLightMode={isLightMode} />} />
-        <Route path="/student/explore" element={<DiscoverTab searchQuery={searchQuery} />} />
+        <Route path="/student/explore" element={<DiscoverTab searchQuery={searchQuery} activeCategory={exploreCategory} isLightMode={isLightMode} />} />
         <Route path="/student/dashboard" element={<DashboardTab />} />
         <Route path="/student/settings" element={<SettingsPage user={user} setUser={setUser} isLightMode={isLightMode} toggleTheme={toggleTheme} onLogout={handleLogout} />} />
         <Route path="/course/:id" element={<CoursePage cart={cart} setCart={setCart} />} />
-        <Route path="/instructor/:id" element={<InstructorProfilePage />} />
+        <Route path="/instructor/:id" element={<InstructorProfilePage isLightMode={isLightMode} />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/help" element={<HelpPage />} />

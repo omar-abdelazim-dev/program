@@ -47,10 +47,8 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
-    isBlocked: {
-      type: Boolean,
-      default: false,
-    },
+    isBlocked: { type: Boolean, default: false },
+    isProgramInstructor: { type: Boolean, default: false },
     // Soft-delete flag — deleted users are hidden from admin lists by default
     // but the record (and any FK references from Enrollment/Course) is preserved.
     isDeleted: {
@@ -103,3 +101,4 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 const User = mongoose.model('User', userSchema);
 
 export default User;
+

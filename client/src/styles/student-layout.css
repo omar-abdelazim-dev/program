@@ -58,8 +58,29 @@
 
 
 .sidebar-logo {
-  margin-bottom: 40px;
+  margin-bottom: 16px;
 }
+
+/* Program instructor label badge - shown below logo in sidebar */
+.program-instructor-badge {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.program-badge-text {
+  display: inline-block;
+  background: linear-gradient(135deg, #f97316 0%, #fbbf24 100%);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  padding: 3px 10px;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.4);
+  user-select: none;
+}
+
 
 .sidebar-nav-top {
   display: flex;
@@ -100,6 +121,45 @@
   background: linear-gradient(135deg, #f97316 0%, #fbbf24 100%);
 }
 
+/* Tooltip: appears to the right of the button on hover via data-tooltip attribute */
+.sidebar-icon-btn[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  inset-inline-start: calc(100% + 12px);
+  top: 50%;
+  transform: translate(10px, -50%);
+  background: #2D3748;
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.25s ease;
+  z-index: 999;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Show tooltip on hover (not active, since active buttons are self-labelled by context) */
+.sidebar-icon-btn[data-tooltip]:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(0, -50%);
+}
+
+/* Light mode tooltip */
+body.light-mode .sidebar-icon-btn[data-tooltip]::after {
+  background: #fff;
+  color: #1e293b;
+  border-color: #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+
 /* --------------------------------------------------------------------------
    Courses nav dropdown (category flyout, hover-triggered like the profile menu)
    -------------------------------------------------------------------------- */
@@ -117,14 +177,20 @@
   border-radius: 12px;
   padding: 12px;
   width: 200px;
-  display: none;
+  display: flex;
   flex-direction: column;
   z-index: 100;
-  box-shadow: var(--outer-shadow);
+  box-shadow: var(--outer-shadow, 0 10px 25px rgba(0,0,0,0.5));
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  transition: all 0.3s ease;
 }
 
 .courses-nav-wrapper:hover .courses-nav-dropdown {
-  display: flex;
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
 }
 
 .courses-nav-dropdown-title {
@@ -452,4 +518,19 @@
 
 body.light-mode .solid-card {
   box-shadow: var(--outer-shadow);
+}
+
+/* Responsive Menu Classes */
+.mobile-only-menu {
+  display: none;
+  margin-inline-end: 12px;
+}
+
+@media (max-width: 900px) {
+  .mobile-only-menu {
+    display: block;
+  }
+  .desktop-only-icon {
+    display: none !important;
+  }
 }

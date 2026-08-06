@@ -160,7 +160,7 @@ export const getRecentActivity = async (req, res) => {
       .limit(5);
 
     const recentCourses = await Course.find()
-      .populate('instructor', 'name')
+      .populate('instructor', 'name isProgramInstructor')
       .populate('approvedBy', 'name role')
       .sort({ createdAt: -1 })
       .limit(5);
@@ -493,7 +493,7 @@ export const getTransactions = async (req, res) => {
 export const getPendingPayouts = async (req, res) => {
   try {
     const payouts = await Transaction.find({ type: 'payout_request' })
-      .populate('instructor', 'name email phone')
+      .populate('instructor', 'name email phone isProgramInstructor')
       .sort({ createdAt: -1 });
     
     res.status(200).json({ payouts });
@@ -551,5 +551,37 @@ export const rejectLesson = async (req, res) => {
   } catch (error) {
     console.error('Error rejecting lesson:', error);
     res.status(500).json({ message: 'Server error rejecting lesson' });
+  }
+};
+
+export const toggleProgramInstructor = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    if (user.role !== 'instructor') {
+      return res.status(400).json({ message: 'Only instructors can be program instructors' });
+    }
+    
+    user.isProgramInstructor = !user.isProgramInstructor;
+    await user.save();
+
+    await logAudit({
+      action: user.isProgramInstructor ? 'PROGRAM_INSTRUCTOR_ADDED' : 'PROGRAM_INSTRUCTOR_REMOVED',
+      module: 'admin',
+      userId: req.user.id,
+      targetId: user._id,
+      targetModel: 'User',
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      severity: 'warn',
+      metadata: { targetEmail: user.email },
+    });
+
+    res.json({ message: `Instructor ${user.isProgramInstructor ? 'added to' : 'removed from'} program`, user });
+  } catch (error) {
+    console.error('Error toggling program instructor:', error);
+    res.status(500).json({ message: 'Server Error' });
   }
 };

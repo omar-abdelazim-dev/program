@@ -55,6 +55,7 @@ export const protect = async (req, res, next) => {
       phone: user.phone,
       university: user.university,
       goalsText: user.goalsText,
+      isProgramInstructor: user.isProgramInstructor, // Include Program instructor flag
     };
 
     next();

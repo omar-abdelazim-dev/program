@@ -44,7 +44,7 @@ export default function CurriculumBuilderTab({ courses = [], lessonsByCourse = {
                 >
                   <h4 style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text-h)' }}>{course.title}</h4>
                   <div style={{ fontSize: '0.8rem', color: 'var(--c-sub)', marginTop: '6px' }}>
-                    {lessonsByCourse[course._id]?.length || 0} lessons
+                    {lessonsByCourse[course._id]?.length || 0} {((lessonsByCourse[course._id]?.length || 0) === 1) ? t('instructor.dashboard.status.lesson') : t('instructor.dashboard.status.lessons')}
                   </div>
                 </div>
               ))
@@ -158,3 +158,4 @@ export default function CurriculumBuilderTab({ courses = [], lessonsByCourse = {
     </div>
   );
 }
+

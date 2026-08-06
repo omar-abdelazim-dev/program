@@ -372,6 +372,19 @@ export default function AdminUserManagementTab({
     }
   };
 
+  const handleToggleProgramInstructor = async (user) => {
+    setIsProcessing(true);
+    try {
+      const res = await api.patch(`/admin/users/${user._id}/program-instructor`);
+      notyf.success(res.data.message || "Toggled program instructor status");
+      fetchUsers(searchQuery, true);
+    } catch (err) {
+      notyf.error(err.response?.data?.message || "Failed to toggle program instructor");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handleRoleChange = async (user, newRole) => {
     setIsProcessing(true);
     try {
@@ -736,7 +749,7 @@ export default function AdminUserManagementTab({
         <table className="admin-table" style={{ width: "100%", borderCollapse: "separate", borderSpacing: "0 4px", textAlign: "left" }}>
           <thead>
             <tr>
-              <th style={{ width: "50px" }}>
+              <th style={{ width: "50px", padding: "16px 24px" }}>
                 <input
                   type="checkbox"
                   checked={
@@ -841,10 +854,36 @@ export default function AdminUserManagementTab({
                         fontWeight: "600",
                         textTransform: "uppercase",
                         letterSpacing: "0.5px",
+                        marginRight: u.isProgramInstructor ? "8px" : "0",
                       }}
                     >
                       {u.role}
                     </span>
+                    {u.role === 'instructor' && u.isProgramInstructor && (
+                      <span
+                        style={{
+                          background: "var(--bg-surface)",
+                          border: "none",
+                          boxShadow: "var(--inner-shadow)",
+                          padding: "4px 10px",
+                          borderRadius: "99px",
+                          fontSize: "0.75rem",
+                          fontWeight: "600",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.5px",
+                        }}
+                      >
+                        <span
+                          style={{
+                            backgroundImage: "linear-gradient(90deg, #f97316, #fbad41)",
+                            WebkitBackgroundClip: "text",
+                            WebkitTextFillColor: "transparent",
+                          }}
+                        >
+                          Program
+                        </span>
+                      </span>
+                    )}
                   </td>
                   <td style={{ padding: "16px" }}>
                     {u.isDeleted ? (
@@ -1477,6 +1516,45 @@ export default function AdminUserManagementTab({
                         : "Soft Delete Account"}
                     </button>
                   </div>
+                  {sidePanelUser.role === 'instructor' && (
+                    <button
+                      onClick={() => handleToggleProgramInstructor(sidePanelUser)}
+                      disabled={isProcessing || !canModifyRole(sidePanelUser)}
+                      style={{
+                        width: '100%',
+                        marginTop: '12px',
+                        background: sidePanelUser.isProgramInstructor ? "rgba(239, 68, 68, 0.1)" : "rgba(16, 185, 129, 0.1)",
+                        border: "none",
+                        boxShadow: "var(--inner-shadow)",
+                        color: sidePanelUser.isProgramInstructor ? "#ef4444" : "#10B981",
+                        padding: "12px",
+                        borderRadius: "10px",
+                        cursor:
+                          isProcessing || !canModifyRole(sidePanelUser)
+                            ? "not-allowed"
+                            : "pointer",
+                        fontSize: "0.9rem",
+                        fontWeight: "600",
+                        opacity:
+                          isProcessing || !canModifyRole(sidePanelUser)
+                            ? 0.5
+                            : 1,
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isProcessing && canModifyRole(sidePanelUser))
+                          e.target.style.background = sidePanelUser.isProgramInstructor ? "rgba(239, 68, 68, 0.2)" : "rgba(16, 185, 129, 0.2)";
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isProcessing && canModifyRole(sidePanelUser))
+                          e.target.style.background = sidePanelUser.isProgramInstructor ? "rgba(239, 68, 68, 0.1)" : "rgba(16, 185, 129, 0.1)";
+                      }}
+                    >
+                      {sidePanelUser.isProgramInstructor
+                        ? "Remove Program Badge"
+                        : "Grant Program Badge"}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

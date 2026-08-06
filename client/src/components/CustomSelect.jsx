@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 
-const CustomSelect = ({ options, value, onChange, placeholder, icon }) => {
+const CustomSelect = ({ options, value, onChange, placeholder, icon, triggerClassName = "", triggerStyle = {} }) => {
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef(null);
 
@@ -19,22 +19,22 @@ const CustomSelect = ({ options, value, onChange, placeholder, icon }) => {
   return (
     <div className="custom-select-wrapper" ref={wrapperRef} style={{ zIndex: isOpen ? 100 : 1 }}>
       <div 
-        className={`icon-input-wrapper custom-select-trigger ${isOpen ? 'focus' : ''} ${!icon ? 'no-icon' : ''}`}
+        className={`icon-input-wrapper custom-select-trigger ${isOpen ? 'focus' : ''} ${!icon ? 'no-icon' : ''} ${triggerClassName}`}
         onClick={() => setIsOpen(!isOpen)}
-        style={!icon ? { paddingLeft: '14px' } : undefined}
+        style={{ ...(!icon ? { paddingLeft: '14px' } : {}), ...triggerStyle }}
+        data-tooltip={selectedOption ? selectedOption.label : placeholder}
       >
         {icon}
         <div 
           className={`custom-select-value ${!selectedOption ? 'placeholder' : ''}`}
-          title={selectedOption ? selectedOption.label : placeholder}
         >
           {selectedOption ? selectedOption.label : placeholder}
         </div>
         <svg className={`custom-select-chevron ${isOpen ? 'open' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
       </div>
       
-      {isOpen && (
-        <div className="custom-select-dropdown animate-entrance">
+      
+        <div className={`custom-select-dropdown ${isOpen ? 'open' : ''}`}>
           <div className="custom-select-options">
             <div className="custom-select-option disabled">{placeholder}</div>
             {options.map(opt => (
@@ -48,7 +48,6 @@ const CustomSelect = ({ options, value, onChange, placeholder, icon }) => {
             ))}
           </div>
         </div>
-      )}
     </div>
   );
 };

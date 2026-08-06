@@ -10,11 +10,24 @@ const ThreeDotMenu = ({
   disabled = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [shouldRender, setShouldRender] = useState(false);
   const [coords, setCoords] = useState({ top: -9999, left: -9999 }); // Render off-screen initially
   const [transformOrigin, setTransformOrigin] = useState("top right");
   const triggerRef = useRef(null);
   const dropdownRef = useRef(null);
   const [focusedIndex, setFocusedIndex] = useState(-1);
+
+  useEffect(() => {
+    if (isOpen) {
+      setShouldRender(true);
+    } else {
+      const t = setTimeout(() => {
+        setShouldRender(false);
+        setCoords({ top: -9999, left: -9999 }); // Reset coords so it hides initially next time
+      }, 250);
+      return () => clearTimeout(t);
+    }
+  }, [isOpen]);
 
   const updatePosition = useCallback(() => {
     if (!isOpen || !triggerRef.current || !dropdownRef.current) return;
@@ -65,10 +78,15 @@ const ThreeDotMenu = ({
 
   // Initial positioning after first render
   useLayoutEffect(() => {
-    if (isOpen) {
-        updatePosition();
+    if (isOpen && shouldRender) {
+        // The portal is now in the DOM. Calculate position.
+        // We use requestAnimationFrame to ensure the browser has painted the portal content
+        // so getBoundingClientRect returns correct dimensions.
+        requestAnimationFrame(() => {
+            updatePosition();
+        });
     }
-  }, [isOpen, updatePosition]);
+  }, [isOpen, shouldRender, updatePosition]);
 
   useEffect(() => {
     if (isOpen) {
@@ -145,24 +163,28 @@ const ThreeDotMenu = ({
     e.stopPropagation();
     e.preventDefault();
     if (!disabled) {
+      if (!isOpen) {
+        setShouldRender(true); // Sync update for immediate rendering
+      }
       setIsOpen(!isOpen);
     }
   };
 
-  const portalContent = isOpen && (
+  const portalContent = shouldRender && (
     <div
       ref={dropdownRef}
-      className={`global-dropdown-menu ${menuClassName}`}
+      className={`global-dropdown-menu ${menuClassName} ${!isOpen ? 'exiting' : ''}`}
       style={{
         position: 'fixed',
         top: `${coords.top}px`,
         left: `${coords.left}px`,
         width: width,
         transformOrigin: transformOrigin,
-        opacity: coords.top === -9999 ? 0 : 1, // Hide until positioned
+        visibility: coords.top === -9999 ? 'hidden' : 'visible',
       }}
       role="menu"
     >
+      <div className="custom-select-options" style={{ padding: 0, paddingRight: "4px", display: "flex", flexDirection: "column", gap: "4px", maxHeight: "300px", overflowY: "auto" }}>
       {options.map((opt, i) => (
         <button
           key={i}
@@ -183,6 +205,7 @@ const ThreeDotMenu = ({
           {opt.label}
         </button>
       ))}
+      </div>
     </div>
   );
 
@@ -209,7 +232,7 @@ const ThreeDotMenu = ({
           <circle cx="12" cy="19" r="1.5" />
         </svg>
       </button>
-      {isOpen && createPortal(portalContent, document.body)}
+      {shouldRender && createPortal(portalContent, document.body)}
     </>
   );
 };

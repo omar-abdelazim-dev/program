@@ -1,5 +1,6 @@
 import Enrollment from '../models/Enrollment.js';
 import Course from '../models/Course.js';
+import User from '../models/User.js';
 import Lesson from '../models/Lesson.js';
 import Transaction from '../models/Transaction.js';
 import Section from '../models/Section.js';
@@ -24,11 +25,25 @@ export const enroll = async (req, res) => {
       return res.status(409).json({ message: 'You are already enrolled in this course' });
     }
 
-    // Calculate financial distribution based on system config
-    const config = await getInternalConfig();
-    const commissionPercent = config?.financial?.commission || 15;
-    const platformCommission = (course.price * commissionPercent) / 100;
-    const instructorShare = course.price - platformCommission;
+    // Calculate financial distribution
+    const instructor = await User.findById(course.instructor);
+    let platformCommission = 0;
+    let instructorShare = 0;
+
+    if (instructor && instructor.isProgramInstructor) {
+      // Program instructors get a fixed 85% cut, platform keeps 15% —
+      // deliberately not admin-configurable, this is the flat benefit of
+      // program-instructor status.
+      instructorShare = course.price * 0.85;
+      platformCommission = course.price * 0.15;
+    } else {
+      // Everyone else keeps using the admin-configurable commission rate
+      // (System Management > Commission Slider), same as before this PR.
+      const config = await getInternalConfig();
+      const commissionPercent = config?.financial?.commission ?? 15;
+      platformCommission = (course.price * commissionPercent) / 100;
+      instructorShare = course.price - platformCommission;
+    }
 
     const enrollment = await Enrollment.create({ 
       student: req.user.id, 
@@ -38,12 +53,11 @@ export const enroll = async (req, res) => {
       instructorShare
     });
 
-    // Generate 70% revenue split transaction for the instructor
+    // Generate revenue split transaction for the instructor
     if (course.price > 0 && course.instructor) {
-      const instructorCut = course.price * 0.7;
       await Transaction.create({
         instructor: course.instructor,
-        amount: instructorCut,
+        amount: instructorShare,
         type: 'course_sale',
         status: 'cleared',
         description: `Course Sale - ${course.title}`,

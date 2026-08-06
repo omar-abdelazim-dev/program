@@ -108,7 +108,7 @@ export const getInstructorProfile = async (req, res) => {
     const [stats, courses] = await Promise.all([
       buildInstructorStats([instructor._id]),
       Course.find({ instructor: instructor._id, status: 'approved' })
-        .populate('instructor', 'name avatarUrl')
+        .populate('instructor', 'name avatarUrl isProgramInstructor')
         .sort({ createdAt: -1 }),
     ]);
 

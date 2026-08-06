@@ -346,7 +346,7 @@ export default function DashboardTab() {
                     )}
                   </div>
                 ) : (
-                  <div className="dash-row course-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '24px' }}>
+                  <div className="dash-row course-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 450px), 1fr))', gap: '24px' }}>
                     {inProgress.map((enrollment) => (
                       <InProgressCard
                         key={enrollment._id}
@@ -377,7 +377,7 @@ export default function DashboardTab() {
                     <p>{t('student.no_completed_courses', "You haven't completed any courses yet. Keep learning!")}</p>
                   </div>
                 ) : (
-                  <div className="dash-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '24px' }}>
+                  <div className="dash-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 450px), 1fr))', gap: '24px' }}>
                     {completed.map((enrollment) => (
                       <CompletedCard
                         key={enrollment._id}
@@ -406,3 +406,4 @@ export default function DashboardTab() {
     </>
   );
 }
+

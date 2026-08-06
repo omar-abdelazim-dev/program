@@ -26,7 +26,7 @@
    -------------------------------------------------------------------------- */
 .dashboard-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
   gap: 24px;
   margin-bottom: 32px;
 }
@@ -91,6 +91,7 @@
 }
 
 .dashboard-tab {
+  white-space: nowrap;
   height: 44px;
   padding: 0 32px;
   border-radius: 50px;
@@ -484,5 +485,12 @@
   .course-image {
     width: 100%;
     height: 160px;
+  }
+}
+
+@media (max-width: 850px) {
+  .dashboard-tab {
+    padding: 0 16px !important;
+    font-size: 0.85rem !important;
   }
 }

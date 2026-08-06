@@ -67,13 +67,6 @@ export default function CourseCard({ course, idx = 0, isLightMode = false }) {
         ) : (
           <div className="cc-thumb cc-thumb--fallback" aria-hidden="true" />
         )}
-
-        {/* Program logo badge overlay on thumbnail — only for Program courses */}
-        {isProgramCourse && (
-          <div className="cc-thumb-badge" aria-label="Program course">
-            <img src={logo} alt="Program" className="cc-thumb-badge-logo" />
-          </div>
-        )}
       </div>
 
       {/* Card body */}
@@ -94,15 +87,6 @@ export default function CourseCard({ course, idx = 0, isLightMode = false }) {
           <span className="cc-instructor-name">
             {instructor?.name ?? 'Instructor'}
           </span>
-          {isProgramCourse && (
-            <img
-              className="cc-program-logo"
-              src={logo}
-              alt="Program"
-              loading="lazy"
-              decoding="async"
-            />
-          )}
         </div>
 
         {/* 4. Reviews */}
@@ -133,18 +117,20 @@ export default function CourseCard({ course, idx = 0, isLightMode = false }) {
         </div>
 
         {/* 6. Category tag + Program logo box */}
-        {category && (
+        {(category || isProgramCourse) && (
           <div className="cc-footer">
-            <span className="cc-category-tag">{category}</span>
-            <div className="cc-logo-box">
-              <img
-                src={logo}
-                alt="Program"
-                className="cc-logo-box-img"
-                loading="lazy"
-                decoding="async"
-              />
-            </div>
+            {category ? <span className="cc-category-tag">{category}</span> : <div />}
+            {isProgramCourse && (
+              <div className="cc-logo-box">
+                <img
+                  src={logo}
+                  alt="Program"
+                  className="cc-logo-box-img"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+            )}
           </div>
         )}
 

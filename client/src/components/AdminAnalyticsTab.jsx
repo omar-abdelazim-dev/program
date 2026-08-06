@@ -224,7 +224,7 @@ const AdminAnalyticsTab = ({ revenueAnalytics, revenueAnalyticsLoading }) => {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))', gap: '24px' }}>
 
         {/* Revenue Distribution – Pie Chart */}
         <div className="glass-card stat-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
@@ -324,3 +324,4 @@ const AdminAnalyticsTab = ({ revenueAnalytics, revenueAnalyticsLoading }) => {
 };
 
 export default AdminAnalyticsTab;
+

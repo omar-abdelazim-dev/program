@@ -874,7 +874,7 @@ export default function AdminPortal({
           style={{
             position: "relative",
             borderBottom: isLightMode ? "1px solid rgba(0, 0, 0, 0.1)" : "none",
-            zIndex: 10,
+            zIndex: 1000,
             display: "flex",
             flexDirection: "row",
             justifyContent: "space-between",

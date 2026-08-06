@@ -112,6 +112,17 @@
       "semester_label": "{{major}} – Semester {{semester}}",
       "no_major_courses": "No {{major}} courses are available yet. Check back soon.",
       "no_courses_available": "No courses available yet."
+    },
+    "instructors_matching": "Instructors matching",
+    "explore": {
+      "all": "All",
+      "instructors": "Instructors",
+      "select_category": "Select Category",
+      "no_instructors_for": "No instructors found for \"{{query}}\".",
+      "no_instructors_yet": "No instructors yet.",
+      "no_courses_search_category": "No courses found for \"{{query}}\" in {{category}}.",
+      "no_courses_search": "No courses found for \"{{query}}\".",
+      "no_courses_category": "No courses found in {{category}}."
     }
   },
   "instructor": {
@@ -424,7 +435,9 @@
       "year_4": "4th Year",
       "year_5": "5th Year",
       "graduated": "Graduated"
-    }
+    },
+    "major": "Major",
+    "major_placeholder": "Select your major"
   },
   "settings": {
     "title": "Settings",
@@ -567,5 +580,37 @@
     "enroll_now": "Enroll Now",
     "added_to_cart": "Added to Cart ✓",
     "add_to_cart": "Add to Cart"
+  },
+  "categories": {
+    "computer_science": "Computer Science",
+    "web_development": "Web Development",
+    "business": "Business",
+    "cybersecurity": "Cybersecurity",
+    "ai": "AI",
+    "data_science": "Data Science",
+    "anatomy": "Anatomy",
+    "medicine": "Medicine",
+    "design": "Design",
+    "marketing": "Marketing"
+  },
+  "majors": {
+    "Computer Science": "Computer Science",
+    "Information Technology": "Information Technology",
+    "Software Engineering": "Software Engineering",
+    "Electrical Engineering": "Electrical Engineering",
+    "Mechanical Engineering": "Mechanical Engineering",
+    "Civil Engineering": "Civil Engineering",
+    "Business Administration": "Business Administration",
+    "Accounting": "Accounting",
+    "Marketing": "Marketing",
+    "Design": "Design",
+    "Medicine": "Medicine",
+    "Pharmacy": "Pharmacy",
+    "Dentistry": "Dentistry",
+    "Architecture": "Architecture",
+    "Arts & Humanities": "Arts & Humanities",
+    "Law": "Law",
+    "Sciences": "Sciences",
+    "Education": "Education"
   }
 }

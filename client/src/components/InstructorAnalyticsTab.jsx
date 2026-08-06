@@ -37,7 +37,7 @@ export default function InstructorAnalyticsTab({ courses = [], stats = [], timeS
     <div data-role="instructor" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
       
       {/* Charts Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))', gap: '24px' }}>
         
         {/* Revenue over Time */}
         <div className="glass-card no-border animate-entrance" style={{ padding: '24px', background: 'var(--bg-surface)', boxShadow: 'var(--outer-shadow)' }}>
@@ -149,3 +149,4 @@ export default function InstructorAnalyticsTab({ courses = [], stats = [], timeS
     </div>
   );
 }
+
