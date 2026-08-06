@@ -1,13 +1,15 @@
 import express from 'express';
-import { register, login, logout, getMe, checkEmail, updateProfile, changePassword } from '../controllers/authController.js';
+import { register, login, logout, getMe, checkEmail, updateProfile, changePassword, forgotPassword, resetPassword } from '../controllers/authController.js';
 import { protect } from '../middleware/authMiddleware.js';
-import { authLimiter, loginLimiter, registerLimiter } from '../middleware/rateLimiter.js';
+import { authLimiter, loginLimiter, registerLimiter, forgotPasswordLimiter } from '../middleware/rateLimiter.js';
 import {
   validateRegister,
   validateLogin,
   validateCheckEmail,
   validateChangePassword,
   validateUpdateProfile,
+  validateForgotPassword,
+  validateResetPassword,
 } from '../validators/authValidators.js';
 
 const router = express.Router();
@@ -24,6 +26,9 @@ router.patch('/profile', protect, validateUpdateProfile, updateProfile);
 // authLimiter here too: an authenticated attacker with a stolen session
 // could otherwise brute-force the current-password check indefinitely.
 router.patch('/change-password', protect, authLimiter, validateChangePassword, changePassword);
+// forgotPasswordLimiter: 3/hour/IP — prevents email-enumeration via rate pressure
+router.post('/forgot-password', forgotPasswordLimiter, validateForgotPassword, forgotPassword);
+router.patch('/reset-password/:token', authLimiter, validateResetPassword, resetPassword);
 
 export default router;
 

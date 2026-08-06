@@ -14,12 +14,14 @@ const systemConfigSchema = new mongoose.Schema(
     
     financial: {
       commission: { type: Number, default: 15, min: 0, max: 100 },
-      tax: { type: Number, default: 0 },
       currency: { type: String, default: 'USD' },
       refundWindow: { type: Number, default: 14 },
       minWithdrawal: { type: Number, default: 50 },
-      stripeEnabled: { type: Boolean, default: true },
-      paypalEnabled: { type: Boolean, default: false },
+      // ADM-15: Stripe/PayPal/tax removed — payments are display-only in this
+      // MVP (see project scope boundaries) and payouts go through mobile
+      // wallets, not a card processor.
+      instaPayEnabled: { type: Boolean, default: true },
+      mobileWalletEnabled: { type: Boolean, default: true },
     },
 
     registration: {
@@ -29,7 +31,8 @@ const systemConfigSchema = new mongoose.Schema(
       emailVerification: { type: Boolean, default: true },
       phoneVerification: { type: Boolean, default: false },
       inviteOnly: { type: Boolean, default: false },
-      autoApproveInstructors: { type: Boolean, default: false },
+      // ADM-11: autoApproveInstructors removed — instructor registrations
+      // always require manual admin review, no exceptions.
     },
 
     security: {
@@ -37,7 +40,9 @@ const systemConfigSchema = new mongoose.Schema(
       sessionTimeout: { type: Number, default: 60 },
       maxLoginAttempts: { type: Number, default: 5 },
       twoFactorAuth: { type: Boolean, default: false },
-      jwtExpiration: { type: Number, default: 7 },
+      // Minutes, not days — a 7-day token was a standing risk if ever stolen.
+      // Kept in the 30-90 minute range recommended for session tokens.
+      jwtExpiration: { type: Number, default: 60 },
       allowedDomains: { type: String, default: '' },
       maintenanceLock: { type: Boolean, default: false },
     },
@@ -48,30 +53,8 @@ const systemConfigSchema = new mongoose.Schema(
       allowedFileTypes: { type: String, default: '.mp4,.pdf,.zip,.jpg,.png' },
     },
 
-    email: {
-      smtpHost: { type: String, default: 'smtp.sendgrid.net' },
-      smtpPort: { type: Number, default: 587 },
-      smtpUser: { type: String, default: 'apikey' },
-      smtpPass: { type: String, default: '' },
-    },
-
-    notifications: {
-      studentEmails: { type: Boolean, default: true },
-      instructorEmails: { type: Boolean, default: true },
-      adminAlerts: { type: Boolean, default: true },
-      marketingEmails: { type: Boolean, default: false },
-      pushNotifications: { type: Boolean, default: false },
-      systemAlerts: { type: Boolean, default: true },
-    },
-
-    appearance: {
-      platformLogo: { type: String, default: '' },
-      favicon: { type: String, default: '' },
-      defaultTheme: { type: String, default: 'system' },
-      accentColor: { type: String, default: '#3B82F6' },
-      landingBanner: { type: String, default: '' },
-      footerInfo: { type: String, default: '© 2026 Program' },
-    },
+    // ADM-14: email (SMTP), notifications, and appearance sections removed —
+    // those System Management tabs are out of scope for this platform.
 
     landingPage: {
       hero: {

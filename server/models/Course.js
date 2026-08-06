@@ -19,10 +19,13 @@ const courseSchema = new mongoose.Schema(
       // see project scope boundaries. Do not wire this to Stripe without
       // being explicitly asked.
     },
+    // INS-03: de-required in favor of College-based tagging — kept (rather
+    // than dropped) so existing courses and category-based analytics/filters
+    // don't break; new courses are no longer required to set it.
     category: {
       type: String,
-      required: [true, 'Category is required'],
       trim: true,
+      default: '',
     },
     // Optional curriculum tagging so the personalized Home page can group
     // this course under "{major} - Semester {semester}". Left unset for
@@ -34,6 +37,13 @@ const courseSchema = new mongoose.Schema(
     semester: {
       type: Number,
     },
+    // College the course is tagged under (INS-03) — replaces major/category
+    // as the primary way students filter and discover courses (STU-06).
+    college: {
+      type: String,
+      default: '',
+      trim: true,
+    },
     instructor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -43,9 +53,10 @@ const courseSchema = new mongoose.Schema(
     // pending -> instructor just submitted, not visible to students yet
     // approved -> admin approved, shows up in the public catalog
     // rejected -> admin rejected, instructor can see feedback and resubmit later
+    // unpublished -> admin pulled a previously-approved course from the catalog
     status: {
       type: String,
-      enum: ['pending', 'approved', 'rejected'],
+      enum: ['pending', 'approved', 'rejected', 'unpublished'],
       default: 'pending',
     },
     // Feedback shown to the instructor when an admin rejects the course.
@@ -61,6 +72,13 @@ const courseSchema = new mongoose.Schema(
     thumbnailUrl: {
       type: String,
       default: '',
+    },
+    // Instructors can no longer delete a course outright — they request
+    // deletion, and an admin reviews the request before the course (and its
+    // enrollment history) is actually removed.
+    deletionRequested: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true }

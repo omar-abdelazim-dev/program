@@ -31,10 +31,19 @@ const transactionSchema = new mongoose.Schema(
       ref: 'Course',
       // Only applicable if type === 'course_sale'
     },
+    // Platform commission percent actually applied to this sale — records
+    // whether the admin-configured rate, the program-instructor fixed rate,
+    // or a promo-code override (ADM-13) was used, since that isn't otherwise
+    // recoverable after the admin-configured rate later changes.
+    commissionRate: {
+      type: Number,
+      // Only applicable if type === 'course_sale'
+    },
     payoutMethod: {
       type: String,
-      // Only applicable if type === 'payout_request'
-      enum: ['bank_transfer', 'vodafone_cash', 'instapay'],
+      // Only applicable if type === 'payout_request'. bank_transfer was
+      // removed (INS-09) — only mobile-wallet-style methods are supported.
+      enum: ['vodafone_cash', 'instapay'],
     },
     payoutDetails: {
       type: String,
