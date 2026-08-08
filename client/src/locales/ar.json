@@ -214,6 +214,8 @@
       "video_file": "ملف الفيديو",
       "leave_blank_video": "اتركه فارغاً للاحتفاظ بالفيديو الحالي",
       "upload_cloudinary": "جاري الرفع مباشرة",
+      "uploading_video": "جاري رفع الفيديو… {{percent}}%",
+      "processing_video": "اكتمل الرفع — جاري حفظ الدرس…",
       "attachment_title": "عنوان المرفق (اختياري)",
       "attachment_file": "ملف المرفق (اختياري)",
       "leave_blank_attachment": "اتركه فارغاً للاحتفاظ بالمرفق الحالي",

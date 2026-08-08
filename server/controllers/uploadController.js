@@ -13,24 +13,34 @@ const streamUpload = (buffer, options) => {
   });
 };
 
-// @route   POST /api/uploads/video
+// @route   GET /api/uploads/video-signature
 // @access  Private (instructor only)
-// Expects multipart/form-data with a field named "video" (see middleware/upload.js)
-export const uploadVideo = async (req, res) => {
+// Videos upload directly from the browser to Cloudinary instead of buffering
+// through this server (see PR discussion — large videos were sitting fully
+// in Node memory before being re-uploaded, which doesn't scale). This
+// endpoint just signs the params the browser needs to be trusted by
+// Cloudinary; the actual bytes never touch our backend.
+export const getVideoUploadSignature = async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ message: 'No video file was provided' });
-    }
+    const timestamp = Math.round(Date.now() / 1000);
+    const folder = 'program/lessons';
 
-    const result = await streamUpload(req.file.buffer, {
-      resource_type: 'video', // tells Cloudinary to run its video pipeline (transcoding, thumbnails, etc.)
-      folder: 'program/lessons',
+    // Signing exactly these params means Cloudinary rejects the upload if the
+    // browser tries to send it anywhere other than this folder — the
+    // signature is a hash of (params + our secret), so tampering with folder
+    // client-side invalidates it.
+    const signature = cloudinary.utils.api_sign_request({ timestamp, folder }, process.env.CLOUDINARY_API_SECRET);
+
+    res.status(200).json({
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+      apiKey: process.env.CLOUDINARY_API_KEY,
+      timestamp,
+      folder,
+      signature,
     });
-
-    res.status(200).json({ url: result.secure_url });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Video upload failed' });
+    res.status(500).json({ message: 'Could not prepare video upload' });
   }
 };
 

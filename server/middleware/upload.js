@@ -5,18 +5,9 @@ import multer from 'multer';
 // on our own server first, which also means no cleanup/tmp-file management.
 const storage = multer.memoryStorage();
 
-// Separate limits for video vs image so a 2MB thumbnail upload doesn't
-// accidentally get a 500MB ceiling, and a course video isn't stuck at 5MB.
-export const uploadVideoFile = multer({
-  storage,
-  limits: { fileSize: 500 * 1024 * 1024 }, // 500MB — generous for lecture-length video
-  fileFilter: (req, file, cb) => {
-    if (!file.mimetype.startsWith('video/')) {
-      return cb(new Error('Only video files are allowed'));
-    }
-    cb(null, true);
-  },
-}).single('video'); // expects the form field to be named "video"
+// Video no longer goes through Multer/this server at all — it uploads
+// directly from the browser to Cloudinary via a signed request (see
+// controllers/uploadController.js#getVideoUploadSignature).
 
 export const uploadImageFile = multer({
   storage,
