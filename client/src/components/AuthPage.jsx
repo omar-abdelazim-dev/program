@@ -264,11 +264,11 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
                       <div className="input-row">
                         <div className="input-group">
                           <label>{t('auth.first_name')}</label>
-                          <input type="text" placeholder="Ahmed" required={!isLogin} value={firstName} onChange={(e) => { if (/^[a-zA-Z\u0600-\u06FF\s]*$/.test(e.target.value)) setFirstName(e.target.value); }} />
+                          <input type="text" placeholder="Ahmed" required={!isLogin} value={firstName} onChange={(e) => { if (/^[a-zA-Z\u0600-\u06FF\s\-']*$/.test(e.target.value)) setFirstName(e.target.value); }} />
                         </div>
                         <div className="input-group">
                           <label>{t('auth.last_name')}</label>
-                          <input type="text" placeholder="Al-Rashidi" required={!isLogin} value={lastName} onChange={(e) => { if (/^[a-zA-Z\u0600-\u06FF\s]*$/.test(e.target.value)) setLastName(e.target.value); }} />
+                          <input type="text" placeholder="Al-Rashidi" required={!isLogin} value={lastName} onChange={(e) => { if (/^[a-zA-Z\u0600-\u06FF\s\-']*$/.test(e.target.value)) setLastName(e.target.value); }} />
                         </div>
                       </div>
                     </div>
