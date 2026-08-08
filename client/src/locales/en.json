@@ -214,6 +214,8 @@
       "video_file": "Video File",
       "leave_blank_video": "Leave blank to keep existing video",
       "upload_cloudinary": "Uploading directly to Cloudinary",
+      "uploading_video": "Uploading video… {{percent}}%",
+      "processing_video": "Upload complete — saving lesson…",
       "attachment_title": "Attachment Title (Optional)",
       "attachment_file": "Attachment File (Optional)",
       "leave_blank_attachment": "Leave blank to keep existing attachment",

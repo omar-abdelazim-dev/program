@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import CustomSelect from './CustomSelect';
 import api from '../api/axios';
@@ -55,6 +56,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
   const [lessonData, setLessonData] = useState({ title: '', attachmentTitle: '' });
   const [videoFile, setVideoFile] = useState(null);
   const [attachmentFile, setAttachmentFile] = useState(null);
+  const [videoUploadProgress, setVideoUploadProgress] = useState(0);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -174,16 +176,33 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
     }
     setSubmitting(true);
     setError('');
+    setVideoUploadProgress(0);
 
     try {
       let videoUrl = undefined;
       if (videoFile) {
-        const fileData = new FormData();
-        fileData.append('video', videoFile);
-        const uploadRes = await api.post('/uploads/video', fileData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
-        videoUrl = uploadRes.data.url;
+        // Video uploads go straight from the browser to Cloudinary — the
+        // backend only signs the request, it never buffers the file. Keeps
+        // large lecture videos off this server's memory/bandwidth entirely.
+        const { data: sig } = await api.get('/uploads/video-signature');
+
+        const cloudinaryForm = new FormData();
+        cloudinaryForm.append('file', videoFile);
+        cloudinaryForm.append('api_key', sig.apiKey);
+        cloudinaryForm.append('timestamp', sig.timestamp);
+        cloudinaryForm.append('signature', sig.signature);
+        cloudinaryForm.append('folder', sig.folder);
+
+        const uploadRes = await axios.post(
+          `https://api.cloudinary.com/v1_1/${sig.cloudName}/video/upload`,
+          cloudinaryForm,
+          {
+            onUploadProgress: (evt) => {
+              if (evt.total) setVideoUploadProgress(Math.round((evt.loaded / evt.total) * 100));
+            },
+          }
+        );
+        videoUrl = uploadRes.data.secure_url;
       }
 
       let attachmentUrl = undefined;
@@ -219,6 +238,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
       setError(err.response?.data?.message || 'Failed to save lesson');
     } finally {
       setSubmitting(false);
+      setVideoUploadProgress(0);
     }
   };
 
@@ -777,6 +797,18 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                   <label>{t('instructor.curriculum.video_file')}</label>
                   <input required={!editingLessonId} type="file" accept="video/*" onChange={e => setVideoFile(e.target.files[0])} />
                   <div className="input-hint">{editingLessonId ? t('instructor.curriculum.leave_blank_video') : t('instructor.curriculum.upload_cloudinary')}</div>
+                  {submitting && videoFile && (
+                    <div style={{ marginTop: '8px' }}>
+                      <div style={{ height: '6px', borderRadius: '999px', background: 'var(--c-border, rgba(255,255,255,0.1))', overflow: 'hidden' }}>
+                        <div style={{ width: `${videoUploadProgress}%`, height: '100%', background: 'var(--color-accent, #6B5DD3)', transition: 'width 0.2s ease' }} />
+                      </div>
+                      <div className="input-hint" style={{ marginTop: '4px' }}>
+                        {videoUploadProgress < 100
+                          ? t('instructor.curriculum.uploading_video', 'Uploading video… {{percent}}%', { percent: videoUploadProgress })
+                          : t('instructor.curriculum.processing_video', 'Upload complete — saving lesson…')}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="input-group">

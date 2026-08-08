@@ -1,6 +1,6 @@
 import express from 'express';
-import { uploadVideo, uploadImage, uploadDocument } from '../controllers/uploadController.js';
-import { uploadVideoFile, uploadImageFile, uploadDocumentFile } from '../middleware/upload.js';
+import { getVideoUploadSignature, uploadImage, uploadDocument } from '../controllers/uploadController.js';
+import { uploadImageFile, uploadDocumentFile } from '../middleware/upload.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -19,12 +19,13 @@ const handleMulterErrors = (multerMiddleware) => (req, res, next) => {
   });
 };
 
-router.post(
-  '/video',
+// Videos go straight from the browser to Cloudinary — this just hands out a
+// signed set of upload params, it never sees the file itself.
+router.get(
+  '/video-signature',
   protect,
   authorize('instructor'),
-  handleMulterErrors(uploadVideoFile),
-  uploadVideo
+  getVideoUploadSignature
 );
 
 // No authorize('instructor') here (unlike /video) — this endpoint is also
