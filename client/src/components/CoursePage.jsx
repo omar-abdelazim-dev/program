@@ -744,7 +744,7 @@ export default function CoursePage({ cart = [], setCart, user }) {
                           {review.student?.avatarUrl ? (
                             <img
                               src={review.student.avatarUrl}
-                              alt="Avatar"
+                              alt={`${review.student.name || 'Student'}'s profile picture`}
                               style={{
                                 width: "40px",
                                 height: "40px",

@@ -679,7 +679,7 @@ export default function LearningPortal({ user }) {
                             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
                               <img 
                                 src={course?.instructor?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(course?.instructor?.name || 'Instructor')}&background=random`} 
-                                alt="Instructor" 
+                                alt={`${course?.instructor?.name || 'Instructor'}'s profile picture`}
                                 style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover' }} 
                               />
                               <Link
