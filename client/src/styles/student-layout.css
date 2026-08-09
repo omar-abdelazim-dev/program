@@ -8,7 +8,7 @@
   --text-primary: #FFFFFF;
   --text-secondary: #808191;
   --border-solid: #2B2A3D;
-  --radius-card: 20px;
+  --radius-card: 50px;
   --radius-btn: 50px;
 }
 
@@ -121,45 +121,6 @@
   background: linear-gradient(135deg, #f97316 0%, #fbbf24 100%);
 }
 
-/* Tooltip: appears to the right of the button on hover via data-tooltip attribute */
-.sidebar-icon-btn[data-tooltip]::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  inset-inline-start: calc(100% + 12px);
-  top: 50%;
-  transform: translate(10px, -50%);
-  background: #2D3748;
-  color: var(--text-primary);
-  font-size: 0.8rem;
-  font-weight: 500;
-  padding: 5px 10px;
-  border-radius: 8px;
-  white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.25s ease;
-  z-index: 999;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-/* Show tooltip on hover (not active, since active buttons are self-labelled by context) */
-.sidebar-icon-btn[data-tooltip]:hover::after {
-  opacity: 1;
-  visibility: visible;
-  transform: translate(0, -50%);
-}
-
-/* Light mode tooltip */
-body.light-mode .sidebar-icon-btn[data-tooltip]::after {
-  background: #fff;
-  color: #1e293b;
-  border-color: #e2e8f0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-
 /* --------------------------------------------------------------------------
    Courses nav dropdown (category flyout, hover-triggered like the profile menu)
    -------------------------------------------------------------------------- */
@@ -243,8 +204,8 @@ body.light-mode .sidebar-icon-btn[data-tooltip]::after {
   transition: all 0.3s ease;
 }
 
-.header-left .search-pill:focus-within {
-  border-color: #f97316;
+.header-left .search-pill:focus-within,
+.header-left .search-pill.focus {
   box-shadow: var(--outer-shadow), 0 0 0 3px rgba(249, 115, 22, 0.2);
 }
 
@@ -520,10 +481,10 @@ body.light-mode .solid-card {
   box-shadow: var(--outer-shadow);
 }
 
-/* Responsive Menu Classes */
 .mobile-only-menu {
   display: none;
-  margin-inline-end: 12px;
+  margin-inline-start: 16px;
+  margin-inline-end: 8px;
 }
 
 @media (max-width: 900px) {
@@ -533,4 +494,30 @@ body.light-mode .solid-card {
   .desktop-only-icon {
     display: none !important;
   }
+}
+
+/* Restore sidebar specific tooltip position - starts outside the 80px sidebar */
+.sidebar-icon-btn[data-tooltip]::after {
+  bottom: auto !important;
+  left: auto !important;
+  inset-inline-start: calc(100% + 28px) !important;
+  top: 50% !important;
+  transform: translate(10px, -50%) !important;
+}
+
+.sidebar-icon-btn[data-tooltip]:hover::after {
+  transform: translate(0, -50%) !important;
+}
+
+/* Header tooltips should appear below the element since they are at the top of the screen */
+.header-right [data-tooltip]::after,
+.avatar-btn[data-tooltip]::after {
+  bottom: auto !important;
+  top: calc(100% + 8px) !important;
+  transform: translate(-50%, -10px) !important;
+}
+
+.header-right [data-tooltip]:hover::after,
+.avatar-btn[data-tooltip]:hover::after {
+  transform: translate(-50%, 0) !important;
 }

@@ -114,7 +114,7 @@ export default function FAQManager({ user }) {
                       variant="danger" 
                       onClick={() => handleDelete(faq._id)}
                       disabled={!isSuperAdmin}
-                      title={!isSuperAdmin ? "Super Admin permission required" : ""}
+                      data-tooltip={!isSuperAdmin ? "Super Admin permission required" : ""}
                       style={{ padding: '6px 16px', borderRadius: '12px' }}
                     >
                       Delete

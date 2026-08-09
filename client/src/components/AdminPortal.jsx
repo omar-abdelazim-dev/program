@@ -695,11 +695,11 @@ export default function AdminPortal({
       style={{
         display: "flex",
         flexDirection: "row",
-        height: "133.333vh",
-        width: "133.333%",
+        flex: 1,
+        width: "100%",
         backgroundColor: "var(--bg-main)",
-        transform: "scale(0.75)",
-        transformOrigin: "top left",
+        overflow: "hidden",
+        minHeight: 0,
       }}
     >
       {/* Sidebar */}
@@ -736,7 +736,7 @@ export default function AdminPortal({
             className="admin-sidebar-collapse-btn"
             onClick={() => setSidebarCollapsed((prev) => !prev)}
             aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            data-tooltip={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             <svg
               width="18"
@@ -814,7 +814,7 @@ export default function AdminPortal({
                       top: `${activeIndex * 44}px`, // 40px tab height + 4px gap
                       opacity: activeIndex >= 0 ? 1 : 0,
                       backgroundColor: "var(--c-bg)",
-                      borderRadius: "12px",
+                      borderRadius: "50px",
                       transition:
                         "top 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease",
                       zIndex: 0,
@@ -836,7 +836,7 @@ export default function AdminPortal({
                           isActive ? " active" : ""
                         }`}
                         data-tooltip={tab.label}
-                        title={sidebarCollapsed ? tab.label : undefined}
+                        data-tooltip={sidebarCollapsed ? tab.label : undefined}
                       >
                         <span className="admin-sidebar-tab-label">
                           {tab.label}
@@ -871,6 +871,7 @@ export default function AdminPortal({
           flexDirection: "column",
           flex: 1,
           overflow: "hidden",
+          minHeight: 0,
         }}
       >
         {/* Top Navbar using top-nav styling */}
@@ -992,12 +993,11 @@ export default function AdminPortal({
         </nav>
 
         {/* Main Content Area */}
-        <div style={{ flex: 1, padding: "32px 48px", overflowY: "auto" }}>
+        <div style={{ flex: 1, padding: "32px 48px", overflowY: "auto", minHeight: 0 }}>
           <div
             className="admin-content-panel"
             style={{
-              maxWidth: "100%",
-              margin: "40px auto",
+              width: "100%",
             }}
           >
             {visitedTabs.has("dashboard_overview") && stats && (

@@ -2,9 +2,28 @@ import Course from '../models/Course.js';
 import Lesson from '../models/Lesson.js';
 import Enrollment from '../models/Enrollment.js';
 import Section from '../models/Section.js';
+import Review from '../models/Review.js';
 import { escapeRegex } from '../utils/escapeRegex.js';
 import mongoose from 'mongoose';
 import fs from 'fs';
+
+// Helper: attach averageRating and reviewsCount to an array of course docs
+export const attachReviewStats = async (courses) => {
+  const courseIds = courses.map(c => c._id);
+  const stats = await Review.aggregate([
+    { $match: { course: { $in: courseIds } } },
+    { $group: { _id: '$course', avg: { $avg: '$rating' }, count: { $sum: 1 } } }
+  ]);
+  const statsMap = {};
+  stats.forEach(s => { statsMap[s._id.toString()] = { avg: parseFloat(s.avg.toFixed(1)), count: s.count }; });
+  return courses.map(c => {
+    const obj = c.toObject ? c.toObject() : { ...c };
+    const s = statsMap[obj._id.toString()];
+    obj.averageRating = s ? s.avg : 0;
+    obj.reviewsCount = s ? s.count : 0;
+    return obj;
+  });
+};
 
 // @route   POST /api/courses
 // @access  Private (instructor only)
@@ -217,7 +236,9 @@ export const getApprovedCourses = async (req, res) => {
         .populate('instructor', 'name avatarUrl isProgramInstructor') // include instructor's name + avatar, nothing more sensitive
         .sort({ createdAt: -1 });
 
-      return res.status(200).json({ courses });
+      // Attach review stats to each course
+      const coursesWithReviews = await attachReviewStats(courses);
+      return res.status(200).json({ courses: coursesWithReviews });
     }
 
     let pageNum = parseInt(page, 10);
@@ -236,7 +257,9 @@ export const getApprovedCourses = async (req, res) => {
     ]);
 
     const totalPages = Math.ceil(totalItems / limitNum) || 1;
-    res.status(200).json({ courses, pagination: { page: pageNum, limit: limitNum, totalPages, totalItems } });
+    // Attach review stats to each course
+    const coursesWithReviews = await attachReviewStats(courses);
+    res.status(200).json({ courses: coursesWithReviews, pagination: { page: pageNum, limit: limitNum, totalPages, totalItems } });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error fetching courses' });

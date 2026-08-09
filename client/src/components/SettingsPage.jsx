@@ -159,7 +159,7 @@ function ProfileSection({ user, setUser }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '16px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>{t('settings.profile.first_name', 'First Name')}</label>
           <input type="text" className="solid-input" value={name} onChange={(e) => setName(e.target.value)} placeholder={t('settings.profile.first_name_placeholder', 'e.g. John')} required />
@@ -288,7 +288,7 @@ function AccountSection({ user, setUser, onLogout }) {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>{t('settings.account.major', 'Major')}</label>
                 <CustomSelect
-                  options={MAJORS.map(m => ({ value: m.id, label: m.label }))}
+                  options={MAJORS.map(m => ({ value: m.id, label: t(`majors.${m.id}`, m.label) }))}
                   value={major}
                   onChange={setMajor}
                   placeholder={t('settings.account.major_placeholder', 'Select your major')}

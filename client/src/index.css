@@ -82,7 +82,27 @@ body[data-role="student"], body[data-role="instructor"] {
   --shadow: none;
 }
 
-body[data-role="admin"], body[data-role="superadmin"] { --color-accent: #6B5DD3; --accent: #6B5DD3; }
+body[data-role="admin"], body[data-role="superadmin"] { 
+  --bg-main: #15141E;
+  --color-accent: #6B5DD3; 
+  --accent: #6B5DD3; 
+}
+
+/* Force single-layer layout for Admin portal (no floating card boxes) */
+body[data-role="admin"] .glass-card,
+body[data-role="superadmin"] .glass-card,
+body[data-role="admin"] .dash-card,
+body[data-role="superadmin"] .dash-card,
+body[data-role="admin"] .admin-card,
+body[data-role="superadmin"] .admin-card,
+body[data-role="admin"] .table-card,
+body[data-role="superadmin"] .table-card,
+body[data-role="admin"] .admin-content-panel,
+body[data-role="superadmin"] .admin-content-panel {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+}
 
 body[data-role="student"] *, 
 body[data-role="student"] *::before, 
@@ -220,18 +240,40 @@ code {
   overflow: hidden !important;
 }
 
+/* RTL Fixes for Notyf */
+html[dir="rtl"] .notyf {
+  align-items: flex-start !important; /* In RTL, flex-start is the right side */
+}
+html[dir="rtl"] .notyf__toast {
+  direction: rtl;
+  text-align: right;
+}
+html[dir="rtl"] .notyf__dismiss {
+  left: 0 !important;
+  right: auto !important;
+  margin-left: -15px !important;
+  margin-right: 0 !important;
+}
+html[dir="rtl"] .notyf__icon {
+  margin-left: 13px !important;
+  margin-right: 0 !important;
+}
+
 /* Scale down the entire Admin/Superadmin portal to 75% */
 body[data-role="admin"],
 body[data-role="superadmin"] {
   overflow: hidden;
+  background: var(--bg) !important;
 }
 
-body[data-role="admin"] .page-wrapper,
-body[data-role="superadmin"] .page-wrapper {
-  transform: scale(0.75);
-  transform-origin: top left;
-  width: 133.333vw !important;
-  height: 133.333vh !important;
+body[data-role="admin"] #root,
+body[data-role="superadmin"] #root {
+  width: 100% !important;
+  max-width: none !important;
+  border-inline: none !important;
+  height: 100vh !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
 }
 
 body[data-role="admin"] .notyf,

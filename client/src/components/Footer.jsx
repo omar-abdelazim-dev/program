@@ -54,7 +54,7 @@ export default function Footer() {
       {activeSocialLinks.length > 0 && (
         <div className="site-footer-social">
           {activeSocialLinks.map(([key, url]) => (
-            <a key={key} href={url} target="_blank" rel="noopener noreferrer" title={SOCIAL_LABELS[key] || key}>
+            <a key={key} href={url} target="_blank" rel="noopener noreferrer" data-tooltip={SOCIAL_LABELS[key] || key}>
               {SOCIAL_LABELS[key] || key}
             </a>
           ))}

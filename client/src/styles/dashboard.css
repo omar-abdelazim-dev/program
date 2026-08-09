@@ -36,7 +36,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  border-radius: var(--radius-card, 20px);
+  border-radius: 50px;
   background: var(--bg-surface);
   border: none;
   box-shadow: var(--outer-shadow);
@@ -312,16 +312,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.2s ease, transform 0.1s ease;
+  transition: opacity 0.2s ease;
   margin-bottom: 10px !important;
 }
 
 .continue-btn:hover {
   opacity: 0.9;
-}
-
-.continue-btn:active {
-  transform: scale(0.85);
 }
 
 /* --------------------------------------------------------------------------
@@ -492,5 +488,151 @@
   .dashboard-tab {
     padding: 0 16px !important;
     font-size: 0.85rem !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Coursera-Style Course Card
+   -------------------------------------------------------------------------- */
+.coursera-card {
+  display: flex;
+  flex-direction: row;
+  border-radius: 32px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  min-height: 140px;
+  box-sizing: border-box;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  position: relative;
+  padding: 20px 32px;
+  align-items: center;
+  width: 100%;
+  gap: 24px;
+  box-shadow: var(--outer-shadow);
+}
+
+
+.coursera-card:hover {
+  box-shadow: none;
+  border-color: var(--color-accent);
+}
+
+.coursera-card-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+}
+
+.provider-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.provider-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  background-color: var(--bg-main);
+}
+
+.provider-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.provider-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.provider-offered {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.coursera-card .course-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.course-meta {
+  font-size: 13px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.coursera-card-right {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 15px;
+  flex-shrink: 0;
+}
+
+.next-lesson-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+}
+
+.next-lesson-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
+}
+
+.next-lesson-duration {
+  font-size: 13px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.coursera-card .continue-btn {
+  background: linear-gradient(135deg, #f97316 0%, #fbbf24 100%);
+  color: #fff;
+  border-radius: 30px;
+  padding: 10px 24px;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  margin-bottom: 0;
+  transition: filter 0.2s ease;
+}
+
+.coursera-card .continue-btn:hover {
+  filter: brightness(1.1);
+}
+
+@media (max-width: 768px) {
+  .coursera-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .coursera-card-right {
+    width: 100%;
+    justify-content: space-between;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .next-lesson-info {
+    min-width: auto;
   }
 }

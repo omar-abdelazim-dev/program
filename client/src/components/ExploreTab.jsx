@@ -3,20 +3,25 @@ import { Link } from "react-router-dom";
 import api from "../api/axios";
 import CourseCard from "./CourseCard";
 import { useTranslation } from "react-i18next";
-import { getMajor } from "../data/majors";
+import { COLLEGES } from "../data/colleges";
 import "../styles/home.css";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
-// This is the Home page (formerly a generic "Explore" catalog) — it now
-// personalizes the feed by the student's major, showing one horizontally
-// scrollable row of suggested courses per semester. Category-driven
-// browsing lives on the separate /student/explore page now.
+// This is the Home page — it now personalizes the feed by the student's college,
+// showing a grid of suggested courses for that college.
 export default function ExploreTab({ user, searchQuery = "", isLightMode }) {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.dir() === 'rtl';
   const firstName = user?.name ? user.name.split(" ")[0] : "Student";
-  const major = getMajor(user?.major);
+  
+  const userCollegeId = user?.college;
+  const collegeObj = COLLEGES.find((c) => c.id === userCollegeId);
+  let collegeLabel = collegeObj ? t(collegeObj.key, collegeObj.id) : userCollegeId;
+  
+  if (collegeLabel && typeof collegeLabel === 'string') {
+    collegeLabel = collegeLabel.replace(/^College of /i, '').trim();
+  }
 
   const [debouncedSearch, setDebouncedSearch] = useState(searchQuery.trim());
   const [websiteContent, setWebsiteContent] = useState(null);
@@ -24,8 +29,8 @@ export default function ExploreTab({ user, searchQuery = "", isLightMode }) {
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
 
-  const [semesterCourses, setSemesterCourses] = useState({});
-  const [semestersLoading, setSemestersLoading] = useState(false);
+  const [collegeCourses, setCollegeCourses] = useState([]);
+  const [collegeLoading, setCollegeLoading] = useState(false);
 
   const [fallbackCourses, setFallbackCourses] = useState([]);
   const [fallbackLoading, setFallbackLoading] = useState(false);
@@ -55,29 +60,21 @@ export default function ExploreTab({ user, searchQuery = "", isLightMode }) {
     return () => controller.abort();
   }, [debouncedSearch]);
 
-  // Personalized: one request per semester of the student's major.
+  // Personalized: request courses for the student's college.
   useEffect(() => {
-    if (debouncedSearch || !major) return;
+    if (debouncedSearch || !userCollegeId) return;
     const controller = new AbortController();
-    setSemestersLoading(true);
-    const requests = Array.from({ length: major.semesters }, (_, i) => i + 1).map((semester) =>
-      api.get("/courses", { params: { major: major.id, semester, limit: 10 }, signal: controller.signal })
-        .then((res) => [semester, res.data.courses || []])
-        .catch(() => [semester, []])
-    );
-    Promise.all(requests).then((results) => {
-      if (controller.signal.aborted) return;
-      const bySemester = {};
-      for (const [semester, courses] of results) bySemester[semester] = courses;
-      setSemesterCourses(bySemester);
-      setSemestersLoading(false);
-    });
+    setCollegeLoading(true);
+    api.get("/courses", { params: { college: userCollegeId, limit: 12 }, signal: controller.signal })
+      .then((res) => setCollegeCourses(res.data.courses || []))
+      .catch((err) => { if (err.code !== "ERR_CANCELED") console.error(err); })
+      .finally(() => { if (!controller.signal.aborted) setCollegeLoading(false); });
     return () => controller.abort();
-  }, [debouncedSearch, major]);
+  }, [debouncedSearch, userCollegeId]);
 
-  // No major set yet: fall back to a single general "Recommended" grid.
+  // No college set yet: fall back to a single general "Recommended" grid.
   useEffect(() => {
-    if (debouncedSearch || major) return;
+    if (debouncedSearch || userCollegeId) return;
     const controller = new AbortController();
     setFallbackLoading(true);
     api.get("/courses", { params: { limit: 12 }, signal: controller.signal })
@@ -85,10 +82,10 @@ export default function ExploreTab({ user, searchQuery = "", isLightMode }) {
       .catch((err) => { if (err.code !== "ERR_CANCELED") console.error(err); })
       .finally(() => { if (!controller.signal.aborted) setFallbackLoading(false); });
     return () => controller.abort();
-  }, [debouncedSearch, major]);
+  }, [debouncedSearch, userCollegeId]);
 
   const skeletonGrid = (
-    <div className="cc-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))", gap: "24px" }}>
+    <div className="cc-grid">
       {Array.from({ length: 4 }).map((_, i) => (
         <div key={i} className="cc-skeleton solid-card skeleton-shimmer" style={{ height: "320px" }} />
       ))}
@@ -136,8 +133,8 @@ export default function ExploreTab({ user, searchQuery = "", isLightMode }) {
                 ? websiteContent.homepage.hero.subtitleAr
                 : websiteContent?.homepage?.hero?.subtitle
                 ? websiteContent.homepage.hero.subtitle
-                : major
-                ? t('student.home.subtitle_major', "Here's what's next in your {{major}} path.", { major: major.label })
+                : userCollegeId
+                ? t('student.home.subtitle_college', "Here's what's next in your {{college}} path.", { college: collegeLabel })
                 : t('student.home.subtitle_default', "Discover new skills, dive into hot topics, and learn from the industry's best instructors.")}
             </p>
           </div>
@@ -167,10 +164,10 @@ export default function ExploreTab({ user, searchQuery = "", isLightMode }) {
         </div>
       )}
 
-      {!major && !debouncedSearch && user?.role === 'student' && (
+      {!userCollegeId && !debouncedSearch && user?.role === 'student' && (
         <div className="home-major-prompt animate-entrance">
-          <span>{t('student.home.set_major_prompt', 'Set your major in Settings to personalize your home feed with courses for your program.')}</span>
-          <Link to="/student/settings">{t('student.home.set_major_link', 'Set your major →')}</Link>
+          <span>{t('student.home.set_college_prompt', 'Set your college in Settings to personalize your home feed with courses for your program.')}</span>
+          <Link to="/student/settings">{t('student.home.set_college_link', 'Set your college →')}</Link>
         </div>
       )}
 
@@ -182,7 +179,7 @@ export default function ExploreTab({ user, searchQuery = "", isLightMode }) {
                 {t('student.home.search_results_for', 'Search results for "{{query}}"', { query: debouncedSearch })}
               </h2>
               {searchLoading ? skeletonGrid : searchResults.length > 0 ? (
-                <div className="cc-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))", gap: "24px" }}>
+                <div className="cc-grid">
                   {searchResults.map((course, idx) => (
                     <CourseCard key={course._id || idx} course={course} idx={idx} isLightMode={isLightMode} />
                   ))}
@@ -193,34 +190,30 @@ export default function ExploreTab({ user, searchQuery = "", isLightMode }) {
                 </p>
               )}
             </section>
-          ) : major ? (
-            semestersLoading ? (
-              skeletonGrid
-            ) : Object.values(semesterCourses).some((c) => c.length > 0) ? (
-              Array.from({ length: major.semesters }, (_, i) => i + 1)
-                .filter((semester) => (semesterCourses[semester] || []).length > 0)
-                .map((semester) => (
-                  <section key={semester} className="home-semester-section animate-entrance">
-                    <h2>{t('student.home.semester_label', '{{major}} – Semester {{semester}}', { major: major.label, semester })}</h2>
-                    <div className="home-semester-track">
-                      {semesterCourses[semester].map((course, idx) => (
-                        <CourseCard key={course._id || idx} course={course} idx={idx} isLightMode={isLightMode} />
-                      ))}
-                    </div>
-                  </section>
-                ))
-            ) : (
-              <p style={{ color: "var(--text-secondary)", padding: "32px 0", textAlign: "center" }}>
-                {t('student.home.no_major_courses', 'No {{major}} courses are available yet. Check back soon.', { major: major.label })}
-              </p>
-            )
+          ) : userCollegeId ? (
+            <section className="dashboard-section animate-entrance">
+              <h2 style={{ color: "var(--text-primary)", margin: "0 0 20px 0", fontSize: "1.5rem" }}>
+                {t('student.home.courses_for_college', 'Courses for {{college}}', { college: collegeLabel })}
+              </h2>
+              {collegeLoading ? skeletonGrid : collegeCourses.length > 0 ? (
+                <div className="cc-grid">
+                  {collegeCourses.map((course, idx) => (
+                    <CourseCard key={course._id || idx} course={course} idx={idx} isLightMode={isLightMode} />
+                  ))}
+                </div>
+              ) : (
+                <p style={{ color: "var(--text-secondary)", padding: "32px 0", textAlign: "center" }}>
+                  {t('student.home.no_college_courses', 'No {{college}} courses are available yet. Check back soon.', { college: collegeLabel })}
+                </p>
+              )}
+            </section>
           ) : (
             <section className="dashboard-section animate-entrance">
               <h2 style={{ color: "var(--text-primary)", margin: "0 0 20px 0", fontSize: "1.5rem" }}>
                 {t('student.recommended_for_you', 'Recommended for You')}
               </h2>
               {fallbackLoading ? skeletonGrid : fallbackCourses.length > 0 ? (
-                <div className="cc-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))", gap: "24px" }}>
+                <div className="cc-grid">
                   {fallbackCourses.map((course, idx) => (
                     <CourseCard key={course._id || idx} course={course} idx={idx} isLightMode={isLightMode} />
                   ))}

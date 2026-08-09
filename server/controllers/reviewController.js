@@ -59,6 +59,23 @@ export const reportReview = async (req, res) => {
   }
 };
 
+// @desc    Get recent reviews for a course
+// @route   GET /api/reviews/course/:id
+// @access  Public
+export const getCourseReviews = async (req, res) => {
+  try {
+    const reviews = await Review.find({ course: req.params.id })
+      .populate('student', 'name avatarUrl')
+      .sort({ createdAt: -1 })
+      .limit(10);
+      
+    res.status(200).json({ reviews });
+  } catch (error) {
+    console.error('Error fetching course reviews:', error);
+    res.status(500).json({ message: 'Failed to fetch course reviews' });
+  }
+};
+
 // @desc    Submit a review for a course (student)
 // @route   POST /api/reviews
 // @access  Private/Student
@@ -94,5 +111,63 @@ export const createReview = async (req, res) => {
     }
     console.error('Error creating review:', error);
     res.status(500).json({ message: 'Failed to submit review' });
+  }
+};
+
+// @desc    Update a review (student)
+// @route   PUT /api/reviews/:id
+// @access  Private/Student
+export const updateReview = async (req, res) => {
+  try {
+    const { rating, text } = req.body;
+    
+    if (!rating || !text) {
+      return res.status(400).json({ message: 'Rating and text are required' });
+    }
+
+    const review = await Review.findById(req.params.id);
+
+    if (!review) {
+      return res.status(404).json({ message: 'Review not found' });
+    }
+
+    if (review.student.toString() !== req.user.id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to edit this review' });
+    }
+
+    review.rating = rating;
+    review.text = text;
+    await review.save();
+    
+    const populatedReview = await Review.findById(review._id).populate('student', 'name avatarUrl');
+
+    res.status(200).json({ message: 'Review updated successfully', review: populatedReview });
+  } catch (error) {
+    console.error('Error updating review:', error);
+    res.status(500).json({ message: 'Failed to update review' });
+  }
+};
+
+// @desc    Delete a review (student)
+// @route   DELETE /api/reviews/:id
+// @access  Private/Student
+export const deleteReview = async (req, res) => {
+  try {
+    const review = await Review.findById(req.params.id);
+
+    if (!review) {
+      return res.status(404).json({ message: 'Review not found' });
+    }
+
+    if (review.student.toString() !== req.user.id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to delete this review' });
+    }
+
+    await review.deleteOne();
+
+    res.status(200).json({ message: 'Review deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting review:', error);
+    res.status(500).json({ message: 'Failed to delete review' });
   }
 };

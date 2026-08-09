@@ -19,67 +19,52 @@ const InProgressCard = ({
 
   return (
     <div
-      className="course-card solid-card interactive animate-entrance"
+      className="coursera-card animate-entrance"
       onClick={onViewCourse}
-      style={{ cursor: "pointer", padding: "16px" }}
+      style={{ cursor: "pointer" }}
     >
-      <div className="course-left">
-        <div
-          className="course-thumbnail course-image"
-          style={
-            course.thumbnailUrl
-              ? { backgroundImage: `url(${course.thumbnailUrl})` }
-              : { background: "var(--bg-main)", boxShadow: "var(--inner-shadow)" }
-          }
-        />
-        <div className="course-content">
-          <h3 className="course-title">{course.title}</h3>
-          <p className="course-instructor">
-            {instructor?.name || t('common.instructor', 'Instructor')}
-          </p>
-          <div className="course-progress">
-            <div className="progress-bar-container course-progress-bar">
-              <div
-                className="progress-bar course-progress-fill"
-                style={{
-                  width: `${enrollment.progressPercent}%`,
-                  background: "linear-gradient(135deg, #f97316 0%, #fbbf24 100%)",
-                }}
-              ></div>
-            </div>
-            <div className="progress-text-row course-progress-meta">
-              <span>{enrollment.progressPercent}% {t('student.completed', 'Complete')}</span>
-            </div>
+      <div className="coursera-card-left">
+        <div className="provider-header">
+          {course.thumbnailUrl ? (
+            <img src={course.thumbnailUrl} className="provider-logo" alt={course.title} />
+          ) : (
+            <div className="provider-logo" style={{ background: "var(--bg-main)" }} />
+          )}
+          <div className="provider-info">
+            <span className="provider-name">{instructor?.name || t('common.instructor', 'Instructor')}</span>
+            {instructor?.isProgramInstructor && (
+              <span className="provider-offered">{course.college ? `Offered by ${course.college}` : t('student.offered_by_program', 'Offered by Program Platform')}</span>
+            )}
           </div>
+        </div>
+        <h3 className="course-title">{course.title}</h3>
+        <div className="course-meta">
+          {t('student.completed', 'Completed')} &bull; {enrollment.progressPercent}%
         </div>
       </div>
-      <div className="course-right">
-        <div className="stats-grid">
-          <div 
-          className="solid-card" 
-          style={{boxShadow: 'none',}}
-          >
-            <span className="lesson-label">{t('student.learning.current_lesson', 'Current Lesson')}</span>
-            <h4 className="lesson-title">
-              {enrollment.currentLesson?.title || t('student.learning.up_next', 'Up Next')}
-            </h4>
-            <span className="lesson-duration">
-              {enrollment.currentLesson?.duration
-                ? `${enrollment.currentLesson.duration} ${t('student.learning.min', 'min')}`
-                : ""}
-            </span>
-          </div>
+      <div className="coursera-card-right">
+        <div className="next-lesson-info">
+          <h4 className="next-lesson-title">
+            {enrollment.currentLesson?.title || t('student.learning.up_next', 'Course Introduction')}
+          </h4>
+          <span className="next-lesson-duration">
+            <svg style={{marginRight:'4px'}} xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg> 
+            {t('student.learning.video', 'فيديو')} ({enrollment.currentLesson?.duration || 5} {t('student.learning.min', 'minutes')})
+          </span>
         </div>
-        <div className="course-actions">
-          <button
-            className="solid-btn primary-action continue-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpen(course._id);
-            }}
-          >
-            {t('student.continue_learning', 'Continue Learning')}
-          </button>
+        <button
+          className="continue-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpen(course._id);
+          }}
+        >
+          {t('student.get_started', 'Get started')}
+        </button>
+        <div onClick={(e) => e.stopPropagation()}>
           <ThreeDotMenu
             options={[
               { label: t('student.learning.report_issue', 'Report issue'), action: () => openReportModal(course) },
@@ -103,54 +88,41 @@ const CompletedCard = ({
 
   return (
     <div
-      className="course-card solid-card completed-card animate-entrance"
+      className="coursera-card animate-entrance"
       onClick={onViewCourse}
-      style={{ cursor: "pointer" }}
+      style={{ cursor: "pointer", borderColor: "var(--color-accent)" }}
     >
-      <div className="course-left">
-        <div
-          className="completed-check completion-icon"
-          style={{ background: "linear-gradient(135deg, #f97316 0%, #fbbf24 100%)" }}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth="2.5"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M5 13l4 4L19 7"
-            />
-          </svg>
-        </div>
-        <div
-          className="course-thumbnail course-image"
-          style={
-            course.thumbnailUrl
-              ? { backgroundImage: `url(${course.thumbnailUrl})` }
-              : { background: "var(--bg-main)", boxShadow: "var(--inner-shadow)" }
-          }
-        />
-        <div className="course-content">
-          <h3 className="course-title">{course.title}</h3>
-          <p className="course-instructor">
-            {instructor?.name || t('common.instructor', 'Instructor')}
-          </p>
-          <div
-            className="completion-badge"
-            style={{ color: "var(--color-accent)" }}
-          >
-            100% {t('student.completed', 'Complete')}
+      <div className="coursera-card-left">
+        <div className="provider-header">
+          {course.thumbnailUrl ? (
+            <img src={course.thumbnailUrl} className="provider-logo" alt={course.title} />
+          ) : (
+            <div className="provider-logo" style={{ background: "var(--bg-main)" }} />
+          )}
+          <div className="provider-info">
+            <span className="provider-name">{instructor?.name || t('common.instructor', 'Instructor')}</span>
+            {instructor?.isProgramInstructor && (
+              <span className="provider-offered">{course.college ? `Offered by ${course.college}` : t('student.offered_by_program', 'Offered by Program Platform')}</span>
+            )}
           </div>
         </div>
+        <h3 className="course-title">{course.title}</h3>
+        <div className="course-meta">
+          {t('student.completed', 'Completed')} &bull; 100% &bull; {t('student.learning.completed_on', 'Completed on')} {new Date(enrollment.updatedAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+        </div>
       </div>
-      <div className="course-right">
-        <div className="course-actions">
+      <div className="coursera-card-right" style={{ justifyContent: 'flex-end' }}>
+        <button
+          className="continue-btn"
+          style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpen(course._id);
+          }}
+        >
+          {t('student.learning.review', 'Review Course')}
+        </button>
+        <div onClick={(e) => e.stopPropagation()}>
           <ThreeDotMenu
             options={[
               {
@@ -346,7 +318,7 @@ export default function DashboardTab() {
                     )}
                   </div>
                 ) : (
-                  <div className="dash-row course-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 450px), 1fr))', gap: '24px' }}>
+                  <div className="dash-row course-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 480px), 1fr))', gap: '24px' }}>
                     {inProgress.map((enrollment) => (
                       <InProgressCard
                         key={enrollment._id}
@@ -377,7 +349,7 @@ export default function DashboardTab() {
                     <p>{t('student.no_completed_courses', "You haven't completed any courses yet. Keep learning!")}</p>
                   </div>
                 ) : (
-                  <div className="dash-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 450px), 1fr))', gap: '24px' }}>
+                  <div className="dash-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 480px), 1fr))', gap: '24px' }}>
                     {completed.map((enrollment) => (
                       <CompletedCard
                         key={enrollment._id}

@@ -1,6 +1,6 @@
 import express from 'express';
 import { param } from 'express-validator';
-import { getUserProfile } from '../controllers/userController.js';
+import { getUserProfile, getStudentEnrollments } from '../controllers/userController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { handleValidationErrors } from '../validators/authValidators.js';
 
@@ -12,5 +12,6 @@ const validateUserIdParam = [
 ];
 
 router.get('/:id/profile', protect, validateUserIdParam, getUserProfile);
+router.get('/:id/enrollments', protect, validateUserIdParam, getStudentEnrollments);
 
 export default router;

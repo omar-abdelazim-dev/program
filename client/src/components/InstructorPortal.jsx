@@ -60,6 +60,16 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [unreadEngagementCount, setUnreadEngagementCount] = useState(0);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const unreadRes = await api.get('/engagement/questions/unread-count');
+      setUnreadEngagementCount(unreadRes.data.count || 0);
+    } catch (unreadErr) {
+      console.error('Failed to load unread questions count', unreadErr);
+    }
+  };
 
   const fetchMyCourses = async () => {
     try {
@@ -88,6 +98,9 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
       } catch (statsErr) {
         console.error('Failed to load stats', statsErr);
       }
+
+      await fetchUnreadCount();
+
     } catch (err) {
       console.error(err);
     } finally {
@@ -292,11 +305,33 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
           </button>
-          <button className={`sidebar-icon-btn ${activeTab === 'engagement' ? 'active' : ''}`} onClick={() => setActiveTab('engagement')} data-tooltip={t('instructor.nav.engagement')}>
+          <button className={`sidebar-icon-btn ${activeTab === 'engagement' ? 'active' : ''}`} style={{ position: 'relative' }} onClick={() => setActiveTab('engagement')} data-tooltip={t('instructor.nav.engagement')}>
             {/* Added i18n to Engagement tooltip title */}
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
             </svg>
+            {unreadEngagementCount > 0 && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '4px',
+                  right: '4px',
+                  backgroundColor: '#ef4444',
+                  color: 'white',
+                  fontSize: '0.7rem',
+                  fontWeight: 'bold',
+                  width: '18px',
+                  height: '18px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  pointerEvents: 'none',
+                }}
+              >
+                {unreadEngagementCount > 99 ? '99+' : unreadEngagementCount}
+              </span>
+            )}
           </button>
           <button className={`sidebar-icon-btn ${activeTab === 'reviews' ? 'active' : ''}`} onClick={() => setActiveTab('reviews')} data-tooltip={t('instructor.nav.reviews')}>
             {/* Added i18n to Reviews tooltip title */}
@@ -442,7 +477,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
             </div>
           ) : activeTab === 'engagement' ? (
             <div className="animate-entrance">
-              <InstructorEngagementTab courses={courses} />
+              <InstructorEngagementTab courses={courses} onAction={fetchUnreadCount} />
             </div>
           ) : activeTab === 'analytics' ? (
             <div className="animate-entrance">
@@ -742,7 +777,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                     value={formData.major}
                     onChange={val => setFormData({...formData, major: val, semester: ''})}
                     placeholder={t('instructor.create_course.form.major_placeholder', "Not part of a major's curriculum")}
-                    options={MAJORS.map(m => ({ value: m.id, label: m.label }))}
+                    options={MAJORS.map(m => ({ value: m.id, label: t(`majors.${m.id}`, m.label) }))}
                   />
                   <div className="input-hint">{t('instructor.create_course.form.major_hint', "Lets this course appear on the Home page's major/semester sections.")}</div>
                 </div>

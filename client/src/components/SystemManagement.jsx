@@ -105,7 +105,7 @@ const isFieldRestricted = (tab, field, isSuperAdmin) => {
 };
 
 const ToggleSwitch = ({ label, checked, onChange, disabled }) => (
-  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--c-border-subtle)', opacity: disabled ? 0.6 : 1 }} title={disabled ? "Super Admin permission required" : ""}>
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--c-border-subtle)', opacity: disabled ? 0.6 : 1 }} data-tooltip={disabled ? "Super Admin permission required" : ""}>
     <span style={{ color: 'var(--text-h)', fontWeight: 500, fontSize: '0.95rem' }}>{label}</span>
     <label style={{ position: 'relative', display: 'inline-block', width: '44px', height: '24px', cursor: disabled ? 'not-allowed' : 'pointer' }}>
       <input type="checkbox" checked={checked} onChange={e => !disabled && onChange(e)} style={{ opacity: 0, width: 0, height: 0 }} disabled={disabled} />
@@ -124,7 +124,7 @@ const ToggleSwitch = ({ label, checked, onChange, disabled }) => (
 );
 
 const InputField = ({ label, type = "text", value, onChange, disabled, placeholder }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }} title={disabled ? "Super Admin permission required" : ""}>
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }} data-tooltip={disabled ? "Super Admin permission required" : ""}>
     <label style={{ fontSize: '0.85rem', color: 'var(--c-sub)', fontWeight: 600, textTransform: 'uppercase' }}>{label}</label>
     <input
       type={type}
@@ -156,7 +156,7 @@ const SelectField = ({ label, value, onChange, options, disabled }) => {
   const selectedLabel = selectedOption ? (selectedOption.label !== undefined ? selectedOption.label : selectedOption) : '';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }} title={disabled ? "Super Admin permission required" : ""}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }} data-tooltip={disabled ? "Super Admin permission required" : ""}>
       <label style={{ fontSize: '0.85rem', color: 'var(--c-sub)', fontWeight: 600, textTransform: 'uppercase' }}>{label}</label>
       <div ref={dropdownRef} style={{ position: 'relative' }}>
         <div 
@@ -252,7 +252,7 @@ const SelectField = ({ label, value, onChange, options, disabled }) => {
 };
 
 const TextareaField = ({ label, value, onChange, disabled, placeholder }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }} title={disabled ? "Super Admin permission required" : ""}>
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }} data-tooltip={disabled ? "Super Admin permission required" : ""}>
     <label style={{ fontSize: '0.85rem', color: 'var(--c-sub)', fontWeight: 600, textTransform: 'uppercase' }}>{label}</label>
     <textarea
       value={value}

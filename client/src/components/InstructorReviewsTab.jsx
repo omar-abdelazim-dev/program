@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import notyf from '../utils/notyf';
 import api from '../api/axios';
 import ThreeDotMenu from "./common/ThreeDotMenu";
@@ -42,6 +43,7 @@ const StarRating = ({ rating, size = 18 }) => (
 );
 
 export default function InstructorReviewsTab() {
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const [reviews, setReviews] = useState([]);
   const [averageRating, setAverageRating] = useState(0);
@@ -207,10 +209,12 @@ export default function InstructorReviewsTab() {
                 />
                 <div style={{ flex: 1 }}>
                   <div
+                    onClick={() => review.student?._id && navigate(`/student/${review.student._id}`)}
                     style={{
                       fontWeight: 600,
                       color: 'var(--text-h)',
                       fontSize: '1.05rem',
+                      cursor: review.student?._id ? 'pointer' : 'default',
                     }}
                   >
                     {review.student?.name || 'Anonymous Student'}

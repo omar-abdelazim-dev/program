@@ -1,4 +1,5 @@
 import User from '../models/User.js';
+import Enrollment from '../models/Enrollment.js';
 
 // @route   GET /api/users/:id/profile
 // @access  Private — only an instructor, an admin, or the user themselves
@@ -38,5 +39,37 @@ export const getUserProfile = async (req, res) => {
   } catch (error) {
     console.error('Error fetching user profile:', error);
     res.status(500).json({ message: 'Server error fetching user profile' });
+  }
+};
+
+// @route   GET /api/users/:id/enrollments
+// @access  Private — only an instructor, an admin, or the user themselves
+export const getStudentEnrollments = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const isSelf = req.user.id.toString() === id;
+    const isPrivileged = ['instructor', 'admin', 'superadmin'].includes(req.user.role);
+    if (!isSelf && !isPrivileged) {
+      return res.status(403).json({ message: 'Not authorized to view this profile' });
+    }
+
+    const enrollments = await Enrollment.find({ student: id })
+      .populate({
+        path: 'course',
+        populate: { path: 'instructor', select: 'name avatarUrl isProgramInstructor' },
+        select: 'title thumbnailUrl instructor price discountedPrice averageRating reviewsCount category',
+      })
+      .sort({ updatedAt: -1 });
+
+    // Filter out enrollments where the course was deleted
+    const courses = enrollments
+      .filter(e => e.course)
+      .map(e => (e.course.toObject ? e.course.toObject() : e.course));
+
+    res.status(200).json({ courses });
+  } catch (error) {
+    console.error('Error fetching student enrollments:', error);
+    res.status(500).json({ message: 'Server error fetching student enrollments' });
   }
 };

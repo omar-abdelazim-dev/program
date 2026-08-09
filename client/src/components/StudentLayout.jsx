@@ -7,7 +7,8 @@ import Footer from "./Footer";
 import "../styles/student-layout.css";
 import "../styles/static-pages.css";
 import { useTranslation } from 'react-i18next';
-import { EXPLORE_CATEGORIES, INSTRUCTORS_TAB, ALL_TAB } from "../data/exploreCategories";
+import { INSTRUCTORS_TAB, ALL_TAB } from "../data/exploreCategories";
+import { COLLEGES } from "../data/colleges";
 import CustomSelect from "./CustomSelect";
 import ThreeDotMenu from "./common/ThreeDotMenu";
 
@@ -22,8 +23,8 @@ export default function StudentLayout({
   setNotifications,
   searchQuery,
   onSearchChange,
-  exploreCategory,
-  onCategoryChange,
+  exploreCollege,
+  onCollegeChange,
 }) {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
@@ -43,7 +44,7 @@ export default function StudentLayout({
     }
   }, []);
   
-  const showSearch = location.pathname === '/student' || location.pathname === '/student/dashboard' || location.pathname === '/student/explore';
+  const showSearch = location.pathname === '/student/explore';
 
   // Derive active tab from pathname
   let activeTab = "home";
@@ -252,24 +253,26 @@ export default function StudentLayout({
               </div>
             )}
             
-            {showSearch && (
-              <div style={{ position: 'relative', flexShrink: 0 }}>
+            {location.pathname === '/student/explore' && (
+              <div style={{ position: 'relative', flexShrink: 0, marginInlineEnd: '12px' }}>
                 <CustomSelect 
-                  options={[ALL_TAB, INSTRUCTORS_TAB, ...EXPLORE_CATEGORIES].map(cat => {
+                  options={[ALL_TAB, ...COLLEGES.map(c => c.id)].map(cat => {
                     let label = cat;
                     if (cat === ALL_TAB) label = t('student.explore.all', 'All');
-                    else if (cat === INSTRUCTORS_TAB) label = t('student.explore.instructors', 'Instructors');
-                    else label = t(`categories.${cat.replace(/\s+/g, '_').toLowerCase()}`, cat);
+                    else {
+                      const college = COLLEGES.find(c => c.id === cat);
+                      label = college ? t(college.key, cat) : cat;
+                    }
                     return { label, value: cat };
                   })}
-                  value={exploreCategory || ALL_TAB}
+                  value={exploreCollege || ALL_TAB}
                   onChange={(val) => {
-                    onCategoryChange?.(val);
+                    onCollegeChange?.(val);
                     if (location.pathname !== '/student/explore') {
                       navigate('/student/explore');
                     }
                   }}
-                  placeholder={t('student.explore.select_category', 'Select Category')}
+                  placeholder={t('student.explore.select_college', 'Select College')}
                   triggerClassName="search-pill"
                   triggerStyle={{ width: '220px', margin: 0, paddingInlineStart: '20px', paddingInlineEnd: '40px', textAlign: 'start' }}
                 />
@@ -432,24 +435,55 @@ export default function StudentLayout({
                                 : "none",
                           }}
                         >
-                          <div
-                            style={{
-                              fontSize: "0.9rem",
-                              color: "var(--text-primary)",
-                              marginBottom: "4px",
-                            }}
-                          >
-                            {notif.text}
-                          </div>
-                          <div
-                            style={{
-                              fontSize: "0.75rem",
-                              color: "var(--text-secondary)",
-                              textAlign: "right",
-                            }}
-                          >
-                            {new Date(notif.timestamp).toLocaleString()}
-                          </div>
+                          {notif.link ? (
+                            <Link to={notif.link} style={{ textDecoration: 'none' }} onClick={() => setNotifications(prev => prev.filter(n => n.id !== notif.id))}>
+                              <div
+                                style={{
+                                  fontSize: "0.9rem",
+                                  color: "var(--color-accent)",
+                                  fontWeight: "600",
+                                  marginBottom: "4px",
+                                }}
+                              >
+                                {notif.text}
+                              </div>
+                              {notif.message && (
+                                <div style={{ fontSize: "0.85rem", color: "var(--text-primary)", marginBottom: "4px" }}>
+                                  {notif.message}
+                                </div>
+                              )}
+                              <div
+                                style={{
+                                  fontSize: "0.75rem",
+                                  color: "var(--text-secondary)",
+                                  textAlign: "right",
+                                }}
+                              >
+                                {new Date(notif.timestamp).toLocaleString()}
+                              </div>
+                            </Link>
+                          ) : (
+                            <>
+                              <div
+                                style={{
+                                  fontSize: "0.9rem",
+                                  color: "var(--text-primary)",
+                                  marginBottom: "4px",
+                                }}
+                              >
+                                {notif.text}
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: "0.75rem",
+                                  color: "var(--text-secondary)",
+                                  textAlign: "right",
+                                }}
+                              >
+                                {new Date(notif.timestamp).toLocaleString()}
+                              </div>
+                            </>
+                          )}
                         </div>
                       ))}
                   </div>
@@ -459,7 +493,7 @@ export default function StudentLayout({
             </div>
 
             <div className="profile-wrapper desktop-only-icon">
-              <div className="avatar-btn">
+              <div className="avatar-btn" data-tooltip={t('student.nav.account', 'Account')}>
                 {user?.avatarUrl ? (
                   <img src={user.avatarUrl} alt={user?.name || "Profile"} />
                 ) : (

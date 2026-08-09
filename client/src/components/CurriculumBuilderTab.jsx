@@ -143,7 +143,7 @@ export default function CurriculumBuilderTab({ courses = [], lessonsByCourse = {
 
       <ConfirmModal 
         isOpen={showDeleteModal}
-        title={t('instructor.dashboard.actions.delete')}
+        data-tooltip={t('instructor.dashboard.actions.delete')}
         message={t('instructor.curriculum.delete_course_confirm')}
         confirmText={t('instructor.dashboard.actions.delete')}
         cancelText={t('instructor.create_course.cancel')}

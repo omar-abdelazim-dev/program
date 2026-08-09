@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import api from "../api/axios";
 import notyf from "../utils/notyf";
 import { createPortal } from "react-dom";
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from "react-i18next";
 
 // Generic custom dropdown component to match the system's dark theme
 const CustomDropdown = ({
@@ -68,7 +68,7 @@ const CustomDropdown = ({
           alignItems: "center",
           background: "var(--bg-main)",
           border: isOpen ? "1px solid #f97316" : "1px solid transparent",
-          borderRadius: "12px",
+          borderRadius: "50px",
           boxShadow: isOpen
             ? "var(--outer-shadow), 0 0 0 3px rgba(249, 115, 22, 0.2)"
             : "var(--inner-shadow)",
@@ -103,7 +103,7 @@ const CustomDropdown = ({
               width: dropdownPos.width,
               background: "var(--bg-surface)",
               border: "none",
-              borderRadius: "12px",
+              borderRadius: "30px",
               padding: "8px",
               zIndex: 999999,
               display: "flex",
@@ -132,27 +132,20 @@ const CustomDropdown = ({
                   border: "none",
                   textAlign: "left",
                   cursor: "pointer",
-                  borderRadius: "8px",
+                  borderRadius: "50px",
                   fontSize: "0.95rem",
                   transition: "all 0.2s ease",
                   color:
                     value.toLowerCase() === opt.toLowerCase()
-                      ? "transparent"
+                      ? "#f97316"
                       : "var(--c-sub)",
-                  ...(value.toLowerCase() === opt.toLowerCase()
-                    ? {
-                        backgroundImage:
-                          "linear-gradient(90deg, #f97316, #fbad41)",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        fontWeight: "600",
-                      }
-                    : {}),
+                  fontWeight:
+                    value.toLowerCase() === opt.toLowerCase() ? "600" : "400",
                 }}
                 onMouseEnter={(e) => {
                   if (value.toLowerCase() !== opt.toLowerCase()) {
                     e.target.style.background = "var(--bg-main)";
-                    e.target.style.boxShadow = "var(--inner-shadow)";
+                    e.target.style.boxShadow = "none";
                     e.target.style.color = "var(--c-light)";
                     e.target.style.WebkitTextFillColor = "var(--c-light)";
                   }
@@ -375,11 +368,15 @@ export default function AdminUserManagementTab({
   const handleToggleProgramInstructor = async (user) => {
     setIsProcessing(true);
     try {
-      const res = await api.patch(`/admin/users/${user._id}/program-instructor`);
+      const res = await api.patch(
+        `/admin/users/${user._id}/program-instructor`,
+      );
       notyf.success(res.data.message || "Toggled program instructor status");
       fetchUsers(searchQuery, true);
     } catch (err) {
-      notyf.error(err.response?.data?.message || "Failed to toggle program instructor");
+      notyf.error(
+        err.response?.data?.message || "Failed to toggle program instructor",
+      );
     } finally {
       setIsProcessing(false);
     }
@@ -420,8 +417,21 @@ export default function AdminUserManagementTab({
         }}
       >
         <div>
-          <h2 style={{ fontSize: "1.8rem", margin: "0 0 8px 0", color: "var(--text-h)" }}>{t('admin.user_management', 'User Management')}</h2>
-          <div style={{ fontSize: "0.95rem", color: "var(--c-sub)" }}>{t('admin.manage_accounts_roles', 'Manage platform accounts, roles, and statuses.')}</div>
+          <h2
+            style={{
+              fontSize: "1.8rem",
+              margin: "0 0 8px 0",
+              color: "var(--text-h)",
+            }}
+          >
+            {t("admin.user_management", "User Management")}
+          </h2>
+          <div style={{ fontSize: "0.95rem", color: "var(--c-sub)" }}>
+            {t(
+              "admin.manage_accounts_roles",
+              "Manage platform accounts, roles, and statuses.",
+            )}
+          </div>
         </div>
         <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
           <div
@@ -442,7 +452,10 @@ export default function AdminUserManagementTab({
             </svg>
             <input
               type="text"
-              placeholder={t('admin.search_placeholder', 'Search by name, email, or ID...')}
+              placeholder={t(
+                "admin.search_placeholder",
+                "Search by name, email, or ID...",
+              )}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setIsSearchFocused(true)}
@@ -493,7 +506,7 @@ export default function AdminUserManagementTab({
               }
             }}
           >
-            {t('common.filters', 'Filters')}
+            {t("common.filters", "Filters")}
           </button>
         </div>
       </div>
@@ -511,58 +524,96 @@ export default function AdminUserManagementTab({
         }}
       >
         <div style={{ overflow: "hidden" }}>
-          <div style={{
-            background: "var(--bg-surface)",
-            border: "none",
-            borderRadius: "12px",
-            padding: "20px 24px",
-            display: "flex",
-            alignItems: "flex-end",
-            gap: "24px",
-            transform: showFilters ? "translateY(0)" : "translateY(-10px)",
-            transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
-          }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px", minWidth: "220px" }}>
-            <label style={{ fontSize: "0.75rem", fontWeight: "600", color: "var(--c-sub)", letterSpacing: "0.5px" }}>{t('admin.account_status', 'ACCOUNT STATUS')}</label>
-            <CustomDropdown
-              value={accountStatus}
-              options={["All Statuses", "Active", "Suspended", "Deleted"]}
-              onChange={setAccountStatus}
-            />
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px", minWidth: "220px" }}>
-            <label style={{ fontSize: "0.75rem", fontWeight: "600", color: "var(--c-sub)", letterSpacing: "0.5px" }}>{t('admin.verification', 'VERIFICATION')}</label>
-            <CustomDropdown
-              value={verification}
-              options={["All", "Verified", "Unverified"]}
-              onChange={setVerification}
-            />
-          </div>
-
-          <button
-            onClick={clearFilters}
+          <div
             style={{
-              background: "rgba(239, 68, 68, 0.1)",
-              color: "#f87171",
-              height: "42px",
-              padding: "0 20px",
+              background: "var(--bg-surface)",
               border: "none",
-              borderRadius: "12px",
-              cursor: "pointer",
-              fontSize: "0.9rem",
-              fontWeight: "500",
-              transition: "all 0.2s ease",
+              borderRadius: "50px",
+              padding: "20px 24px",
               display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "var(--inner-shadow)",
+              alignItems: "flex-end",
+              gap: "24px",
+              transform: showFilters ? "translateY(0)" : "translateY(-10px)",
+              transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
             }}
-            onMouseEnter={(e) => (e.target.style.background = "rgba(239, 68, 68, 0.2)")}
-            onMouseLeave={(e) => (e.target.style.background = "rgba(239, 68, 68, 0.1)")}
           >
-            {t('common.clear_all', 'Clear All Filters')}
-          </button>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+                minWidth: "220px",
+              }}
+            >
+              <label
+                style={{
+                  fontSize: "0.75rem",
+                  fontWeight: "600",
+                  color: "var(--c-sub)",
+                  letterSpacing: "0.5px",
+                }}
+              >
+                {t("admin.account_status", "ACCOUNT STATUS")}
+              </label>
+              <CustomDropdown
+                value={accountStatus}
+                options={["All Statuses", "Active", "Suspended", "Deleted"]}
+                onChange={setAccountStatus}
+              />
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+                minWidth: "220px",
+              }}
+            >
+              <label
+                style={{
+                  fontSize: "0.75rem",
+                  fontWeight: "600",
+                  color: "var(--c-sub)",
+                  letterSpacing: "0.5px",
+                }}
+              >
+                {t("admin.verification", "VERIFICATION")}
+              </label>
+              <CustomDropdown
+                value={verification}
+                options={["All", "Verified", "Unverified"]}
+                onChange={setVerification}
+              />
+            </div>
+
+            <button
+              onClick={clearFilters}
+              style={{
+                background: "rgba(239, 68, 68, 0.1)",
+                color: "#f87171",
+                height: "42px",
+                padding: "0 20px",
+                border: "none",
+                borderRadius: "50px",
+                cursor: "pointer",
+                fontSize: "0.9rem",
+                fontWeight: "500",
+                transition: "all 0.2s ease",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "var(--inner-shadow)",
+              }}
+              onMouseEnter={(e) =>
+                (e.target.style.background = "rgba(239, 68, 68, 0.2)")
+              }
+              onMouseLeave={(e) =>
+                (e.target.style.background = "rgba(239, 68, 68, 0.1)")
+              }
+            >
+              {t("common.clear_all", "Clear All Filters")}
+            </button>
           </div>
         </div>
       </div>
@@ -570,11 +621,18 @@ export default function AdminUserManagementTab({
       {/* Role Tabs */}
       <div style={{ display: "flex", gap: "12px" }}>
         {[
-          { id: "student", label: t('admin.students', 'Students') },
-          { id: "instructor", label: t('admin.instructors', 'Instructors') },
-          { id: "admin", label: t('admin.admins', 'Admins') },
-          ...(currentUser?.role === 'superadmin' ? [{ id: "superadmin", label: t('admin.superadmins', 'Super Admins') }] : [])
-        ].map(tab => {
+          { id: "student", label: t("admin.students", "Students") },
+          { id: "instructor", label: t("admin.instructors", "Instructors") },
+          { id: "admin", label: t("admin.admins", "Admins") },
+          ...(currentUser?.role === "superadmin"
+            ? [
+                {
+                  id: "superadmin",
+                  label: t("admin.superadmins", "Super Admins"),
+                },
+              ]
+            : []),
+        ].map((tab) => {
           const isActive = activeRole === tab.id;
           const roleStyle = getRoleColor(tab.id);
           return (
@@ -594,7 +652,9 @@ export default function AdminUserManagementTab({
                 border: "none",
                 background: "var(--bg-surface)",
                 color: isActive ? "var(--text-h)" : "var(--c-sub)",
-                boxShadow: isActive ? "var(--inner-shadow)" : "var(--outer-shadow)",
+                boxShadow: isActive
+                  ? "var(--inner-shadow)"
+                  : "var(--outer-shadow)",
               }}
               onMouseEnter={(e) => {
                 if (!isActive) {
@@ -631,7 +691,9 @@ export default function AdminUserManagementTab({
           }}
         >
           <div style={{ fontWeight: "600", color: "var(--text-h)" }}>
-            {t('admin.selected_count', '{{count}} users selected', { count: selectedIds.size })}
+            {t("admin.selected_count", "{{count}} users selected", {
+              count: selectedIds.size,
+            })}
           </div>
           <div style={{ display: "flex", gap: "12px" }}>
             <button
@@ -656,7 +718,7 @@ export default function AdminUserManagementTab({
                 (e.target.style.background = "rgba(16,185,129,0.1)")
               }
             >
-              {t('admin.activate', 'Activate')}
+              {t("admin.activate", "Activate")}
             </button>
             <button
               onClick={() => handleBulkAction("suspend")}
@@ -680,7 +742,7 @@ export default function AdminUserManagementTab({
                 (e.target.style.background = "rgba(249,115,22,0.1)")
               }
             >
-              {t('admin.suspend', 'Suspend')}
+              {t("admin.suspend", "Suspend")}
             </button>
             <button
               onClick={() => notyf.success("Exporting CSV...")}
@@ -703,7 +765,7 @@ export default function AdminUserManagementTab({
                 (e.target.style.background = "var(--bg-surface)")
               }
             >
-              {t('admin.export_csv', 'Export CSV')}
+              {t("admin.export_csv", "Export CSV")}
             </button>
             <button
               onClick={() => handleBulkAction("delete")}
@@ -727,7 +789,7 @@ export default function AdminUserManagementTab({
                 (e.target.style.background = "rgba(239,68,68,0.1)")
               }
             >
-              {t('admin.delete', 'Delete')}
+              {t("admin.delete", "Delete")}
             </button>
           </div>
         </div>
@@ -743,10 +805,18 @@ export default function AdminUserManagementTab({
           borderRadius: "12px",
           overflow: "hidden",
           marginTop: selectedIds.size > 0 ? "0px" : "4px",
-          width: "100%"
+          width: "100%",
         }}
       >
-        <table className="admin-table" style={{ width: "100%", borderCollapse: "separate", borderSpacing: "0 4px", textAlign: "left" }}>
+        <table
+          className="admin-table"
+          style={{
+            width: "100%",
+            borderCollapse: "separate",
+            borderSpacing: "0 4px",
+            textAlign: "left",
+          }}
+        >
           <thead>
             <tr>
               <th style={{ width: "50px", padding: "16px 24px" }}>
@@ -765,22 +835,75 @@ export default function AdminUserManagementTab({
                   }}
                 />
               </th>
-              <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>{t('admin.name', 'User')}</th>
-              <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>{t('admin.role', 'Role')}</th>
-              <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>{t('common.status', 'Status')}</th>
-              <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>{t('admin.registered', 'Registered')}</th>
-              <th style={{ padding: "16px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem", textAlign: "right" }}>{t('admin.action', 'Action')}</th>
+              <th
+                style={{
+                  padding: "16px",
+                  fontWeight: "600",
+                  color: "var(--c-sub)",
+                  fontSize: "0.85rem",
+                }}
+              >
+                {t("admin.name", "User")}
+              </th>
+              <th
+                style={{
+                  padding: "16px",
+                  fontWeight: "600",
+                  color: "var(--c-sub)",
+                  fontSize: "0.85rem",
+                }}
+              >
+                {t("admin.role", "Role")}
+              </th>
+              <th
+                style={{
+                  padding: "16px",
+                  fontWeight: "600",
+                  color: "var(--c-sub)",
+                  fontSize: "0.85rem",
+                }}
+              >
+                {t("common.status", "Status")}
+              </th>
+              <th
+                style={{
+                  padding: "16px",
+                  fontWeight: "600",
+                  color: "var(--c-sub)",
+                  fontSize: "0.85rem",
+                }}
+              >
+                {t("admin.registered", "Registered")}
+              </th>
+              <th
+                style={{
+                  padding: "16px 24px",
+                  fontWeight: "600",
+                  color: "var(--c-sub)",
+                  fontSize: "0.85rem",
+                  textAlign: "right",
+                }}
+              >
+                {t("admin.action", "Action")}
+              </th>
             </tr>
           </thead>
           <tbody>
             {currentUsers.length === 0 ? (
               <tr>
-                <td colSpan="7" style={{ padding: "40px", textAlign: "center", color: "var(--c-sub)" }}>
+                <td
+                  colSpan="7"
+                  style={{
+                    padding: "40px",
+                    textAlign: "center",
+                    color: "var(--c-sub)",
+                  }}
+                >
                   No users found.
                 </td>
               </tr>
             ) : (
-              currentUsers.map(u => (
+              currentUsers.map((u) => (
                 <tr
                   key={u._id}
                   className={selectedIds.has(u._id) ? "selected" : ""}
@@ -859,7 +982,7 @@ export default function AdminUserManagementTab({
                     >
                       {u.role}
                     </span>
-                    {u.role === 'instructor' && u.isProgramInstructor && (
+                    {u.role === "instructor" && u.isProgramInstructor && (
                       <span
                         style={{
                           background: "var(--bg-surface)",
@@ -875,7 +998,8 @@ export default function AdminUserManagementTab({
                       >
                         <span
                           style={{
-                            backgroundImage: "linear-gradient(90deg, #f97316, #fbad41)",
+                            backgroundImage:
+                              "linear-gradient(90deg, #f97316, #fbad41)",
                             WebkitBackgroundClip: "text",
                             WebkitTextFillColor: "transparent",
                           }}
@@ -955,6 +1079,8 @@ export default function AdminUserManagementTab({
                         padding: "6px 14px",
                         fontSize: "0.8rem",
                         width: "fit-content",
+                        marginLeft: "auto",
+                        display: "block",
                         whiteSpace: "nowrap",
                         background: "var(--bg-main)",
                         color: "var(--c-sub)",
@@ -981,7 +1107,7 @@ export default function AdminUserManagementTab({
             )}
           </tbody>
         </table>
-        
+
         {/* Pagination Controls */}
         {totalPages > 1 && (
           <div
@@ -1317,6 +1443,65 @@ export default function AdminUserManagementTab({
                       {sidePanelUser.studentId || "—"}
                     </div>
                   </div>
+                  <div>
+                    <div
+                      style={{
+                        color: "var(--c-sub)",
+                        fontSize: "0.8rem",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      College
+                    </div>
+                    <div
+                      style={{ color: "var(--c-light)", fontSize: "0.95rem" }}
+                    >
+                      {sidePanelUser.college || "—"}
+                    </div>
+                  </div>
+                  <div>
+                    <div
+                      style={{
+                        color: "var(--c-sub)",
+                        fontSize: "0.8rem",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      Major
+                    </div>
+                    <div
+                      style={{ color: "var(--c-light)", fontSize: "0.95rem" }}
+                    >
+                      {sidePanelUser.major || "—"}
+                    </div>
+                  </div>
+                  <div style={{ gridColumn: "1 / -1" }}>
+                    <div
+                      style={{
+                        color: "var(--c-sub)",
+                        fontSize: "0.8rem",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      Bio / Goals
+                    </div>
+                    <div
+                      style={{
+                        color: "var(--c-light)",
+                        fontSize: "0.9rem",
+                        background: "var(--bg-main)",
+                        padding: "12px",
+                        borderRadius: "50px",
+                        lineHeight: "1.5",
+                        whiteSpace: "pre-wrap",
+                        maxHeight: "120px",
+                        overflowY: "auto",
+                        boxShadow: "var(--inner-shadow)",
+                      }}
+                    >
+                      {sidePanelUser.goalsText || "—"}
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -1516,17 +1701,23 @@ export default function AdminUserManagementTab({
                         : "Soft Delete Account"}
                     </button>
                   </div>
-                  {sidePanelUser.role === 'instructor' && (
+                  {sidePanelUser.role === "instructor" && (
                     <button
-                      onClick={() => handleToggleProgramInstructor(sidePanelUser)}
+                      onClick={() =>
+                        handleToggleProgramInstructor(sidePanelUser)
+                      }
                       disabled={isProcessing || !canModifyRole(sidePanelUser)}
                       style={{
-                        width: '100%',
-                        marginTop: '12px',
-                        background: sidePanelUser.isProgramInstructor ? "rgba(239, 68, 68, 0.1)" : "rgba(16, 185, 129, 0.1)",
+                        width: "100%",
+                        marginTop: "12px",
+                        background: sidePanelUser.isProgramInstructor
+                          ? "rgba(239, 68, 68, 0.1)"
+                          : "rgba(16, 185, 129, 0.1)",
                         border: "none",
                         boxShadow: "var(--inner-shadow)",
-                        color: sidePanelUser.isProgramInstructor ? "#ef4444" : "#10B981",
+                        color: sidePanelUser.isProgramInstructor
+                          ? "#ef4444"
+                          : "#10B981",
                         padding: "12px",
                         borderRadius: "10px",
                         cursor:
@@ -1543,11 +1734,17 @@ export default function AdminUserManagementTab({
                       }}
                       onMouseEnter={(e) => {
                         if (!isProcessing && canModifyRole(sidePanelUser))
-                          e.target.style.background = sidePanelUser.isProgramInstructor ? "rgba(239, 68, 68, 0.2)" : "rgba(16, 185, 129, 0.2)";
+                          e.target.style.background =
+                            sidePanelUser.isProgramInstructor
+                              ? "rgba(239, 68, 68, 0.2)"
+                              : "rgba(16, 185, 129, 0.2)";
                       }}
                       onMouseLeave={(e) => {
                         if (!isProcessing && canModifyRole(sidePanelUser))
-                          e.target.style.background = sidePanelUser.isProgramInstructor ? "rgba(239, 68, 68, 0.1)" : "rgba(16, 185, 129, 0.1)";
+                          e.target.style.background =
+                            sidePanelUser.isProgramInstructor
+                              ? "rgba(239, 68, 68, 0.1)"
+                              : "rgba(16, 185, 129, 0.1)";
                       }}
                     >
                       {sidePanelUser.isProgramInstructor

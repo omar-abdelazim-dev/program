@@ -149,12 +149,12 @@ export default function TestimonialsManager({ user }) {
                 <td style={{ padding: '16px', textAlign: 'right', verticalAlign: 'top', borderBottom: '1px solid var(--border)', borderTopRightRadius: '16px', borderBottomRightRadius: '16px' }}>
                   <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                     {item.status !== "approved" && item.status !== "featured" && (
-                      <Button variant="success" onClick={() => handleStatusChange(item._id, "approved")} disabled={!isSuperAdmin} title={!isSuperAdmin ? "Super Admin permission required" : ""} style={{ padding: '6px 16px', borderRadius: '12px' }}>
+                      <Button variant="success" onClick={() => handleStatusChange(item._id, "approved")} disabled={!isSuperAdmin} data-tooltip={!isSuperAdmin ? "Super Admin permission required" : ""} style={{ padding: '6px 16px', borderRadius: '12px' }}>
                         Approve
                       </Button>
                     )}
                     {item.status !== "featured" && (
-                      <Button variant="primary" onClick={() => handleStatusChange(item._id, "featured")} disabled={!isSuperAdmin} title={!isSuperAdmin ? "Super Admin permission required" : ""} style={{ padding: '6px 16px', borderRadius: '12px' }}>
+                      <Button variant="primary" onClick={() => handleStatusChange(item._id, "featured")} disabled={!isSuperAdmin} data-tooltip={!isSuperAdmin ? "Super Admin permission required" : ""} style={{ padding: '6px 16px', borderRadius: '12px' }}>
                         Feature
                       </Button>
                     )}
@@ -163,7 +163,7 @@ export default function TestimonialsManager({ user }) {
                         Hide
                       </Button>
                     )}
-                    <Button variant="danger" onClick={() => handleDelete(item._id)} disabled={!isSuperAdmin} title={!isSuperAdmin ? "Super Admin permission required" : ""} style={{ padding: '6px 16px', borderRadius: '12px' }}>
+                    <Button variant="danger" onClick={() => handleDelete(item._id)} disabled={!isSuperAdmin} data-tooltip={!isSuperAdmin ? "Super Admin permission required" : ""} style={{ padding: '6px 16px', borderRadius: '12px' }}>
                       Delete
                     </Button>
                   </div>

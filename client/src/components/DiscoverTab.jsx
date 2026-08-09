@@ -2,17 +2,17 @@ import { useState, useEffect } from "react";
 import api from "../api/axios";
 import CourseCard from "./CourseCard";
 import InstructorCard from "./InstructorCard";
-import { EXPLORE_CATEGORIES, INSTRUCTORS_TAB, ALL_TAB } from "../data/exploreCategories";
+import { INSTRUCTORS_TAB, ALL_TAB } from "../data/exploreCategories";
+import { COLLEGES } from "../data/colleges";
 import { useTranslation } from "react-i18next";
 import "../styles/explore.css";
 
 const SEARCH_DEBOUNCE_MS = 300;
-const TABS = [ALL_TAB, INSTRUCTORS_TAB, ...EXPLORE_CATEGORIES];
 
 // The Explore page — was the dead "Courses" sidebar tab. Category tabs +
 // search filter instantly, no navigation. The personalized, major-driven
 // feed lives on the Home page (ExploreTab.jsx) now.
-export default function DiscoverTab({ searchQuery = "", activeCategory: activeTab = ALL_TAB, isLightMode }) {
+export default function DiscoverTab({ searchQuery = "", activeCollege: activeTab = ALL_TAB, isLightMode }) {
   const { t } = useTranslation();
   const [debouncedSearch, setDebouncedSearch] = useState(searchQuery.trim());
 
@@ -34,7 +34,7 @@ export default function DiscoverTab({ searchQuery = "", activeCategory: activeTa
     setCoursesLoading(true);
     const params = {};
     if (debouncedSearch) params.search = debouncedSearch;
-    if (activeTab !== ALL_TAB) params.category = activeTab;
+    if (activeTab !== ALL_TAB) params.college = activeTab;
     api.get("/courses", { params, signal: controller.signal })
       .then((res) => setCourses(res.data.courses || []))
       .catch((err) => { if (err.code !== "ERR_CANCELED") console.error(err); })
@@ -104,13 +104,13 @@ export default function DiscoverTab({ searchQuery = "", activeCategory: activeTa
             </p>
           )
         ) : coursesLoading ? (
-          <div className="cc-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))", gap: "24px" }}>
+          <div className="cc-grid">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="cc-skeleton solid-card skeleton-shimmer" style={{ height: "320px" }} />
             ))}
           </div>
         ) : courses.length > 0 ? (
-          <div className="cc-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))", gap: "24px" }}>
+          <div className="cc-grid">
             {courses.map((course, idx) => (
               <CourseCard key={course._id || idx} course={course} idx={idx} isLightMode={isLightMode} />
             ))}
@@ -121,7 +121,14 @@ export default function DiscoverTab({ searchQuery = "", activeCategory: activeTa
               let translatedTab = activeTab;
               if (activeTab === ALL_TAB) translatedTab = t('student.explore.all', 'All');
               else if (activeTab === INSTRUCTORS_TAB) translatedTab = t('student.explore.instructors', 'Instructors');
-              else translatedTab = t(`categories.${activeTab.replace(/\s+/g, '_').toLowerCase()}`, activeTab);
+              else {
+                const collegeObj = COLLEGES.find((c) => c.id === activeTab);
+                if (collegeObj) {
+                  translatedTab = t(collegeObj.key, collegeObj.id);
+                } else {
+                  translatedTab = t(`categories.${activeTab.replace(/\s+/g, '_').toLowerCase()}`, activeTab);
+                }
+              }
 
               if (debouncedSearch) {
                 return activeTab !== ALL_TAB 

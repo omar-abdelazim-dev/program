@@ -296,7 +296,7 @@ body {
     inset-inline-start: calc(100% + 12px);
     top: 50%;
     transform: translate(10px, -50%);
-    background: #2D3748;
+    background: var(--bg-surface);
     color: var(--text-primary);
     font-size: .8rem;
     padding: 5px 10px;
@@ -363,11 +363,6 @@ body.light-mode .collapse-btn.sideBarButton {
     border-color: #e2e8f0;
 }
 
-body.light-mode .sideBarButton::after {
-    background: #fff;
-    color: #1e293b;
-    border-color: #e2e8f0;
-}
 
 /* ── CONTENT ── */
 .content {
