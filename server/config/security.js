@@ -70,5 +70,5 @@ export const RATE_LIMITS = {
   // General auth endpoints (check-email, change-password)
   auth: { windowMs: 15 * 60 * 1000, max: 1000 },
   // Global API catch-all — 200 req/15 min is generous but still protective
-  global: { windowMs: 15 * 60 * 1000, max: 2000 },
+  global: { windowMs: 15 * 60 * 1000, max: 200 },
 };
