@@ -211,7 +211,7 @@
         "major": "Major (Optional)",
         "major_placeholder": "Not part of a major's curriculum",
         "major_hint": "Lets this course appear on the Home page's major/semester sections.",
-        "semester": "Semester (Optional)",
+        "semester": "Semester",
         "semester_placeholder": "Select a semester",
         "semester_placeholder_no_major": "Select a major first",
         "semester_n": "Semester {{n}}"
@@ -288,7 +288,16 @@
       "message": "MESSAGE",
       "type_message": "Type your message here...",
       "send_announcement": "Send Announcement",
-      "loading_questions": "Loading questions..."
+      "loading_questions": "Loading questions...",
+      "send_announcement_title": "Send Announcement",
+      "send_announcement_msg": "Are you sure you want to notify all students in this course?",
+      "send_now": "Send Now",
+      "delete_question_title": "Delete Question",
+      "delete_question_msg": "Are you sure you want to delete this question? This action cannot be undone.",
+      "delete_reply_title": "Delete Reply",
+      "delete_reply_msg": "Are you sure you want to delete this reply? This action cannot be undone.",
+      "reply_deleted": "Reply deleted",
+      "delete_reply_failed": "Failed to delete reply"
     },
     "financials": {
       "title": "Financials",
@@ -330,7 +339,8 @@
       "based_on_reviews": "Based on {{count}} student reviews",
       "no_reviews_yet": "No reviews yet",
       "no_reviews_desc": "Once students review your courses, their ratings and feedback will appear here.",
-      "loading_reviews": "Loading reviews..."
+      "loading_reviews": "Loading reviews...",
+      "reported": "Reported"
     },
     "no_courses": "You haven't created any courses yet. Start sharing your knowledge with the world!"
   },
@@ -468,6 +478,7 @@
   },
   "settings": {
     "title": "Settings",
+    "subtitle": "Manage your profile, preferences, and account.",
     "nav": {
       "profile": "Profile",
       "appearance": "Appearance",

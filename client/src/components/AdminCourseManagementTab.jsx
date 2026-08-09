@@ -621,7 +621,7 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
               <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.9rem" }}>
                   <span style={{ color: "var(--c-sub)" }}>Category</span>
-                  <span style={{ color: "var(--c-light)" }}>{sidePanelCourse.category}</span>
+                  <span style={{ color: "var(--c-light)" }}>{t(`categories.${sidePanelCourse.category.replace(/\s+/g, '_').toLowerCase()}`, sidePanelCourse.category)}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.9rem" }}>
                   <span style={{ color: "var(--c-sub)" }}>Difficulty</span>

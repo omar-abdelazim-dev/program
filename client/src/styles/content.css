@@ -2424,7 +2424,7 @@ body.light-mode .custom-select-value.placeholder {
 .input-group input:focus,
 .input-group textarea:focus,
 .input-group select:focus {
-    border-color: transparent;
+    border-color: #f97316;
     box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15), var(--inner-shadow);
 }
 
@@ -3519,6 +3519,11 @@ body.light-mode .solid-input {
 body.light-mode .solid-input:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15), inset var(--outer-shadow) !important;
+}
+
+body.light-mode .solid-input:read-only:focus {
+    border-color: transparent;
+    box-shadow: var(--inner-shadow) !important;
 }
 
 body.light-mode .light-inner-shadow {

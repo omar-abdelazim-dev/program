@@ -67,6 +67,18 @@
   box-shadow: var(--inner-shadow);
 }
 
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
+}
+
+.input-error {
+    border-color: #ef4444 !important;
+    background: rgba(239, 68, 68, 0.05) !important;
+}
+
 .profile-header {
   display: flex;
   align-items: center;
@@ -93,4 +105,27 @@
   margin: 0 0 12px 0;
   color: var(--text-secondary);
   max-width: 620px;
+}
+
+.reorder-arrow-btn {
+  background: none;
+  border: none;
+  padding: 4px;
+  line-height: 1;
+  transition: all 0.2s;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.reorder-arrow-btn:active {
+  background: var(--bg-main);
+  box-shadow: var(--inner-shadow);
+}
+.reorder-arrow-btn:hover {
+  background: var(--bg-main);
+  box-shadow: var(--inner-shadow);
 }

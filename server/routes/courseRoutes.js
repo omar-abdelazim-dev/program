@@ -16,7 +16,7 @@ import {
   getCourseEnrollments,
   unpublishCourse,
 } from '../controllers/courseController.js';
-import { addLesson, getLessonContent, updateLesson } from '../controllers/lessonController.js';
+import { addLesson, getLessonContent, updateLesson, deleteLesson, reorderLessons } from '../controllers/lessonController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 import { optionalAuth } from '../middleware/optionalAuth.js';
 import { validateCreateCourse, validateUpdateCourse } from '../validators/courseValidators.js';
@@ -38,6 +38,8 @@ router.patch('/:id/request-delete', protect, authorize('instructor'), requestDel
 router.post('/:courseId/lessons', protect, authorize('instructor'), addLesson);
 router.put('/:courseId/lessons/:lessonId', protect, authorize('instructor'), updateLesson);
 router.get('/:courseId/lessons/:lessonId', protect, getLessonContent);
+router.delete('/:courseId/lessons/:lessonId', protect, authorize('instructor'), deleteLesson);
+router.put('/:courseId/lessons-reorder', protect, authorize('instructor'), reorderLessons);
 
 // --- Instructor (own course) or Admin/Superadmin (compliance edits) ---
 router.put('/:id', protect, authorize('instructor', 'admin', 'superadmin'), validateUpdateCourse, updateCourse);

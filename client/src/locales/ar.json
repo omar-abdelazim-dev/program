@@ -188,7 +188,9 @@
         "reason": "السبب",
         "no_lessons_yet": "لا توجد دروس بعد",
         "lesson": "درس",
-        "lessons": "دروس"
+        "lessons": "دروس",
+        "draft": "مسودة",
+        "published": "منشور"
       },
       "actions": {
         "edit": "تعديل",
@@ -211,7 +213,7 @@
         "major": "التخصص (اختياري)",
         "major_placeholder": "غير مرتبط بمنهج تخصص معين",
         "major_hint": "يتيح ظهور هذا المقرر في أقسام التخصص/الفصل الدراسي بالصفحة الرئيسية.",
-        "semester": "الفصل الدراسي (اختياري)",
+        "semester": "الفصل الدراسي",
         "semester_placeholder": "اختر فصلًا دراسيًا",
         "semester_placeholder_no_major": "اختر تخصصًا أولًا",
         "semester_n": "الفصل الدراسي {{n}}"
@@ -247,7 +249,8 @@
       "ph_lesson_title": "مثال: مقدمة إلى الحالة",
       "ph_attachment_title": "مثال: ملف PDF مرجعي",
       "delete_course_confirm": "هل أنت متأكد أنك تريد حذف هذه الدورة؟ لا يمكن التراجع عن هذا الإجراء.",
-      "edit_lesson": "تعديل الدرس"
+      "edit_lesson": "تعديل الدرس",
+      "video_content": "محتوى الفيديو"
     },
     "analytics": {
       "title": "لوحة التحليلات",
@@ -288,7 +291,16 @@
       "message": "الرسالة",
       "type_message": "اكتب رسالتك هنا...",
       "send_announcement": "إرسال الإعلان",
-      "loading_questions": "جاري تحميل الأسئلة..."
+      "loading_questions": "جاري تحميل الأسئلة...",
+      "send_announcement_title": "إرسال إعلان",
+      "send_announcement_msg": "هل أنت متأكد أنك تريد إشعار جميع الطلاب في هذه الدورة؟",
+      "send_now": "إرسال الآن",
+      "delete_question_title": "حذف السؤال",
+      "delete_question_msg": "هل أنت متأكد أنك تريد حذف هذا السؤال؟ لا يمكن التراجع عن هذا الإجراء.",
+      "delete_reply_title": "حذف الرد",
+      "delete_reply_msg": "هل أنت متأكد أنك تريد حذف هذا الرد؟ لا يمكن التراجع عن هذا الإجراء.",
+      "reply_deleted": "تم حذف الرد",
+      "delete_reply_failed": "فشل في حذف الرد"
     },
     "financials": {
       "title": "المالية",
@@ -310,6 +322,9 @@
       "rejected_suffix": " (مرفوض)"
     },
     "notyf": {
+      "lesson_published": "تم نشر الدرس",
+      "lesson_drafted": "تم حفظ الدرس كمسودة",
+      "lesson_update_failed": "فشل تحديث حالة الدرس",
       "lesson_updated": "تم تحديث الدرس بنجاح",
       "course_updated": "تم تحديث الدورة بنجاح!",
       "course_created": "تم إنشاء الدورة بنجاح!",
@@ -330,7 +345,8 @@
       "based_on_reviews": "بناءً على تقييمات {{count}} من الطلاب",
       "no_reviews_yet": "لا توجد تقييمات بعد",
       "no_reviews_desc": "بمجرد قيام الطلاب بتقييم دوراتك، ستظهر تقييماتهم وملاحظاتهم هنا.",
-      "loading_reviews": "جاري تحميل التقييمات..."
+      "loading_reviews": "جاري تحميل التقييمات...",
+      "reported": "تم الإبلاغ"
     },
     "no_courses": "لم تقم بإنشاء أي دورات بعد. ابدأ بمشاركة معرفتك مع العالم!"
   },
@@ -468,6 +484,7 @@
   },
   "settings": {
     "title": "الإعدادات",
+    "subtitle": "إدارة ملفك الشخصي والتفضيلات والحساب.",
     "nav": {
       "profile": "الملف الشخصي",
       "appearance": "المظهر",

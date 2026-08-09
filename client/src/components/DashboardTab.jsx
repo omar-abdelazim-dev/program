@@ -143,7 +143,7 @@ const CompletedCard = ({
 };
 
 export default function DashboardTab() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [enrollments, setEnrollments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -192,6 +192,8 @@ export default function DashboardTab() {
     return () => controller.abort();
   }, []);
 
+  const isRTL = i18n.language === 'ar';
+
   useEffect(() => {
     const timer = setTimeout(() => {
       if (tabsContainerRef.current) {
@@ -199,16 +201,20 @@ export default function DashboardTab() {
           ".dashboard-tab.active",
         );
         if (activeBtn) {
+          const parentWidth = tabsContainerRef.current.offsetWidth;
+          const childLeft = activeBtn.offsetLeft;
+          const childWidth = activeBtn.offsetWidth;
+          
           setTabIndicatorStyle({
-            left: activeBtn.offsetLeft,
-            width: activeBtn.offsetWidth,
+            insetInlineStart: isRTL ? (parentWidth - (childLeft + childWidth)) : childLeft,
+            width: childWidth,
             opacity: 1,
           });
         }
       }
     }, 50);
     return () => clearTimeout(timer);
-  }, [activeSubTab, loading, enrollments]);
+  }, [activeSubTab, loading, enrollments, i18n.language]);
 
   if (loading) return <FullPageLoader message={t('student.loading_courses', 'Loading your courses...')} fullScreen={false} />;
   if (error) return <p style={{ color: "#ef4444" }}>{error}</p>;
@@ -265,7 +271,7 @@ export default function DashboardTab() {
             <div
               className="dashboard-tab-indicator"
               style={{
-                left: `${tabIndicatorStyle.left}px`,
+                insetInlineStart: `${tabIndicatorStyle.insetInlineStart}px`,
                 width: `${tabIndicatorStyle.width}px`,
                 opacity: tabIndicatorStyle.opacity,
                 background: "linear-gradient(135deg, #f97316 0%, #fbbf24 100%)",

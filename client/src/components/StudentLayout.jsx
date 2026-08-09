@@ -28,6 +28,7 @@ export default function StudentLayout({
 }) {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const isSettingsPage = location.pathname.includes('/settings');
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
 
@@ -282,7 +283,8 @@ export default function StudentLayout({
 
           <div className="header-right">
             {/* Language Toggle */}
-            <button
+            {!isSettingsPage && (
+              <button
               className="utility-icon-btn desktop-only-icon"
               onClick={toggleLanguage}
               aria-label="Toggle language"
@@ -294,8 +296,10 @@ export default function StudentLayout({
             >
               {i18n.language === "ar" ? "EN" : "AR"}
             </button>
+            )}
 
-            <button
+            {!isSettingsPage && (
+              <button
               className="utility-icon-btn theme-toggle-btn desktop-only-icon"
               onClick={toggleTheme}
               aria-label="Toggle theme"
@@ -338,10 +342,13 @@ export default function StudentLayout({
                 </svg>
               )}
             </button>
+            )}
 
-            <div className="mobile-only-menu">
-              <ThreeDotMenu options={mobileMenuOptions} placement="bottom-end" />
-            </div>
+            {!isSettingsPage && (
+              <div className="mobile-only-menu">
+                <ThreeDotMenu options={mobileMenuOptions} placement="bottom-end" />
+              </div>
+            )}
 
             <Link
               to="/checkout/cart"
@@ -492,8 +499,9 @@ export default function StudentLayout({
               </div>
             </div>
 
-            <div className="profile-wrapper desktop-only-icon">
-              <div className="avatar-btn" data-tooltip={t('student.nav.account', 'Account')}>
+            {!isSettingsPage && (
+              <div className="profile-wrapper desktop-only-icon">
+                <div className="avatar-btn" data-tooltip={t('student.nav.account', 'Account')}>
                 {user?.avatarUrl ? (
                   <img src={user.avatarUrl} alt={user?.name || "Profile"} />
                 ) : (
@@ -516,6 +524,7 @@ export default function StudentLayout({
                 )}
               </div>
             </div>
+            )}
           </div>
         </header>
 

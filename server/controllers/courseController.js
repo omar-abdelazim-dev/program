@@ -33,9 +33,7 @@ export const createCourse = async (req, res) => {
   try {
     const { title, description, price, category, major, semester, college, thumbnailUrl } = req.body;
 
-    if (!title || !description || price === undefined) {
-      return res.status(400).json({ message: 'Title, description, and price are required' });
-    }
+
 
     const course = await Course.create({
       title,

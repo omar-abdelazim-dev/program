@@ -542,7 +542,8 @@ export const getAllLessons = async (req, res) => {
 // @access  Private (Admin/SuperAdmin)
 export const approveLesson = async (req, res) => {
   try {
-    const lesson = await Lesson.findByIdAndUpdate(req.params.id, { status: 'approved' }, { new: true });
+    // Approved lessons start as draft — the instructor publishes them manually
+    const lesson = await Lesson.findByIdAndUpdate(req.params.id, { status: 'draft' }, { new: true });
     if (!lesson) return res.status(404).json({ message: 'Lesson not found' });
     res.status(200).json({ message: 'Lesson approved', lesson });
   } catch (error) {

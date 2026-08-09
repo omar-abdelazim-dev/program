@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 
 
 export default function InstructorEngagementTab({ courses = [], onAction }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('qa');
   const [replyingTo, setReplyingTo] = useState(null);
@@ -26,6 +26,7 @@ export default function InstructorEngagementTab({ courses = [], onAction }) {
   const [questions, setQuestions] = useState([]);
   const [qaStatusTab, setQaStatusTab] = useState("pending");
   const [questionToDelete, setQuestionToDelete] = useState(null);
+  const [replyToDelete, setReplyToDelete] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -33,21 +34,27 @@ export default function InstructorEngagementTab({ courses = [], onAction }) {
     fetchQuestions();
   }, []);
 
+  const isRTL = i18n.language === 'ar';
+
   useEffect(() => {
     const timer = setTimeout(() => {
       if (tabsContainerRef.current) {
         const activeBtn = tabsContainerRef.current.querySelector(".dashboard-tab.active");
         if (activeBtn) {
+          const parentWidth = tabsContainerRef.current.offsetWidth;
+          const childLeft = activeBtn.offsetLeft;
+          const childWidth = activeBtn.offsetWidth;
+          
           setTabIndicatorStyle({
-            left: activeBtn.offsetLeft,
-            width: activeBtn.offsetWidth,
+            insetInlineStart: isRTL ? (parentWidth - (childLeft + childWidth)) : childLeft,
+            width: childWidth,
             opacity: 1,
           });
         }
       }
     }, 50);
     return () => clearTimeout(timer);
-  }, [activeTab]);
+  }, [activeTab, i18n.language]);
 
   const fetchQuestions = async () => {
     try {
@@ -85,15 +92,21 @@ export default function InstructorEngagementTab({ courses = [], onAction }) {
   };
 
   const handleDeleteReply = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this reply?")) return;
+    setReplyToDelete(id);
+  };
+
+  const confirmDeleteReply = async () => {
+    if (!replyToDelete) return;
     try {
-      await api.delete(`/engagement/questions/${id}/reply`);
-      notyf.success("Reply deleted");
+      await api.delete(`/engagement/questions/${replyToDelete}/reply`);
+      notyf.success(t('instructor.engagement.reply_deleted', "Reply deleted"));
       fetchQuestions();
       if (onAction) onAction();
     } catch (err) {
       console.error(err);
-      notyf.error("Failed to delete reply");
+      notyf.error(t('instructor.engagement.delete_reply_failed', "Failed to delete reply"));
+    } finally {
+      setReplyToDelete(null);
     }
   };
 
@@ -163,7 +176,7 @@ export default function InstructorEngagementTab({ courses = [], onAction }) {
         <div
           className="dashboard-tab-indicator"
           style={{
-            left: `${tabIndicatorStyle.left}px`,
+            insetInlineStart: `${tabIndicatorStyle.insetInlineStart}px`,
             width: `${tabIndicatorStyle.width}px`,
             opacity: tabIndicatorStyle.opacity,
           }}
@@ -190,19 +203,34 @@ export default function InstructorEngagementTab({ courses = [], onAction }) {
             <h2 style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--text-h)', margin: 0 }}>
               {t('instructor.engagement.title')}
             </h2>
-            <div style={{ display: 'flex', gap: '8px', background: 'var(--bg-main)', padding: '6px', borderRadius: '10px', boxShadow: 'var(--inner-shadow)' }}>
+            <div style={{ position: 'relative', display: 'flex', background: 'var(--bg-main)', padding: '4px', borderRadius: '50px', boxShadow: 'var(--inner-shadow)', width: '240px', height: '36px' }}>
+              <div style={{
+                position: 'absolute',
+                top: '4px',
+                insetInlineStart: qaStatusTab === 'approved' ? '50%' : '4px',
+                width: 'calc(50% - 4px)',
+                height: 'calc(100% - 8px)',
+                borderRadius: '50px',
+                background: 'var(--bg-surface)',
+                boxShadow: 'var(--outer-shadow)',
+                transition: 'inset-inline-start 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                zIndex: 0,
+              }} />
               <button
                 onClick={() => setQaStatusTab('pending')}
                 style={{
-                  padding: '6px 16px',
-                  borderRadius: '6px',
+                  flex: 1,
+                  position: 'relative',
+                  zIndex: 1,
+                  padding: '0',
+                  borderRadius: '50px',
                   border: 'none',
-                  background: qaStatusTab === 'pending' ? 'var(--bg-surface)' : 'transparent',
+                  background: 'transparent',
                   color: qaStatusTab === 'pending' ? 'var(--text-h)' : 'var(--c-sub)',
-                  boxShadow: qaStatusTab === 'pending' ? 'var(--outer-shadow)' : 'none',
                   cursor: 'pointer',
                   fontWeight: qaStatusTab === 'pending' ? '600' : '400',
-                  transition: 'all 0.2s'
+                  transition: 'color 0.3s, font-weight 0.3s',
+                  fontSize: '0.85rem'
                 }}
               >
                 {t('instructor.engagement.pending')}
@@ -210,15 +238,18 @@ export default function InstructorEngagementTab({ courses = [], onAction }) {
               <button
                 onClick={() => setQaStatusTab('approved')}
                 style={{
-                  padding: '6px 16px',
-                  borderRadius: '6px',
+                  flex: 1,
+                  position: 'relative',
+                  zIndex: 1,
+                  padding: '0',
+                  borderRadius: '50px',
                   border: 'none',
-                  background: qaStatusTab === 'approved' ? 'var(--bg-surface)' : 'transparent',
+                  background: 'transparent',
                   color: qaStatusTab === 'approved' ? 'var(--text-h)' : 'var(--c-sub)',
-                  boxShadow: qaStatusTab === 'approved' ? 'var(--outer-shadow)' : 'none',
                   cursor: 'pointer',
                   fontWeight: qaStatusTab === 'approved' ? '600' : '400',
-                  transition: 'all 0.2s'
+                  transition: 'color 0.3s, font-weight 0.3s',
+                  fontSize: '0.85rem'
                 }}
               >
                 {t('instructor.engagement.approved')}
@@ -252,13 +283,24 @@ export default function InstructorEngagementTab({ courses = [], onAction }) {
               <div key={q._id} style={{ padding: '20px', borderRadius: '12px', background: 'var(--bg-main)', border: 'none', boxShadow: 'var(--inner-shadow)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                   <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                    <img 
-                      src={q.student?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${q.student?.name || 'User'}`} 
-                      alt={q.student?.name || 'Student'} 
-                      onClick={() => q.student?._id && navigate(`/student/${q.student._id}`)}
-                      style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--c-bg)', cursor: q.student?._id ? 'pointer' : 'default' }}
-                    />
-                    <div>
+                    {q.student?.avatarUrl ? (
+                      <img 
+                        src={q.student.avatarUrl} 
+                        alt={q.student.name || 'Student'} 
+                        onClick={() => q.student?._id && navigate(`/student/${q.student._id}`)}
+                        style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--c-bg)', cursor: q.student?._id ? 'pointer' : 'default', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <div 
+                        onClick={() => q.student?._id && navigate(`/student/${q.student._id}`)}
+                        style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--c-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: q.student?._id ? 'pointer' : 'default' }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="var(--c-sub)" strokeWidth="2">
+                          <circle cx="12" cy="8" r="4"></circle>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 20c0-4 3.6-7 8-7s8 3 8 7"></path>
+                        </svg>
+                      </div>
+                    )}                    <div>
                       <span
                         onClick={() => q.student?._id && navigate(`/student/${q.student._id}`)}
                         style={{ fontWeight: 600, color: 'var(--text-h)', fontSize: '1.05rem', cursor: q.student?._id ? 'pointer' : 'default', textDecoration: 'none' }}
@@ -282,7 +324,7 @@ export default function InstructorEngagementTab({ courses = [], onAction }) {
                 <p style={{ margin: '0 0 16px 0', color: 'var(--text-h)', lineHeight: '1.5' }}>{q.question}</p>
                 
                 {replyingTo !== q._id && q.reply ? (
-                  <div style={{ marginTop: '16px', padding: '16px', background: 'rgba(16, 185, 129, 0.05)', borderLeft: '4px solid #10b981', borderRadius: '4px' }}>
+                  <div style={{ marginTop: '16px', padding: '16px', background: 'rgba(16, 185, 129, 0.05)', borderInlineStart: '4px solid #10b981', borderRadius: '4px' }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                       <div style={{ color: '#10b981', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase' }}>{t('instructor.engagement.your_reply')}</div>
                       <div style={{ display: 'flex', gap: '8px' }}>
@@ -352,6 +394,7 @@ export default function InstructorEngagementTab({ courses = [], onAction }) {
               <label style={{ color: 'var(--c-sub)', marginBottom: '8px', display: 'block' }}>{t('instructor.engagement.announcement_title')}</label>
               <input 
                 type="text" 
+                className="solid-input"
                 style={{ width: '100%' }}
                 placeholder={t('instructor.engagement.ph_announcement_title')}
                 value={announcementTitle}
@@ -362,6 +405,7 @@ export default function InstructorEngagementTab({ courses = [], onAction }) {
             <div className="input-group">
               <label style={{ color: 'var(--c-sub)', marginBottom: '8px', display: 'block' }}>{t('instructor.engagement.message')}</label>
               <textarea 
+                className="solid-input"
                 rows="6"
                 style={{ width: '100%', resize: 'vertical' }}
                 placeholder={t('instructor.engagement.type_message')}
@@ -384,10 +428,10 @@ export default function InstructorEngagementTab({ courses = [], onAction }) {
 
       <ConfirmModal 
         isOpen={showConfirmModal}
-        title="Send Announcement"
-        message="Are you sure you want to notify all students in this course?"
-        confirmText="Send Now"
-        cancelText="Cancel"
+        title={t('instructor.engagement.send_announcement_title', 'Send Announcement')}
+        message={t('instructor.engagement.send_announcement_msg', 'Are you sure you want to notify all students in this course?')}
+        confirmText={t('instructor.engagement.send_now', 'Send Now')}
+        cancelText={t('common.cancel', 'Cancel')}
         intent="primary"
         onConfirm={confirmSendAnnouncement}
         onCancel={() => setShowConfirmModal(false)}
@@ -395,13 +439,24 @@ export default function InstructorEngagementTab({ courses = [], onAction }) {
 
       <ConfirmModal 
         isOpen={!!questionToDelete}
-        title="Delete Question"
-        message="Are you sure you want to delete this question? This action cannot be undone."
-        confirmText="Delete"
-        cancelText="Cancel"
+        title={t('instructor.engagement.delete_question_title', 'Delete Question')}
+        message={t('instructor.engagement.delete_question_msg', 'Are you sure you want to delete this question? This action cannot be undone.')}
+        confirmText={t('common.delete', 'Delete')}
+        cancelText={t('common.cancel', 'Cancel')}
         intent="danger"
         onConfirm={confirmDeleteQuestion}
         onCancel={() => setQuestionToDelete(null)}
+      />
+
+      <ConfirmModal 
+        isOpen={!!replyToDelete}
+        title={t('instructor.engagement.delete_reply_title', 'Delete Reply')}
+        message={t('instructor.engagement.delete_reply_msg', 'Are you sure you want to delete this reply? This action cannot be undone.')}
+        confirmText={t('common.delete', 'Delete')}
+        cancelText={t('common.cancel', 'Cancel')}
+        intent="danger"
+        onConfirm={confirmDeleteReply}
+        onCancel={() => setReplyToDelete(null)}
       />
     </div>
   );

@@ -17,6 +17,7 @@ import InstructorReviewsTab from './InstructorReviewsTab';
 import { notyf } from './WebsiteManagement/SharedUI';
 import { EXPLORE_CATEGORIES } from '../data/exploreCategories';
 import { MAJORS, getMajor } from '../data/majors';
+import { COLLEGES } from '../data/colleges';
 import { useTranslation } from 'react-i18next';
 
 export default function InstructorPortal({ user, setUser, onLogout, toggleTheme, isLightMode }) {
@@ -49,7 +50,8 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
   const [selectedCourseId, setSelectedCourseId] = useState(null);
 
   // Form states
-  const [formData, setFormData] = useState({ title: '', description: '', price: '', category: '', major: '', semester: '' });
+  // INS-03: Replaced category/major with college
+  const [formData, setFormData] = useState({ title: '', description: '', price: '', college: '', semester: '' });
   const [thumbnailFile, setThumbnailFile] = useState(null);
 
   const [editingLessonId, setEditingLessonId] = useState(null);
@@ -118,11 +120,33 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
 
   const handleSaveCourse = async (e) => {
     e.preventDefault();
-    if (!formData.title || !formData.description || formData.price === '' || formData.price === null || formData.price === undefined || !formData.category) {
-      // NOTE: Using a generic message here since this is a quick alert. We can also add this to translations if needed.
-      setError('Please fill in all required fields (Title, Description, Price, Category).');
+
+    if (!formData.title.trim()) {
+      setError(t('instructor.create_course.form.title_required', 'Title is required.'));
       return;
     }
+    if (!formData.description.trim()) {
+      setError(t('instructor.create_course.form.description_required', 'Description is required.'));
+      return;
+    }
+    // INS-05: Price is only settable during creation, skip validation if editing
+    if (!editingCourse && (formData.price === '' || formData.price < 0)) {
+      setError(t('instructor.create_course.form.price_required', 'A valid price is required.'));
+      return;
+    }
+    if (!formData.college) {
+      setError(t('instructor.create_course.form.college_required', 'College is required.'));
+      return;
+    }
+    if (!formData.semester) {
+      setError(t('instructor.create_course.form.semester_required', 'Semester is required.'));
+      return;
+    }
+    if (!editingCourse && !thumbnailFile) {
+      setError(t('instructor.create_course.form.thumbnail_required', 'Thumbnail image is required for new courses.'));
+      return;
+    }
+
     setSubmitting(true);
     setError('');
 
@@ -138,9 +162,9 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
       }
 
       if (editingCourse) {
+        // INS-05: Remove price from the PUT payload entirely
         await api.put(`/courses/${editingCourse._id}`, {
           ...formData,
-          price: Number(formData.price),
           thumbnailUrl
         });
         notyf.success(t('instructor.notyf.course_updated'));
@@ -155,7 +179,8 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
       
       setShowCreateModal(false);
       setEditingCourse(null);
-      setFormData({ title: '', description: '', price: '', category: '', major: '', semester: '' });
+      // INS-03: Resetting formData correctly without category/major
+      setFormData({ title: '', description: '', price: '', college: '', semester: '' });
       setThumbnailFile(null);
       fetchMyCourses();
     } catch (err) {
@@ -316,7 +341,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                   position: 'absolute',
                   top: '4px',
                   right: '4px',
-                  backgroundColor: '#ef4444',
+                  backgroundColor: 'var(--color-accent)',
                   color: 'white',
                   fontSize: '0.7rem',
                   fontWeight: 'bold',
@@ -380,7 +405,8 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
 
           <div className="header-right">
             {/* Language Toggle */}
-            <button
+            {activeTab !== 'settings' && (
+              <button
               className="utility-icon-btn"
               onClick={toggleLanguage}
               aria-label="Toggle language"
@@ -392,8 +418,10 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
             >
               {i18n.language === "ar" ? "EN" : "AR"}
             </button>
+            )}
 
-            <button
+            {activeTab !== 'settings' && (
+              <button
               className="utility-icon-btn theme-toggle-btn"
               onClick={toggleTheme}
               aria-label="Toggle theme"
@@ -416,20 +444,24 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                 </svg>
               )}
             </button>
+            )}
 
-            <div className="profile-wrapper">
-              <button 
-                className="utility-icon-btn" 
-                onClick={() => setActiveTab('settings')}
-                data-tooltip={t('instructor.nav.settings')}
-                aria-label={t('instructor.nav.settings')}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-                  <circle cx="12" cy="8" r="4"></circle>
-                  <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"></path>
-                </svg>
-              </button>
-            </div>
+            {/* Notifications */}
+            {activeTab !== 'settings' && (
+              <div className="profile-wrapper">
+                <button 
+                  className="utility-icon-btn" 
+                  onClick={() => setActiveTab('settings')}
+                  data-tooltip={t('instructor.nav.settings')}
+                  aria-label={t('instructor.nav.settings')}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+                    <circle cx="12" cy="8" r="4"></circle>
+                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"></path>
+                  </svg>
+                </button>
+              </div>
+            )}
           </div>
         </header>
 
@@ -442,6 +474,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
               <CurriculumBuilderTab 
                 courses={courses} 
                 lessonsByCourse={lessonsByCourse} 
+                onAction={fetchMyCourses}
                 onOpenAddLesson={(courseId) => {
                   setError('');
                   setSelectedCourseId(courseId);
@@ -465,8 +498,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                     title: course.title,
                     description: course.description,
                     price: course.price,
-                    category: course.category,
-                    major: course.major || '',
+                    college: course.college || '', // INS-03: Initialize college from course data
                     semester: course.semester || ''
                   });
                   setThumbnailFile(null);
@@ -534,7 +566,8 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
               {/* Translated My Courses header */}
               <h2 style={{ fontSize: '2rem', margin: 0, color: 'var(--text-h)' }}>{t('instructor.dashboard.my_courses')}</h2>
               <button 
-                onClick={() => { setError(''); setEditingCourse(null); setFormData({ title: '', description: '', price: '', category: '', major: '', semester: '' }); setShowCreateModal(true); }}
+                // INS-03: Resetting formData correctly without category/major
+                onClick={() => { setError(''); setEditingCourse(null); setFormData({ title: '', description: '', price: '', college: '', semester: '' }); setShowCreateModal(true); }}
                 style={{ width: 'auto', borderRadius: '24px', padding: '10px 24px', fontWeight: 700, background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: 'none', boxShadow: 'var(--inner-shadow)', cursor: 'pointer', transition: 'all 0.2s' }}
                 onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)'; e.currentTarget.style.boxShadow = 'var(--inner-shadow)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
                 onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'; e.currentTarget.style.boxShadow = 'var(--inner-shadow)'; e.currentTarget.style.filter = 'none'; }}
@@ -616,7 +649,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                             {t("instructor.dashboard.price")}: EGP{" "}
                             {course.price} •{" "}
                             {t("instructor.dashboard.category")}:{" "}
-                            {course.category}
+                            {t(`categories.${course.category.replace(/\s+/g, '_').toLowerCase()}`, course.category)}
                           </div>
                           <div
                             style={{
@@ -628,8 +661,8 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                           >
                             <span
                               style={{
-                                padding: "4px 8px",
-                                borderRadius: "4px",
+                                padding: "4px 10px",
+                                borderRadius: "50px",
                                 fontSize: "0.8rem",
                                 fontWeight: "bold",
                                 boxShadow: "var(--inner-shadow)",
@@ -673,8 +706,8 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                                   marginTop: "8px",
                                   padding: "10px 12px",
                                   background: "rgba(239, 68, 68, 0.08)",
-                                  border: "1px solid rgba(239, 68, 68, 0.25)",
-                                  borderRadius: "8px",
+                                  border: "none",
+                                  borderRadius: "50px",
                                   fontSize: "0.85rem",
                                   color: "var(--text)",
                                   maxWidth: "480px",
@@ -748,58 +781,49 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
             
             <form noValidate onSubmit={handleSaveCourse} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div className="input-group">
-                <label>{t('instructor.create_course.form.title')}</label>
-                <input required type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
+                <label>{t('instructor.create_course.form.title')} <span style={{ color: '#ef4444' }}>*</span></label>
+                <input required type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className={error && !formData.title.trim() ? 'input-error' : ''} />
               </div>
               <div className="input-group">
-                <label>{t('instructor.create_course.form.description')}</label>
-                <textarea required value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} style={{ minHeight: '100px', resize: 'vertical' }} />
+                <label>{t('instructor.create_course.form.description')} <span style={{ color: '#ef4444' }}>*</span></label>
+                <textarea required value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} style={{ minHeight: '100px', resize: 'vertical' }} className={error && !formData.description.trim() ? 'input-error' : ''} />
               </div>
-              <div className="input-row">
-                <div className="input-group">
-                  <label>{t('instructor.create_course.form.price')} (EGP)</label>
-                  <input required type="number" min="0" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} />
+              {/* INS-05: Hide the price input entirely if we are editing the course */}
+              {!editingCourse && (
+                <div className="input-row" style={{ marginBottom: '-16px' }}>
+                  <div className="input-group">
+                    <label>{t('instructor.create_course.form.price')} (EGP) <span style={{ color: '#ef4444' }}>*</span></label>
+                    <input required type="number" min="0" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className={error && formData.price === '' ? 'input-error' : ''} />
+                  </div>
+                  <div className="input-group" style={{ visibility: 'hidden' }}></div>
                 </div>
+              )}
+              
+              <div className="input-row">
+                {/* INS-03: Replace category/major with college */}
                 <div className="input-group">
-                  <label>{t('instructor.create_course.form.category')}</label>
+                  <label>{t('instructor.create_course.form.college', 'College')} <span style={{ color: '#ef4444' }}>*</span></label>
                   <CustomSelect
-                    value={formData.category}
-                    onChange={val => setFormData({...formData, category: val})}
-                    placeholder={t('instructor.create_course.form.category_placeholder', 'Select a category')}
-                    options={EXPLORE_CATEGORIES.map(c => ({ value: c, label: c }))}
+                    value={formData.college}
+                    onChange={val => setFormData({...formData, college: val})}
+                    placeholder={t('instructor.create_course.form.college_placeholder', 'Select a college')}
+                    options={COLLEGES.map(c => ({ value: c.id, label: t(c.key, c.id) }))}
                   />
                 </div>
-              </div>
-              <div className="input-row">
                 <div className="input-group">
-                  <label>{t('instructor.create_course.form.major', 'Major (Optional)')}</label>
-                  <CustomSelect
-                    value={formData.major}
-                    onChange={val => setFormData({...formData, major: val, semester: ''})}
-                    placeholder={t('instructor.create_course.form.major_placeholder', "Not part of a major's curriculum")}
-                    options={MAJORS.map(m => ({ value: m.id, label: t(`majors.${m.id}`, m.label) }))}
-                  />
-                  <div className="input-hint">{t('instructor.create_course.form.major_hint', "Lets this course appear on the Home page's major/semester sections.")}</div>
-                </div>
-                <div className="input-group">
-                  <label>{t('instructor.create_course.form.semester', 'Semester (Optional)')}</label>
+                  <label>{t('instructor.create_course.form.semester', 'Semester')} <span style={{ color: '#ef4444' }}>*</span></label>
                   <CustomSelect
                     value={formData.semester ? String(formData.semester) : ''}
                     onChange={val => setFormData({...formData, semester: val})}
-                    placeholder={formData.major ? t('instructor.create_course.form.semester_placeholder', 'Select a semester') : t('instructor.create_course.form.semester_placeholder_no_major', 'Select a major first')}
-                    options={
-                      getMajor(formData.major)
-                        ? Array.from({ length: getMajor(formData.major).semesters }, (_, i) => i + 1)
-                            .map(n => ({ value: String(n), label: t('instructor.create_course.form.semester_n', 'Semester {{n}}', { n }) }))
-                        : []
-                    }
+                    placeholder={t('instructor.create_course.form.semester_placeholder', 'Select a semester')}
+                    options={Array.from({ length: 12 }, (_, i) => i + 1).map(n => ({ value: String(n), label: t('instructor.create_course.form.semester_n', 'Semester {{n}}', { n }) }))}
                   />
                 </div>
               </div>
               <div className="input-group">
-                <label>{t('instructor.create_course.form.thumbnail')}</label>
-                <input type="file" accept="image/*" onChange={e => setThumbnailFile(e.target.files[0])} />
-                <div className="input-hint">{t('instructor.create_course.leave_blank_placeholder')}</div>
+                <label>{t('instructor.create_course.form.thumbnail')} <span style={{ color: '#ef4444' }}>*</span></label>
+                <input required={!editingCourse} type="file" accept="image/*" onChange={e => setThumbnailFile(e.target.files[0])} />
+                <div className="input-hint">{editingCourse ? t('instructor.create_course.leave_blank_placeholder') : ''}</div>
               </div>
               
               <div className="input-row" style={{ marginTop: '16px' }}>

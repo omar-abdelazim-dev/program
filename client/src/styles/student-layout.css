@@ -457,6 +457,11 @@
   box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15), var(--inner-shadow);
 }
 
+.solid-input:read-only:focus {
+  border-color: transparent;
+  box-shadow: var(--inner-shadow);
+}
+
 .solid-input::placeholder {
   color: var(--text-secondary);
 }
