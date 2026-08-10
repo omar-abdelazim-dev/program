@@ -478,16 +478,7 @@ export const getTransactions = async (req, res) => {
         })
         .sort({ createdAt: -1 });
 
-      const sampleStatuses = ['pending', 'approved', 'under_review', 'rejected', 'refunded'];
-      const formattedEnrollments = enrollments.map((e, index) => {
-        const doc = e.toObject ? e.toObject() : e;
-        if (!doc.status || doc.status === 'pending') {
-          doc.status = sampleStatuses[index % sampleStatuses.length];
-        }
-        return doc;
-      });
-
-      return res.status(200).json({ transactions: formattedEnrollments });
+      return res.status(200).json({ transactions: enrollments });
     }
 
     let pageNum = parseInt(page, 10);
@@ -512,16 +503,7 @@ export const getTransactions = async (req, res) => {
 
     const totalPages = Math.ceil(totalItems / limitNum) || 1;
 
-    const sampleStatuses = ['pending', 'approved', 'under_review', 'rejected', 'refunded'];
-    const formattedEnrollments = enrollments.map((e, index) => {
-      const doc = e.toObject ? e.toObject() : e;
-      if (!doc.status || doc.status === 'pending') {
-        doc.status = sampleStatuses[index % sampleStatuses.length];
-      }
-      return doc;
-    });
-
-    res.status(200).json({ transactions: formattedEnrollments, pagination: { page: pageNum, limit: limitNum, totalPages, totalItems } });
+    res.status(200).json({ transactions: enrollments, pagination: { page: pageNum, limit: limitNum, totalPages, totalItems } });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error fetching transactions' });
