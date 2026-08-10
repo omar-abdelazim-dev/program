@@ -12,6 +12,7 @@ const CustomDropdown = ({
   onChange,
   disabled,
   width = "100%",
+  inline = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
@@ -62,29 +63,30 @@ const CustomDropdown = ({
         onClick={() => setIsOpen(!isOpen)}
         style={{
           width: "100%",
-          height: "42px",
-          padding: "0 16px",
+          height: inline ? "auto" : "42px",
+          padding: inline ? "8px 12px" : "0 16px",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          background: "var(--bg-main)",
-          border: isOpen ? "1px solid #f97316" : "1px solid transparent",
-          borderRadius: "50px",
-          boxShadow: isOpen
+          background: inline ? "transparent" : "var(--bg-main)",
+          border: isOpen && !inline ? "1px solid #f97316" : "none",
+          borderRadius: inline ? "0" : "50px",
+          boxShadow: inline ? "none" : (isOpen
             ? "var(--outer-shadow), 0 0 0 3px rgba(249, 115, 22, 0.2)"
-            : "var(--inner-shadow)",
+            : "var(--inner-shadow)"),
           color: "var(--c-light)",
           cursor: disabled ? "not-allowed" : "pointer",
           opacity: disabled ? 0.5 : 1,
           fontSize: "0.9rem",
+          fontWeight: inline ? "500" : "normal",
         }}
       >
         <span>{value.charAt(0).toUpperCase() + value.slice(1)}</span>
         <span
           style={{
             fontSize: "0.8rem",
-            color: "var(--c-sub)",
-            transition: "transform 0.2s",
+            color: isOpen ? "#f97316" : "var(--c-sub)",
+            transition: "transform 0.2s, color 0.2s",
             transform: isOpen ? "rotate(180deg)" : "rotate(0)",
           }}
         >
@@ -104,13 +106,13 @@ const CustomDropdown = ({
               width: dropdownPos.width,
               background: "var(--bg-surface)",
               border: "none",
-              borderRadius: "30px",
+              borderRadius: "12px",
               padding: "8px",
               zIndex: 999999,
               display: "flex",
               flexDirection: "column",
               gap: "4px",
-              boxShadow: "var(--outer-shadow)",
+              boxShadow: "0 10px 25px rgba(0,0,0,0.1), var(--outer-shadow)",
             }}
           >
             {options.map((opt) => (
@@ -434,208 +436,101 @@ export default function AdminUserManagementTab({
             )}
           </div>
         </div>
-        <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-          <div
-            className="nav-search"
-            style={{ width: "320px", position: "relative" }}
+      </div>
+
+      {/* Role Tabs and Search Pill Row */}
+      <div style={{ 
+        display: "flex", 
+        justifyContent: "space-between", 
+        alignItems: "center", 
+        marginBottom: "20px" 
+      }}>
+        {/* Role Tabs (Segmented Control) */}
+        <SegmentedControl
+          tabs={[
+            { id: "student", label: t("admin.students", "Students") },
+            { id: "instructor", label: t("admin.instructors", "Instructors") },
+            { id: "admin", label: t("admin.admins", "Admins") },
+            ...(currentUser?.role === "superadmin"
+              ? [{ id: "superadmin", label: t("admin.superadmins", "Super Admins") }]
+              : []),
+          ]}
+          activeTab={activeRole}
+          onChange={(id) => {
+            setActiveRole(id);
+            setSelectedIds(new Set());
+          }}
+          style={{ marginBottom: "0px" }}
+        />
+
+        <div 
+          style={{ 
+            display: "flex", 
+            alignItems: "center",
+            background: "var(--bg-surface)",
+            borderRadius: "99px",
+            boxShadow: isSearchFocused 
+              ? "var(--outer-shadow), 0 0 0 3px rgba(249, 115, 22, 0.2)"
+              : "var(--outer-shadow)",
+            padding: "4px 8px 4px 16px",
+            transition: "all 0.3s ease",
+            border: isSearchFocused ? "1px solid #f97316" : "1px solid transparent",
+          }}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth="2"
+            style={{ color: "var(--c-sub)", flexShrink: 0 }}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <input
-              type="text"
-              placeholder={t(
-                "admin.search_placeholder",
-                "Search by name, email, or ID...",
-              )}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setIsSearchFocused(true)}
-              onBlur={() => setIsSearchFocused(false)}
-              style={{
-                background: "var(--bg-surface)",
-                border: isSearchFocused
-                  ? "1px solid #f97316"
-                  : "1px solid transparent",
-                borderRadius: "99px",
-                boxShadow: isSearchFocused
-                  ? "var(--outer-shadow), 0 0 0 3px rgba(249, 115, 22, 0.2)"
-                  : "var(--outer-shadow)",
-                paddingLeft: "42px", // keep space for the search icon
-                outline: "none",
-                transition: "all 0.3s ease",
-                color: "var(--c-light)",
-              }}
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input
+            type="text"
+            placeholder={t("admin.search_placeholder", "Search...")}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => setIsSearchFocused(true)}
+            onBlur={() => setIsSearchFocused(false)}
+            style={{
+              background: "transparent",
+              border: "none",
+              outline: "none",
+              padding: "8px 12px",
+              color: "var(--c-light)",
+              width: "180px",
+              fontSize: "0.95rem"
+            }}
+          />
+
+          <div style={{ width: "1px", height: "22px", background: "rgba(255, 255, 255, 0.1)", margin: "0 4px" }} />
+
+          <div style={{ width: "135px", position: "relative" }}>
+            <CustomDropdown
+              value={accountStatus}
+              options={["All Statuses", "Active", "Suspended", "Deleted"]}
+              onChange={setAccountStatus}
+              inline={true}
             />
           </div>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            style={{
-              background: "var(--bg-surface)",
-              color: showFilters ? "var(--text-h)" : "var(--c-sub)",
-              padding: "10px 24px",
-              borderRadius: "99px",
-              cursor: "pointer",
-              fontSize: "0.9rem",
-              fontWeight: "500",
-              transition: "all 0.2s ease",
-              border: "none",
-              boxShadow: showFilters
-                ? "var(--inner-shadow)"
-                : "var(--outer-shadow)",
-            }}
-            onMouseEnter={(e) => {
-              if (!showFilters) {
-                e.target.style.background = "var(--bg-surface)";
-                e.target.style.color = "var(--text-h)";
-                e.target.style.boxShadow = "var(--inner-shadow)";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!showFilters) {
-                e.target.style.background = "var(--bg-surface)";
-                e.target.style.color = "var(--c-sub)";
-              }
-            }}
-          >
-            {t("common.filters", "Filters")}
-          </button>
-        </div>
-      </div>
 
-      {/* Filters Bar */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateRows: showFilters ? "1fr" : "0fr",
-          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-          opacity: showFilters ? 1 : 0,
-          margin: showFilters ? "0 0 24px 0" : "-24px 0 0 0",
-          pointerEvents: showFilters ? "auto" : "none",
-          filter: "drop-shadow(var(--outer-shadow))",
-        }}
-      >
-        <div style={{ overflow: "hidden" }}>
-          <div
-            style={{
-              background: "var(--bg-surface)",
-              border: "none",
-              borderRadius: "50px",
-              padding: "20px 24px",
-              display: "flex",
-              alignItems: "flex-end",
-              gap: "24px",
-              transform: showFilters ? "translateY(0)" : "translateY(-10px)",
-              transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px",
-                minWidth: "220px",
-              }}
-            >
-              <label
-                style={{
-                  fontSize: "0.75rem",
-                  fontWeight: "600",
-                  color: "var(--c-sub)",
-                  letterSpacing: "0.5px",
-                }}
-              >
-                {t("admin.account_status", "ACCOUNT STATUS")}
-              </label>
-              <CustomDropdown
-                value={accountStatus}
-                options={["All Statuses", "Active", "Suspended", "Deleted"]}
-                onChange={setAccountStatus}
-              />
-            </div>
+          <div style={{ width: "1px", height: "22px", background: "rgba(255, 255, 255, 0.1)", margin: "0 4px" }} />
 
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px",
-                minWidth: "220px",
-              }}
-            >
-              <label
-                style={{
-                  fontSize: "0.75rem",
-                  fontWeight: "600",
-                  color: "var(--c-sub)",
-                  letterSpacing: "0.5px",
-                }}
-              >
-                {t("admin.verification", "VERIFICATION")}
-              </label>
-              <CustomDropdown
-                value={verification}
-                options={["All", "Verified", "Unverified"]}
-                onChange={setVerification}
-              />
-            </div>
-
-            <button
-              onClick={clearFilters}
-              style={{
-                background: "rgba(239, 68, 68, 0.1)",
-                color: "#f87171",
-                height: "42px",
-                padding: "0 20px",
-                border: "none",
-                borderRadius: "50px",
-                cursor: "pointer",
-                fontSize: "0.9rem",
-                fontWeight: "500",
-                transition: "all 0.2s ease",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "var(--inner-shadow)",
-              }}
-              onMouseEnter={(e) =>
-                (e.target.style.background = "rgba(239, 68, 68, 0.2)")
-              }
-              onMouseLeave={(e) =>
-                (e.target.style.background = "rgba(239, 68, 68, 0.1)")
-              }
-            >
-              {t("common.clear_all", "Clear All Filters")}
-            </button>
+          <div style={{ width: "110px", position: "relative" }}>
+            <CustomDropdown
+              value={verification}
+              options={["All", "Verified", "Unverified"]}
+              onChange={setVerification}
+              inline={true}
+            />
           </div>
         </div>
       </div>
-
-      {/* Role Tabs (Segmented Control) */}
-      <SegmentedControl
-        tabs={[
-          { id: "student", label: t("admin.students", "Students") },
-          { id: "instructor", label: t("admin.instructors", "Instructors") },
-          { id: "admin", label: t("admin.admins", "Admins") },
-          ...(currentUser?.role === "superadmin"
-            ? [{ id: "superadmin", label: t("admin.superadmins", "Super Admins") }]
-            : []),
-        ]}
-        activeTab={activeRole}
-        onChange={(id) => {
-          setActiveRole(id);
-          setSelectedIds(new Set());
-        }}
-        style={{ marginBottom: "20px" }}
-      />
 
       {/* Selection Bar */}
       {selectedIds.size > 0 && (

@@ -829,6 +829,7 @@ export default function AdminPortal({
           const pendingEnrollmentsCount = transactions.filter((t) => (t.status || 'pending').toLowerCase() === 'pending').length;
           const pendingPayoutsCount = payouts.filter((p) => (p.status || 'pending').toLowerCase() === 'pending').length;
           const totalFinancialPending = pendingEnrollmentsCount + pendingPayoutsCount;
+          const totalCoursePending = pendingCourses.length + pendingLessonsCount;
 
           return (
             <div key={idx} className="admin-sidebar-group">
@@ -844,8 +845,8 @@ export default function AdminPortal({
                 {group.title === "Financial Management" && totalFinancialPending > 0 && (
                   <span
                     style={{
-                      marginLeft: "auto",
-                      marginRight: "6px",
+                      marginInlineStart: "auto",
+                      marginInlineEnd: "6px",
                       padding: "2px 8px",
                       borderRadius: "12px",
                       fontSize: "0.75rem",
@@ -855,6 +856,22 @@ export default function AdminPortal({
                     }}
                   >
                     {totalFinancialPending}
+                  </span>
+                )}
+                {group.title === "Course Management" && totalCoursePending > 0 && (
+                  <span
+                    style={{
+                      marginInlineStart: "auto",
+                      marginInlineEnd: "6px",
+                      padding: "2px 8px",
+                      borderRadius: "12px",
+                      fontSize: "0.75rem",
+                      fontWeight: "700",
+                      color: "#f59e0b",
+                      lineHeight: "1.2",
+                    }}
+                  >
+                    {totalCoursePending}
                   </span>
                 )}
                 <svg
