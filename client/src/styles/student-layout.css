@@ -504,7 +504,6 @@ body.light-mode .solid-card {
 /* Restore sidebar specific tooltip position - starts outside the 80px sidebar */
 .sidebar-icon-btn[data-tooltip]::after {
   bottom: auto !important;
-  left: auto !important;
   inset-inline-start: calc(100% + 28px) !important;
   top: 50% !important;
   transform: translate(10px, -50%) !important;

@@ -251,13 +251,10 @@ html[dir="rtl"] .notyf__toast {
   text-align: start !important;
 }
 .notyf__dismiss {
-  right: auto !important;
   inset-inline-end: 0 !important;
-  margin-right: 0 !important;
   margin-inline-end: -15px !important;
 }
 .notyf__icon {
-  margin-right: 0 !important;
   margin-inline-end: 13px !important;
 }
 
