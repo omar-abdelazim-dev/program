@@ -64,10 +64,27 @@ export const register = async (req, res) => {
 
     const user = await User.create({
       name, email, password, role: safeRole, phone: phone || '',
-      major, university, college, year, track, providedCourses, linkedinUrl, socialUrl, goalsText, selectedPills
+      major, university, college, year, track, providedCourses, linkedinUrl, socialUrl, goalsText, selectedPills,
+      isEmailVerified: false,
     });
 
-    await generateTokenAndSetCookie(res, user._id);
+    // Generate Verification Token
+    const crypto = await import('crypto');
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    user.emailVerificationTokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+    
+    const { AUTH_CONFIG } = await import('../config/security.js');
+    user.emailVerificationExpires = Date.now() + AUTH_CONFIG.EMAIL_TOKEN_EXPIRATION;
+    await user.save();
+
+    // Log Verification Link (Simulated SMTP)
+    const clientOrigin = (process.env.CLIENT_URL || 'http://localhost:5173').split(',')[0].trim();
+    const verificationLink = `${clientOrigin}/verify-email/${rawToken}`;
+    
+    const logger = (await import('../utils/logger.js')).default;
+    logger.info(`Email verification requested for ${user.email}`, { verificationLink });
+
+    await generateTokenAndSetCookie(res, user._id, req);
 
     res.status(201).json({
       user: {
@@ -95,15 +112,62 @@ export const login = async (req, res) => {
     }
 
     // .select('+password') is needed because the User model excludes password
-    // by default (select: false) — we explicitly ask for it here since we need
-    // to compare it, but nowhere else in the app will it leak accidentally.
     const user = await User.findOne({ email }).select('+password');
+    
+    // Check if account is locked
+    if (user && user.lockUntil && user.lockUntil > Date.now()) {
+      await logAudit({
+        action: 'LOGIN_BLOCKED',
+        module: 'auth',
+        userId: user._id,
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+        severity: 'warn',
+        metadata: { reason: 'Account locked due to too many failed attempts' },
+      });
+      return res.status(403).json({ message: 'Account is temporarily locked due to multiple failed login attempts. Please try again later.' });
+    }
 
-    // Deliberately vague error message: we don't say "email not found" vs
-    // "wrong password" separately, so an attacker can't use this endpoint to
-    // discover which emails are registered.
     if (!user || !(await user.comparePassword(password))) {
-      // Audit failed login attempt (no userId — attacker may not have one)
+      // Handle progressive lockout
+      if (user) {
+        user.failedLoginAttempts += 1;
+        
+        let shouldLock = false;
+        let lockDurationMs = 0;
+        
+        const { AUTH_CONFIG } = await import('../config/security.js');
+
+        if (user.lockoutStage === 0 && user.failedLoginAttempts >= AUTH_CONFIG.MAX_LOGIN_ATTEMPTS_STAGE_1) {
+          shouldLock = true;
+          lockDurationMs = AUTH_CONFIG.LOCK_DURATION_STAGE_1;
+          user.lockoutStage = 1;
+          user.failedLoginAttempts = 0; // Reset for next stage
+        } else if (user.lockoutStage === 1 && user.failedLoginAttempts >= AUTH_CONFIG.MAX_LOGIN_ATTEMPTS_STAGE_2) {
+          shouldLock = true;
+          lockDurationMs = AUTH_CONFIG.LOCK_DURATION_STAGE_2;
+          user.lockoutStage = 2;
+          user.failedLoginAttempts = 0;
+        } else if (user.lockoutStage >= 2 && user.failedLoginAttempts >= 1) {
+          shouldLock = true;
+          lockDurationMs = AUTH_CONFIG.LOCK_DURATION_ESCALATED;
+          user.failedLoginAttempts = 0;
+        }
+
+        if (shouldLock) {
+          user.lockUntil = new Date(Date.now() + lockDurationMs);
+          await logAudit({
+            action: 'ACCOUNT_LOCKED',
+            module: 'auth',
+            userId: user._id,
+            ipAddress: req.ip,
+            severity: 'warn',
+            metadata: { stage: user.lockoutStage, durationMs: lockDurationMs }
+          });
+        }
+        await user.save();
+      }
+
       await logAudit({
         action: 'LOGIN_FAILURE',
         module: 'auth',
@@ -114,6 +178,14 @@ export const login = async (req, res) => {
         metadata: { email: email.toLowerCase() },
       });
       return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    // Successful login: reset lockout counters
+    if (user.failedLoginAttempts > 0 || user.lockoutStage > 0 || user.lockUntil) {
+      user.failedLoginAttempts = 0;
+      user.lockoutStage = 0;
+      user.lockUntil = undefined;
+      await user.save();
     }
 
     if (user.isBlocked) {
@@ -134,7 +206,7 @@ export const login = async (req, res) => {
       return res.status(403).json({ message: 'Platform is locked for maintenance. Only Super Admins can log in.' });
     }
 
-    await generateTokenAndSetCookie(res, user._id, rememberMe !== false);
+    await generateTokenAndSetCookie(res, user._id, req);
 
     // Audit successful login
     await logAudit({
@@ -167,11 +239,17 @@ export const login = async (req, res) => {
 
 // @route   POST /api/auth/logout
 // @access  Private
-export const logout = (req, res) => {
+export const logout = async (req, res) => {
   res.clearCookie('token', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  });
+  res.clearCookie('refreshToken', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    path: '/api/auth/refresh'
   });
   // Also clear the CSRF token cookie on logout
   res.clearCookie('csrfToken', {
@@ -179,6 +257,22 @@ export const logout = (req, res) => {
     secure: process.env.NODE_ENV === 'production',
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
   });
+
+  // Revoke session if refreshToken was provided
+  const refreshToken = req.cookies.refreshToken;
+  if (refreshToken) {
+    try {
+      const crypto = await import('crypto');
+      const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+      const Session = (await import('../models/Session.js')).default;
+      await Session.findOneAndUpdate(
+        { refreshTokenHash },
+        { revoked: true }
+      );
+    } catch (e) {
+      console.error('Error revoking session on logout:', e);
+    }
+  }
 
   // Fire-and-forget audit log — logout doesn't need to wait for it
   if (req.user?.id) {
@@ -413,6 +507,201 @@ export const resetPassword = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error resetting password' });
+  }
+};
+
+// @route   POST /api/auth/refresh
+// @access  Public (Requires refreshToken cookie)
+export const refresh = async (req, res) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) {
+      return res.status(401).json({ message: 'No refresh token provided' });
+    }
+
+    const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+    const Session = (await import('../models/Session.js')).default;
+    
+    const session = await Session.findOne({ refreshTokenHash });
+    if (!session) {
+      return res.status(401).json({ message: 'Invalid refresh token' });
+    }
+
+    if (session.revoked) {
+      // Possible token theft / replay attack
+      await Session.updateMany({ userId: session.userId }, { revoked: true });
+      await logAudit({
+        action: 'TOKEN_REUSE',
+        module: 'auth',
+        userId: session.userId,
+        ipAddress: req.ip,
+        severity: 'error',
+        metadata: { sessionId: session._id }
+      });
+      res.clearCookie('token');
+      res.clearCookie('refreshToken', { path: '/api/auth/refresh' });
+      return res.status(401).json({ message: 'Security violation: Refresh token reused. All sessions revoked.' });
+    }
+
+    if (session.expiresAt < Date.now()) {
+      session.revoked = true;
+      await session.save();
+      return res.status(401).json({ message: 'Refresh token expired' });
+    }
+
+    const user = await User.findById(session.userId);
+    if (!user || user.isBlocked) {
+      return res.status(401).json({ message: 'User invalid or blocked' });
+    }
+
+    // Mark current session as revoked so it can't be used again (Rotation)
+    // We allow a small grace period for concurrent requests? 
+    // Actually, destroying the session and creating a new one is safer, but let's just revoke it.
+    session.revoked = true;
+    await session.save();
+    
+    // Create new session via generateTokenAndSetCookie
+    await generateTokenAndSetCookie(res, user._id, req);
+
+    await logAudit({
+      action: 'TOKEN_ROTATED',
+      module: 'auth',
+      userId: user._id,
+      ipAddress: req.ip,
+      severity: 'info',
+    });
+
+    res.status(200).json({ message: 'Token refreshed successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error during refresh' });
+  }
+};
+
+// @route   GET /api/auth/sessions
+// @access  Private
+export const getSessions = async (req, res) => {
+  try {
+    const Session = (await import('../models/Session.js')).default;
+    const sessions = await Session.find({ userId: req.user.id, revoked: false }).select('-refreshTokenHash');
+    res.status(200).json({ sessions });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// @route   DELETE /api/auth/sessions/:sessionId
+// @access  Private
+export const revokeSession = async (req, res) => {
+  try {
+    const Session = (await import('../models/Session.js')).default;
+    const session = await Session.findOne({ _id: req.params.sessionId, userId: req.user.id });
+    if (!session) return res.status(404).json({ message: 'Session not found' });
+    
+    session.revoked = true;
+    await session.save();
+    
+    await logAudit({
+      action: 'SESSION_REVOKED',
+      module: 'auth',
+      userId: req.user.id,
+      ipAddress: req.ip,
+      severity: 'info',
+      metadata: { sessionId: session._id }
+    });
+
+    res.status(200).json({ message: 'Session revoked' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// @route   DELETE /api/auth/sessions
+// @access  Private
+export const revokeAllSessions = async (req, res) => {
+  try {
+    const Session = (await import('../models/Session.js')).default;
+    await Session.updateMany({ userId: req.user.id }, { revoked: true });
+    
+    await logAudit({
+      action: 'SESSION_REVOKED_ALL',
+      module: 'auth',
+      userId: req.user.id,
+      ipAddress: req.ip,
+      severity: 'info'
+    });
+
+    res.status(200).json({ message: 'All sessions revoked' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// @route   POST /api/auth/verify-email
+// @access  Public
+export const verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ message: 'Token is required' });
+
+    const crypto = await import('crypto');
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    
+    const user = await User.findOne({
+      emailVerificationTokenHash: hashedToken,
+      emailVerificationExpires: { $gt: Date.now() },
+    }).select('+emailVerificationTokenHash +emailVerificationExpires');
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired verification token' });
+    }
+
+    user.isEmailVerified = true;
+    user.emailVerificationTokenHash = undefined;
+    user.emailVerificationExpires = undefined;
+    await user.save();
+
+    await logAudit({
+      action: 'EMAIL_VERIFIED',
+      module: 'auth',
+      userId: user._id,
+      ipAddress: req.ip,
+      severity: 'info',
+    });
+
+    res.status(200).json({ message: 'Email verified successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error during email verification' });
+  }
+};
+
+// @route   POST /api/auth/resend-verification
+// @access  Private
+export const resendVerification = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('+emailVerificationTokenHash');
+    if (!user) return res.status(401).json({ message: 'User not found' });
+    if (user.isEmailVerified) return res.status(400).json({ message: 'Email is already verified' });
+
+    const crypto = await import('crypto');
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    user.emailVerificationTokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+    
+    const { AUTH_CONFIG } = await import('../config/security.js');
+    user.emailVerificationExpires = Date.now() + AUTH_CONFIG.EMAIL_TOKEN_EXPIRATION;
+    await user.save();
+
+    const clientOrigin = (process.env.CLIENT_URL || 'http://localhost:5173').split(',')[0].trim();
+    const verificationLink = `${clientOrigin}/verify-email/${rawToken}`;
+    
+    const logger = (await import('../utils/logger.js')).default;
+    logger.info(`Email verification resent for ${user.email}`, { verificationLink });
+
+    res.status(200).json({ message: 'Verification email sent' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error resending verification' });
   }
 };
 

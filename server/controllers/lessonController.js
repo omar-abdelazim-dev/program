@@ -14,16 +14,7 @@ export const addLesson = async (req, res) => {
       return res.status(400).json({ message: 'Title and video URL are required' });
     }
 
-    const course = await Course.findById(courseId);
-    if (!course) {
-      return res.status(404).json({ message: 'Course not found' });
-    }
-
-    // Ownership check: an instructor can only add lessons to their own courses.
-    // Without this, any logged-in instructor could add lessons to anyone's course.
-    if (course.instructor.toString() !== req.user.id.toString()) {
-      return res.status(403).json({ message: 'You do not own this course' });
-    }
+    const course = req.resource; // Provided by verifyOwnership middleware
 
     // Backward compatibility: Find or create a default section for this course
     let section = await Section.findOne({ course: courseId }).sort({ order: 1 });
@@ -98,14 +89,7 @@ export const updateLesson = async (req, res) => {
     const { title, videoUrl, attachmentUrl, attachmentTitle } = req.body;
     const { courseId, lessonId } = req.params;
 
-    const course = await Course.findById(courseId);
-    if (!course) {
-      return res.status(404).json({ message: 'Course not found' });
-    }
-
-    if (course.instructor.toString() !== req.user.id.toString()) {
-      return res.status(403).json({ message: 'You do not own this course' });
-    }
+    const course = req.resource; // Provided by verifyOwnership middleware
 
     const lesson = await Lesson.findById(lessonId).populate('section');
     if (!lesson || !lesson.section || lesson.section.course.toString() !== courseId) {
