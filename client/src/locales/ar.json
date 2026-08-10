@@ -40,7 +40,28 @@
     "my_courses": "دوراتي",
     "cart": "عربة التسوق",
     "notifications": "الإشعارات",
+    "clear_all": "مسح الكل",
+    "no_notifications": "لا توجد إشعارات جديدة",
     "profile": "الملف الشخصي"
+  },
+  "notifications": {
+    "course_suspended": "تم تعليق الدورة",
+    "course_approved": "تمت الموافقة على الدورة",
+    "course_submitted": "تم تقديم الدورة",
+    "course_rejected": "تم رفض الدورة",
+    "new_reply": "رد جديد",
+    "new_student_enrollment": "تسجيل طالب جديد",
+    "new_admin_added": "تم إضافة مسؤول جديد",
+    "new_super_admin_added": "تم إضافة مسؤول ممتاز جديد",
+    "new_question_in": "سؤال جديد في",
+    "new_announcement": "إعلان جديد",
+    "total_courses": "إجمالي الدورات",
+    "pending_courses": "الدورات المعلقة",
+    "pending_lessons": "الدروس المعلقة",
+    "new_question_msg": "سأل طالب سؤالاً جديداً في دورتك.",
+    "course_suspended_msg": "تم تعليق دورتك \"{{title}}\".",
+    "course_approved_msg": "تمت الموافقة على دورتك \"{{title}}\"!",
+    "republish_instructions": "يمكنك إعادة نشر دورتك بالنقر على بطاقة الدورة بعد معالجة سبب التعليق."
   },
   "student": {
     "welcome_back": "مرحباً بعودتك",
@@ -65,12 +86,6 @@
       "all_courses": "جميع الدورات",
       "settings": "الإعدادات",
       "home": "الرئيسية"
-    },
-    "nav": {
-      "search_placeholder": "ابحث عن دورات، دروس، مواضيع...",
-      "notifications": "الإشعارات",
-      "clear_all": "مسح الكل",
-      "no_notifications": "لا توجد إشعارات جديدة"
     },
     "learning": {
       "loading_portal": "جاري تحميل بوابة التعلم...",
@@ -185,6 +200,8 @@
         "approved": "معتمد",
         "pending": "قيد الانتظار",
         "rejected": "مرفوض",
+        "suspended": "موقوف",
+        "unpublished": "غير منشور",
         "reason": "السبب",
         "no_lessons_yet": "لا توجد دروس بعد",
         "lesson": "درس",

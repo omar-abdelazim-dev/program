@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import api from "../api/axios";
 import notyf from "../utils/notyf";
 import { createPortal } from "react-dom";
+import SegmentedControl from "./common/SegmentedControl";
 import { useTranslation } from "react-i18next";
 
 // Generic custom dropdown component to match the system's dark theme
@@ -120,7 +121,7 @@ const CustomDropdown = ({
                   setIsOpen(false);
                 }}
                 style={{
-                  padding: "10px 12px",
+                  padding: "10px 8px",
                   background:
                     value.toLowerCase() === opt.toLowerCase()
                       ? "var(--bg-main)"
@@ -618,62 +619,23 @@ export default function AdminUserManagementTab({
         </div>
       </div>
 
-      {/* Role Tabs */}
-      <div style={{ display: "flex", gap: "12px" }}>
-        {[
+      {/* Role Tabs (Segmented Control) */}
+      <SegmentedControl
+        tabs={[
           { id: "student", label: t("admin.students", "Students") },
           { id: "instructor", label: t("admin.instructors", "Instructors") },
           { id: "admin", label: t("admin.admins", "Admins") },
           ...(currentUser?.role === "superadmin"
-            ? [
-                {
-                  id: "superadmin",
-                  label: t("admin.superadmins", "Super Admins"),
-                },
-              ]
+            ? [{ id: "superadmin", label: t("admin.superadmins", "Super Admins") }]
             : []),
-        ].map((tab) => {
-          const isActive = activeRole === tab.id;
-          const roleStyle = getRoleColor(tab.id);
-          return (
-            <button
-              key={tab.id}
-              onClick={() => {
-                setActiveRole(tab.id);
-                setSelectedIds(new Set());
-              }}
-              style={{
-                padding: "10px 24px",
-                borderRadius: "99px",
-                fontSize: "0.9rem",
-                fontWeight: "500",
-                cursor: "pointer",
-                transition: "all 0.2s ease",
-                border: "none",
-                background: "var(--bg-surface)",
-                color: isActive ? "var(--text-h)" : "var(--c-sub)",
-                boxShadow: isActive
-                  ? "var(--inner-shadow)"
-                  : "var(--outer-shadow)",
-              }}
-              onMouseEnter={(e) => {
-                if (!isActive) {
-                  e.target.style.boxShadow = "var(--inner-shadow)";
-                  e.target.style.color = "var(--text-h)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive) {
-                  e.target.style.boxShadow = "var(--outer-shadow)";
-                  e.target.style.color = "var(--c-sub)";
-                }
-              }}
-            >
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
+        ]}
+        activeTab={activeRole}
+        onChange={(id) => {
+          setActiveRole(id);
+          setSelectedIds(new Set());
+        }}
+        style={{ marginBottom: "20px" }}
+      />
 
       {/* Selection Bar */}
       {selectedIds.size > 0 && (

@@ -1,5 +1,5 @@
 import Question from '../models/Question.js';
-import Announcement from '../models/Announcement.js';
+import Announcement from '../models/CourseAnnouncement.js';
 import Course from '../models/Course.js';
 import Notification from '../models/Notification.js';
 import Enrollment from '../models/Enrollment.js';

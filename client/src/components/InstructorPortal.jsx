@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import CustomSelect from './CustomSelect';
@@ -64,6 +64,48 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
   const [error, setError] = useState('');
   const [unreadEngagementCount, setUnreadEngagementCount] = useState(0);
 
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notificationsRef = useRef(null);
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await api.get('/notifications');
+      setNotifications(res.data.notifications || []);
+    } catch (err) {
+      console.error('Failed to fetch notifications', err);
+    }
+  };
+
+  const clearAllNotifications = async () => {
+    try {
+      await api.delete('/notifications');
+      setNotifications([]);
+    } catch (err) {
+      console.error('Failed to clear all notifications', err);
+    }
+  };
+
+  const clearNotification = async (id, e) => {
+    e.stopPropagation();
+    try {
+      await api.delete(`/notifications/${id}`);
+      setNotifications(prev => prev.filter(n => n._id !== id));
+    } catch (err) {
+      console.error('Failed to clear notification', err);
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const fetchUnreadCount = async () => {
     try {
       const unreadRes = await api.get('/engagement/questions/unread-count');
@@ -80,29 +122,28 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
       setCourses(myCourses);
 
       // The owner-gated GET /api/courses/:id already returns { course, lessons },
-      // so we can show real lesson visibility without any backend changes.
-      const lessonEntries = await Promise.all(
-        myCourses.map(async (c) => {
-          try {
-            const detail = await api.get(`/courses/${c._id}`);
-            return [c._id, detail.data.lessons || []];
-          } catch {
-            return [c._id, []];
-          }
-        })
-      );
-      setLessonsByCourse(Object.fromEntries(lessonEntries));
+      // but only if the user is the instructor. Let's just do a series of fetches for now.
+      const lessonsMap = {};
+      for (const c of myCourses) {
+        try {
+          const detail = await api.get(`/courses/${c._id}`);
+          lessonsMap[c._id] = detail.data.lessons || [];
+        } catch (err) {
+          console.error(`Failed to load lessons for course ${c._id}`, err);
+        }
+      }
+      setLessonsByCourse(lessonsMap);
 
       try {
         const statsRes = await api.get('/courses/stats');
         setStats(statsRes.data.courseStats || []);
-        setTimeSeries(statsRes.data.timeSeriesData || []);
-      } catch (statsErr) {
-        console.error('Failed to load stats', statsErr);
+        setTimeSeries(statsRes.data.timeSeries || []);
+      } catch (err) {
+        console.error('Failed to load instructor stats', err);
       }
-
-      await fetchUnreadCount();
-
+      
+      fetchUnreadCount();
+      fetchNotifications();
     } catch (err) {
       console.error(err);
     } finally {
@@ -187,6 +228,33 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
       setError(err.response?.data?.message || 'Failed to save course');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleRepublish = async (courseId) => {
+    try {
+      await api.patch(`/courses/${courseId}/republish`);
+      notyf.success(t('instructor.notyf.course_republished', 'Course submitted for review.'));
+      fetchMyCourses();
+    } catch (err) {
+      console.error('Failed to republish course:', err);
+      notyf.error(t('instructor.notyf.error', 'An error occurred.'));
+    }
+  };
+
+  const handleTogglePublish = async (courseId, e) => {
+    if (e) e.stopPropagation();
+    try {
+      const res = await api.patch(`/courses/${courseId}/publish`);
+      if (res.data.course.status === 'approved') {
+        notyf.success(t('instructor.notyf.course_live', 'Course is now live!'));
+      } else {
+        notyf.success(t('instructor.notyf.course_draft', 'Course set to draft.'));
+      }
+      fetchMyCourses();
+    } catch (err) {
+      console.error('Failed to toggle publish:', err);
+      notyf.error(err.response?.data?.message || 'Failed to update live status.');
     }
   };
 
@@ -448,6 +516,212 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
 
             {/* Notifications */}
             {activeTab !== 'settings' && (
+              <div className="profile-wrapper" ref={notificationsRef}>
+                <button 
+                  className="utility-icon-btn" 
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  style={{ position: 'relative' }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                  </svg>
+                  {notifications.some(n => !n.read) && (
+                    <span style={{
+                      position: 'absolute', top: '4px', right: '4px',
+                      width: '8px', height: '8px', backgroundColor: '#ef4444',
+                      borderRadius: '50%', boxShadow: '0 0 0 2px var(--bg-surface)'
+                    }}></span>
+                  )}
+                </button>
+                {showNotifications && (
+                  <div className="profile-dropdown" style={{ width: '350px' }}>
+                    <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-surface-hover)' }}>
+                      <span style={{ color: 'var(--color-accent)', fontSize: '1.1rem' }}>{t('nav.notifications', 'Notifications')}</span>
+                      {notifications.length > 0 && (
+                        <button 
+                          onClick={clearAllNotifications}
+                          style={{ background: 'none', border: 'none', color: 'var(--c-sub)', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
+                        >
+                          {t('nav.clear_all', 'Clear All')}
+                        </button>
+                      )}
+                    </div>
+                    <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                      {notifications.length > 0 ? notifications.map(notif => (
+                        <div key={notif._id} style={{ 
+                          padding: '12px 16px', 
+                          borderBottom: '1px solid var(--border)',
+                          backgroundColor: notif.read ? 'transparent' : 'rgba(16, 185, 129, 0.05)',
+                          cursor: 'pointer',
+                          position: 'relative'
+                        }} onClick={async () => {
+                          if (!notif.read) {
+                            await api.patch(`/notifications/${notif._id}/read`);
+                            fetchNotifications();
+                          }
+                        }}>
+                          <div style={{
+                            fontSize: '0.85rem',
+                            marginBottom: '4px',
+                            paddingRight: '20px',
+                            ...(
+                              (() => {
+                                const titleLower = (notif.title || '').toLowerCase();
+                                const typeLower = (notif.type || '').toLowerCase();
+
+                                // 1. Course Suspended -> keep as is (#f59e0b)
+                                if (titleLower.includes('suspended') || typeLower === 'suspended') {
+                                  return { color: '#f59e0b', fontWeight: 700 };
+                                }
+                                // 2. Course Rejected -> red gradient
+                                if (titleLower.includes('reject') || typeLower === 'rejected') {
+                                  return {
+                                    background: 'linear-gradient(135deg, #ef4444 0%, #f87171 100%)',
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                    fontWeight: 700,
+                                    display: 'inline-block'
+                                  };
+                                }
+                                // 3. Course/Lesson Approval -> green gradient
+                                if (titleLower.includes('approve') || titleLower.includes('approved') || typeLower.includes('approval')) {
+                                  return {
+                                    background: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)',
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                    fontWeight: 700,
+                                    display: 'inline-block'
+                                  };
+                                }
+                                // 4. New Enroll -> orange gradient
+                                if (titleLower.includes('enroll') || titleLower.includes('enrolled') || typeLower === 'enrollment') {
+                                  return {
+                                    background: 'linear-gradient(135deg, #f97316 0%, #fbbf24 100%)',
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                    fontWeight: 700,
+                                    display: 'inline-block'
+                                  };
+                                }
+                                // 5. New Comment -> blue gradient
+                                if (titleLower.includes('comment') || titleLower.includes('question') || titleLower.includes('reply') || typeLower.startsWith('qa_')) {
+                                  return {
+                                    background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)',
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                    fontWeight: 700,
+                                    display: 'inline-block'
+                                  };
+                                }
+                                return { color: 'var(--text-h)', fontWeight: 600 };
+                              })()
+                            )
+                          }}>
+                            {(() => {
+                              const title = notif.title || "";
+                              if (title === 'Course Suspended') return t('notifications.course_suspended', 'Course Suspended');
+                              if (title === 'Course Approved') return t('notifications.course_approved', 'Course Approved');
+                              if (title === 'Course Submitted') return t('notifications.course_submitted', 'Course Submitted');
+                              if (title === 'Course Rejected') return t('notifications.course_rejected', 'Course Rejected');
+                              if (title === 'New Reply') return t('notifications.new_reply', 'New Reply');
+                              if (title === 'New Student Enrollment') return t('notifications.new_student_enrollment', 'New Student Enrollment');
+                              if (title.startsWith('New Admin Added')) return t('notifications.new_admin_added', 'New Admin Added');
+                              if (title.startsWith('New Super Admin Added')) return t('notifications.new_super_admin_added', 'New Super Admin Added');
+
+                              if (title.startsWith('New Question in ')) {
+                                const courseTitle = title.replace('New Question in ', '');
+                                return `${t('notifications.new_question_in', 'New Question in')} ${courseTitle}`;
+                              }
+                              if (title.startsWith('New Announcement: ')) {
+                                const annTitle = title.replace('New Announcement: ', '');
+                                return `${t('notifications.new_announcement', 'New Announcement')}: ${annTitle}`;
+                              }
+
+                              if (title.toLowerCase().includes('suspended')) return t('notifications.course_suspended', 'Course Suspended');
+                              if (title.toLowerCase().includes('approved')) return t('notifications.course_approved', 'Course Approved');
+                              if (title.toLowerCase().includes('rejected')) return t('notifications.course_rejected', 'Course Rejected');
+                              if (title.toLowerCase().includes('submitted')) return t('notifications.course_submitted', 'Course Submitted');
+
+                              return title;
+                            })()}
+                          </div>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text)' }}>
+                            {(() => {
+                              let mainText = notif.message || "";
+                              let hasRepublish = false;
+                              let reasonText = "";
+
+                              if (mainText.includes("Reason:")) {
+                                const splitReason = mainText.split("Reason:");
+                                mainText = splitReason[0];
+                                reasonText = splitReason[1];
+                              }
+
+                              if (mainText.includes("You can republish")) {
+                                const splitRepublish = mainText.split("You can republish");
+                                mainText = splitRepublish[0];
+                                hasRepublish = true;
+                              }
+
+                              let formattedMain = mainText.trim();
+                              if (formattedMain.includes('has been suspended.')) {
+                                const match = formattedMain.match(/Your course "([^"]+)" has been suspended\./);
+                                if (match) {
+                                  formattedMain = t('notifications.course_suspended_msg', { title: match[1], defaultValue: `Your course "${match[1]}" has been suspended.` });
+                                }
+                              } else if (formattedMain === 'A student asked a new question in your course.') {
+                                formattedMain = t('notifications.new_question_msg', 'A student asked a new question in your course.');
+                              } else if (formattedMain.includes('has been approved!')) {
+                                const match = formattedMain.match(/Your course "([^"]+)" has been approved!/);
+                                if (match) {
+                                  formattedMain = t('notifications.course_approved_msg', { title: match[1], defaultValue: `Your course "${match[1]}" has been approved!` });
+                                }
+                              }
+
+                              return (
+                                <>
+                                  {formattedMain}
+                                  {hasRepublish && (
+                                    <>
+                                      <br />
+                                      {t('notifications.republish_instructions', 'You can republish your course by clicking on the course card after resolving the suspended reason.')}
+                                    </>
+                                  )}
+                                  {reasonText && (
+                                    <>
+                                      <br />
+                                      <span style={{ color: '#ef4444' }}>{t('instructor.dashboard.status.reason', 'Reason')}:</span> {reasonText}
+                                    </>
+                                  )}
+                                </>
+                              );
+                            })()}
+                          </div>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>{new Date(notif.createdAt).toLocaleDateString()}</div>
+                          
+                          <button
+                            onClick={(e) => clearNotification(notif._id, e)}
+                            style={{ position: 'absolute', top: '12px', right: '12px', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }}
+                            title={t('instructor.notifications.clear', 'Clear')}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                              <line x1="18" y1="6" x2="6" y2="18"></line>
+                              <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                          </button>
+                        </div>
+                      )) : (
+                        <div style={{ padding: '16px', fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+                          {t('nav.no_notifications', 'No new notifications')}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {activeTab !== 'settings' && (
               <div className="profile-wrapper">
                 <button 
                   className="utility-icon-btn" 
@@ -590,12 +864,14 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                 return (
                   <div
                     key={course._id}
-                    className="solid-card hover-glow"
+                    className={`solid-card hover-glow ${course.status === 'suspended' ? 'clickable' : ''}`}
+                    onClick={() => course.status === 'suspended' && handleRepublish(course._id)}
                     style={{
                       padding: "24px",
                       display: "flex",
                       flexDirection: "column",
                       gap: "16px",
+                      cursor: course.status === 'suspended' ? 'pointer' : 'default'
                     }}
                   >
                     <div
@@ -669,22 +945,61 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                                 background:
                                   course.status === "approved"
                                     ? "rgba(16, 185, 129, 0.2)"
-                                    : course.status === "rejected"
-                                      ? "rgba(239, 68, 68, 0.2)"
-                                      : "rgba(245, 158, 11, 0.2)",
+                                    : course.status === "draft"
+                                      ? "rgba(59, 130, 246, 0.2)"
+                                      : course.status === "rejected"
+                                        ? "rgba(239, 68, 68, 0.2)"
+                                        : "rgba(245, 158, 11, 0.2)",
                                 color:
                                   course.status === "approved"
                                     ? "#10B981"
-                                    : course.status === "rejected"
-                                      ? "#ef4444"
-                                      : "#F59E0B",
+                                    : course.status === "draft"
+                                      ? "#3B82F6"
+                                      : course.status === "rejected"
+                                        ? "#ef4444"
+                                        : "#F59E0B",
                               }}
                             >
-                              {/* Translated Status Badges */}
-                              {t(
-                                `instructor.dashboard.status.${course.status}`,
-                              ) || course.status.toUpperCase()}
+                              {course.status === "approved" ? "LIVE" : course.status === "draft" ? "DRAFT" : (t(`instructor.dashboard.status.${course.status}`) || course.status.toUpperCase())}
                             </span>
+
+                            {course.status === "draft" && (
+                              <button
+                                onClick={(e) => handleTogglePublish(course._id, e)}
+                                style={{
+                                  padding: "4px 12px",
+                                  borderRadius: "50px",
+                                  background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                                  color: "white",
+                                  border: "none",
+                                  cursor: "pointer",
+                                  fontSize: "0.8rem",
+                                  fontWeight: "bold",
+                                  boxShadow: "0 2px 8px rgba(16, 185, 129, 0.3)"
+                                }}
+                              >
+                                Go Live
+                              </button>
+                            )}
+
+                            {course.status === "approved" && (
+                              <button
+                                onClick={(e) => handleTogglePublish(course._id, e)}
+                                style={{
+                                  padding: "4px 12px",
+                                  borderRadius: "50px",
+                                  background: "rgba(255, 255, 255, 0.08)",
+                                  color: "var(--text-h)",
+                                  border: "1px solid var(--border)",
+                                  boxShadow: "var(--inner-shadow)",
+                                  cursor: "pointer",
+                                  fontSize: "0.75rem"
+                                }}
+                              >
+                                Make Draft
+                              </button>
+                            )}
+
                             <span
                               style={{
                                 fontSize: "0.85rem",
@@ -698,23 +1013,23 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                                 : `${lessons.length} ${lessons.length === 1 ? t("instructor.dashboard.status.lesson") : t("instructor.dashboard.status.lessons")}`}
                             </span>
                           </div>
-                          {course.status === "rejected" &&
+                          {(course.status === "rejected" || course.status === "suspended") &&
                             course.rejectionReason && (
                               <div
                                 style={{
                                   boxShadow: "var(--inner-shadow)",
                                   marginTop: "8px",
-                                  padding: "10px 12px",
-                                  background: "rgba(239, 68, 68, 0.08)",
+                                  padding: "6px 14px",
+                                  background: course.status === "suspended" ? "rgba(245, 158, 11, 0.2)" : "rgba(239, 68, 68, 0.2)",
                                   border: "none",
                                   borderRadius: "50px",
                                   fontSize: "0.85rem",
                                   color: "var(--text)",
-                                  maxWidth: "480px",
+                                  width: "fit-content",
                                 }}
                               >
                                 <span
-                                  style={{ color: "#ef4444", fontWeight: 600 }}
+                                  style={{ color: course.status === "suspended" ? "#f59e0b" : "#ef4444", fontWeight: 600 }}
                                 >
                                   {t("instructor.dashboard.status.reason")}
                                   :{" "}
@@ -726,41 +1041,6 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                       </div>
                     </div>
 
-                    {lessons.length > 0 && (
-                      <div
-                        style={{
-                          borderTop: "1px solid var(--border)",
-                          paddingTop: "12px",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "6px",
-                        }}
-                      >
-                        {lessons.map((lesson) => (
-                          <div
-                            key={lesson._id}
-                            style={{
-                              display: "flex",
-                              gap: "10px",
-                              alignItems: "center",
-                              fontSize: "0.9rem",
-                              color: "var(--text)",
-                            }}
-                          >
-                            <span
-                              style={{
-                                minWidth: "20px",
-                                color: "var(--text-h)",
-                                fontWeight: 600,
-                              }}
-                            >
-                              {lesson.order}.
-                            </span>
-                            <span>{lesson.title}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 );
               })

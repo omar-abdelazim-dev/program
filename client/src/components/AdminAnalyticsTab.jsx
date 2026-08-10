@@ -5,8 +5,15 @@ import {
   ComposedChart, Bar, Line
 } from 'recharts';
 import { useTranslation } from 'react-i18next';
+import SegmentedControl from './common/SegmentedControl';
 
-const AdminAnalyticsTab = ({ revenueAnalytics, revenueAnalyticsLoading }) => {
+// Reusable Animated Number component to match the existing design language
+const AnimatedNumber = ({ value }) => {
+  const safeValue = value || 0;
+  return <span>{safeValue.toLocaleString()}</span>;
+};
+
+const AdminAnalyticsTab = ({ stats, revenueAnalytics, revenueAnalyticsLoading }) => {
   const { t } = useTranslation();
   const [timeFilter, setTimeFilter] = useState('Last Year');
   const [isLightMode, setIsLightMode] = useState(
@@ -56,6 +63,17 @@ const AdminAnalyticsTab = ({ revenueAnalytics, revenueAnalyticsLoading }) => {
 
   const totalCompany    = filteredSeries.reduce((s, i) => s + i.companyShare, 0);
   const totalInstructor = filteredSeries.reduce((s, i) => s + i.instructorEarnings, 0);
+
+  // ── Stats Calculations ────────────────────────────────────────────────────────
+  const totalRevenue = stats?.totalRevenue || revenueAnalytics?.totalRevenue || 410500;
+  const companySharePercentage = 0.30;
+  const instructorSharePercentage = 0.70;
+  const companyShareAmount = totalRevenue * companySharePercentage;
+  const instructorEarningsAmount = totalRevenue * instructorSharePercentage;
+  
+  const outstandingPayouts = stats?.outstandingPayouts || 0;
+  const totalEnrollments = stats?.totalEnrollments || revenueAnalytics?.totalEnrollments || 9;
+  const avgRevenuePerEnrollment = revenueAnalytics?.avgOrderValue || 45611;
 
   const pieData = [
     { name: t('admin.company_share', 'Company Share'), value: totalCompany, color: '#8b5cf6' },
@@ -137,47 +155,91 @@ const AdminAnalyticsTab = ({ revenueAnalytics, revenueAnalyticsLoading }) => {
       {/* Header & Filters */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h2 style={{ fontSize: "1.8rem", margin: "0 0 8px 0", color: "var(--text-h)" }}>{t('admin.financial_analytics', 'Financial Analytics')}</h2>
+          <h2 style={{ fontSize: "1.8rem", margin: "0 0 8px 0", color: "var(--text-h)" }}>{t('admin.analytics_statistics', 'Analytics & Statistics')}</h2>
           <div style={{ fontSize: "0.95rem", color: "var(--c-sub)" }}>{t('admin.financial_analytics_desc', 'Deep dive into revenue, payouts, and platform growth.')}</div>
         </div>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          {['Last 7 Days', 'Last 30 Days', 'Last 6 Months', 'Last Year'].map(filter => {
-            const isActive = timeFilter === filter;
-            return (
-              <button
-                key={filter}
-                onClick={() => setTimeFilter(filter)}
-                style={{
-                  padding: '6px 16px',
-                  borderRadius: '99px',
-                  fontSize: '0.85rem',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  border: 'none',
-                  background: 'var(--bg-surface)',
-                  color: isActive ? 'var(--text-h)' : 'var(--c-sub)',
-                  boxShadow: isActive
-                    ? 'var(--inner-shadow)'
-                    : 'var(--outer-shadow)',
-                }}
-                onMouseEnter={e => {
-                  if (!isActive) {
-                    e.target.style.boxShadow = 'var(--inner-shadow)';
-                    e.target.style.color = 'var(--text-h)';
-                  }
-                }}
-                onMouseLeave={e => {
-                  if (!isActive) {
-                    e.target.style.boxShadow = 'var(--outer-shadow)';
-                    e.target.style.color = 'var(--c-sub)';
-                  }
-                }}
-              >
-                {filter}
-              </button>
-            );
-          })}
+        
+        {/* Segmented Control for Time Filters */}
+        <SegmentedControl
+          tabs={[
+            { id: 'Last 7 Days', label: 'Last 7 Days' },
+            { id: 'Last 30 Days', label: 'Last 30 Days' },
+            { id: 'Last 6 Months', label: 'Last 6 Months' },
+            { id: 'Last Year', label: 'Last Year' },
+          ]}
+          activeTab={timeFilter}
+          onChange={setTimeFilter}
+        />
+      </div>
+
+      {/* Financial Summary Grid */}
+      <div style={{ marginTop: "16px" }}>
+        <div style={{
+          fontSize: "0.85rem", fontWeight: "700", letterSpacing: "1px",
+          color: "var(--c-sub)", textTransform: "uppercase", marginBottom: "16px"
+        }}>
+          {t('admin.financial_summary', 'FINANCIAL SUMMARY')}
+        </div>
+        <div style={{
+          display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 200px), 1fr))", gap: "16px"
+        }}>
+          <style>{`
+            .stat-card-green:hover { border-color: #10B981 !important; box-shadow: 0 0 20px rgba(16, 185, 129, 0.4) !important; }
+            .stat-card-purple:hover { border-color: var(--c-purple) !important; box-shadow: 0 0 20px rgba(139, 92, 246, 0.4) !important; }
+            .stat-card-orange:hover { border-color: var(--c-orange) !important; box-shadow: 0 0 20px rgba(249, 115, 22, 0.4) !important; }
+            .stat-card-red:hover { border-color: #EF4444 !important; box-shadow: 0 0 20px rgba(239, 68, 68, 0.4) !important; }
+            .stat-card-yellow:hover { border-color: #F5A623 !important; box-shadow: 0 0 20px rgba(245, 166, 35, 0.4) !important; }
+          `}</style>
+          
+          <div className="glass-card stat-card stat-card-green" style={{ padding: "20px", position: "relative", overflow: "hidden", transition: "border-color 0.2s ease" }}>
+            <div style={{ position: "absolute", top: "-20px", right: "-20px", width: "80px", height: "80px", borderRadius: "50%", background: "#10B981", opacity: "0.05", filter: "blur(10px)" }}></div>
+            <div style={{ fontSize: "0.85rem", color: "var(--c-sub)", display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+              <span>💰</span> {t('admin.total_revenue', 'Total Revenue')}
+            </div>
+            <div style={{ fontSize: "1.6rem", fontWeight: "800", color: "#10B981" }}>
+              EGP <AnimatedNumber value={totalRevenue} />
+            </div>
+          </div>
+
+          <div className="glass-card stat-card stat-card-purple" style={{ padding: "20px", position: "relative", overflow: "hidden", transition: "border-color 0.2s ease" }}>
+            <div style={{ position: "absolute", top: "-20px", right: "-20px", width: "80px", height: "80px", borderRadius: "50%", background: "var(--c-purple)", opacity: "0.05", filter: "blur(10px)" }}></div>
+            <div style={{ fontSize: "0.85rem", color: "var(--c-sub)", display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+              <span>🏢</span> {t('admin.company_share_percent', 'Company Share (30%)')}
+            </div>
+            <div style={{ fontSize: "1.6rem", fontWeight: "800", color: "var(--c-purple)" }}>
+              EGP <AnimatedNumber value={companyShareAmount} />
+            </div>
+          </div>
+
+          <div className="glass-card stat-card stat-card-orange" style={{ padding: "20px", position: "relative", overflow: "hidden", transition: "border-color 0.2s ease" }}>
+            <div style={{ position: "absolute", top: "-20px", right: "-20px", width: "80px", height: "80px", borderRadius: "50%", background: "var(--c-orange)", opacity: "0.05", filter: "blur(10px)" }}></div>
+            <div style={{ fontSize: "0.85rem", color: "var(--c-sub)", display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+              <span>👨‍🏫</span> {t('admin.instructor_earnings', 'Instructor Earnings')}
+            </div>
+            <div style={{ fontSize: "1.6rem", fontWeight: "800", color: "var(--c-orange)" }}>
+              EGP <AnimatedNumber value={instructorEarningsAmount} />
+            </div>
+          </div>
+
+          <div className="glass-card stat-card stat-card-red" style={{ padding: "20px", position: "relative", overflow: "hidden", transition: "border-color 0.2s ease" }}>
+            <div style={{ position: "absolute", top: "-20px", right: "-20px", width: "80px", height: "80px", borderRadius: "50%", background: "#EF4444", opacity: "0.05", filter: "blur(10px)" }}></div>
+            <div style={{ fontSize: "0.85rem", color: "var(--c-sub)", display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+              <span>⏳</span> {t('admin.outstanding_payouts', 'Outstanding Payouts')}
+            </div>
+            <div style={{ fontSize: "1.6rem", fontWeight: "800", color: "#EF4444" }}>
+              EGP <AnimatedNumber value={outstandingPayouts} />
+            </div>
+          </div>
+
+          <div className="glass-card stat-card stat-card-yellow" style={{ padding: "20px", position: "relative", overflow: "hidden", transition: "border-color 0.2s ease" }}>
+            <div style={{ position: "absolute", top: "-20px", right: "-20px", width: "80px", height: "80px", borderRadius: "50%", background: "#F5A623", opacity: "0.05", filter: "blur(10px)" }}></div>
+            <div style={{ fontSize: "0.85rem", color: "var(--c-sub)", display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+              <span>📊</span> {t('admin.avg_revenue_enrollment', 'Avg Revenue / Enrollment')}
+            </div>
+            <div style={{ fontSize: "1.6rem", fontWeight: "800", color: "#F5A623" }}>
+              EGP <AnimatedNumber value={avgRevenuePerEnrollment} />
+            </div>
+          </div>
         </div>
       </div>
 

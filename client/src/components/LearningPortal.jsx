@@ -70,7 +70,7 @@ export default function LearningPortal({ user }) {
         }
       } catch(err) {
         if (err.code === 'ERR_CANCELED') return;
-        setError('Failed to load learning portal.');
+        setError(err.response?.data?.message || 'Failed to load learning portal.');
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }

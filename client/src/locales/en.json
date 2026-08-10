@@ -40,7 +40,28 @@
     "my_courses": "My Courses",
     "cart": "Cart",
     "notifications": "Notifications",
+    "clear_all": "Clear All",
+    "no_notifications": "No new notifications",
     "profile": "Profile"
+  },
+  "notifications": {
+    "course_suspended": "Course Suspended",
+    "course_approved": "Course Approved",
+    "course_submitted": "Course Submitted",
+    "course_rejected": "Course Rejected",
+    "new_reply": "New Reply",
+    "new_student_enrollment": "New Student Enrollment",
+    "new_admin_added": "New Admin Added",
+    "new_super_admin_added": "New Super Admin Added",
+    "new_question_in": "New Question in",
+    "new_announcement": "New Announcement",
+    "total_courses": "Total Courses",
+    "pending_courses": "Pending Courses",
+    "pending_lessons": "Pending Lessons",
+    "new_question_msg": "A student asked a new question in your course.",
+    "course_suspended_msg": "Your course \"{{title}}\" has been suspended.",
+    "course_approved_msg": "Your course \"{{title}}\" has been approved!",
+    "republish_instructions": "You can republish your course by clicking on the course card after resolving the suspended reason."
   },
   "student": {
     "welcome_back": "Welcome back",
@@ -65,12 +86,6 @@
       "all_courses": "All Courses",
       "settings": "Settings",
       "home": "Home"
-    },
-    "nav": {
-      "search_placeholder": "Search courses, lessons, topics...",
-      "notifications": "Notifications",
-      "clear_all": "Clear all",
-      "no_notifications": "No new notifications"
     },
     "learning": {
       "loading_portal": "Loading Learning Portal...",
@@ -185,6 +200,8 @@
         "approved": "Approved",
         "pending": "Pending",
         "rejected": "Rejected",
+        "suspended": "Suspended",
+        "unpublished": "Unpublished",
         "reason": "Reason",
         "no_lessons_yet": "No lessons yet",
         "lesson": "lesson",

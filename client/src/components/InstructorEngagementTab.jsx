@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ConfirmModal from './ConfirmModal';
 import CustomSelect from './CustomSelect';
+import SegmentedControl from "./common/SegmentedControl";
 import api from '../api/axios';
 import { useTranslation } from 'react-i18next';
 
@@ -168,34 +169,15 @@ export default function InstructorEngagementTab({ courses = [], onAction }) {
 
   return (
     <div data-role="instructor">
-      <div
-        className="course-tabs"
-        style={{ position: "relative", marginBottom: "32px", width: "fit-content" }}
-        ref={tabsContainerRef}
-      >
-        <div
-          className="dashboard-tab-indicator"
-          style={{
-            insetInlineStart: `${tabIndicatorStyle.insetInlineStart}px`,
-            width: `${tabIndicatorStyle.width}px`,
-            opacity: tabIndicatorStyle.opacity,
-          }}
-        />
-        <button
-          className={`dashboard-tab ${activeTab === 'qa' ? "active" : ""}`}
-          onClick={() => setActiveTab('qa')}
-          data-text={t('instructor.engagement.qna')}
-        >
-          {t('instructor.engagement.qna')}
-        </button>
-        <button
-          className={`dashboard-tab ${activeTab === 'announcements' ? "active" : ""}`}
-          onClick={() => setActiveTab('announcements')}
-          data-text={t('instructor.engagement.announcements')}
-        >
-          {t('instructor.engagement.announcements')}
-        </button>
-      </div>
+      <SegmentedControl
+        tabs={[
+          { id: 'qa', label: t('instructor.engagement.qna') },
+          { id: 'announcements', label: t('instructor.engagement.announcements') }
+        ]}
+        activeTab={activeTab}
+        onChange={setActiveTab}
+        style={{ marginBottom: "32px" }}
+      />
 
       {activeTab === 'qa' && (
         <div className="glass-card no-border animate-entrance" style={{ padding: '40px', borderRadius: '24px', background: 'var(--bg-surface)', border: 'none' }}>
@@ -203,58 +185,14 @@ export default function InstructorEngagementTab({ courses = [], onAction }) {
             <h2 style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--text-h)', margin: 0 }}>
               {t('instructor.engagement.title')}
             </h2>
-            <div style={{ position: 'relative', display: 'flex', background: 'var(--bg-main)', padding: '4px', borderRadius: '50px', boxShadow: 'var(--inner-shadow)', width: '240px', height: '36px' }}>
-              <div style={{
-                position: 'absolute',
-                top: '4px',
-                insetInlineStart: qaStatusTab === 'approved' ? '50%' : '4px',
-                width: 'calc(50% - 4px)',
-                height: 'calc(100% - 8px)',
-                borderRadius: '50px',
-                background: 'var(--bg-surface)',
-                boxShadow: 'var(--outer-shadow)',
-                transition: 'inset-inline-start 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                zIndex: 0,
-              }} />
-              <button
-                onClick={() => setQaStatusTab('pending')}
-                style={{
-                  flex: 1,
-                  position: 'relative',
-                  zIndex: 1,
-                  padding: '0',
-                  borderRadius: '50px',
-                  border: 'none',
-                  background: 'transparent',
-                  color: qaStatusTab === 'pending' ? 'var(--text-h)' : 'var(--c-sub)',
-                  cursor: 'pointer',
-                  fontWeight: qaStatusTab === 'pending' ? '600' : '400',
-                  transition: 'color 0.3s, font-weight 0.3s',
-                  fontSize: '0.85rem'
-                }}
-              >
-                {t('instructor.engagement.pending')}
-              </button>
-              <button
-                onClick={() => setQaStatusTab('approved')}
-                style={{
-                  flex: 1,
-                  position: 'relative',
-                  zIndex: 1,
-                  padding: '0',
-                  borderRadius: '50px',
-                  border: 'none',
-                  background: 'transparent',
-                  color: qaStatusTab === 'approved' ? 'var(--text-h)' : 'var(--c-sub)',
-                  cursor: 'pointer',
-                  fontWeight: qaStatusTab === 'approved' ? '600' : '400',
-                  transition: 'color 0.3s, font-weight 0.3s',
-                  fontSize: '0.85rem'
-                }}
-              >
-                {t('instructor.engagement.approved')}
-              </button>
-            </div>
+            <SegmentedControl
+              tabs={[
+                { id: 'pending', label: t('instructor.engagement.pending') },
+                { id: 'approved', label: t('instructor.engagement.approved') }
+              ]}
+              activeTab={qaStatusTab}
+              onChange={setQaStatusTab}
+            />
           </div>
           {(() => {
             const filteredQuestions = questions.filter(q => (q.status || 'pending') === qaStatusTab);

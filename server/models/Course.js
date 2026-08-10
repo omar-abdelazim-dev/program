@@ -54,9 +54,10 @@ const courseSchema = new mongoose.Schema(
     // approved -> admin approved, shows up in the public catalog
     // rejected -> admin rejected, instructor can see feedback and resubmit later
     // unpublished -> admin pulled a previously-approved course from the catalog
+    // suspended -> admin suspended the course, removing it from catalog and notifying instructor
     status: {
       type: String,
-      enum: ['pending', 'approved', 'rejected', 'unpublished'],
+      enum: ['pending', 'approved', 'rejected', 'unpublished', 'suspended', 'draft'],
       default: 'pending',
     },
     // Feedback shown to the instructor when an admin rejects the course.

@@ -70,10 +70,10 @@ export const getLessonContent = async (req, res) => {
     }
 
     const isOwner = course.instructor.toString() === req.user.id.toString();
-    const isAdmin = req.user.role === 'admin';
+    const isAdmin = req.user.role === 'admin' || req.user.role === 'superadmin';
 
     if (!isOwner && !isAdmin) {
-      const enrollment = await Enrollment.findOne({ student: req.user.id, course: courseId });
+      const enrollment = await Enrollment.findOne({ $or: [{ student: req.user.id }, { user: req.user.id }], course: courseId });
       if (!enrollment) {
         return res.status(403).json({ message: 'Enroll in this course to watch its lessons' });
       }

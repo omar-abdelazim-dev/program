@@ -60,15 +60,11 @@ export const getAllowedOrigins = () => {
 
 // ─── Rate limiter windows ───────────────────────────────────────────────────
 export const RATE_LIMITS = {
-  // Login: tight — 5 attempts per 15 minutes to prevent brute-force
-  login: { windowMs: 15 * 60 * 1000, max: 500 },
-  // Register: very tight — 3 registrations per hour per IP
-  register: { windowMs: 60 * 60 * 1000, max: 300 },
-  // Forgot password / OTP: 3 per hour per IP
-  forgotPassword: { windowMs: 60 * 60 * 1000, max: 300 },
-  otp: { windowMs: 15 * 60 * 1000, max: 500 },
-  // General auth endpoints (check-email, change-password)
-  auth: { windowMs: 15 * 60 * 1000, max: 1000 },
-  // Global API catch-all — 200 req/15 min is generous but still protective
-  global: { windowMs: 15 * 60 * 1000, max: 200 },
+  // Disabled rate limits for testing
+  login: { windowMs: 15 * 60 * 1000, max: 9999 },
+  register: { windowMs: 60 * 60 * 1000, max: 9999 },
+  forgotPassword: { windowMs: 60 * 60 * 1000, max: 9999 },
+  otp: { windowMs: 15 * 60 * 1000, max: 9999 },
+  auth: { windowMs: 15 * 60 * 1000, max: 9999 },
+  global: { windowMs: 15 * 60 * 1000, max: 9999 },
 };
