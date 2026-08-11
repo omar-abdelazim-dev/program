@@ -18,6 +18,7 @@ import AdminPayoutsTab from "./AdminPayoutsTab";
 import AdminAnalyticsTab from "./AdminAnalyticsTab";
 import AdminOverviewTab from "./AdminOverviewTab";
 import SegmentedControl from "./common/SegmentedControl";
+import { formatNotificationTitle, formatNotificationMessage } from "../utils/notificationFormatter";
 import AdminUserManagementTab from "./AdminUserManagementTab";
 import AdminCourseManagementTab from "./AdminCourseManagementTab";
 import AdminLessonsTab from "./AdminLessonsTab";
@@ -1106,10 +1107,10 @@ export default function AdminPortal({
                         setShowNotifications(false);
                       }}>
                         <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-h)', marginBottom: '4px' }}>
-                          {notif.title}
+                          {formatNotificationTitle(notif.title || notif.text, t)}
                         </div>
                         <div style={{ fontSize: '0.8rem', color: 'var(--c-sub)', lineHeight: '1.4' }}>
-                          {notif.message}
+                          {formatNotificationMessage(notif.message, t)}
                         </div>
                         <div style={{ fontSize: '0.72rem', color: 'var(--c-sub)', marginTop: '6px', textAlign: 'right', opacity: 0.8 }}>
                           {new Date(notif.createdAt).toLocaleString(undefined, { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}

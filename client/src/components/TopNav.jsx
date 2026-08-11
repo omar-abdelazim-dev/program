@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { formatNotificationTitle, formatNotificationMessage } from "../utils/notificationFormatter";
 
 export default function TopNav({
   user,
@@ -12,7 +13,7 @@ export default function TopNav({
   searchQuery,
   onSearchChange,
 }) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const toggleLanguage = () => {
     const newLang = i18n.language === "en" ? "ar" : "en";
@@ -160,11 +161,11 @@ export default function TopNav({
                       const content = (
                         <>
                           <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-h)', marginBottom: '4px' }}>
-                            {notif.text}
+                            {formatNotificationTitle(notif.text || notif.title, t)}
                           </div>
                           {notif.message && (
                             <div style={{ fontSize: '0.8rem', color: 'var(--c-sub)', lineHeight: '1.4', marginBottom: '4px' }}>
-                              {notif.message}
+                              {formatNotificationMessage(notif.message, t)}
                             </div>
                           )}
                           <div style={{ fontSize: '0.72rem', color: 'var(--c-sub)', marginTop: '6px', textAlign: 'right', opacity: 0.8 }}>

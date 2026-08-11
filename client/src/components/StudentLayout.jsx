@@ -11,6 +11,7 @@ import { INSTRUCTORS_TAB, ALL_TAB } from "../data/exploreCategories";
 import { COLLEGES } from "../data/colleges";
 import CustomSelect from "./CustomSelect";
 import ThreeDotMenu from "./common/ThreeDotMenu";
+import { formatNotificationTitle, formatNotificationMessage } from "../utils/notificationFormatter";
 
 export default function StudentLayout({
   user,
@@ -440,11 +441,11 @@ export default function StudentLayout({
                           const content = (
                             <>
                               <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-h)', marginBottom: '4px' }}>
-                                {notif.text}
+                                {formatNotificationTitle(notif.text || notif.title, t)}
                               </div>
                               {notif.message && (
                                 <div style={{ fontSize: '0.8rem', color: 'var(--c-sub)', lineHeight: '1.4', marginBottom: '4px' }}>
-                                  {notif.message}
+                                  {formatNotificationMessage(notif.message, t)}
                                 </div>
                               )}
                               <div style={{ fontSize: '0.72rem', color: 'var(--c-sub)', marginTop: '6px', textAlign: 'right', opacity: 0.8 }}>
