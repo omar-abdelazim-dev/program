@@ -14,6 +14,7 @@ export const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: rateLimitMessage,
+  skip: () => process.env.NODE_ENV === 'test',
 });
 
 // ─── Granular limiters (Sprint 1 additions) ──────────────────────────────────
@@ -26,6 +27,7 @@ export const loginLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: rateLimitMessage,
+  skip: () => process.env.NODE_ENV === 'test',
 });
 
 // Register: very restrictive — 3 registrations / hour per IP.
@@ -36,6 +38,7 @@ export const registerLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: rateLimitMessage,
+  skip: () => process.env.NODE_ENV === 'test',
 });
 
 // Forgot password: prevents email enumeration via rate pressure.
@@ -45,6 +48,7 @@ export const forgotPasswordLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: rateLimitMessage,
+  skip: () => process.env.NODE_ENV === 'test',
 });
 
 // OTP: prevents SMS/email OTP brute-force.
@@ -54,6 +58,15 @@ export const otpLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: rateLimitMessage,
+});
+
+// Uploads: prevents malicious bots from exhausting storage quotas or disk space.
+export const uploadLimiter = rateLimit({
+  windowMs: RATE_LIMITS.uploads?.windowMs || 60 * 60 * 1000,
+  limit: RATE_LIMITS.uploads?.max || 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Upload limit reached. Please try again later.' },
 });
 
 // Global API limiter — applied to all routes as a catch-all backstop.

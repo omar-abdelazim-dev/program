@@ -29,7 +29,6 @@ export const ALLOWED_IMAGE_MIMES = new Set([
   'image/png',
   'image/gif',
   'image/webp',
-  'image/svg+xml',
 ]);
 
 export const ALLOWED_VIDEO_MIMES = new Set([
@@ -43,11 +42,26 @@ export const ALLOWED_VIDEO_MIMES = new Set([
 
 // ─── Allowed upload extensions ─────────────────────────────────────────────
 export const ALLOWED_IMAGE_EXTENSIONS = new Set([
-  '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg',
+  '.jpg', '.jpeg', '.png', '.gif', '.webp',
 ]);
 
 export const ALLOWED_VIDEO_EXTENSIONS = new Set([
   '.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv',
+]);
+
+export const ALLOWED_DOCUMENT_MIMES = new Set([
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/zip',
+  'application/x-zip-compressed',
+  'application/x-rar-compressed',
+  'text/plain',
+  'application/rtf',
+]);
+
+export const ALLOWED_DOCUMENT_EXTENSIONS = new Set([
+  '.pdf', '.doc', '.docx', '.zip', '.rar', '.txt', '.rtf',
 ]);
 
 // ─── CORS ──────────────────────────────────────────────────────────────────
@@ -69,6 +83,28 @@ export const RATE_LIMITS = {
   otp: { windowMs: 15 * 60 * 1000, max: 5 },
   // General auth endpoints (check-email, change-password)
   auth: { windowMs: 15 * 60 * 1000, max: 10 },
+  // File uploads: maximum 10 uploads per hour per IP to prevent disk/quota exhaustion
+  uploads: { windowMs: 60 * 60 * 1000, max: 10 },
   // Global API catch-all — 200 req/15 min is generous but still protective
   global: { windowMs: 15 * 60 * 1000, max: 200 },
+};
+
+// ─── Authentication & Session Configuration ────────────────────────────────
+export const AUTH_CONFIG = {
+  ACCESS_TOKEN_LIFETIME: '30m',
+  REFRESH_TOKEN_LIFETIME: '7d',
+  
+  MAX_LOGIN_ATTEMPTS_STAGE_1: 5,
+  LOCK_DURATION_STAGE_1: 1 * 60 * 1000, // 1 minute
+  
+  MAX_LOGIN_ATTEMPTS_STAGE_2: 3,
+  LOCK_DURATION_STAGE_2: 3 * 60 * 1000, // 3 minutes
+  
+  LOCK_DURATION_ESCALATED: 5 * 60 * 1000, // 5 minutes
+  
+  MAX_ACTIVE_SESSIONS: 5,
+  
+  EMAIL_TOKEN_EXPIRATION: 24 * 60 * 60 * 1000, // 24 hours
+  PASSWORD_RESET_EXPIRATION: 30 * 60 * 1000, // 30 minutes
+  SESSION_IDLE_TIMEOUT: 7 * 24 * 60 * 60 * 1000, // 7 days
 };

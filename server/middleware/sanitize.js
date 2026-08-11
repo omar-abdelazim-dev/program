@@ -45,6 +45,12 @@ const recursiveMongoCleaner = (value, location, req) => {
   if (value !== null && typeof value === 'object') {
     const cleaned = {};
     for (const [key, val] of Object.entries(value)) {
+      // Prevent prototype pollution
+      if (['__proto__', 'constructor', 'prototype'].includes(key)) {
+        attacked = true;
+        continue;
+      }
+      
       if (key.startsWith('$') || key.includes('.')) {
         attacked = true;
         // Drop the key entirely — do not include it in the output
@@ -125,6 +131,10 @@ const recursiveXssCleaner = (value) => {
   if (value !== null && typeof value === 'object') {
     const cleaned = {};
     for (const [key, val] of Object.entries(value)) {
+      // Prevent prototype pollution
+      if (['__proto__', 'constructor', 'prototype'].includes(key)) {
+        continue;
+      }
       cleaned[key] = recursiveXssCleaner(val);
     }
     return cleaned;

@@ -1,4 +1,4 @@
-node_modules/
+﻿node_modules/
 .env
 .env.local
 .env.*
@@ -6,3 +6,5 @@ node_modules/
 dist/
 build/
 .DS_Store
+server/node-v20.12.2-win-x64/
+server/node.zip

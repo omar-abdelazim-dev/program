@@ -369,16 +369,7 @@ export const updateCourse = async (req, res) => {
   try {
     const { title, description, category, major, semester, college, thumbnailUrl } = req.body;
 
-    const course = await Course.findById(req.params.id);
-    if (!course) {
-      return res.status(404).json({ message: 'Course not found' });
-    }
-
-    const isOwner = course.instructor.toString() === req.user.id.toString();
-    const isAdmin = req.user.role === 'admin' || req.user.role === 'superadmin';
-    if (!isOwner && !isAdmin) {
-      return res.status(403).json({ message: 'Not authorized to update this course' });
-    }
+    const course = req.resource; // Provided by verifyOwnership middleware
 
     course.title = title || course.title;
     course.description = description || course.description;
@@ -471,14 +462,7 @@ export const deleteCourse = async (req, res) => {
 // @access  Private (instructor only, must own the course)
 export const requestDeleteCourse = async (req, res) => {
   try {
-    const course = await Course.findById(req.params.id);
-    if (!course) {
-      return res.status(404).json({ message: 'Course not found' });
-    }
-
-    if (course.instructor.toString() !== req.user.id.toString()) {
-      return res.status(403).json({ message: 'Not authorized to request deletion of this course' });
-    }
+    const course = req.resource; // Provided by verifyOwnership middleware
 
     if (course.deletionRequested) {
       return res.status(409).json({ message: 'Deletion has already been requested for this course' });
