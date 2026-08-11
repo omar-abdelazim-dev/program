@@ -15,11 +15,28 @@ export default function LearningPortal({ user }) {
   const location = useLocation();
   
   const [course, setCourse] = useState(null);
-  const [lessons, setLessons] = useState([]);
+  const [modules, setModules] = useState([]);
+  const [collapsedModules, setCollapsedModules] = useState({});
   const [activeLesson, setActiveLesson] = useState(null);
   const [activeVideoUrl, setActiveVideoUrl] = useState('');
+  const [videoError, setVideoError] = useState(false);
   const [completedLessons, setCompletedLessons] = useState([]);
   const [progressPercent, setProgressPercent] = useState(0);
+  const [moduleProgress, setModuleProgress] = useState([]);
+
+  // Flattened, module-order-then-lesson-order list — powers "select first
+  // lesson on load" and Previous/Next navigation across module boundaries.
+  const flatLessons = modules.flatMap((m) =>
+    (m.lessons || []).map((lesson) => ({ ...lesson, moduleId: m._id, moduleTitle: m.title }))
+  );
+  const activeLessonFlatIndex = activeLesson
+    ? flatLessons.findIndex((l) => l._id === activeLesson._id)
+    : -1;
+  const previousLesson = activeLessonFlatIndex > 0 ? flatLessons[activeLessonFlatIndex - 1] : null;
+  const nextLesson =
+    activeLessonFlatIndex >= 0 && activeLessonFlatIndex < flatLessons.length - 1
+      ? flatLessons[activeLessonFlatIndex + 1]
+      : null;
   
   const searchParams = new URLSearchParams(location.search);
   const initialTab = searchParams.get('tab') || 'overview';
@@ -28,7 +45,11 @@ export default function LearningPortal({ user }) {
   const [loading, setLoading] = useState(true);
   const [videoLoading, setVideoLoading] = useState(false);
   const [error, setError] = useState('');
-  const [isCourseContentOpen, setIsCourseContentOpen] = useState(true);
+  // Default the course-content sidebar closed on narrow viewports so it doesn't
+  // eat the whole screen on first load — still just a manual toggle either way.
+  const [isCourseContentOpen, setIsCourseContentOpen] = useState(
+    () => typeof window === 'undefined' || window.innerWidth > 768
+  );
   
   const [questionToDelete, setQuestionToDelete] = useState(null);
   
@@ -53,20 +74,23 @@ export default function LearningPortal({ user }) {
         const courseRes = await api.get(`/courses/${id}`, { signal: controller.signal });
         if (controller.signal.aborted) return;
         setCourse(courseRes.data.course);
-        setLessons(courseRes.data.lessons);
+        const loadedModules = courseRes.data.modules || [];
+        setModules(loadedModules);
 
         try {
           const enrollRes = await api.get(`/enrollments/${id}`, { signal: controller.signal });
           if (enrollRes.data && enrollRes.data.enrolled) {
             setCompletedLessons(enrollRes.data.completedLessonIds || []);
             setProgressPercent(enrollRes.data.progressPercent || 0);
+            setModuleProgress(enrollRes.data.moduleProgress || []);
           }
         } catch(e) {
           // If not enrolled or error, just continue
         }
 
-        if (courseRes.data.lessons.length > 0 && !controller.signal.aborted) {
-          handleSelectLesson(courseRes.data.lessons[0]._id, courseRes.data.lessons[0].title);
+        const firstLesson = loadedModules.flatMap((m) => m.lessons || [])[0];
+        if (firstLesson && !controller.signal.aborted) {
+          handleSelectLesson(firstLesson._id, firstLesson.title);
         }
       } catch(err) {
         if (err.code === 'ERR_CANCELED') return;
@@ -83,6 +107,7 @@ export default function LearningPortal({ user }) {
     setActiveLesson({ _id: lessonId, title: lessonTitle });
     setVideoLoading(true);
     setActiveVideoUrl('');
+    setVideoError(false);
     try {
       const { data } = await api.get(`/courses/${id}/lessons/${lessonId}`);
       setActiveVideoUrl(data.lesson?.videoUrl || '');
@@ -100,6 +125,7 @@ export default function LearningPortal({ user }) {
       const { data } = await api.patch(`/enrollments/${id}/lessons/${lessonId}/complete`);
       setCompletedLessons(data.completedLessonIds || []);
       setProgressPercent(data.progressPercent || 0);
+      setModuleProgress(data.moduleProgress || []);
     } catch(err) {
       console.error('Failed to mark complete', err);
     }
@@ -310,6 +336,8 @@ export default function LearningPortal({ user }) {
           <div
             style={{
               width: "100%",
+              maxWidth: "960px",
+              margin: "0 auto",
               background: "var(--bg-main)",
               aspectRatio: "16/9",
               position: "relative",
@@ -343,15 +371,21 @@ export default function LearningPortal({ user }) {
                   <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
                 </svg>
               </div>
-            ) : activeVideoUrl ? (
+            ) : activeVideoUrl && !videoError ? (
               <video
+                key={activeVideoUrl}
                 src={activeVideoUrl}
                 controls
                 autoPlay
+                onError={() => setVideoError(true)}
                 style={{ width: "100%", height: "100%", objectFit: "contain" }}
               />
             ) : (
-              <div style={{ color: "white" }}>{t('student.learning.video_unavailable', 'Video not available')}</div>
+              <div style={{ color: "white" }}>
+                {videoError
+                  ? t('student.learning.video_unsupported', "This video format isn't supported by your browser.")
+                  : t('student.learning.video_unavailable', 'Video not available')}
+              </div>
             )}
           </div>
 
@@ -363,6 +397,13 @@ export default function LearningPortal({ user }) {
               width: "100%",
             }}
           >
+            {activeLessonFlatIndex >= 0 && (
+              <div style={{ color: "var(--c-sub)", fontSize: "0.9rem", marginBottom: "8px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.02em" }}>
+                {flatLessons[activeLessonFlatIndex].moduleTitle}
+                {" • "}
+                {t('student.learning.lesson_position', 'Lesson {{n}} of {{total}}', { n: activeLessonFlatIndex + 1, total: flatLessons.length })}
+              </div>
+            )}
             <h2 style={{ fontSize: "2rem", marginBottom: "16px" }}>
               {activeLesson?.title}
             </h2>
@@ -418,10 +459,8 @@ export default function LearningPortal({ user }) {
                     marginBottom: "32px",
                   }}
                 >
-                  {t('student.learning.lesson_placeholder', 'In this lesson, we will dive deep into the core concepts of Enterprise Architecture. You will learn how to structure large-scale applications so that they are maintainable, scalable, and easy for new developers to onboard onto. Make sure to download the attached cheat sheet before proceeding!')}
+                  {activeLesson?.description || t('student.learning.lesson_placeholder', 'In this lesson, we will dive deep into the core concepts of Enterprise Architecture. You will learn how to structure large-scale applications so that they are maintainable, scalable, and easy for new developers to onboard onto. Make sure to download the attached cheat sheet before proceeding!')}
                 </p>
-
-
               </div>
             )}
 
@@ -817,6 +856,59 @@ export default function LearningPortal({ user }) {
                 )}
               </div>
             )}
+
+            {/* Previous / Next lesson navigation — crosses module boundaries */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginTop: "40px",
+                paddingTop: "24px",
+                borderTop: "1px solid var(--c-border-medium)",
+              }}
+            >
+              <button
+                onClick={() => previousLesson && handleSelectLesson(previousLesson._id, previousLesson.title)}
+                disabled={!previousLesson}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  padding: "10px 20px",
+                  borderRadius: "10px",
+                  border: "none",
+                  background: previousLesson ? "var(--bg-surface)" : "transparent",
+                  color: previousLesson ? "var(--text-h)" : "var(--c-border-subtle)",
+                  boxShadow: previousLesson ? "var(--outer-shadow)" : "none",
+                  cursor: previousLesson ? "pointer" : "default",
+                  visibility: previousLesson ? "visible" : "hidden",
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isRTL ? 'scaleX(-1)' : 'none' }}><polyline points="15 18 9 12 15 6" /></svg>
+                {t('student.learning.previous_lesson', 'Previous Lesson')}
+              </button>
+              <button
+                onClick={() => nextLesson && handleSelectLesson(nextLesson._id, nextLesson.title)}
+                disabled={!nextLesson}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  padding: "10px 20px",
+                  borderRadius: "10px",
+                  border: "none",
+                  background: nextLesson ? "linear-gradient(135deg, var(--c-orange), var(--c-yellow))" : "transparent",
+                  color: nextLesson ? "#1a1a1a" : "var(--c-border-subtle)",
+                  fontWeight: "600",
+                  cursor: nextLesson ? "pointer" : "default",
+                  visibility: nextLesson ? "visible" : "hidden",
+                }}
+              >
+                {t('student.learning.next_lesson', 'Next Lesson')}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isRTL ? 'scaleX(-1)' : 'none' }}><polyline points="9 18 15 12 9 6" /></svg>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -832,125 +924,160 @@ export default function LearningPortal({ user }) {
         }}>
           <div style={{ width: "280px", flex: 1, display: "flex", flexDirection: "column" }}>
             <div style={{ flex: 1, overflowY: "auto" }}>
-              <div style={{ borderBottom: "1px solid var(--c-border-subtle)" }}>
-                <div
-                  style={{
-                    padding: "16px 24px",
-                    background: "var(--c-bg-subtle)",
-                    fontWeight: "600",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  {t('student.learning.course_content', 'Course Content')}
-                </div>
+              <div style={{ padding: "16px 24px", background: "var(--c-bg-subtle)", fontWeight: "600", borderBottom: "1px solid var(--c-border-subtle)" }}>
+                {t('student.learning.course_content', 'Course Content')}
+              </div>
 
-                <div style={{ position: "relative" }}>
+              {modules.map((module) => {
+                const isModuleCollapsed = !!collapsedModules[module._id];
+                const moduleLessons = module.lessons || [];
+                const progress = moduleProgress.find((mp) => String(mp.moduleId) === String(module._id));
 
-                {lessons.map((lesson) => {
-                  const isCompleted = completedLessons.includes(lesson._id);
-                  const isCurrent = activeLesson?._id === lesson._id;
-
-                  return (
-                    <div
-                      key={lesson._id}
-                      className={`saas-card interactive ${isCurrent ? 'active-lesson' : ''}`}
-                      onClick={() => handleSelectLesson(lesson._id, lesson.title)}
+                return (
+                  <div key={module._id} style={{ borderBottom: "1px solid var(--c-border-subtle)" }}>
+                    <button
+                      onClick={() => setCollapsedModules((prev) => ({ ...prev, [module._id]: !prev[module._id] }))}
                       style={{
-                        height: "72px",
-                        boxSizing: "border-box",
-                        padding: "16px 24px",
-                        display: "flex",
-                        gap: "16px",
+                        width: "100%",
+                        padding: "14px 24px",
+                        background: "transparent",
+                        border: "none",
                         cursor: "pointer",
-                        position: "relative",
-                        zIndex: 1,
-                        borderLeft: "3px solid transparent",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "6px",
+                        textAlign: "start",
                       }}
                     >
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleComplete(lesson._id);
-                        }}
-                        style={{
-                          width: "24px",
-                          height: "24px",
-                          borderRadius: "50%",
-                          border: isCompleted
-                            ? "none"
-                            : "2px solid var(--c-border-active)",
-                          background: isCompleted ? "#10B981" : "transparent",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          cursor: "pointer",
-                          flexShrink: 0,
-                        }}
-                      >
-                        {isCompleted && (
-                          <svg
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="#fff"
-                            strokeWidth="3"
-                          >
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                          </svg>
-                        )}
-                      </button>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+                        <span style={{ fontWeight: "600", color: "var(--text-h)", fontSize: "0.92rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {module.title}
+                        </span>
+                        <svg
+                          width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                          style={{ transition: "transform 0.25s", transform: isModuleCollapsed ? "rotate(-90deg)" : "rotate(0deg)", flexShrink: 0, color: "var(--c-sub)" }}
+                        >
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                      </div>
+                      {progress && progress.totalCount > 0 && (
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <div style={{ flex: 1, height: "4px", background: "var(--c-bg-hover)", borderRadius: "2px", overflow: "hidden" }}>
+                            <div style={{ width: `${progress.percent}%`, height: "100%", background: "linear-gradient(90deg, var(--c-orange), var(--c-yellow))" }} />
+                          </div>
+                          <span style={{ fontSize: "0.72rem", color: "var(--c-sub)" }}>{progress.percent}%</span>
+                        </div>
+                      )}
+                    </button>
 
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div
-                          style={{
-                            fontWeight: isCurrent ? "600" : "400",
-                            color: isCurrent ? "var(--c-light)" : "var(--c-sub)",
-                            marginBottom: "4px",
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
-                          {lesson.order}. {lesson.title}
-                        </div>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            fontSize: "0.85rem",
-                            color: "var(--c-sub)",
-                          }}
-                        >
-                          <svg
-                            width="12"
-                            height="12"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                          >
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <polyline points="12 6 12 12 16 14"></polyline>
-                          </svg>
-                          {t('student.learning.video', 'Video')}
-                        </div>
+                    <div className={`expandable-section ${!isModuleCollapsed ? 'expanded' : ''}`}>
+                      <div style={{ overflow: "hidden", position: "relative" }}>
+                        {moduleLessons.map((lesson) => {
+                          const isCompleted = completedLessons.includes(lesson._id);
+                          const isCurrent = activeLesson?._id === lesson._id;
+
+                          return (
+                            <div
+                              key={lesson._id}
+                              className={`saas-card interactive ${isCurrent ? 'active-lesson' : ''}`}
+                              onClick={() => handleSelectLesson(lesson._id, lesson.title)}
+                              style={{
+                                height: "72px",
+                                boxSizing: "border-box",
+                                padding: "16px 24px",
+                                display: "flex",
+                                gap: "16px",
+                                cursor: "pointer",
+                                position: "relative",
+                                zIndex: 1,
+                                borderLeft: "3px solid transparent",
+                              }}
+                            >
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleComplete(lesson._id);
+                                }}
+                                style={{
+                                  width: "24px",
+                                  height: "24px",
+                                  borderRadius: "50%",
+                                  border: isCompleted
+                                    ? "none"
+                                    : "2px solid var(--c-border-active)",
+                                  background: isCompleted ? "#10B981" : "transparent",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  cursor: "pointer",
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {isCompleted && (
+                                  <svg
+                                    width="14"
+                                    height="14"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="#fff"
+                                    strokeWidth="3"
+                                  >
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                  </svg>
+                                )}
+                              </button>
+
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div
+                                  style={{
+                                    fontWeight: isCurrent ? "600" : "400",
+                                    color: isCurrent ? "var(--c-light)" : "var(--c-sub)",
+                                    marginBottom: "4px",
+                                    whiteSpace: "nowrap",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                  }}
+                                >
+                                  {lesson.order}. {lesson.title}
+                                </div>
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "6px",
+                                    fontSize: "0.85rem",
+                                    color: "var(--c-sub)",
+                                  }}
+                                >
+                                  <svg
+                                    width="12"
+                                    height="12"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                  >
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                  </svg>
+                                  {t('student.learning.video', 'Video')}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-      
-  <ConfirmModal 
+
+  <ConfirmModal
         isOpen={!!questionToDelete}
         title={t('student.learning.delete_question_title', 'Delete Question')}
         message={t('student.learning.delete_question_msg', 'Are you sure you want to delete this question? This action cannot be undone.')}

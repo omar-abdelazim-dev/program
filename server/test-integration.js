@@ -42,14 +42,58 @@ const run = async () => {
   const courseId = res.body.course._id;
   console.log('✓ Instructor created course (status: pending)');
 
-  // 3. Instructor adds a lesson to their own course
-  res = await agentInstructor.post(`/api/courses/${courseId}/lessons`).set('X-CSRF-Token', instructorCsrf).send({
+  // 3a. Instructor creates a module for their course
+  res = await agentInstructor.post(`/api/courses/${courseId}/modules`).set('X-CSRF-Token', instructorCsrf).send({
+    title: 'Module 1: Foundations',
+  });
+  assert(res.status === 201, `Create module failed: ${JSON.stringify(res.body)}`);
+  assert(res.body.module.order === 1, 'First module should be order 1');
+  const moduleId = res.body.module._id;
+  console.log('✓ Instructor created a module');
+
+  // 3b. Instructor adds two lessons to that module, then reorders them
+  res = await agentInstructor.post(`/api/courses/${courseId}/modules/${moduleId}/lessons`).set('X-CSRF-Token', instructorCsrf).send({
     title: 'Lesson 1: Big-O Notation',
     videoUrl: 'https://res.cloudinary.com/demo/video/upload/sample.mp4',
   });
   assert(res.status === 201, `Add lesson failed: ${JSON.stringify(res.body)}`);
   assert(res.body.lesson.order === 1, 'First lesson should be order 1');
-  console.log('✓ Instructor added a lesson');
+  const lesson1Id = res.body.lesson._id;
+  console.log('✓ Instructor added a lesson to the module');
+
+  res = await agentInstructor.post(`/api/courses/${courseId}/modules/${moduleId}/lessons`).set('X-CSRF-Token', instructorCsrf).send({
+    title: 'Lesson 2: Time Complexity',
+    videoUrl: 'https://res.cloudinary.com/demo/video/upload/sample2.mp4',
+  });
+  assert(res.status === 201 && res.body.lesson.order === 2, `Second lesson should be order 2: ${JSON.stringify(res.body)}`);
+  const lesson2Id = res.body.lesson._id;
+
+  res = await agentInstructor.put(`/api/courses/${courseId}/modules/${moduleId}/lessons-reorder`).set('X-CSRF-Token', instructorCsrf).send({
+    lessonIds: [lesson2Id, lesson1Id],
+  });
+  assert(res.status === 200, `Reorder lessons failed: ${JSON.stringify(res.body)}`);
+  console.log('✓ Instructor reordered lessons within the module');
+
+  // 3c. Instructor creates a second module and reorders both modules
+  res = await agentInstructor.post(`/api/courses/${courseId}/modules`).set('X-CSRF-Token', instructorCsrf).send({
+    title: 'Module 2: Data Structures',
+  });
+  assert(res.status === 201 && res.body.module.order === 2, `Second module should be order 2: ${JSON.stringify(res.body)}`);
+  const module2Id = res.body.module._id;
+
+  res = await agentInstructor.put(`/api/courses/${courseId}/modules-reorder`).set('X-CSRF-Token', instructorCsrf).send({
+    moduleIds: [module2Id, moduleId],
+  });
+  assert(res.status === 200, `Reorder modules failed: ${JSON.stringify(res.body)}`);
+  console.log('✓ Instructor reordered modules');
+
+  // Delete the second (empty) module and one of the two lessons so the rest
+  // of this test — written for "exactly 1 module / 1 lesson" — still holds.
+  res = await agentInstructor.delete(`/api/courses/${courseId}/modules/${module2Id}`).set('X-CSRF-Token', instructorCsrf);
+  assert(res.status === 200, `Delete second module failed: ${JSON.stringify(res.body)}`);
+  res = await agentInstructor.delete(`/api/courses/${courseId}/lessons/${lesson2Id}`).set('X-CSRF-Token', instructorCsrf);
+  assert(res.status === 200, `Delete second lesson failed: ${JSON.stringify(res.body)}`);
+  console.log('✓ Cleaned up extra module/lesson used for reorder testing');
 
   // 4. Public catalog should NOT show the pending course yet
   res = await agentPublic.get('/api/courses');
@@ -107,13 +151,30 @@ const run = async () => {
   assert(res.body.courses.length === 1, 'Published course should now appear in public catalog');
   console.log('✓ Published course now visible in public catalog');
 
-  // 10. Course details endpoint returns lessons too
+  // 9b. Publish gate: a course with zero lessons cannot be published live
+  res = await agentInstructor.post('/api/courses').set('X-CSRF-Token', instructorCsrf).send({
+    title: 'Empty Course',
+    description: 'Has no modules or lessons yet.',
+    price: 0,
+    college: 'College of Computer Science and Information Technology',
+    semester: 1,
+  });
+  assert(res.status === 201, `Create empty course failed: ${JSON.stringify(res.body)}`);
+  const emptyCourseId = res.body.course._id;
+  res = await agentAdmin.patch(`/api/courses/${emptyCourseId}/approve`).set('X-CSRF-Token', adminCsrf);
+  assert(res.status === 200 && res.body.course.status === 'draft', `Approve empty course failed: ${JSON.stringify(res.body)}`);
+  res = await agentInstructor.patch(`/api/courses/${emptyCourseId}/publish`).set('X-CSRF-Token', instructorCsrf);
+  assert(res.status === 400, 'Publishing a course with zero lessons should be rejected');
+  console.log('✓ Course with no lessons correctly blocked from publishing');
+
+  // 10. Course details endpoint returns modules with nested lessons
   res = await agentPublic.get(`/api/courses/${courseId}`);
   assert(res.status === 200, 'Course details fetch failed');
-  assert(res.body.lessons.length === 1, 'Course details should include the 1 lesson we added');
-  assert(res.body.lessons[0].videoUrl === undefined, 'Public course details must NOT leak videoUrl');
-  const lessonId = res.body.lessons[0]._id;
-  console.log('✓ Course details endpoint returns course + lessons (videoUrl correctly hidden)');
+  assert(res.body.modules.length === 1, 'Course details should include the 1 module we created');
+  assert(res.body.modules[0].lessons.length === 1, 'Module should include the 1 lesson we added');
+  assert(res.body.modules[0].lessons[0].videoUrl === undefined, 'Public course details must NOT leak videoUrl');
+  const lessonId = res.body.modules[0].lessons[0]._id;
+  console.log('✓ Course details endpoint returns course + modules + lessons (videoUrl correctly hidden)');
 
   // --- WEEK 3: enrollment + lesson player + progress ---
 
@@ -154,13 +215,15 @@ const run = async () => {
   res = await agentStudent.get(`/api/enrollments/${courseId}`);
   assert(res.body.enrolled === true, 'Enrollment status should show enrolled: true');
   assert(res.body.progressPercent === 0, 'Progress should start at 0%');
-  console.log('✓ Initial progress is 0%');
+  assert(res.body.moduleProgress.length === 1 && res.body.moduleProgress[0].percent === 0, 'Module progress should start at 0%');
+  console.log('✓ Initial progress is 0% (course + module level)');
 
   // 17. Mark the lesson complete
   res = await agentStudent.patch(`/api/enrollments/${courseId}/lessons/${lessonId}/complete`).set('X-CSRF-Token', studentCsrf);
   assert(res.status === 200, `Mark complete failed: ${JSON.stringify(res.body)}`);
   assert(res.body.progressPercent === 100, 'Progress should be 100% after completing the only lesson');
-  console.log('✓ Marking lesson complete updates progress to 100%');
+  assert(res.body.moduleProgress[0].percent === 100, 'Module progress should be 100% after completing its only lesson');
+  console.log('✓ Marking lesson complete updates progress to 100% (course + module level)');
 
   // 18. Marking the same lesson complete twice should NOT create a duplicate
   res = await agentStudent.patch(`/api/enrollments/${courseId}/lessons/${lessonId}/complete`).set('X-CSRF-Token', studentCsrf);
