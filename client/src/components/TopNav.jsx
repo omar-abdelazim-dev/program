@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { formatNotificationTitle, formatNotificationMessage } from "../utils/notificationFormatter";
+import api from "../api/axios";
 
 export default function TopNav({
   user,
@@ -15,6 +16,16 @@ export default function TopNav({
 }) {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
+
+  const handleClearAllNotifications = async () => {
+    try {
+      await api.delete('/notifications');
+      if (setNotifications) setNotifications([]);
+    } catch (err) {
+      console.error('Failed to clear notifications', err);
+      if (setNotifications) setNotifications([]);
+    }
+  };
 
   const toggleLanguage = () => {
     const newLang = i18n.language === "en" ? "ar" : "en";
@@ -136,7 +147,7 @@ export default function TopNav({
                 <span style={{ color: 'var(--color-accent, #f97316)', fontSize: '1.05rem' }}>{t('nav.notifications', 'Notifications')}</span>
                 {notifications.length > 0 && (
                   <button 
-                    onClick={clearAllNotifications}
+                    onClick={handleClearAllNotifications}
                     style={{ background: 'none', border: 'none', color: 'var(--c-sub)', cursor: 'pointer', fontSize: '0.8rem', textDecoration: 'underline' }}
                   >
                     {t('nav.clear_all', 'Clear all')}

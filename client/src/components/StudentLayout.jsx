@@ -12,6 +12,7 @@ import { COLLEGES } from "../data/colleges";
 import CustomSelect from "./CustomSelect";
 import ThreeDotMenu from "./common/ThreeDotMenu";
 import { formatNotificationTitle, formatNotificationMessage } from "../utils/notificationFormatter";
+import api from "../api/axios";
 
 export default function StudentLayout({
   user,
@@ -33,6 +34,16 @@ export default function StudentLayout({
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
+
+  const handleClearAllNotifications = async () => {
+    try {
+      await api.delete('/notifications');
+      if (setNotifications) setNotifications([]);
+    } catch (err) {
+      console.error('Failed to clear notifications', err);
+      if (setNotifications) setNotifications([]);
+    }
+  };
 
   const toggleLanguage = () => {
     const newLang = i18n.language === "en" ? "ar" : "en";
@@ -416,8 +427,8 @@ export default function StudentLayout({
                     <span style={{ color: 'var(--color-accent, #f97316)', fontSize: '1.05rem' }}>{t('nav.notifications', 'Notifications')}</span>
                     {notifications && notifications.length > 0 && (
                       <button 
-                        onClick={clearAllNotifications}
-                        style={{ background: 'none', border: 'none', color: 'var(--c-sub)', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
+                        onClick={handleClearAllNotifications}
+                        style={{ background: 'none', border: 'none', color: 'var(--c-sub)', cursor: 'pointer', fontSize: '0.8rem', textDecoration: 'underline' }}
                       >
                         {t('nav.clear_all', 'Clear all')}
                       </button>
