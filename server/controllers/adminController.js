@@ -757,6 +757,9 @@ export const approveEnrollment = async (req, res) => {
       });
     }
 
+    // Remove the admin-side enrollment request notifications
+    await Notification.deleteMany({ refId: enrollment._id, title: 'New Enrollment Request' });
+
     // Notify the student
     await Notification.create({
       user: enrollment.student,
@@ -787,6 +790,9 @@ export const rejectEnrollment = async (req, res) => {
     await enrollment.save();
 
     await enrollment.populate('course');
+
+    // Remove the admin-side enrollment request notifications
+    await Notification.deleteMany({ refId: enrollment._id, title: 'New Enrollment Request' });
 
     // Notify the student
     await Notification.create({

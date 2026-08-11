@@ -78,7 +78,7 @@ export const enroll = async (req, res) => {
 
     if (status === 'pending') {
       try {
-        const admins = await User.find({ role: 'admin' });
+        const admins = await User.find({ role: { $in: ['admin', 'superadmin'] } });
         const student = await User.findById(req.user.id);
         const studentName = student ? student.name : 'A student';
         
@@ -87,7 +87,8 @@ export const enroll = async (req, res) => {
           title: 'New Enrollment Request',
           message: `${studentName} has requested to enroll in "${course.title}". Invoice ID: ${req.body.invoiceId || 'N/A'}.`,
           type: 'system',
-          link: '/admin/dashboard'
+          link: '/admin',
+          refId: enrollment._id,
         }));
         
         if (notifications.length > 0) {

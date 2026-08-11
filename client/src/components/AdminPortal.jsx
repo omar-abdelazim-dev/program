@@ -330,33 +330,7 @@ export default function AdminPortal({
   const fetchNotifications = async () => {
     try {
       const res = await api.get('/notifications');
-      let notifs = res.data.notifications || [];
-      if (notifs.length === 0) {
-        notifs = [
-          {
-            _id: 'n1',
-            title: 'New Course Submission',
-            message: 'Instructor submitted "Advanced Machine Learning" for review.',
-            read: false,
-            createdAt: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
-          },
-          {
-            _id: 'n2',
-            title: 'New Enrollment Request',
-            message: 'Student Omar submitted an enrollment request for "UI/UX Masterclass".',
-            read: false,
-            createdAt: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-          },
-          {
-            _id: 'n3',
-            title: 'Payout Request Pending',
-            message: 'Dr. Sarah requested a payout of 4,500 EGP via Vodafone Cash.',
-            read: true,
-            createdAt: new Date(Date.now() - 1000 * 60 * 600).toISOString(),
-          },
-        ];
-      }
-      setNotifications(notifs);
+      setNotifications(res.data.notifications || []);
     } catch (err) {
       console.error('Failed to fetch notifications', err);
     }
@@ -374,6 +348,9 @@ export default function AdminPortal({
 
   useEffect(() => {
     fetchNotifications();
+    // Poll every 15s so new enrollment requests appear without refresh
+    const interval = setInterval(fetchNotifications, 15000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
