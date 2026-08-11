@@ -3,6 +3,7 @@ import Announcement from '../models/CourseAnnouncement.js';
 import Course from '../models/Course.js';
 import Notification from '../models/Notification.js';
 import Enrollment from '../models/Enrollment.js';
+import logger from '../utils/logger.js';
 
 // @desc    Get questions for all courses owned by the instructor
 // @route   GET /api/engagement/questions
@@ -21,7 +22,7 @@ export const getInstructorQuestions = async (req, res) => {
 
     res.status(200).json({ questions });
   } catch (error) {
-    console.error('Error fetching questions:', error);
+    logger.error('Error fetching questions:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to fetch questions' });
   }
 };
@@ -42,7 +43,7 @@ export const getUnreadQuestionsCount = async (req, res) => {
 
     res.status(200).json({ count });
   } catch (error) {
-    console.error('Error fetching unread questions count:', error);
+    logger.error('Error fetching unread questions count:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to fetch unread count' });
   }
 };
@@ -90,7 +91,7 @@ export const replyToQuestion = async (req, res) => {
 
     res.status(200).json({ message: 'Reply posted successfully', question });
   } catch (error) {
-    console.error('Error posting reply:', error);
+    logger.error('Error posting reply:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to post reply' });
   }
 };
@@ -118,7 +119,7 @@ export const deleteReply = async (req, res) => {
 
     res.status(200).json({ message: 'Reply deleted successfully', question });
   } catch (error) {
-    console.error('Error deleting reply:', error);
+    logger.error('Error deleting reply:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to delete reply' });
   }
 };
@@ -147,7 +148,7 @@ export const deleteQuestion = async (req, res) => {
 
     res.status(200).json({ message: 'Question deleted successfully', question });
   } catch (error) {
-    console.error('Error deleting question:', error);
+    logger.error('Error deleting question:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to delete question' });
   }
 };
@@ -181,7 +182,7 @@ export const editQuestion = async (req, res) => {
 
     res.status(200).json({ message: 'Question updated successfully', question });
   } catch (error) {
-    console.error('Error editing question:', error);
+    logger.error('Error editing question:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to edit question' });
   }
 };
@@ -231,7 +232,7 @@ export const createAnnouncement = async (req, res) => {
 
     res.status(201).json({ message: 'Announcement created successfully', announcement });
   } catch (error) {
-    console.error('Error creating announcement:', error);
+    logger.error('Error creating announcement:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to create announcement' });
   }
 };
@@ -266,7 +267,7 @@ export const createQuestion = async (req, res) => {
 
     res.status(201).json({ message: 'Question posted successfully', question: newQuestion });
   } catch (error) {
-    console.error('Error creating question:', error);
+    logger.error('Error creating question:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to post question' });
   }
 };
@@ -298,7 +299,7 @@ export const updateQuestionStatus = async (req, res) => {
 
     res.status(200).json({ message: 'Status updated successfully', question });
   } catch (error) {
-    console.error('Error updating question status:', error);
+    logger.error('Error updating question status:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to update question status' });
   }
 };
@@ -323,7 +324,7 @@ export const getCourseQuestions = async (req, res) => {
 
     res.status(200).json({ questions });
   } catch (error) {
-    console.error('Error fetching course questions:', error);
+    logger.error('Error fetching course questions:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to fetch course questions' });
   }
 };

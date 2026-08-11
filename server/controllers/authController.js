@@ -13,6 +13,7 @@ const RESET_TOKEN_EXPIRY_MINUTES = 30;
 export const checkEmail = async (req, res) => {
   try {
     const { email } = req.body;
+
     if (!email) {
       return res.status(400).json({ message: 'Email is required' });
     }
@@ -22,7 +23,7 @@ export const checkEmail = async (req, res) => {
     }
     res.status(200).json({ message: 'Email is available' });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error checking email' });
   }
 };
@@ -96,7 +97,7 @@ export const register = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error during registration' });
   }
 };
@@ -232,7 +233,7 @@ export const login = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error during login' });
   }
 };
@@ -270,7 +271,7 @@ export const logout = async (req, res) => {
         { revoked: true }
       );
     } catch (e) {
-      console.error('Error revoking session on logout:', e);
+      logger.error('Error revoking session on logout:', { error: e.message, stack: e.stack });
     }
   }
 
@@ -359,7 +360,7 @@ export const updateProfile = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error updating profile' });
   }
 };
@@ -417,7 +418,7 @@ export const changePassword = async (req, res) => {
 
     res.status(200).json({ message: 'Password updated successfully' });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error changing password' });
   }
 };
@@ -463,7 +464,7 @@ export const forgotPassword = async (req, res) => {
 
     res.status(200).json({ message: 'If an account with that email exists, a password reset link has been sent.' });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error processing password reset request' });
   }
 };
@@ -505,7 +506,7 @@ export const resetPassword = async (req, res) => {
 
     res.status(200).json({ message: 'Password has been reset successfully. You can now log in.' });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error resetting password' });
   }
 };
@@ -573,7 +574,7 @@ export const refresh = async (req, res) => {
 
     res.status(200).json({ message: 'Token refreshed successfully' });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error during refresh' });
   }
 };
@@ -671,7 +672,7 @@ export const verifyEmail = async (req, res) => {
 
     res.status(200).json({ message: 'Email verified successfully' });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error during email verification' });
   }
 };
@@ -700,7 +701,7 @@ export const resendVerification = async (req, res) => {
 
     res.status(200).json({ message: 'Verification email sent' });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error resending verification' });
   }
 };

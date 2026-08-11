@@ -6,6 +6,7 @@ import Lesson from '../models/Lesson.js';
 import PromoCode from '../models/PromoCode.js';
 import { escapeRegex } from '../utils/escapeRegex.js';
 import { logAudit } from '../utils/auditLogger.js';
+import logger from '../utils/logger.js';
 
 // @route   GET /api/admin/stats
 // @access  Private (Admin)
@@ -102,7 +103,7 @@ export const getStats = async (req, res) => {
       growth
     });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching stats' });
   }
 };
@@ -152,7 +153,7 @@ export const getRevenueAnalytics = async (req, res) => {
 
     res.status(200).json({ series, totalRevenue, totalEnrollments, avgOrderValue });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching revenue analytics' });
   }
 };
@@ -221,7 +222,7 @@ export const getRecentActivity = async (req, res) => {
 
     res.status(200).json({ activities: activities.slice(0, 10) });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching activity' });
   }
 };
@@ -272,7 +273,7 @@ export const getUsers = async (req, res) => {
 
     res.status(200).json({ users, pagination: { page: pageNum, limit: limitNum, totalPages, totalItems } });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching users' });
   }
 };
@@ -319,7 +320,7 @@ export const toggleBlockUser = async (req, res) => {
 
     res.status(200).json({ message: `User ${user.isBlocked ? 'blocked' : 'unblocked'}`, user });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error blocking user' });
   }
 };
@@ -379,7 +380,7 @@ export const changeUserRole = async (req, res) => {
 
     res.status(200).json({ message: `User's role changed to ${role}`, user });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error changing user role' });
   }
 };
@@ -424,7 +425,7 @@ export const softDeleteUser = async (req, res) => {
 
     res.status(200).json({ message: 'User deleted', user });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error deleting user' });
   }
 };
@@ -456,7 +457,7 @@ export const restoreUser = async (req, res) => {
 
     res.status(200).json({ message: 'User restored', user });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error restoring user' });
   }
 };
@@ -505,7 +506,7 @@ export const getTransactions = async (req, res) => {
 
     res.status(200).json({ transactions: enrollments, pagination: { page: pageNum, limit: limitNum, totalPages, totalItems } });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching transactions' });
   }
 };
@@ -521,7 +522,7 @@ export const getPendingPayouts = async (req, res) => {
     
     res.status(200).json({ payouts });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching payouts' });
   }
 };
@@ -546,7 +547,7 @@ export const getAllLessons = async (req, res) => {
     
     res.status(200).json({ lessons });
   } catch (error) {
-    console.error('Error fetching lessons:', error);
+    logger.error('Error fetching lessons:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching lessons' });
   }
 };
@@ -560,7 +561,7 @@ export const approveLesson = async (req, res) => {
     if (!lesson) return res.status(404).json({ message: 'Lesson not found' });
     res.status(200).json({ message: 'Lesson approved', lesson });
   } catch (error) {
-    console.error('Error approving lesson:', error);
+    logger.error('Error approving lesson:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error approving lesson' });
   }
 };
@@ -573,7 +574,7 @@ export const rejectLesson = async (req, res) => {
     if (!lesson) return res.status(404).json({ message: 'Lesson not found' });
     res.status(200).json({ message: 'Lesson rejected', lesson });
   } catch (error) {
-    console.error('Error rejecting lesson:', error);
+    logger.error('Error rejecting lesson:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error rejecting lesson' });
   }
 };
@@ -626,7 +627,7 @@ export const manualEnroll = async (req, res) => {
     if (error.code === 11000) {
       return res.status(409).json({ message: 'Student is already enrolled in this course' });
     }
-    console.error('Error manually enrolling student:', error);
+    logger.error('Error manually enrolling student:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error enrolling student' });
   }
 };
@@ -652,7 +653,7 @@ export const createPromoCode = async (req, res) => {
     if (error.code === 11000) {
       return res.status(409).json({ message: 'That promo code already exists' });
     }
-    console.error('Error creating promo code:', error);
+    logger.error('Error creating promo code:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error creating promo code' });
   }
 };
@@ -664,7 +665,7 @@ export const getPromoCodes = async (req, res) => {
     const promoCodes = await PromoCode.find().populate('instructor', 'name email isProgramInstructor').sort({ createdAt: -1 });
     res.status(200).json({ promoCodes });
   } catch (error) {
-    console.error('Error fetching promo codes:', error);
+    logger.error('Error fetching promo codes:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching promo codes' });
   }
 };
@@ -683,7 +684,7 @@ export const togglePromoCode = async (req, res) => {
 
     res.status(200).json({ message: `Promo code ${promo.active ? 'activated' : 'deactivated'}`, promo });
   } catch (error) {
-    console.error('Error toggling promo code:', error);
+    logger.error('Error toggling promo code:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error toggling promo code' });
   }
 };
@@ -715,7 +716,7 @@ export const toggleProgramInstructor = async (req, res) => {
 
     res.json({ message: `Instructor ${user.isProgramInstructor ? 'added to' : 'removed from'} program`, user });
   } catch (error) {
-    console.error('Error toggling program instructor:', error);
+    logger.error('Error toggling program instructor:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server Error' });
   }
 };

@@ -2,6 +2,7 @@ import Lesson from '../models/Lesson.js';
 import Course from '../models/Course.js';
 import Enrollment from '../models/Enrollment.js';
 import Section from '../models/Section.js';
+import logger from '../utils/logger.js';
 
 // @route   POST /api/courses/:courseId/lessons
 // @access  Private (instructor only, must own the course)
@@ -41,7 +42,7 @@ export const addLesson = async (req, res) => {
 
     res.status(201).json({ lesson });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error adding lesson' });
   }
 };
@@ -77,7 +78,7 @@ export const getLessonContent = async (req, res) => {
 
     res.status(200).json({ lesson });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching lesson' });
   }
 };
@@ -105,7 +106,7 @@ export const updateLesson = async (req, res) => {
 
     res.status(200).json({ lesson });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error updating lesson' });
   }
 };
@@ -142,7 +143,7 @@ export const deleteLesson = async (req, res) => {
 
     res.status(200).json({ message: 'Lesson deleted' });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error deleting lesson' });
   }
 };
@@ -173,7 +174,7 @@ export const reorderLessons = async (req, res) => {
 
     res.status(200).json({ message: 'Lessons reordered' });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error reordering lessons' });
   }
 };
