@@ -8,6 +8,7 @@ import { escapeRegex } from '../utils/escapeRegex.js';
 import { getModulesWithLessons, getLessonIdsForCourse } from '../utils/courseContent.js';
 import mongoose from 'mongoose';
 import fs from 'fs';
+import logger from '../utils/logger.js';
 
 // Helper: attach averageRating and reviewsCount to an array of course docs
 export const attachReviewStats = async (courses) => {
@@ -52,7 +53,7 @@ export const createCourse = async (req, res) => {
 
     res.status(201).json({ course });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error creating course' });
   }
 };
@@ -84,7 +85,7 @@ export const getMyCourses = async (req, res) => {
     const totalPages = Math.ceil(totalItems / limitNum) || 1;
     res.status(200).json({ courses, pagination: { page: pageNum, limit: limitNum, totalPages, totalItems } });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching your courses' });
   }
 };
@@ -210,7 +211,7 @@ export const getInstructorStats = async (req, res) => {
 
     res.status(200).json({ courseStats, timeSeriesData: fullTimeSeries });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching stats' });
   }
 };
@@ -269,7 +270,7 @@ export const getApprovedCourses = async (req, res) => {
     const coursesWithReviews = await attachReviewStats(courses);
     res.status(200).json({ courses: coursesWithReviews, pagination: { page: pageNum, limit: limitNum, totalPages, totalItems } });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching courses' });
   }
 };
@@ -308,7 +309,7 @@ export const getCourseById = async (req, res) => {
 
     res.status(200).json({ course, modules });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching course' });
   }
 };
@@ -347,7 +348,7 @@ export const getPendingCourses = async (req, res) => {
     const totalPages = Math.ceil(totalItems / limitNum) || 1;
     res.status(200).json({ courses, pagination: { page: pageNum, limit: limitNum, totalPages, totalItems } });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching pending courses' });
   }
 };
@@ -376,7 +377,7 @@ export const approveCourse = async (req, res) => {
 
     res.status(200).json({ course });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error approving course' });
   }
 };
@@ -409,7 +410,7 @@ export const publishCourse = async (req, res) => {
     await course.save();
     res.status(200).json({ course });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error toggling course live status' });
   }
 };
@@ -432,7 +433,7 @@ export const rejectCourse = async (req, res) => {
 
     res.status(200).json({ course });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error rejecting course' });
   }
 };
@@ -465,7 +466,7 @@ export const updateCourse = async (req, res) => {
     await course.save();
     res.status(200).json({ course });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error updating course' });
   }
 };
@@ -486,7 +487,7 @@ export const getCourseEnrollments = async (req, res) => {
 
     res.status(200).json({ enrollments });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching course enrollments' });
   }
 };
@@ -504,7 +505,7 @@ export const unpublishCourse = async (req, res) => {
 
     res.status(200).json({ course });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error unpublishing course' });
   }
 };
@@ -533,7 +534,7 @@ export const suspendCourse = async (req, res) => {
 
     res.status(200).json({ course });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error suspending course' });
   }
 };
@@ -557,7 +558,7 @@ export const republishCourse = async (req, res) => {
     await course.save();
     res.status(200).json({ course });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error republishing course' });
   }
 };
@@ -585,7 +586,7 @@ export const deleteCourse = async (req, res) => {
 
     res.status(200).json({ message: 'Course deleted successfully' });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error deleting course' });
   }
 };
@@ -605,7 +606,7 @@ export const requestDeleteCourse = async (req, res) => {
 
     res.status(200).json({ message: 'Deletion request submitted for admin review', course });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error requesting course deletion' });
   }
 };
@@ -621,7 +622,7 @@ export const getDeletionRequests = async (req, res) => {
 
     res.status(200).json({ courses });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching deletion requests' });
   }
 };
@@ -638,7 +639,7 @@ export const rejectDeletionRequest = async (req, res) => {
 
     res.status(200).json({ message: 'Deletion request rejected', course });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error rejecting deletion request' });
   }
 };
