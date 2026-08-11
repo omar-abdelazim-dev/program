@@ -1001,7 +1001,7 @@ export default function CoursePage({ cart = [], setCart, user }) {
                   }}
                   disabled
                 >
-                  Pending Approval
+                  {t('admin.pending_approval', 'Pending Approval')}
                 </button>
               ) : (
                 <button
