@@ -27,8 +27,12 @@ export const validateCreateCourse = [
     .isString().withMessage('Category must be a string'),
 
   body('college')
-    .optional({ checkFalsy: true })
+    .notEmpty().withMessage('College is required')
     .isString().withMessage('College must be a string'),
+
+  body('semester')
+    .notEmpty().withMessage('Semester is required')
+    .isInt({ min: 1, max: 12 }).withMessage('Semester must be a valid number between 1 and 12'),
 
   handleValidationErrors,
 ];
@@ -49,8 +53,12 @@ export const validateUpdateCourse = [
     .isString().withMessage('Category must be a string'),
 
   body('college')
-    .optional({ checkFalsy: true })
+    .notEmpty().withMessage('College is required')
     .isString().withMessage('College must be a string'),
+
+  body('semester')
+    .notEmpty().withMessage('Semester is required')
+    .isInt({ min: 1, max: 12 }).withMessage('Semester must be a valid number between 1 and 12'),
 
   handleValidationErrors,
 ];

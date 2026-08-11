@@ -40,7 +40,7 @@ export default function AdminAuthPage({ onLoginSuccess, isLightMode, toggleTheme
         <button 
           onClick={toggleTheme} 
           className="nav-icon-btn-auth"
-          title="Toggle Theme"
+          data-tooltip="Toggle Theme"
         >
           {isLightMode ? (
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
@@ -52,7 +52,7 @@ export default function AdminAuthPage({ onLoginSuccess, isLightMode, toggleTheme
         <button 
           onClick={() => i18n.changeLanguage(i18n.language === "en" ? "ar" : "en")} 
           className="nav-icon-btn-auth"
-          title="Toggle Language"
+          data-tooltip="Toggle Language"
           style={{ fontWeight: '600', fontSize: '0.9rem', fontFamily: 'Inter, sans-serif' }}
         >
           {i18n.language === "ar" ? "EN" : "AR"}

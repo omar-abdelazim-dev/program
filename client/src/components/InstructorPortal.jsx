@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import CustomSelect from './CustomSelect';
@@ -17,6 +17,7 @@ import InstructorReviewsTab from './InstructorReviewsTab';
 import { notyf } from './WebsiteManagement/SharedUI';
 import { EXPLORE_CATEGORIES } from '../data/exploreCategories';
 import { MAJORS, getMajor } from '../data/majors';
+import { COLLEGES } from '../data/colleges';
 import { useTranslation } from 'react-i18next';
 
 export default function InstructorPortal({ user, setUser, onLogout, toggleTheme, isLightMode }) {
@@ -49,7 +50,8 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
   const [selectedCourseId, setSelectedCourseId] = useState(null);
 
   // Form states
-  const [formData, setFormData] = useState({ title: '', description: '', price: '', category: '', major: '', semester: '' });
+  // INS-03: Replaced category/major with college
+  const [formData, setFormData] = useState({ title: '', description: '', price: '', college: '', semester: '' });
   const [thumbnailFile, setThumbnailFile] = useState(null);
 
   const [editingLessonId, setEditingLessonId] = useState(null);
@@ -60,6 +62,58 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [unreadEngagementCount, setUnreadEngagementCount] = useState(0);
+
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notificationsRef = useRef(null);
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await api.get('/notifications');
+      setNotifications(res.data.notifications || []);
+    } catch (err) {
+      console.error('Failed to fetch notifications', err);
+    }
+  };
+
+  const clearAllNotifications = async () => {
+    try {
+      await api.delete('/notifications');
+      setNotifications([]);
+    } catch (err) {
+      console.error('Failed to clear all notifications', err);
+    }
+  };
+
+  const clearNotification = async (id, e) => {
+    e.stopPropagation();
+    try {
+      await api.delete(`/notifications/${id}`);
+      setNotifications(prev => prev.filter(n => n._id !== id));
+    } catch (err) {
+      console.error('Failed to clear notification', err);
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const unreadRes = await api.get('/engagement/questions/unread-count');
+      setUnreadEngagementCount(unreadRes.data.count || 0);
+    } catch (unreadErr) {
+      console.error('Failed to load unread questions count', unreadErr);
+    }
+  };
 
   const fetchMyCourses = async () => {
     try {
@@ -68,26 +122,28 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
       setCourses(myCourses);
 
       // The owner-gated GET /api/courses/:id already returns { course, lessons },
-      // so we can show real lesson visibility without any backend changes.
-      const lessonEntries = await Promise.all(
-        myCourses.map(async (c) => {
-          try {
-            const detail = await api.get(`/courses/${c._id}`);
-            return [c._id, detail.data.lessons || []];
-          } catch {
-            return [c._id, []];
-          }
-        })
-      );
-      setLessonsByCourse(Object.fromEntries(lessonEntries));
+      // but only if the user is the instructor. Let's just do a series of fetches for now.
+      const lessonsMap = {};
+      for (const c of myCourses) {
+        try {
+          const detail = await api.get(`/courses/${c._id}`);
+          lessonsMap[c._id] = detail.data.lessons || [];
+        } catch (err) {
+          console.error(`Failed to load lessons for course ${c._id}`, err);
+        }
+      }
+      setLessonsByCourse(lessonsMap);
 
       try {
         const statsRes = await api.get('/courses/stats');
         setStats(statsRes.data.courseStats || []);
-        setTimeSeries(statsRes.data.timeSeriesData || []);
-      } catch (statsErr) {
-        console.error('Failed to load stats', statsErr);
+        setTimeSeries(statsRes.data.timeSeries || []);
+      } catch (err) {
+        console.error('Failed to load instructor stats', err);
       }
+      
+      fetchUnreadCount();
+      fetchNotifications();
     } catch (err) {
       console.error(err);
     } finally {
@@ -105,11 +161,33 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
 
   const handleSaveCourse = async (e) => {
     e.preventDefault();
-    if (!formData.title || !formData.description || formData.price === '' || formData.price === null || formData.price === undefined || !formData.category) {
-      // NOTE: Using a generic message here since this is a quick alert. We can also add this to translations if needed.
-      setError('Please fill in all required fields (Title, Description, Price, Category).');
+
+    if (!formData.title.trim()) {
+      setError(t('instructor.create_course.form.title_required', 'Title is required.'));
       return;
     }
+    if (!formData.description.trim()) {
+      setError(t('instructor.create_course.form.description_required', 'Description is required.'));
+      return;
+    }
+    // INS-05: Price is only settable during creation, skip validation if editing
+    if (!editingCourse && (formData.price === '' || formData.price < 0)) {
+      setError(t('instructor.create_course.form.price_required', 'A valid price is required.'));
+      return;
+    }
+    if (!formData.college) {
+      setError(t('instructor.create_course.form.college_required', 'College is required.'));
+      return;
+    }
+    if (!formData.semester) {
+      setError(t('instructor.create_course.form.semester_required', 'Semester is required.'));
+      return;
+    }
+    if (!editingCourse && !thumbnailFile) {
+      setError(t('instructor.create_course.form.thumbnail_required', 'Thumbnail image is required for new courses.'));
+      return;
+    }
+
     setSubmitting(true);
     setError('');
 
@@ -125,9 +203,9 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
       }
 
       if (editingCourse) {
+        // INS-05: Remove price from the PUT payload entirely
         await api.put(`/courses/${editingCourse._id}`, {
           ...formData,
-          price: Number(formData.price),
           thumbnailUrl
         });
         notyf.success(t('instructor.notyf.course_updated'));
@@ -142,13 +220,41 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
       
       setShowCreateModal(false);
       setEditingCourse(null);
-      setFormData({ title: '', description: '', price: '', category: '', major: '', semester: '' });
+      // INS-03: Resetting formData correctly without category/major
+      setFormData({ title: '', description: '', price: '', college: '', semester: '' });
       setThumbnailFile(null);
       fetchMyCourses();
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to save course');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleRepublish = async (courseId) => {
+    try {
+      await api.patch(`/courses/${courseId}/republish`);
+      notyf.success(t('instructor.notyf.course_republished', 'Course submitted for review.'));
+      fetchMyCourses();
+    } catch (err) {
+      console.error('Failed to republish course:', err);
+      notyf.error(t('instructor.notyf.error', 'An error occurred.'));
+    }
+  };
+
+  const handleTogglePublish = async (courseId, e) => {
+    if (e) e.stopPropagation();
+    try {
+      const res = await api.patch(`/courses/${courseId}/publish`);
+      if (res.data.course.status === 'approved') {
+        notyf.success(t('instructor.notyf.course_live', 'Course is now live!'));
+      } else {
+        notyf.success(t('instructor.notyf.course_draft', 'Course set to draft.'));
+      }
+      fetchMyCourses();
+    } catch (err) {
+      console.error('Failed to toggle publish:', err);
+      notyf.error(err.response?.data?.message || 'Failed to update live status.');
     }
   };
 
@@ -292,11 +398,33 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
           </button>
-          <button className={`sidebar-icon-btn ${activeTab === 'engagement' ? 'active' : ''}`} onClick={() => setActiveTab('engagement')} data-tooltip={t('instructor.nav.engagement')}>
+          <button className={`sidebar-icon-btn ${activeTab === 'engagement' ? 'active' : ''}`} style={{ position: 'relative' }} onClick={() => setActiveTab('engagement')} data-tooltip={t('instructor.nav.engagement')}>
             {/* Added i18n to Engagement tooltip title */}
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
             </svg>
+            {unreadEngagementCount > 0 && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '4px',
+                  right: '4px',
+                  backgroundColor: 'var(--color-accent)',
+                  color: 'white',
+                  fontSize: '0.7rem',
+                  fontWeight: 'bold',
+                  width: '18px',
+                  height: '18px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  pointerEvents: 'none',
+                }}
+              >
+                {unreadEngagementCount > 99 ? '99+' : unreadEngagementCount}
+              </span>
+            )}
           </button>
           <button className={`sidebar-icon-btn ${activeTab === 'reviews' ? 'active' : ''}`} onClick={() => setActiveTab('reviews')} data-tooltip={t('instructor.nav.reviews')}>
             {/* Added i18n to Reviews tooltip title */}
@@ -345,7 +473,8 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
 
           <div className="header-right">
             {/* Language Toggle */}
-            <button
+            {activeTab !== 'settings' && (
+              <button
               className="utility-icon-btn"
               onClick={toggleLanguage}
               aria-label="Toggle language"
@@ -357,8 +486,10 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
             >
               {i18n.language === "ar" ? "EN" : "AR"}
             </button>
+            )}
 
-            <button
+            {activeTab !== 'settings' && (
+              <button
               className="utility-icon-btn theme-toggle-btn"
               onClick={toggleTheme}
               aria-label="Toggle theme"
@@ -381,20 +512,230 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                 </svg>
               )}
             </button>
+            )}
 
-            <div className="profile-wrapper">
-              <button 
-                className="utility-icon-btn" 
-                onClick={() => setActiveTab('settings')}
-                data-tooltip={t('instructor.nav.settings')}
-                aria-label={t('instructor.nav.settings')}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-                  <circle cx="12" cy="8" r="4"></circle>
-                  <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"></path>
-                </svg>
-              </button>
-            </div>
+            {/* Notifications */}
+            {activeTab !== 'settings' && (
+              <div className="profile-wrapper" ref={notificationsRef}>
+                <button 
+                  className="utility-icon-btn" 
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  style={{ position: 'relative' }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                  </svg>
+                  {notifications.some(n => !n.read) && (
+                    <span style={{
+                      position: 'absolute', top: '4px', right: '4px',
+                      width: '8px', height: '8px', backgroundColor: '#ef4444',
+                      borderRadius: '50%', boxShadow: '0 0 0 2px var(--bg-surface)'
+                    }}></span>
+                  )}
+                </button>
+                {showNotifications && (
+                  <div className="profile-dropdown" style={{ width: '350px' }}>
+                    <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-surface-hover)' }}>
+                      <span style={{ color: 'var(--color-accent)', fontSize: '1.1rem' }}>{t('nav.notifications', 'Notifications')}</span>
+                      {notifications.length > 0 && (
+                        <button 
+                          onClick={clearAllNotifications}
+                          style={{ background: 'none', border: 'none', color: 'var(--c-sub)', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
+                        >
+                          {t('nav.clear_all', 'Clear All')}
+                        </button>
+                      )}
+                    </div>
+                    <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                      {notifications.length > 0 ? notifications.map(notif => (
+                        <div key={notif._id} style={{ 
+                          padding: '12px 16px', 
+                          borderBottom: '1px solid var(--border)',
+                          backgroundColor: notif.read ? 'transparent' : 'rgba(16, 185, 129, 0.05)',
+                          cursor: 'pointer',
+                          position: 'relative'
+                        }} onClick={async () => {
+                          if (!notif.read) {
+                            await api.patch(`/notifications/${notif._id}/read`);
+                            fetchNotifications();
+                          }
+                        }}>
+                          <div style={{
+                            fontSize: '0.85rem',
+                            marginBottom: '4px',
+                            paddingRight: '20px',
+                            ...(
+                              (() => {
+                                const titleLower = (notif.title || '').toLowerCase();
+                                const typeLower = (notif.type || '').toLowerCase();
+
+                                // 1. Course Suspended -> keep as is (#f59e0b)
+                                if (titleLower.includes('suspended') || typeLower === 'suspended') {
+                                  return { color: '#f59e0b', fontWeight: 700 };
+                                }
+                                // 2. Course Rejected -> red gradient
+                                if (titleLower.includes('reject') || typeLower === 'rejected') {
+                                  return {
+                                    background: 'linear-gradient(135deg, #ef4444 0%, #f87171 100%)',
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                    fontWeight: 700,
+                                    display: 'inline-block'
+                                  };
+                                }
+                                // 3. Course/Lesson Approval -> green gradient
+                                if (titleLower.includes('approve') || titleLower.includes('approved') || typeLower.includes('approval')) {
+                                  return {
+                                    background: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)',
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                    fontWeight: 700,
+                                    display: 'inline-block'
+                                  };
+                                }
+                                // 4. New Enroll -> orange gradient
+                                if (titleLower.includes('enroll') || titleLower.includes('enrolled') || typeLower === 'enrollment') {
+                                  return {
+                                    background: 'linear-gradient(135deg, #f97316 0%, #fbbf24 100%)',
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                    fontWeight: 700,
+                                    display: 'inline-block'
+                                  };
+                                }
+                                // 5. New Comment -> blue gradient
+                                if (titleLower.includes('comment') || titleLower.includes('question') || titleLower.includes('reply') || typeLower.startsWith('qa_')) {
+                                  return {
+                                    background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)',
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                    fontWeight: 700,
+                                    display: 'inline-block'
+                                  };
+                                }
+                                return { color: 'var(--text-h)', fontWeight: 600 };
+                              })()
+                            )
+                          }}>
+                            {(() => {
+                              const title = notif.title || "";
+                              if (title === 'Course Suspended') return t('notifications.course_suspended', 'Course Suspended');
+                              if (title === 'Course Approved') return t('notifications.course_approved', 'Course Approved');
+                              if (title === 'Course Submitted') return t('notifications.course_submitted', 'Course Submitted');
+                              if (title === 'Course Rejected') return t('notifications.course_rejected', 'Course Rejected');
+                              if (title === 'New Reply') return t('notifications.new_reply', 'New Reply');
+                              if (title === 'New Student Enrollment') return t('notifications.new_student_enrollment', 'New Student Enrollment');
+                              if (title.startsWith('New Admin Added')) return t('notifications.new_admin_added', 'New Admin Added');
+                              if (title.startsWith('New Super Admin Added')) return t('notifications.new_super_admin_added', 'New Super Admin Added');
+
+                              if (title.startsWith('New Question in ')) {
+                                const courseTitle = title.replace('New Question in ', '');
+                                return `${t('notifications.new_question_in', 'New Question in')} ${courseTitle}`;
+                              }
+                              if (title.startsWith('New Announcement: ')) {
+                                const annTitle = title.replace('New Announcement: ', '');
+                                return `${t('notifications.new_announcement', 'New Announcement')}: ${annTitle}`;
+                              }
+
+                              if (title.toLowerCase().includes('suspended')) return t('notifications.course_suspended', 'Course Suspended');
+                              if (title.toLowerCase().includes('approved')) return t('notifications.course_approved', 'Course Approved');
+                              if (title.toLowerCase().includes('rejected')) return t('notifications.course_rejected', 'Course Rejected');
+                              if (title.toLowerCase().includes('submitted')) return t('notifications.course_submitted', 'Course Submitted');
+
+                              return title;
+                            })()}
+                          </div>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text)' }}>
+                            {(() => {
+                              let mainText = notif.message || "";
+                              let hasRepublish = false;
+                              let reasonText = "";
+
+                              if (mainText.includes("Reason:")) {
+                                const splitReason = mainText.split("Reason:");
+                                mainText = splitReason[0];
+                                reasonText = splitReason[1];
+                              }
+
+                              if (mainText.includes("You can republish")) {
+                                const splitRepublish = mainText.split("You can republish");
+                                mainText = splitRepublish[0];
+                                hasRepublish = true;
+                              }
+
+                              let formattedMain = mainText.trim();
+                              if (formattedMain.includes('has been suspended.')) {
+                                const match = formattedMain.match(/Your course "([^"]+)" has been suspended\./);
+                                if (match) {
+                                  formattedMain = t('notifications.course_suspended_msg', { title: match[1], defaultValue: `Your course "${match[1]}" has been suspended.` });
+                                }
+                              } else if (formattedMain === 'A student asked a new question in your course.') {
+                                formattedMain = t('notifications.new_question_msg', 'A student asked a new question in your course.');
+                              } else if (formattedMain.includes('has been approved!')) {
+                                const match = formattedMain.match(/Your course "([^"]+)" has been approved!/);
+                                if (match) {
+                                  formattedMain = t('notifications.course_approved_msg', { title: match[1], defaultValue: `Your course "${match[1]}" has been approved!` });
+                                }
+                              }
+
+                              return (
+                                <>
+                                  {formattedMain}
+                                  {hasRepublish && (
+                                    <>
+                                      <br />
+                                      {t('notifications.republish_instructions', 'You can republish your course by clicking on the course card after resolving the suspended reason.')}
+                                    </>
+                                  )}
+                                  {reasonText && (
+                                    <>
+                                      <br />
+                                      <span style={{ color: '#ef4444' }}>{t('instructor.dashboard.status.reason', 'Reason')}:</span> {reasonText}
+                                    </>
+                                  )}
+                                </>
+                              );
+                            })()}
+                          </div>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>{new Date(notif.createdAt).toLocaleDateString()}</div>
+                          
+                          <button
+                            onClick={(e) => clearNotification(notif._id, e)}
+                            style={{ position: 'absolute', top: '12px', right: '12px', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }}
+                            title={t('instructor.notifications.clear', 'Clear')}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                              <line x1="18" y1="6" x2="6" y2="18"></line>
+                              <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                          </button>
+                        </div>
+                      )) : (
+                        <div style={{ padding: '16px', fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+                          {t('nav.no_notifications', 'No new notifications')}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {activeTab !== 'settings' && (
+              <div className="profile-wrapper">
+                <button 
+                  className="utility-icon-btn" 
+                  onClick={() => setActiveTab('settings')}
+                  data-tooltip={t('instructor.nav.settings')}
+                  aria-label={t('instructor.nav.settings')}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+                    <circle cx="12" cy="8" r="4"></circle>
+                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"></path>
+                  </svg>
+                </button>
+              </div>
+            )}
           </div>
         </header>
 
@@ -407,6 +748,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
               <CurriculumBuilderTab 
                 courses={courses} 
                 lessonsByCourse={lessonsByCourse} 
+                onAction={fetchMyCourses}
                 onOpenAddLesson={(courseId) => {
                   setError('');
                   setSelectedCourseId(courseId);
@@ -430,8 +772,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                     title: course.title,
                     description: course.description,
                     price: course.price,
-                    category: course.category,
-                    major: course.major || '',
+                    college: course.college || '', // INS-03: Initialize college from course data
                     semester: course.semester || ''
                   });
                   setThumbnailFile(null);
@@ -442,7 +783,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
             </div>
           ) : activeTab === 'engagement' ? (
             <div className="animate-entrance">
-              <InstructorEngagementTab courses={courses} />
+              <InstructorEngagementTab courses={courses} onAction={fetchUnreadCount} />
             </div>
           ) : activeTab === 'analytics' ? (
             <div className="animate-entrance">
@@ -499,7 +840,8 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
               {/* Translated My Courses header */}
               <h2 style={{ fontSize: '2rem', margin: 0, color: 'var(--text-h)' }}>{t('instructor.dashboard.my_courses')}</h2>
               <button 
-                onClick={() => { setError(''); setEditingCourse(null); setFormData({ title: '', description: '', price: '', category: '', major: '', semester: '' }); setShowCreateModal(true); }}
+                // INS-03: Resetting formData correctly without category/major
+                onClick={() => { setError(''); setEditingCourse(null); setFormData({ title: '', description: '', price: '', college: '', semester: '' }); setShowCreateModal(true); }}
                 style={{ width: 'auto', borderRadius: '24px', padding: '10px 24px', fontWeight: 700, background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: 'none', boxShadow: 'var(--inner-shadow)', cursor: 'pointer', transition: 'all 0.2s' }}
                 onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)'; e.currentTarget.style.boxShadow = 'var(--inner-shadow)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
                 onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'; e.currentTarget.style.boxShadow = 'var(--inner-shadow)'; e.currentTarget.style.filter = 'none'; }}
@@ -522,12 +864,14 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                 return (
                   <div
                     key={course._id}
-                    className="solid-card hover-glow"
+                    className={`solid-card hover-glow ${course.status === 'suspended' ? 'clickable' : ''}`}
+                    onClick={() => course.status === 'suspended' && handleRepublish(course._id)}
                     style={{
                       padding: "24px",
                       display: "flex",
                       flexDirection: "column",
                       gap: "16px",
+                      cursor: course.status === 'suspended' ? 'pointer' : 'default'
                     }}
                   >
                     <div
@@ -581,7 +925,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                             {t("instructor.dashboard.price")}: EGP{" "}
                             {course.price} •{" "}
                             {t("instructor.dashboard.category")}:{" "}
-                            {course.category}
+                            {t(`categories.${course.category.replace(/\s+/g, '_').toLowerCase()}`, course.category)}
                           </div>
                           <div
                             style={{
@@ -593,30 +937,69 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                           >
                             <span
                               style={{
-                                padding: "4px 8px",
-                                borderRadius: "4px",
+                                padding: "4px 10px",
+                                borderRadius: "50px",
                                 fontSize: "0.8rem",
                                 fontWeight: "bold",
                                 boxShadow: "var(--inner-shadow)",
                                 background:
                                   course.status === "approved"
                                     ? "rgba(16, 185, 129, 0.2)"
-                                    : course.status === "rejected"
-                                      ? "rgba(239, 68, 68, 0.2)"
-                                      : "rgba(245, 158, 11, 0.2)",
+                                    : course.status === "draft"
+                                      ? "rgba(59, 130, 246, 0.2)"
+                                      : course.status === "rejected"
+                                        ? "rgba(239, 68, 68, 0.2)"
+                                        : "rgba(245, 158, 11, 0.2)",
                                 color:
                                   course.status === "approved"
                                     ? "#10B981"
-                                    : course.status === "rejected"
-                                      ? "#ef4444"
-                                      : "#F59E0B",
+                                    : course.status === "draft"
+                                      ? "#3B82F6"
+                                      : course.status === "rejected"
+                                        ? "#ef4444"
+                                        : "#F59E0B",
                               }}
                             >
-                              {/* Translated Status Badges */}
-                              {t(
-                                `instructor.dashboard.status.${course.status}`,
-                              ) || course.status.toUpperCase()}
+                              {course.status === "approved" ? "LIVE" : course.status === "draft" ? "DRAFT" : (t(`instructor.dashboard.status.${course.status}`) || course.status.toUpperCase())}
                             </span>
+
+                            {course.status === "draft" && (
+                              <button
+                                onClick={(e) => handleTogglePublish(course._id, e)}
+                                style={{
+                                  padding: "4px 12px",
+                                  borderRadius: "50px",
+                                  background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                                  color: "white",
+                                  border: "none",
+                                  cursor: "pointer",
+                                  fontSize: "0.8rem",
+                                  fontWeight: "bold",
+                                  boxShadow: "0 2px 8px rgba(16, 185, 129, 0.3)"
+                                }}
+                              >
+                                Go Live
+                              </button>
+                            )}
+
+                            {course.status === "approved" && (
+                              <button
+                                onClick={(e) => handleTogglePublish(course._id, e)}
+                                style={{
+                                  padding: "4px 12px",
+                                  borderRadius: "50px",
+                                  background: "rgba(255, 255, 255, 0.08)",
+                                  color: "var(--text-h)",
+                                  border: "1px solid var(--border)",
+                                  boxShadow: "var(--inner-shadow)",
+                                  cursor: "pointer",
+                                  fontSize: "0.75rem"
+                                }}
+                              >
+                                Make Draft
+                              </button>
+                            )}
+
                             <span
                               style={{
                                 fontSize: "0.85rem",
@@ -630,23 +1013,23 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                                 : `${lessons.length} ${lessons.length === 1 ? t("instructor.dashboard.status.lesson") : t("instructor.dashboard.status.lessons")}`}
                             </span>
                           </div>
-                          {course.status === "rejected" &&
+                          {(course.status === "rejected" || course.status === "suspended") &&
                             course.rejectionReason && (
                               <div
                                 style={{
                                   boxShadow: "var(--inner-shadow)",
                                   marginTop: "8px",
-                                  padding: "10px 12px",
-                                  background: "rgba(239, 68, 68, 0.08)",
-                                  border: "1px solid rgba(239, 68, 68, 0.25)",
-                                  borderRadius: "8px",
+                                  padding: "6px 14px",
+                                  background: course.status === "suspended" ? "rgba(245, 158, 11, 0.2)" : "rgba(239, 68, 68, 0.2)",
+                                  border: "none",
+                                  borderRadius: "50px",
                                   fontSize: "0.85rem",
                                   color: "var(--text)",
-                                  maxWidth: "480px",
+                                  width: "fit-content",
                                 }}
                               >
                                 <span
-                                  style={{ color: "#ef4444", fontWeight: 600 }}
+                                  style={{ color: course.status === "suspended" ? "#f59e0b" : "#ef4444", fontWeight: 600 }}
                                 >
                                   {t("instructor.dashboard.status.reason")}
                                   :{" "}
@@ -658,41 +1041,6 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                       </div>
                     </div>
 
-                    {lessons.length > 0 && (
-                      <div
-                        style={{
-                          borderTop: "1px solid var(--border)",
-                          paddingTop: "12px",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "6px",
-                        }}
-                      >
-                        {lessons.map((lesson) => (
-                          <div
-                            key={lesson._id}
-                            style={{
-                              display: "flex",
-                              gap: "10px",
-                              alignItems: "center",
-                              fontSize: "0.9rem",
-                              color: "var(--text)",
-                            }}
-                          >
-                            <span
-                              style={{
-                                minWidth: "20px",
-                                color: "var(--text-h)",
-                                fontWeight: 600,
-                              }}
-                            >
-                              {lesson.order}.
-                            </span>
-                            <span>{lesson.title}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 );
               })
@@ -713,58 +1061,49 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
             
             <form noValidate onSubmit={handleSaveCourse} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div className="input-group">
-                <label>{t('instructor.create_course.form.title')}</label>
-                <input required type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
+                <label>{t('instructor.create_course.form.title')} <span style={{ color: '#ef4444' }}>*</span></label>
+                <input required type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className={error && !formData.title.trim() ? 'input-error' : ''} />
               </div>
               <div className="input-group">
-                <label>{t('instructor.create_course.form.description')}</label>
-                <textarea required value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} style={{ minHeight: '100px', resize: 'vertical' }} />
+                <label>{t('instructor.create_course.form.description')} <span style={{ color: '#ef4444' }}>*</span></label>
+                <textarea required value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} style={{ minHeight: '100px', resize: 'vertical' }} className={error && !formData.description.trim() ? 'input-error' : ''} />
               </div>
-              <div className="input-row">
-                <div className="input-group">
-                  <label>{t('instructor.create_course.form.price')} (EGP)</label>
-                  <input required type="number" min="0" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} />
+              {/* INS-05: Hide the price input entirely if we are editing the course */}
+              {!editingCourse && (
+                <div className="input-row" style={{ marginBottom: '-16px' }}>
+                  <div className="input-group">
+                    <label>{t('instructor.create_course.form.price')} (EGP) <span style={{ color: '#ef4444' }}>*</span></label>
+                    <input required type="number" min="0" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className={error && formData.price === '' ? 'input-error' : ''} />
+                  </div>
+                  <div className="input-group" style={{ visibility: 'hidden' }}></div>
                 </div>
+              )}
+              
+              <div className="input-row">
+                {/* INS-03: Replace category/major with college */}
                 <div className="input-group">
-                  <label>{t('instructor.create_course.form.category')}</label>
+                  <label>{t('instructor.create_course.form.college', 'College')} <span style={{ color: '#ef4444' }}>*</span></label>
                   <CustomSelect
-                    value={formData.category}
-                    onChange={val => setFormData({...formData, category: val})}
-                    placeholder={t('instructor.create_course.form.category_placeholder', 'Select a category')}
-                    options={EXPLORE_CATEGORIES.map(c => ({ value: c, label: c }))}
+                    value={formData.college}
+                    onChange={val => setFormData({...formData, college: val})}
+                    placeholder={t('instructor.create_course.form.college_placeholder', 'Select a college')}
+                    options={COLLEGES.map(c => ({ value: c.id, label: t(c.key, c.id) }))}
                   />
                 </div>
-              </div>
-              <div className="input-row">
                 <div className="input-group">
-                  <label>{t('instructor.create_course.form.major', 'Major (Optional)')}</label>
-                  <CustomSelect
-                    value={formData.major}
-                    onChange={val => setFormData({...formData, major: val, semester: ''})}
-                    placeholder={t('instructor.create_course.form.major_placeholder', "Not part of a major's curriculum")}
-                    options={MAJORS.map(m => ({ value: m.id, label: m.label }))}
-                  />
-                  <div className="input-hint">{t('instructor.create_course.form.major_hint', "Lets this course appear on the Home page's major/semester sections.")}</div>
-                </div>
-                <div className="input-group">
-                  <label>{t('instructor.create_course.form.semester', 'Semester (Optional)')}</label>
+                  <label>{t('instructor.create_course.form.semester', 'Semester')} <span style={{ color: '#ef4444' }}>*</span></label>
                   <CustomSelect
                     value={formData.semester ? String(formData.semester) : ''}
                     onChange={val => setFormData({...formData, semester: val})}
-                    placeholder={formData.major ? t('instructor.create_course.form.semester_placeholder', 'Select a semester') : t('instructor.create_course.form.semester_placeholder_no_major', 'Select a major first')}
-                    options={
-                      getMajor(formData.major)
-                        ? Array.from({ length: getMajor(formData.major).semesters }, (_, i) => i + 1)
-                            .map(n => ({ value: String(n), label: t('instructor.create_course.form.semester_n', 'Semester {{n}}', { n }) }))
-                        : []
-                    }
+                    placeholder={t('instructor.create_course.form.semester_placeholder', 'Select a semester')}
+                    options={Array.from({ length: 12 }, (_, i) => i + 1).map(n => ({ value: String(n), label: t('instructor.create_course.form.semester_n', 'Semester {{n}}', { n }) }))}
                   />
                 </div>
               </div>
               <div className="input-group">
-                <label>{t('instructor.create_course.form.thumbnail')}</label>
-                <input type="file" accept="image/*" onChange={e => setThumbnailFile(e.target.files[0])} />
-                <div className="input-hint">{t('instructor.create_course.leave_blank_placeholder')}</div>
+                <label>{t('instructor.create_course.form.thumbnail')} <span style={{ color: '#ef4444' }}>*</span></label>
+                <input required={!editingCourse} type="file" accept="image/*" onChange={e => setThumbnailFile(e.target.files[0])} />
+                <div className="input-hint">{editingCourse ? t('instructor.create_course.leave_blank_placeholder') : ''}</div>
               </div>
               
               <div className="input-row" style={{ marginTop: '16px' }}>

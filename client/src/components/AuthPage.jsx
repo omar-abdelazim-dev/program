@@ -5,6 +5,7 @@ import logoLight from '../assets/logo-light.png';
 import api from '../api/axios';
 
 import CustomSelect from './CustomSelect';
+import { COLLEGES } from '../data/colleges';
 import { MAJORS } from '../data/majors';
 
 export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
@@ -37,7 +38,6 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
   
   // Step 3 Fields
   const [goalsText, setGoalsText] = useState('');
-  const [selectedPills, setSelectedPills] = useState([]);
   
   // Loading State
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
@@ -64,15 +64,20 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
     { id: 'cert', label: t('auth.goals.cert'), icon: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>, color: '#fcd34d' },
   ];
 
+  const selectedPills = PILLS.filter(pill => 
+    goalsText.split(',').map(s => s.trim()).includes(pill.label)
+  ).map(p => p.label);
+
   const togglePill = (label) => {
-    let newPills;
     if (selectedPills.includes(label)) {
-      newPills = selectedPills.filter(p => p !== label);
+      const newText = goalsText.split(',')
+        .map(s => s.trim())
+        .filter(s => s !== label && s !== '')
+        .join(', ');
+      setGoalsText(newText);
     } else {
-      newPills = [...selectedPills, label];
+      setGoalsText(goalsText ? `${goalsText}, ${label}` : label);
     }
-    setSelectedPills(newPills);
-    setGoalsText(newPills.join(', '));
   };
 
   const handleSubmit = async (e) => {
@@ -154,7 +159,6 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
         <button 
           onClick={toggleTheme} 
           className="nav-icon-btn-auth"
-          title="Toggle Theme"
         >
           {isLightMode ? (
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
@@ -166,7 +170,6 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
         <button 
           onClick={() => i18n.changeLanguage(i18n.language === "en" ? "ar" : "en")} 
           className="nav-icon-btn-auth"
-          title="Toggle Language"
           style={{ fontWeight: '600', fontSize: '0.9rem', fontFamily: 'Inter, sans-serif' }}
         >
           {i18n.language === "ar" ? "EN" : "AR"}
@@ -179,7 +182,7 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
         <div className="auth-left">
           <div className="auth-header">
             <img 
-              src={isLightMode ? `${logoLight}?v=3` : `${logoDark}?v=3`} 
+              src={isLightMode ? logoLight : logoDark} 
               alt="Program Logo" 
               className="auth-logo"
             />
@@ -261,11 +264,11 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
                       <div className="input-row">
                         <div className="input-group">
                           <label>{t('auth.first_name')}</label>
-                          <input type="text" placeholder="Ahmed" required={!isLogin} value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                          <input type="text" placeholder="Ahmed" required={!isLogin} value={firstName} onChange={(e) => { if (/^[a-zA-Z\u0600-\u06FF\s\-']*$/.test(e.target.value)) setFirstName(e.target.value); }} />
                         </div>
                         <div className="input-group">
                           <label>{t('auth.last_name')}</label>
-                          <input type="text" placeholder="Al-Rashidi" required={!isLogin} value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                          <input type="text" placeholder="Al-Rashidi" required={!isLogin} value={lastName} onChange={(e) => { if (/^[a-zA-Z\u0600-\u06FF\s\-']*$/.test(e.target.value)) setLastName(e.target.value); }} />
                         </div>
                       </div>
                     </div>
@@ -279,10 +282,13 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
                           <div className="input-row">
                             <div className="input-group">
                               <label>{t('auth.college')}</label>
-                              <div className="icon-input-wrapper">
-                                <svg className="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-                                <input type="text" placeholder={t('auth.college_placeholder')} required value={college} onChange={(e) => setCollege(e.target.value)} />
-                              </div>
+                              <CustomSelect 
+                                options={COLLEGES.map(c => ({ value: c.id, label: t(c.key, c.id) }))}
+                                value={college}
+                                onChange={setCollege}
+                                placeholder={t('auth.college_placeholder')}
+                                icon={<svg className="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>}
+                              />
                             </div>
                             <div className="input-group">
                               <label>{t('auth.year')}</label>
@@ -320,7 +326,7 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
                             <label>{t('auth.courses_provided')}</label>
                             <div className="icon-input-wrapper">
                               <svg className="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-                              <input type="text" placeholder={t('auth.courses_provided_placeholder')} required value={providedCourses} onChange={(e) => setProvidedCourses(e.target.value)} />
+                              <input type="text" placeholder={t('auth.courses_provided_placeholder')} required value={providedCourses} onChange={(e) => { if (/^[a-zA-Z\u0600-\u06FF\s,\.\-]*$/.test(e.target.value)) setProvidedCourses(e.target.value); }} />
                             </div>
                           </div>
                           <div className="input-row">

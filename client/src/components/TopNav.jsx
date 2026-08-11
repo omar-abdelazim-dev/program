@@ -151,35 +151,66 @@ export default function TopNav({
                 {notifications
                   .sort((a, b) => b.timestamp - a.timestamp)
                   .map((notif, idx) => (
-                    <div
-                      key={notif.id || idx}
-                      style={{
-                        padding: "12px 8px",
-                        borderBottom:
-                          idx !== notifications.length - 1
-                            ? "1px solid var(--border-solid)"
-                            : "none",
-                      }}
-                    >
                       <div
+                        key={notif.id || idx}
                         style={{
-                          fontSize: "0.9rem",
-                          color: "var(--text-primary)",
-                          marginBottom: "4px",
+                          padding: "12px 8px",
+                          borderBottom:
+                            idx !== notifications.length - 1
+                              ? "1px solid var(--border-solid)"
+                              : "none",
                         }}
                       >
-                        {notif.text}
+                        {notif.link ? (
+                          <Link to={notif.link} style={{ textDecoration: 'none' }} onClick={() => setNotifications(prev => prev.filter(n => n.id !== notif.id))}>
+                            <div
+                              style={{
+                                fontSize: "0.9rem",
+                                color: "var(--color-accent)",
+                                fontWeight: "600",
+                                marginBottom: "4px",
+                              }}
+                            >
+                              {notif.text}
+                            </div>
+                            {notif.message && (
+                              <div style={{ fontSize: "0.85rem", color: "var(--text-primary)", marginBottom: "4px" }}>
+                                {notif.message}
+                              </div>
+                            )}
+                            <div
+                              style={{
+                                fontSize: "0.75rem",
+                                color: "var(--text-secondary)",
+                                textAlign: "right",
+                              }}
+                            >
+                              {new Date(notif.timestamp).toLocaleString()}
+                            </div>
+                          </Link>
+                        ) : (
+                          <>
+                            <div
+                              style={{
+                                fontSize: "0.9rem",
+                                color: "var(--text-primary)",
+                                marginBottom: "4px",
+                              }}
+                            >
+                              {notif.text}
+                            </div>
+                            <div
+                              style={{
+                                fontSize: "0.75rem",
+                                color: "var(--text-secondary)",
+                                textAlign: "right",
+                              }}
+                            >
+                              {new Date(notif.timestamp).toLocaleString()}
+                            </div>
+                          </>
+                        )}
                       </div>
-                      <div
-                        style={{
-                          fontSize: "0.75rem",
-                          color: "var(--text-secondary)",
-                          textAlign: "right",
-                        }}
-                      >
-                        {new Date(notif.timestamp).toLocaleString()}
-                      </div>
-                    </div>
                   ))}
               </div>
             )}

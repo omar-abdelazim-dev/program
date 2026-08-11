@@ -2,8 +2,10 @@ import { useState, useRef, useEffect } from "react";
 import api from "../api/axios";
 import notyf from "../utils/notyf";
 import { createPortal } from "react-dom";
+import SegmentedControl from "./common/SegmentedControl";
 import Spinner from "./Spinner";
 import { useTranslation } from 'react-i18next';
+import AdminLessonsTab from "./AdminLessonsTab";
 
 // Generic custom dropdown component to match the system's dark theme
 const CustomDropdown = ({ value, options, onChange, disabled, width = "100%" }) => {
@@ -126,6 +128,8 @@ const CustomDropdown = ({ value, options, onChange, disabled, width = "100%" }) 
 
 export default function AdminCourseManagementTab({ currentUser, onDashboardUpdate }) {
   const { t } = useTranslation();
+  const [activeSubTab, setActiveSubTab] = useState("courses");
+  
   const [courses, setCourses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -137,30 +141,33 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
 
   const [sidePanelCourseId, setSidePanelCourseId] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  const [suspendModal, setSuspendModal] = useState({ isOpen: false, courseId: null, reason: "" });
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
+  const [stats, setStats] = useState({ totalCourses: 0, pendingCourses: 0, pendingLessonsCount: 0 });
+
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        setIsLoading(true);
-        // We fetch from both /courses and /courses/pending to gather real data as per requirements
-        const [publishedRes, pendingRes] = await Promise.all([
+        if (courses.length === 0) {
+          setIsLoading(true);
+        }
+        // Fetch published courses, pending courses, and admin stats
+        const [publishedRes, pendingRes, statsRes] = await Promise.all([
           api.get("/courses").catch(() => ({ data: { courses: [] } })),
-          api.get("/courses/pending").catch(() => ({ data: { courses: [] } }))
+          api.get("/courses/pending").catch(() => ({ data: { courses: [] } })),
+          api.get("/admin/stats").catch(() => ({ data: {} }))
         ]);
         
         let allCourses = [];
-        
-        // GET /courses only ever returns approved courses (status: 'approved'
-        // is already set server-side), so no fallback/relabeling needed here.
         const approved = publishedRes.data.data || publishedRes.data.courses || [];
         allCourses = [...allCourses, ...approved];
         
         if (pendingRes.data?.courses) {
             const pendingWithStatus = pendingRes.data.courses.map(c => ({ ...c, status: 'pending' }));
-            // Avoid duplicates if backend is weird
             const existingIds = new Set(allCourses.map(c => c._id));
             pendingWithStatus.forEach(c => {
                 if (!existingIds.has(c._id)) {
@@ -170,6 +177,14 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
         }
         
         setCourses(allCourses);
+
+        if (statsRes.data) {
+          setStats({
+            totalCourses: statsRes.data.totalCourses ?? 0,
+            pendingCourses: statsRes.data.pendingCourses ?? 0,
+            pendingLessonsCount: statsRes.data.pendingLessonsCount ?? statsRes.data.pendingLessons ?? 0
+          });
+        }
       } catch (error) {
         console.error("Failed to fetch courses:", error);
         notyf.error("Failed to load courses");
@@ -201,7 +216,7 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
         setIsProcessing(true);
         await api.patch(`/courses/${id}/approve`);
         notyf.success('Course approved');
-        setCourses(courses.map(c => c._id === id ? { ...c, status: 'published' } : c));
+        setCourses(courses.map(c => c._id === id ? { ...c, status: 'approved' } : c));
         if (onDashboardUpdate) onDashboardUpdate();
     } catch (err) {
         notyf.error('Failed to approve course');
@@ -220,6 +235,29 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
         if (onDashboardUpdate) onDashboardUpdate();
     } catch (err) {
         notyf.error('Failed to reject course');
+    } finally {
+        setIsProcessing(false);
+    }
+  };
+
+  const handleSuspend = async () => {
+    const { courseId, reason } = suspendModal;
+    if (!reason.trim()) {
+        notyf.error('Please provide a reason for suspension');
+        return;
+    }
+    try {
+        setIsProcessing(true);
+        await api.patch(`/courses/${courseId}/suspend`, { reason });
+        notyf.success('Course suspended successfully');
+        setCourses(courses.map(c => c._id === courseId ? { ...c, status: 'suspended' } : c));
+        setSuspendModal({ isOpen: false, courseId: null, reason: "" });
+        if (sidePanelCourseId === courseId) {
+            setSidePanelCourseId(null);
+        }
+        if (onDashboardUpdate) onDashboardUpdate();
+    } catch (err) {
+        notyf.error('Failed to suspend course');
     } finally {
         setIsProcessing(false);
     }
@@ -265,219 +303,338 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }} className="animate-entrance">
-      {/* Header and Metrics */}
+      {/* Header */}
       <div>
         <h2 style={{ fontSize: "1.8rem", margin: "0 0 8px 0", color: "var(--text-h)" }}>{t('admin.course_management', 'Course Management')}</h2>
         <div style={{ fontSize: "0.95rem", color: "var(--c-sub)", marginBottom: "24px" }}>{t('admin.manage_courses_desc', 'Manage, review, and organize platform courses.')}</div>
-        
+      </div>
+
+      {/* Metrics Stat Cards (Preserved for both Courses and Lessons tabs) */}
+      <div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 200px), 1fr))", gap: "16px" }}>
-            {/* KPI Cards (Reusing existing glass-card stat-card styles) */}
-            <div className="glass-card stat-card overview-stat-purple" style={{ padding: '24px', display: 'flex', flexDirection: 'column', transition: 'all 0.2s ease' }}>
-                <div style={{ color: 'var(--c-sub)', fontSize: '0.85rem', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '8px' }}>{t('admin.total_courses', 'Total Courses')}</div>
-                <div style={{ color: 'var(--text-h)', fontSize: '2rem', fontWeight: '700', margin: '0' }}>{totalCourses}</div>
-            </div>
-            <div className="glass-card stat-card overview-stat-green" style={{ padding: '24px', display: 'flex', flexDirection: 'column', transition: 'all 0.2s ease' }}>
-                <div style={{ color: 'var(--c-sub)', fontSize: '0.85rem', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '8px' }}>{t('admin.approved', 'Approved')}</div>
-                <div style={{ color: 'var(--text-h)', fontSize: '2rem', fontWeight: '700', margin: '0' }}>{approvedCourses}</div>
-            </div>
-            <div className="glass-card stat-card overview-stat-orange" style={{ padding: '24px', display: 'flex', flexDirection: 'column', transition: 'all 0.2s ease' }}>
-                <div style={{ color: 'var(--c-sub)', fontSize: '0.85rem', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '8px' }}>{t('admin.pending_review', 'Pending Review')}</div>
-                <div style={{ color: 'var(--text-h)', fontSize: '2rem', fontWeight: '700', margin: '0' }}>{pendingCourses}</div>
-            </div>
+          {/* KPI Cards (Total Courses, Pending Courses, Pending Lessons) */}
+          <div className="glass-card stat-card overview-stat-purple" style={{ padding: '24px', display: 'flex', flexDirection: 'column', transition: 'all 0.2s ease' }}>
+            <div style={{ color: 'var(--c-sub)', fontSize: '0.85rem', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '8px' }}>Total Courses</div>
+            <div style={{ color: 'var(--text-h)', fontSize: '2rem', fontWeight: '700', margin: '0' }}>{stats.totalCourses || totalCourses}</div>
+          </div>
+          <div className="glass-card stat-card overview-stat-orange" style={{ padding: '24px', display: 'flex', flexDirection: 'column', transition: 'all 0.2s ease' }}>
+            <div style={{ color: 'var(--c-sub)', fontSize: '0.85rem', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '8px' }}>Pending Courses</div>
+            <div style={{ color: 'var(--text-h)', fontSize: '2rem', fontWeight: '700', margin: '0' }}>{stats.pendingCourses !== undefined ? stats.pendingCourses : pendingCourses}</div>
+          </div>
+          <div className="glass-card stat-card overview-stat-green" style={{ padding: '24px', display: 'flex', flexDirection: 'column', transition: 'all 0.2s ease' }}>
+            <div style={{ color: 'var(--c-sub)', fontSize: '0.85rem', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '8px' }}>Pending Lessons</div>
+            <div style={{ color: 'var(--text-h)', fontSize: '2rem', fontWeight: '700', margin: '0' }}>{stats.pendingLessonsCount ?? stats.pendingLessons ?? 0}</div>
+          </div>
         </div>
       </div>
 
-      {/* Search and Filter Toggle */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-        <div style={{ display: "flex", gap: "12px", alignItems: "center", marginLeft: "auto" }}>
-          <div className="nav-search" style={{ width: "320px", position: "relative" }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <input
-              type="text"
-              placeholder={t('admin.search_courses', 'Search courses...')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setIsSearchFocused(true)}
-              onBlur={() => setIsSearchFocused(false)}
+      {/* Courses / Lessons Top Tab Bar */}
+      <SegmentedControl
+        tabs={[
+          { id: "courses", label: "Courses" },
+          { id: "lessons", label: "Lessons" }
+        ]}
+        activeTab={activeSubTab}
+        onChange={setActiveSubTab}
+        style={{ marginBottom: "0px" }}
+      />
+
+      <div style={{ display: activeSubTab === "courses" ? "flex" : "none", flexDirection: "column", gap: "24px" }}>
+          {/* Controls Row: Status Bar on LEFT, Search & Filter on RIGHT */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
+            {/* Left: Status Bar */}
+            <SegmentedControl
+              tabs={[
+                { id: "all", label: "All Courses" },
+                { id: "approved", label: "Approved" },
+                { id: "pending", label: "Pending Review" }
+              ]}
+              activeTab={activeStatus}
+              onChange={setActiveStatus}
+            />
+
+            {/* Merged Search & Filters Control Pill */}
+            <div
               style={{
+                display: "flex",
+                alignItems: "center",
                 background: "var(--bg-surface)",
-                border: isSearchFocused ? "1px solid #f97316" : "1px solid transparent",
                 borderRadius: "99px",
-                boxShadow: isSearchFocused 
+                boxShadow: isSearchFocused || showFilters
                   ? "var(--outer-shadow), 0 0 0 3px rgba(249, 115, 22, 0.2)"
                   : "var(--outer-shadow)",
-                paddingLeft: "42px", // keep space for the search icon
-                outline: "none",
+                border: isSearchFocused || showFilters
+                  ? "1px solid #f97316"
+                  : "1px solid transparent",
                 transition: "all 0.3s ease",
-                color: "var(--c-light)"
+                padding: "4px 8px 4px 16px",
+                position: "relative",
               }}
-            />
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+                style={{ color: "var(--c-sub)", flexShrink: 0 }}
+              >
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input
+                type="text"
+                placeholder={t('admin.search_courses', 'Search courses...')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setIsSearchFocused(false)}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  outline: "none",
+                  color: "var(--c-light)",
+                  padding: "8px 12px",
+                  fontSize: "0.95rem",
+                  width: "200px",
+                }}
+              />
+
+              {/* Divider */}
+              <div style={{ width: "1px", height: "22px", background: "rgba(255, 255, 255, 0.1)", margin: "0 4px" }} />
+
+              {/* Category Dropdown Trigger */}
+              <div
+                style={{ position: "relative" }}
+                tabIndex={0}
+                onBlur={(e) => {
+                  if (!e.currentTarget.contains(e.relatedTarget)) {
+                    setShowFilters(false);
+                  }
+                }}
+              >
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    outline: "none",
+                    color: "var(--c-light)",
+                    cursor: "pointer",
+                    fontSize: "0.9rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "8px 12px",
+                    fontWeight: "500",
+                  }}
+                >
+                  {categoryFilter}
+                  <span
+                    style={{
+                      fontSize: "0.75rem",
+                      color: showFilters ? "#f97316" : "var(--c-sub)",
+                      transition: "transform 0.2s, color 0.2s",
+                      transform: showFilters ? "rotate(180deg)" : "rotate(0)",
+                    }}
+                  >
+                    ▼
+                  </span>
+                </button>
+
+                {showFilters && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "calc(100% + 12px)",
+                      right: 0,
+                      width: "200px",
+                      background: "var(--bg-surface)",
+                      borderRadius: "12px",
+                      boxShadow: "0 10px 25px rgba(0,0,0,0.1), var(--outer-shadow)",
+                      padding: "8px",
+                      zIndex: 999,
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "4px",
+                    }}
+                  >
+                    {["All Categories", "Development", "Business", "Design", "Data", "Computer Science"].map((cat) => (
+                      <button
+                        key={cat}
+                        onClick={() => {
+                          setCategoryFilter(cat);
+                          setShowFilters(false);
+                        }}
+                        style={{
+                          padding: "10px 12px",
+                          background: categoryFilter === cat ? "var(--bg-main)" : "transparent",
+                          boxShadow: categoryFilter === cat ? "var(--inner-shadow)" : "none",
+                          border: "none",
+                          textAlign: "left",
+                          cursor: "pointer",
+                          borderRadius: "50px",
+                          fontSize: "0.95rem",
+                          transition: "all 0.2s ease",
+                          color: categoryFilter === cat ? "transparent" : "var(--c-sub)",
+                          ...(categoryFilter === cat
+                            ? {
+                                backgroundImage: "linear-gradient(90deg, #f97316, #fbad41)",
+                                WebkitBackgroundClip: "text",
+                                WebkitTextFillColor: "transparent",
+                                fontWeight: "600",
+                              }
+                            : {}),
+                        }}
+                        onMouseEnter={(e) => {
+                          if (categoryFilter !== cat) {
+                            e.target.style.background = "var(--bg-main)";
+                            e.target.style.boxShadow = "var(--inner-shadow)";
+                            e.target.style.color = "var(--c-light)";
+                            e.target.style.WebkitTextFillColor = "var(--c-light)";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (categoryFilter !== cat) {
+                            e.target.style.background = "transparent";
+                            e.target.style.boxShadow = "none";
+                            e.target.style.color = "var(--c-sub)";
+                            e.target.style.WebkitTextFillColor = "var(--c-sub)";
+                          }
+                        }}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-          <button 
-            onClick={() => setShowFilters(!showFilters)}
-            style={{ 
-              background: showFilters ? "var(--c-sub)" : "var(--bg-surface)", 
-              color: showFilters ? "var(--bg-main)" : "var(--c-sub)",
-              border: "none",
-              padding: "10px 20px", borderRadius: "99px",
-              cursor: "pointer", fontSize: "0.9rem", transition: "all 0.2s ease",
-              boxShadow: showFilters ? "var(--inner-shadow)" : "var(--outer-shadow)"
-            }}
-            onMouseEnter={e => { if(!showFilters) { e.target.style.background = "rgba(255,255,255,0.05)"; e.target.style.color = "var(--c-light)"; } }}
-            onMouseLeave={e => { if(!showFilters) { e.target.style.background = "var(--bg-surface)"; e.target.style.color = "var(--c-sub)"; } }}
-          >
-            Filters
-          </button>
-        </div>
-      </div>
-
-      {/* Filters Bar */}
-      {showFilters && (
-        <div style={{ 
-          background: "var(--bg-surface)", border: "none", boxShadow: "var(--outer-shadow)",
-          borderRadius: "12px", padding: "20px 24px", display: "flex", alignItems: "flex-end", gap: "24px",
-          animation: "fadeIn 0.2s ease"
-        }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px", minWidth: "220px" }}>
-            <label style={{ fontSize: "0.75rem", fontWeight: "600", color: "var(--c-sub)", letterSpacing: "0.5px" }}>CATEGORY</label>
-            <CustomDropdown 
-              value={categoryFilter}
-              options={["All Categories", "Development", "Business", "Design", "Data"]}
-              onChange={setCategoryFilter}
-            />
-          </div>
-
-          <button
-            onClick={clearFilters}
-            style={{ 
-              background: "rgba(239, 68, 68, 0.1)",
-              border: "none", boxShadow: "var(--inner-shadow)",
-              color: "#ef4444", padding: "12px 20px", borderRadius: "10px",
-              cursor: "pointer", fontSize: "0.9rem", fontWeight: "500", transition: "all 0.2s"
-            }}
-            onMouseEnter={e => { e.target.style.background = "rgba(239,68,68,0.15)"; }}
-            onMouseLeave={e => { e.target.style.background = "rgba(239,68,68,0.05)"; }}
-          >
-            Clear Filters
-          </button>
-        </div>
-      )}
-
-      {/* Status Tabs */}
-      <div style={{ display: "flex", gap: "12px", overflowX: "auto", paddingBottom: "20px", paddingLeft: "10px" }}>
-        {[
-          { id: "all", label: "All Courses" },
-          { id: "approved", label: "Approved" },
-          { id: "pending", label: "Pending Review" },
-        ].map(tab => {
-          const isActive = activeStatus === tab.id;
-          const statusStyle = getStatusColor(tab.id);
-          return (
-          <button
-            key={tab.id}
-            onClick={() => setActiveStatus(tab.id)}
-            style={{
-              padding: "10px 24px", borderRadius: "99px", fontSize: "0.9rem", fontWeight: "500", cursor: "pointer", transition: "all 0.2s",
-              border: "none",
-              background: "var(--bg-surface)",
-              color: isActive ? "var(--text-h)" : "var(--c-sub)",
-              boxShadow: isActive ? "var(--inner-shadow)" : "var(--outer-shadow)",
-              whiteSpace: "nowrap"
-            }}
-            onMouseEnter={e => { if(!isActive) e.target.style.boxShadow = "var(--inner-shadow)"; }}
-            onMouseLeave={e => { if(!isActive) e.target.style.boxShadow = "var(--outer-shadow)"; }}
-          >
-            {tab.label}
-          </button>
-        )})}
-      </div>
 
       {/* Data Table */}
-      <div className="glass-card" style={{ background: "var(--bg-surface)", border: "none", boxShadow: "var(--outer-shadow)", borderRadius: "12px", overflow: "hidden", marginTop: "4px", width: "100%" }}>
-        <table className="admin-table" style={{ width: "100%", borderCollapse: "separate", borderSpacing: "0 4px", textAlign: "left" }}>
-          <thead>
-            <tr style={{ background: "rgba(255,255,255,0.02)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-              <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>{t('instructor.course_title', 'Course')}</th>
-              <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>{t('instructor.category', 'Category')}</th>
-              <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>{t('instructor.price', 'Price')}</th>
-              <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>{t('common.status', 'Status')}</th>
-              <th style={{ padding: "16px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem" }}>{t('admin.last_updated', 'Last Updated')}</th>
-              <th style={{ padding: "16px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.85rem", textAlign: "right" }}>{t('admin.action', 'Action')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ? (
-                <tr>
-                    <td colSpan="7" style={{ padding: "40px", textAlign: "center" }}>
-                        <Spinner size="small" label="Loading courses..." />
-                    </td>
-                </tr>
-            ) : currentCourses.length === 0 ? (
+      <div
+        className="glass-card"
+        style={{
+          padding: "24px",
+          background: "var(--bg-surface)",
+          border: "none",
+          flex: 1,
+          minHeight: "500px",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <div className="table-responsive" style={{ overflowX: "auto", margin: "-24px", padding: "24px" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+            <thead>
               <tr>
-                <td colSpan="7" style={{ padding: "40px", textAlign: "center", color: "var(--c-sub)" }}>
-                  No courses found matching criteria.
-                </td>
+                <th style={{ padding: "16px 24px", color: "var(--c-sub)", fontWeight: "600", borderBottom: "1px solid var(--c-border-subtle)", whiteSpace: "nowrap" }}>COURSE</th>
+                <th style={{ padding: "16px", color: "var(--c-sub)", fontWeight: "600", borderBottom: "1px solid var(--c-border-subtle)", textAlign: "center", whiteSpace: "nowrap" }}>CATEGORY</th>
+                <th style={{ padding: "16px", color: "var(--c-sub)", fontWeight: "600", borderBottom: "1px solid var(--c-border-subtle)", textAlign: "center", whiteSpace: "nowrap" }}>PRICE</th>
+                <th style={{ padding: "16px", color: "var(--c-sub)", fontWeight: "600", borderBottom: "1px solid var(--c-border-subtle)", textAlign: "center", whiteSpace: "nowrap" }}>STATUS</th>
+                <th style={{ padding: "16px", color: "var(--c-sub)", fontWeight: "600", borderBottom: "1px solid var(--c-border-subtle)", textAlign: "center", whiteSpace: "nowrap" }}>LAST UPDATED</th>
+                <th style={{ padding: "16px 24px", color: "var(--c-sub)", fontWeight: "600", borderBottom: "1px solid var(--c-border-subtle)", textAlign: "right", whiteSpace: "nowrap" }}>ACTION</th>
               </tr>
-            ) : (
-              currentCourses.map(c => (
-                <tr key={c._id} className="hover-row">
-                  <td style={{ padding: "16px 24px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                      {/* Thumbnail Placeholder if no real image */}
-                      {c.thumbnailUrl ? (
-                          <img src={c.thumbnailUrl} alt="Thumbnail" style={{ width: "48px", height: "48px", borderRadius: "8px", objectFit: "cover" }} />
-                      ) : (
-                          <div style={{ 
-                            width: "48px", height: "48px", borderRadius: "8px", 
-                            background: "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center"
-                          }}>
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--c-sub)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                          </div>
-                      )}
-                      <div>
-                        <div style={{ fontWeight: "600", color: "var(--text-h)", fontSize: "0.95rem" }}>{c.title}</div>
-                        <div style={{ color: "var(--c-sub)", fontSize: "0.8rem" }}>{c.instructor?.name || "Unknown Instructor"}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td style={{ padding: "16px", color: "var(--c-sub)", fontSize: "0.9rem" }}>{c.category}</td>
-                  <td style={{ padding: "16px", color: "var(--text-h)", fontSize: "0.9rem" }}>${c.price || "0.00"}</td>
-                  <td style={{ padding: "16px" }}>
-                    <span style={{ 
-                      background: getStatusColor(c.status).bg, border: "none",
-                      color: getStatusColor(c.status).text, padding: "4px 10px", borderRadius: "99px",
-                      boxShadow: "var(--inner-shadow)",
-                      fontSize: "0.75rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.5px"
-                    }}>
-                      {c.status || 'unknown'}
-                    </span>
-                  </td>
-                  <td style={{ padding: "16px", color: "var(--c-sub)", fontSize: "0.9rem" }}>
-                    {new Date(c.updatedAt || c.createdAt || Date.now()).toLocaleDateString()}
-                  </td>
-                  <td style={{ padding: "16px 24px", textAlign: "right" }}>
-                    <button 
-                      onClick={() => setSidePanelCourseId(c._id)}
-                      style={{ 
-                        background: "rgba(255,255,255,0.03)", border: "none",
-                        boxShadow: "var(--inner-shadow)",
-                        color: "var(--c-light)", padding: "6px 14px", borderRadius: "8px",
-                        fontSize: "0.85rem", cursor: "pointer", transition: "all 0.2s"
-                      }}
-                      onMouseEnter={e => e.target.style.background = "rgba(255,255,255,0.08)"}
-                      onMouseLeave={e => e.target.style.background = "rgba(255,255,255,0.03)"}
-                    >
-                      View Details
-                    </button>
+            </thead>
+            <tbody>
+              {isLoading ? (
+                  <tr>
+                      <td colSpan="7" style={{ padding: "40px", textAlign: "center" }}>
+                          <Spinner size="small" label="Loading courses..." />
+                      </td>
+                  </tr>
+              ) : currentCourses.length === 0 ? (
+                <tr>
+                  <td colSpan="7" style={{ padding: "40px", textAlign: "center", color: "var(--c-sub)" }}>
+                    No courses found matching criteria.
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                currentCourses.map(c => (
+                  <tr key={c._id} className="hover-row" style={{ borderBottom: "1px solid var(--c-border-subtle)", transition: "background 0.2s", cursor: "pointer" }} onClick={() => setSidePanelCourseId(c._id)}>
+                    <td style={{ padding: "16px 24px", verticalAlign: "middle" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                        {/* Thumbnail Placeholder if no real image */}
+                        {c.thumbnailUrl ? (
+                            <img src={c.thumbnailUrl} alt="Thumbnail" style={{ width: "40px", height: "40px", borderRadius: "8px", objectFit: "cover" }} />
+                        ) : (
+                            <div style={{ 
+                              width: "40px", height: "40px", borderRadius: "8px", 
+                              background: "var(--bg-main) !important", boxShadow: "var(--inner-shadow) !important", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--c-sub)"
+                            }}>
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                            </div>
+                        )}
+                        <div>
+                          <div style={{ fontWeight: "600", color: "var(--text-h)", fontSize: "0.95rem" }}>{c.title}</div>
+                          <div style={{ color: "var(--c-sub)", fontSize: "0.85rem", marginTop: "4px" }}>{c.instructor?.name || "Unknown Instructor"}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{ padding: "16px", color: "var(--c-sub)", fontSize: "0.9rem", textAlign: "center", verticalAlign: "middle" }}>{c.category}</td>
+                    <td style={{ padding: "16px", color: "var(--text-h)", fontSize: "0.9rem", textAlign: "center", verticalAlign: "middle" }}>{c.price ? `${c.price} EGP` : "0 EGP"}</td>
+                    <td style={{ padding: "16px", textAlign: "center", verticalAlign: "middle" }}>
+                      {(() => {
+                        const style = getStatusColor(c.status);
+                        const statusLabel = c.status ? (c.status.charAt(0).toUpperCase() + c.status.slice(1).toLowerCase()) : "Draft";
+                        return (
+                          <span
+                            style={{
+                              padding: "6px 12px",
+                              borderRadius: "20px",
+                              fontSize: "0.85rem",
+                              fontWeight: "600",
+                              background: style.bg,
+                              color: style.text,
+                              border: "none",
+                              boxShadow: "var(--inner-shadow, inset 0 2px 4px 0 rgba(0,0,0,0.06))",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "6px",
+                              textTransform: "capitalize",
+                            }}
+                          >
+                            <span
+                              style={{
+                                width: "6px",
+                                height: "6px",
+                                borderRadius: "50%",
+                                background: "currentColor",
+                              }}
+                            />
+                            {statusLabel}
+                          </span>
+                        );
+                      })()}
+                    </td>
+                    <td style={{ padding: "16px", color: "var(--c-sub)", fontSize: "0.9rem", textAlign: "center", verticalAlign: "middle" }}>
+                      {new Date(c.updatedAt || c.createdAt || Date.now()).toLocaleDateString()}
+                    </td>
+                    <td style={{ padding: "16px 24px", textAlign: "right", verticalAlign: "middle" }}>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setSidePanelCourseId(c._id); }}
+                        style={{ 
+                          background: "rgba(255,255,255,0.03)", border: "none",
+                          boxShadow: "var(--inner-shadow)",
+                          color: "var(--c-light)", padding: "6px 14px", borderRadius: "8px",
+                          fontSize: "0.85rem", cursor: "pointer", transition: "all 0.2s"
+                        }}
+                        onMouseEnter={e => e.target.style.background = "rgba(255,255,255,0.08)"}
+                        onMouseLeave={e => e.target.style.background = "rgba(255,255,255,0.03)"}
+                      >
+                        View Details
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
 
         {/* Pagination Controls */}
         {!isLoading && totalPages > 1 && (
@@ -587,18 +744,20 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
               ✕ Close
             </button>
 
-            {/* Course Header */}
-            <div>
-              {sidePanelCourse.thumbnailUrl ? (
-                  <img src={sidePanelCourse.thumbnailUrl} alt="Cover" style={{ width: "100%", height: "180px", objectFit: "cover", borderRadius: "12px", marginBottom: "16px" }} />
-              ) : (
-                  <div style={{ width: "100%", height: "180px", background: "rgba(255,255,255,0.05)", borderRadius: "12px", marginBottom: "16px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--c-sub)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                  </div>
-              )}
-              <h3 style={{ margin: "0 0 8px 0", fontSize: "1.4rem", color: "var(--text-h)" }}>{sidePanelCourse.title}</h3>
-              <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px" }}>
+            {/* Course Header & Description */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <div style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
+                {sidePanelCourse.thumbnailUrl ? (
+                    <img src={sidePanelCourse.thumbnailUrl} alt="Cover" style={{ width: "120px", height: "80px", objectFit: "cover", borderRadius: "12px", flexShrink: 0 }} />
+                ) : (
+                    <div style={{ width: "120px", height: "80px", background: "rgba(255,255,255,0.05)", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--c-sub)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    </div>
+                )}
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <h3 style={{ margin: "0", fontSize: "1.2rem", color: "var(--text-h)", lineHeight: "1.2" }}>{sidePanelCourse.title}</h3>
                   <span style={{ 
+                    width: "fit-content",
                     background: getStatusColor(sidePanelCourse.status).bg, border: "none",
                     color: getStatusColor(sidePanelCourse.status).text, padding: "2px 8px", borderRadius: "99px",
                     boxShadow: "var(--inner-shadow)",
@@ -606,9 +765,15 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
                   }}>
                     {sidePanelCourse.status}
                   </span>
+                  {sidePanelCourse.rejectionReason && (
+                    <span style={{ color: "var(--c-sub)", fontSize: "0.8rem", marginTop: "-4px" }}>
+                      <strong>Reason:</strong> {sidePanelCourse.rejectionReason}
+                    </span>
+                  )}
                   <span style={{ color: "var(--c-sub)", fontSize: "0.85rem" }}>
                     Created by {sidePanelCourse.instructor?.name || 'Unknown'}
                   </span>
+                </div>
               </div>
               <p style={{ color: "var(--c-sub)", fontSize: "0.9rem", lineHeight: "1.5", margin: 0 }}>
                   {sidePanelCourse.description}
@@ -616,12 +781,12 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
             </div>
 
             {/* Course Info */}
-            <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "12px", padding: "16px" }}>
+            <div style={{ background: "var(--bg-main)", border: "none", boxShadow: "var(--inner-shadow)", borderRadius: "12px", padding: "16px" }}>
               <div style={{ fontSize: "0.75rem", fontWeight: "700", color: "var(--c-sub)", letterSpacing: "1px", marginBottom: "12px" }}>DETAILS</div>
               <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.9rem" }}>
                   <span style={{ color: "var(--c-sub)" }}>Category</span>
-                  <span style={{ color: "var(--c-light)" }}>{sidePanelCourse.category}</span>
+                  <span style={{ color: "var(--c-light)" }}>{t(`categories.${sidePanelCourse.category.replace(/\s+/g, '_').toLowerCase()}`, sidePanelCourse.category)}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.9rem" }}>
                   <span style={{ color: "var(--c-sub)" }}>Difficulty</span>
@@ -629,7 +794,7 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.9rem" }}>
                   <span style={{ color: "var(--c-sub)" }}>Price</span>
-                  <span style={{ color: "var(--c-light)" }}>${sidePanelCourse.price || "0.00"}</span>
+                  <span style={{ color: "var(--c-light)" }}>{sidePanelCourse.price ? `${sidePanelCourse.price} EGP` : "0 EGP"}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.9rem" }}>
                   <span style={{ color: "var(--c-sub)" }}>Created On</span>
@@ -639,7 +804,7 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
             </div>
             
             {/* Analytics Preview Placeholder */}
-            <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "12px", padding: "16px" }}>
+            <div style={{ background: "var(--bg-main)", border: "none", boxShadow: "var(--inner-shadow)", borderRadius: "12px", padding: "16px" }}>
                 <div style={{ fontSize: "0.75rem", fontWeight: "700", color: "var(--c-sub)", letterSpacing: "1px", marginBottom: "12px" }}>ANALYTICS PREVIEW</div>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
                     <span style={{ color: "var(--c-sub)", fontSize: "0.85rem" }}>Enrollments</span>
@@ -647,12 +812,12 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                     <span style={{ color: "var(--c-sub)", fontSize: "0.85rem" }}>Revenue</span>
-                    <span style={{ color: "var(--c-light)", fontSize: "0.85rem", fontWeight: "600" }}>${(sidePanelCourse.enrollments || 0) * (sidePanelCourse.price || 0)}</span>
+                    <span style={{ color: "var(--c-light)", fontSize: "0.85rem", fontWeight: "600" }}>{((sidePanelCourse.enrollments || 0) * (sidePanelCourse.price || 0)).toLocaleString()} EGP</span>
                 </div>
             </div>
 
             {/* Actions */}
-            <div style={{ marginTop: "auto" }}>
+            <div>
               <div style={{ fontSize: "0.75rem", fontWeight: "700", color: "var(--c-sub)", letterSpacing: "1px", marginBottom: "16px" }}>ACTIONS</div>
               
               <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -685,15 +850,98 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
                             Reject
                         </button>
                     </div>
+                ) : sidePanelCourse.status === "approved" ? (
+                    <div style={{ display: "flex", flexDirection: "row", gap: "12px" }}>
+                        <a 
+                          href={`/course/${sidePanelCourse._id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            flex: 1, display: "block", textAlign: "center", textDecoration: "none",
+                            background: "var(--bg-main)", border: "none", boxShadow: "var(--inner-shadow)",
+                            color: "var(--text-h)", padding: "12px", borderRadius: "10px", fontSize: "0.9rem",
+                            transition: "all 0.2s"
+                          }}
+                          onMouseEnter={e => e.target.style.background = "var(--bg-surface)"}
+                          onMouseLeave={e => e.target.style.background = "var(--bg-main)"}
+                        >
+                            View Public Course Page
+                        </a>
+                        <button 
+                            onClick={() => setSuspendModal({ isOpen: true, courseId: sidePanelCourse._id, reason: "" })}
+                            disabled={isProcessing}
+                            style={{
+                              flex: 1, background: "rgba(239,68,68,0.1)", border: "none", boxShadow: "var(--inner-shadow)",
+                              color: "#ef4444", padding: "12px", borderRadius: "10px", cursor: isProcessing ? "not-allowed" : "pointer", fontSize: "0.9rem",
+                              transition: "all 0.2s", opacity: isProcessing ? 0.5 : 1
+                            }}
+                            onMouseEnter={e => { if(!isProcessing) e.target.style.background = "rgba(239,68,68,0.15)"; }}
+                            onMouseLeave={e => { if(!isProcessing) e.target.style.background = "rgba(239,68,68,0.05)"; }}
+                        >
+                            Suspend Course
+                        </button>
+                    </div>
                 ) : (
-                    <div style={{ color: "var(--c-sub)", fontSize: "0.85rem" }}>
-                        {sidePanelCourse.status === "approved" ? "This course is live in the public catalog." : "This course was rejected and is not visible to students."}
+                    <div style={{ color: "var(--c-sub)", fontSize: "0.85rem", textAlign: "center", padding: "12px 0" }}>
+                        This course is not visible to students.
                     </div>
                 )}
               </div>
             </div>
 
           </div>
+        </div>
+      , document.body)}
+      
+      </div>
+
+      <div style={{ display: activeSubTab === "lessons" ? "block" : "none" }} className="animate-entrance">
+        <AdminLessonsTab currentUser={currentUser} onDashboardUpdate={onDashboardUpdate} />
+      </div>
+
+      {activeSubTab === "categories" && (
+        <div className="animate-entrance glass-card" style={{ padding: "40px", textAlign: "center" }}>
+          <div style={{ fontSize: "3rem", marginBottom: "16px" }}>🚧</div>
+          <h3 style={{ color: "var(--text-h)", fontSize: "1.5rem", marginBottom: "8px" }}>Categories Management</h3>
+          <p style={{ color: "var(--c-sub)" }}>This feature is currently under construction.</p>
+        </div>
+      )}
+
+      {/* Suspend Confirmation Modal */}
+      {suspendModal.isOpen && createPortal(
+        <div style={{ position: "fixed", inset: 0, zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div onClick={() => setSuspendModal({ isOpen: false, courseId: null, reason: "" })} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }} />
+            <div style={{ position: "relative", width: "400px", background: "var(--bg-surface)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "16px", padding: "24px", boxShadow: "var(--outer-shadow)" }}>
+                <h3 style={{ color: "var(--text-h)", marginTop: 0, marginBottom: "16px" }}>Suspend Course</h3>
+                <p style={{ color: "var(--c-sub)", fontSize: "0.9rem", marginBottom: "16px", lineHeight: "1.5" }}>
+                    Suspending this course will remove it from the public catalog. The instructor will receive a notification with the reason below.
+                </p>
+                <textarea 
+                    value={suspendModal.reason}
+                    onChange={(e) => setSuspendModal(prev => ({ ...prev, reason: e.target.value }))}
+                    placeholder="Provide a reason for suspension..."
+                    rows={4}
+                    style={{
+                        width: "100%", background: "var(--bg-main)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--c-light)",
+                        padding: "12px", borderRadius: "8px", fontSize: "0.9rem", resize: "none", marginBottom: "24px", boxShadow: "var(--inner-shadow)"
+                    }}
+                />
+                <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+                    <button 
+                        onClick={() => setSuspendModal({ isOpen: false, courseId: null, reason: "" })}
+                        style={{ padding: "8px 16px", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "var(--c-light)", borderRadius: "8px", cursor: "pointer" }}
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        onClick={handleSuspend}
+                        disabled={isProcessing}
+                        style={{ padding: "8px 16px", background: "#ef4444", border: "none", color: "#fff", borderRadius: "8px", cursor: isProcessing ? "not-allowed" : "pointer", opacity: isProcessing ? 0.7 : 1 }}
+                    >
+                        Confirm Suspend
+                    </button>
+                </div>
+            </div>
         </div>
       , document.body)}
 

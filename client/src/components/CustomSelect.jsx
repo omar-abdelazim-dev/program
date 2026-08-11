@@ -22,7 +22,6 @@ const CustomSelect = ({ options, value, onChange, placeholder, icon, triggerClas
         className={`icon-input-wrapper custom-select-trigger ${isOpen ? 'focus' : ''} ${!icon ? 'no-icon' : ''} ${triggerClassName}`}
         onClick={() => setIsOpen(!isOpen)}
         style={{ ...(!icon ? { paddingLeft: '14px' } : {}), ...triggerStyle }}
-        data-tooltip={selectedOption ? selectedOption.label : placeholder}
       >
         {icon}
         <div 

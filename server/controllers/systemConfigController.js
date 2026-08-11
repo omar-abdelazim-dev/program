@@ -105,7 +105,7 @@ export const updateConfigSection = async (req, res) => {
       action: `Updated ${section} configuration`,
       changedBy: req.user.id,
       oldValue: oldValues,
-      newValue: { ...(newSectionData.toObject ? newSectionData.toObject() : newSectionData) },
+      newValue: typeof newSectionData.toObject === 'function' ? newSectionData.toObject() : newSectionData,
       module: 'System Management',
     });
 

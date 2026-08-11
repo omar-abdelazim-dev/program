@@ -23,6 +23,7 @@ import MobileAppPage from './components/MobileAppPage';
 import TermsPage from './components/TermsPage';
 import FullPageLoader from './components/FullPageLoader';
 import LandingPage from './components/LandingPage';
+import StudentProfilePage from './components/StudentProfilePage';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -75,7 +76,41 @@ export default function App() {
   });
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [exploreCategory, setExploreCategory] = useState('All');
+  const [exploreCollege, setExploreCollege] = useState('All');
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const fetchBackendNotifications = async () => {
+        try {
+          const res = await api.get('/notifications');
+          if (res.data.notifications) {
+            setNotifications(prev => {
+              const backendNotifs = res.data.notifications.map(n => ({
+                id: n._id,
+                text: n.title, // mapping title to text for UI compatibility
+                message: n.message,
+                link: n.link,
+                timestamp: new Date(n.createdAt).getTime(),
+                read: n.read,
+                isBackend: true
+              }));
+              
+              const merged = [...prev.filter(p => !p.isBackend)];
+              backendNotifs.forEach(bn => {
+                merged.push(bn);
+              });
+              return merged.sort((a, b) => b.timestamp - a.timestamp);
+            });
+          }
+        } catch (err) {
+          console.error("Failed to load notifications", err);
+        }
+      };
+      fetchBackendNotifications();
+    }
+  }, [isAuthenticated, user]);
+
+
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -183,7 +218,7 @@ export default function App() {
   if (location.pathname.startsWith('/learn/') || location.pathname.startsWith('/checkout/') || location.pathname === '/instructor' || location.pathname === '/admin') {
     return (
       <Routes>
-        <Route path="/learn/:id" element={<LearningPortal />} />
+        <Route path="/learn/:id" element={<LearningPortal user={user} />} />
         <Route path="/checkout/cart" element={<CheckoutPage cart={cart} setCart={setCart} setNotifications={setNotifications} isCartCheckout={true} />} />
         <Route path="/instructor" element={<InstructorPortal user={user} setUser={setUser} onLogout={handleLogout} toggleTheme={toggleTheme} isLightMode={isLightMode} />} />
         <Route path="/admin" element={<AdminPortal user={user} onLogout={handleLogout} toggleTheme={toggleTheme} isLightMode={isLightMode} />} />
@@ -196,8 +231,10 @@ export default function App() {
     return <Navigate to="/admin" replace />;
   }
 
-  // Instructors should not have access to the student portal either
-  if (user?.role === 'instructor' && (location.pathname.startsWith('/student') || location.pathname === '/')) {
+  // Instructors should not have access to the student portal either,
+  // but they MAY view a student's public profile page (/student/:id).
+  const isStudentProfile = /^\/student\/[^/]+$/.test(location.pathname);
+  if (user?.role === 'instructor' && (location.pathname === '/' || (location.pathname.startsWith('/student') && !isStudentProfile))) {
     return <Navigate to="/instructor" replace />;
   }
 
@@ -209,27 +246,28 @@ export default function App() {
   }
 
   return (
-    <StudentLayout
-      user={user}
-      toggleTheme={toggleTheme}
-      isLightMode={isLightMode}
-      onLogout={handleLogout}
+    <StudentLayout 
+      user={user} 
+      onLogout={handleLogout} 
       cartCount={cart.length}
       notifications={notifications}
       setNotifications={setNotifications}
+      isLightMode={isLightMode}
+      toggleTheme={toggleTheme}
       searchQuery={searchQuery}
       onSearchChange={setSearchQuery}
-      exploreCategory={exploreCategory}
-      onCategoryChange={setExploreCategory}
+      exploreCollege={exploreCollege}
+      onCollegeChange={setExploreCollege}
     >
       <Routes>
         <Route path="/" element={<Navigate to="/student" replace />} />
         <Route path="/student" element={<ExploreTab user={user} searchQuery={searchQuery} isLightMode={isLightMode} />} />
-        <Route path="/student/explore" element={<DiscoverTab searchQuery={searchQuery} activeCategory={exploreCategory} isLightMode={isLightMode} />} />
-        <Route path="/student/dashboard" element={<DashboardTab />} />
+        <Route path="/student/dashboard" element={<DashboardTab user={user} />} />
+        <Route path="/student/explore" element={<DiscoverTab searchQuery={searchQuery} activeCollege={exploreCollege} isLightMode={isLightMode} />} />
         <Route path="/student/settings" element={<SettingsPage user={user} setUser={setUser} isLightMode={isLightMode} toggleTheme={toggleTheme} onLogout={handleLogout} />} />
-        <Route path="/course/:id" element={<CoursePage cart={cart} setCart={setCart} />} />
+        <Route path="/course/:id" element={<CoursePage cart={cart} setCart={setCart} user={user} />} />
         <Route path="/instructor/:id" element={<InstructorProfilePage isLightMode={isLightMode} />} />
+        <Route path="/student/:id" element={<StudentProfilePage isLightMode={isLightMode} user={user} />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/help" element={<HelpPage />} />

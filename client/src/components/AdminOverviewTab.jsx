@@ -6,6 +6,8 @@ const AnimatedNumber = ({ value }) => {
 };
 
 const GrowthBadge = ({ growth }) => {
+  const { t } = useTranslation();
+  
   if (growth === undefined || growth === null) return null;
   const isPositive = growth >= 0;
   return (
@@ -16,19 +18,20 @@ const GrowthBadge = ({ growth }) => {
         gap: "4px",
         padding: "4px 8px",
         borderRadius: "99px",
-        background: isPositive
-          ? "rgba(16, 185, 129, 0.1)"
-          : "rgba(239, 68, 68, 0.1)",
+        background: "var(--bg-main)",
+        boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.2)",
         color: isPositive ? "#10B981" : "#ef4444",
         fontSize: "0.75rem",
         fontWeight: "600",
         marginTop: "16px",
+        width: "fit-content",
+        whiteSpace: "nowrap"
       }}
     >
       <span>{isPositive ? "▲" : "▼"}</span>
       <span>
         {isPositive ? "+" : ""}
-        {growth}% this month
+        {growth}% {t('admin.this_month', 'this month')}
       </span>
     </div>
   );
@@ -50,15 +53,15 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
     return t('admin.good_evening', 'Good evening');
   };
 
-  const safeTotalRevenue = stats?.totalRevenue || 7900;
-  const safeStudents = stats?.totalStudents || 12;
-  const safeInstructors = stats?.totalInstructors || 8;
-  const safeSuperAdmins = stats?.totalSuperAdmins || 4;
-  const safeAdmins = stats?.totalAdmins || 4;
+  const safeTotalRevenue = stats?.totalRevenue || 0;
+  const safeStudents = stats?.totalStudents || 0;
+  const safeInstructors = stats?.totalInstructors || 0;
+  const safeSuperAdmins = stats?.totalSuperAdmins || 0;
+  const safeAdmins = stats?.totalAdmins || 0;
 
   const categoryCounts = stats?.categoryCounts && Object.keys(stats.categoryCounts).length > 0 
     ? stats.categoryCounts 
-    : { "Business": 2, "Development": 1, "Design": 1, "Data": 1 };
+    : {};
   
   const totalEnrollments = Object.values(categoryCounts).reduce((a, b) => a + b, 0);
 
@@ -96,7 +99,7 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
         <div className="glass-card stat-card overview-stat-green" style={{ display: 'flex', flexDirection: 'column', padding: '24px', position: 'relative', transition: 'all 0.2s ease' }}>
           <div style={{ position: 'absolute', top: '16px', right: '16px', color: 'var(--c-sub)', fontSize: '0.9rem' }}>→</div>
           <div className="stat-label" style={{ marginBottom: '4px' }}>{t('admin.total_revenue', 'Total Revenue')}</div>
-          <div style={{ color: "#10B981", fontSize: '2.4rem', fontWeight: '800', lineHeight: '1.1' }}>
+          <div style={{ color: "#10B981", fontSize: '1.8rem', fontWeight: '800', lineHeight: '1.1' }}>
             EGP <AnimatedNumber value={safeTotalRevenue} />
           </div>
           <div style={{ color: 'var(--c-sub)', fontSize: '0.85rem', marginTop: '8px' }}>{t('admin.growth_unavailable', 'Growth data unavailable')}</div>
@@ -116,22 +119,22 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
         {/* Students */}
         <div className="glass-card stat-card overview-stat-white" style={{ padding: '24px', display: 'flex', flexDirection: 'column', transition: 'all 0.2s ease' }}>
           <div className="stat-label">{t('admin.students', 'Students')}</div>
-          <div style={{ fontSize: '2.4rem', fontWeight: '800', color: 'var(--text-h)', lineHeight: '1.1', marginTop: '4px' }}>
+          <div style={{ fontSize: '1.8rem', fontWeight: '800', color: 'var(--text-h)', lineHeight: '1.1', marginTop: '4px' }}>
             <AnimatedNumber value={safeStudents} />
           </div>
           <div style={{ marginTop: 'auto' }}>
-            <GrowthBadge growth={stats?.growth?.students ?? 12.5} />
+            <GrowthBadge growth={stats?.growth?.students} />
           </div>
         </div>
 
         {/* Instructors */}
         <div className="glass-card stat-card overview-stat-orange" style={{ padding: '24px', display: 'flex', flexDirection: 'column', transition: 'all 0.2s ease' }}>
           <div className="stat-label">{t('admin.instructors', 'Instructors')}</div>
-          <div style={{ fontSize: '2.4rem', fontWeight: '800', color: '#f97316', lineHeight: '1.1', marginTop: '4px' }}>
+          <div style={{ fontSize: '1.8rem', fontWeight: '800', color: '#f97316', lineHeight: '1.1', marginTop: '4px' }}>
             <AnimatedNumber value={safeInstructors} />
           </div>
           <div style={{ marginTop: 'auto' }}>
-            <GrowthBadge growth={stats?.growth?.instructors ?? 5.2} />
+            <GrowthBadge growth={stats?.growth?.instructors} />
           </div>
         </div>
       </div>
@@ -141,21 +144,21 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
         {user?.role === "superadmin" && (
           <div className="glass-card stat-card overview-stat-red" style={{ padding: '24px', display: 'flex', flexDirection: 'column', transition: 'all 0.2s ease' }}>
             <div className="stat-label">{t('admin.superadmins', 'Super Admins')}</div>
-            <div style={{ fontSize: '2.4rem', fontWeight: '800', color: '#ef4444', lineHeight: '1.1', marginTop: '4px' }}>
+            <div style={{ fontSize: '1.8rem', fontWeight: '800', color: '#ef4444', lineHeight: '1.1', marginTop: '4px' }}>
               <AnimatedNumber value={safeSuperAdmins} />
             </div>
             <div style={{ marginTop: 'auto' }}>
-              <GrowthBadge growth={stats?.growth?.superAdmins ?? 0} />
+              <GrowthBadge growth={stats?.growth?.superAdmins} />
             </div>
           </div>
         )}
         <div className="glass-card stat-card overview-stat-purple" style={{ padding: '24px', display: 'flex', flexDirection: 'column', transition: 'all 0.2s ease' }}>
           <div className="stat-label">{t('admin.admins', 'Admins')}</div>
-          <div style={{ fontSize: '2.4rem', fontWeight: '800', color: '#8b5cf6', lineHeight: '1.1', marginTop: '4px' }}>
+          <div style={{ fontSize: '1.8rem', fontWeight: '800', color: '#8b5cf6', lineHeight: '1.1', marginTop: '4px' }}>
             <AnimatedNumber value={safeAdmins} />
           </div>
           <div style={{ marginTop: 'auto' }}>
-            <GrowthBadge growth={stats?.growth?.admins ?? -2.4} />
+            <GrowthBadge growth={stats?.growth?.admins} />
           </div>
         </div>
       </div>
@@ -181,7 +184,11 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
                       <span style={{ color: color, fontWeight: 'bold' }}>{count}</span> ({percentage.toFixed(1)}%)
                     </span>
                   </div>
-                  <div style={{ width: '100%', height: '6px', background: 'var(--c-input-bg)', borderRadius: '3px', overflow: 'hidden' }}>
+                  <div style={{ 
+                    width: '100%', height: '6px', 
+                    background: 'var(--bg-main)', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.3)', 
+                    borderRadius: '3px', overflow: 'hidden' 
+                  }}>
                     <div style={{ width: `${percentage}%`, height: '100%', background: color, borderRadius: '3px' }}></div>
                   </div>
                 </div>
@@ -194,7 +201,11 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
         <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
           <h3 style={{ margin: "0 0 24px 0", fontSize: '1.1rem', color: 'var(--text-h)' }}>{t('admin.pending_actions', 'Pending Actions')}</h3>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+            <div style={{ 
+              width: '48px', height: '48px', borderRadius: '50%', 
+              background: 'var(--bg-main)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)', 
+              display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' 
+            }}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12"></polyline>
               </svg>
@@ -211,12 +222,18 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
         <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
           <h3 style={{ margin: "0 0 24px 0", fontSize: '1.1rem', color: 'var(--text-h)' }}>{t('admin.platform_health', 'Platform Health')}</h3>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '20px 0' }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--c-sub)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '16px' }}>
-              <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
-              <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
-              <line x1="6" y1="6" x2="6.01" y2="6"></line>
-              <line x1="6" y1="18" x2="6.01" y2="18"></line>
-            </svg>
+            <div style={{ 
+              width: '48px', height: '48px', borderRadius: '50%', 
+              background: 'var(--bg-main)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)', 
+              display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' 
+            }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--c-sub)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                <line x1="6" y1="18" x2="6.01" y2="18"></line>
+              </svg>
+            </div>
             <div style={{ fontSize: '0.9rem', color: 'var(--c-sub)', marginBottom: '16px' }}>
               {t('admin.health_not_connected', 'Health monitoring endpoint not yet connected.')}
             </div>
@@ -242,10 +259,16 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
             </button>
           </div>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '20px 0' }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--c-sub)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '16px' }}>
-              <circle cx="12" cy="12" r="10"></circle>
-              <polyline points="12 6 12 12 16 14"></polyline>
-            </svg>
+            <div style={{ 
+              width: '48px', height: '48px', borderRadius: '50%', 
+              background: 'var(--bg-main)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)', 
+              display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' 
+            }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--c-sub)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
             <div style={{ fontSize: '0.9rem', color: 'var(--c-sub)', marginBottom: '16px' }}>
               {t('admin.no_recent_activity', 'No recent activity to display.')}
             </div>

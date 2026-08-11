@@ -37,8 +37,9 @@ export default function ConfirmModal({ isOpen, title, message, onConfirm, onCanc
             style={{
               padding: '12px 24px',
               borderRadius: '999px',
-              border: '1px solid var(--c-border-active)',
+              border: 'none',
               background: 'transparent',
+              boxShadow: 'var(--inner-shadow)',
               color: 'var(--text-h)',
               fontWeight: '700',
               cursor: 'pointer',

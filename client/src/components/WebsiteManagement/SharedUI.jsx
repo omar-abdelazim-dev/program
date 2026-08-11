@@ -8,7 +8,7 @@ export const notyf = new Notyf({
   types: [{ type: 'info', background: '#3B82F6', icon: false }]
 });
 export const InputField = ({ label, type = "text", value, onChange, disabled, placeholder, required }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }} title={disabled ? "Super Admin permission required" : ""}>
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }} data-tooltip={disabled ? "Super Admin permission required" : ""}>
     <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{label}</label>
     <input
       type={type}
@@ -24,7 +24,7 @@ export const InputField = ({ label, type = "text", value, onChange, disabled, pl
 );
 
 export const TextareaField = ({ label, value, onChange, disabled, placeholder, required, rows = 4 }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }} title={disabled ? "Super Admin permission required" : ""}>
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }} data-tooltip={disabled ? "Super Admin permission required" : ""}>
     <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{label}</label>
     <textarea
       value={value}
@@ -98,7 +98,7 @@ export const SelectField = ({ label, value, onChange, options, disabled }) => {
   const openUpwards = spaceBelow < 250 && (rect.top - window.scrollY) > spaceBelow;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }} title={disabled ? "Super Admin permission required" : ""}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }} data-tooltip={disabled ? "Super Admin permission required" : ""}>
       <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{label}</label>
       <div ref={dropdownRef} style={{ position: 'relative' }}>
         <button
@@ -267,7 +267,7 @@ export const Button = ({ children, onClick, variant = 'primary', type = "button"
       type={type}
       onClick={onClick}
       disabled={disabled}
-      title={title}
+      data-tooltip={title}
       className="solid-btn"
       style={{
         width: 'auto',

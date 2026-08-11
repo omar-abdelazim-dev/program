@@ -2,9 +2,29 @@ import Course from '../models/Course.js';
 import Lesson from '../models/Lesson.js';
 import Enrollment from '../models/Enrollment.js';
 import Section from '../models/Section.js';
+import Review from '../models/Review.js';
+import Notification from '../models/Notification.js';
 import { escapeRegex } from '../utils/escapeRegex.js';
 import mongoose from 'mongoose';
 import fs from 'fs';
+
+// Helper: attach averageRating and reviewsCount to an array of course docs
+export const attachReviewStats = async (courses) => {
+  const courseIds = courses.map(c => c._id);
+  const stats = await Review.aggregate([
+    { $match: { course: { $in: courseIds } } },
+    { $group: { _id: '$course', avg: { $avg: '$rating' }, count: { $sum: 1 } } }
+  ]);
+  const statsMap = {};
+  stats.forEach(s => { statsMap[s._id.toString()] = { avg: parseFloat(s.avg.toFixed(1)), count: s.count }; });
+  return courses.map(c => {
+    const obj = c.toObject ? c.toObject() : { ...c };
+    const s = statsMap[obj._id.toString()];
+    obj.averageRating = s ? s.avg : 0;
+    obj.reviewsCount = s ? s.count : 0;
+    return obj;
+  });
+};
 
 // @route   POST /api/courses
 // @access  Private (instructor only)
@@ -14,9 +34,7 @@ export const createCourse = async (req, res) => {
   try {
     const { title, description, price, category, major, semester, college, thumbnailUrl } = req.body;
 
-    if (!title || !description || price === undefined) {
-      return res.status(400).json({ message: 'Title, description, and price are required' });
-    }
+
 
     const course = await Course.create({
       title,
@@ -217,7 +235,9 @@ export const getApprovedCourses = async (req, res) => {
         .populate('instructor', 'name avatarUrl isProgramInstructor') // include instructor's name + avatar, nothing more sensitive
         .sort({ createdAt: -1 });
 
-      return res.status(200).json({ courses });
+      // Attach review stats to each course
+      const coursesWithReviews = await attachReviewStats(courses);
+      return res.status(200).json({ courses: coursesWithReviews });
     }
 
     let pageNum = parseInt(page, 10);
@@ -236,7 +256,9 @@ export const getApprovedCourses = async (req, res) => {
     ]);
 
     const totalPages = Math.ceil(totalItems / limitNum) || 1;
-    res.status(200).json({ courses, pagination: { page: pageNum, limit: limitNum, totalPages, totalItems } });
+    // Attach review stats to each course
+    const coursesWithReviews = await attachReviewStats(courses);
+    res.status(200).json({ courses: coursesWithReviews, pagination: { page: pageNum, limit: limitNum, totalPages, totalItems } });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error fetching courses' });
@@ -256,9 +278,13 @@ export const getCourseById = async (req, res) => {
 
     const isOwner = req.user && course.instructor._id.toString() === req.user.id.toString();
     const isAdmin = req.user && (req.user.role === 'admin' || req.user.role === 'superadmin');
+    const isEnrolled = req.user ? await Enrollment.exists({ $or: [{ student: req.user.id }, { user: req.user.id }], course: course._id }) : false;
 
-    if (course.status !== 'approved' && !isOwner && !isAdmin) {
-      return res.status(403).json({ message: 'This course is not yet available' });
+    if (course.status !== 'approved' && !isOwner && !isAdmin && !isEnrolled) {
+      if (course.status === 'suspended') {
+        return res.status(403).json({ message: 'This course has been suspended by administration.' });
+      }
+      return res.status(403).json({ message: 'This course is not yet available.' });
     }
 
     const sections = await Section.find({ course: course._id });
@@ -320,7 +346,7 @@ export const approveCourse = async (req, res) => {
   try {
     const course = await Course.findByIdAndUpdate(
       req.params.id,
-      { status: 'approved', rejectionReason: '', approvedBy: req.user.id },
+      { status: 'draft', rejectionReason: '', approvedBy: req.user.id },
       { new: true } // return the updated document, not the pre-update one
     );
 
@@ -328,10 +354,47 @@ export const approveCourse = async (req, res) => {
       return res.status(404).json({ message: 'Course not found' });
     }
 
+    // Send notification to instructor
+    await Notification.create({
+      user: course.instructor,
+      title: 'Course Approved',
+      message: `Your course "${course.title}" has been approved! It is now saved as a Draft. You can publish it to go live whenever you are ready.`,
+      type: 'system'
+    });
+
     res.status(200).json({ course });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error approving course' });
+  }
+};
+
+// @route   PATCH /api/courses/:id/publish
+// @access  Private (instructor only)
+export const publishCourse = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    if (course.instructor.toString() !== req.user.id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to control this course' });
+    }
+
+    if (course.status === 'draft') {
+      course.status = 'approved';
+    } else if (course.status === 'approved') {
+      course.status = 'draft';
+    } else {
+      return res.status(400).json({ message: 'Course must be approved before you can publish it live' });
+    }
+
+    await course.save();
+    res.status(200).json({ course });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error toggling course live status' });
   }
 };
 
@@ -427,6 +490,59 @@ export const unpublishCourse = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error unpublishing course' });
+  }
+};
+
+// @route   PATCH /api/courses/:id/suspend
+// @access  Private (admin/superadmin)
+export const suspendCourse = async (req, res) => {
+  try {
+    const { reason } = req.body;
+    if (!reason) {
+      return res.status(400).json({ message: 'Suspension reason is required' });
+    }
+
+    const course = await Course.findByIdAndUpdate(req.params.id, { status: 'suspended', rejectionReason: reason }, { new: true });
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    // Send notification to instructor
+    await Notification.create({
+      user: course.instructor,
+      title: 'Course Suspended',
+      message: `Your course "${course.title}" has been suspended. You can republish your course by clicking on the course card after resolving the suspended reason. Reason: ${reason}`,
+      type: 'system'
+    });
+
+    res.status(200).json({ course });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error suspending course' });
+  }
+};
+
+// @route   PATCH /api/courses/:id/republish
+// @access  Private (instructor only)
+export const republishCourse = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+    if (course.instructor.toString() !== req.user.id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to republish this course' });
+    }
+    if (course.status !== 'suspended' && course.status !== 'rejected') {
+      return res.status(400).json({ message: 'Only suspended or rejected courses can be republished' });
+    }
+
+    course.status = 'pending';
+    await course.save();
+    res.status(200).json({ course });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error republishing course' });
   }
 };
 

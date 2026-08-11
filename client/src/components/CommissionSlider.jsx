@@ -67,7 +67,7 @@ export default function CommissionSlider({ value, onChange, disabled }) {
         Company Commission
       </label>
       
-      <div className="glass-card" style={{ padding: '24px', opacity: disabled ? 0.6 : 1, position: 'relative' }} title={disabled ? "Super Admin permission required" : ""}>
+      <div className="glass-card" style={{ padding: '24px', opacity: disabled ? 0.6 : 1, position: 'relative' }} data-tooltip={disabled ? "Super Admin permission required" : ""}>
         {/* Value Display */}
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
           <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--text-h)', textShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>

@@ -40,7 +40,28 @@
     "my_courses": "دوراتي",
     "cart": "عربة التسوق",
     "notifications": "الإشعارات",
+    "clear_all": "مسح الكل",
+    "no_notifications": "لا توجد إشعارات جديدة",
     "profile": "الملف الشخصي"
+  },
+  "notifications": {
+    "course_suspended": "تم تعليق الدورة",
+    "course_approved": "تمت الموافقة على الدورة",
+    "course_submitted": "تم تقديم الدورة",
+    "course_rejected": "تم رفض الدورة",
+    "new_reply": "رد جديد",
+    "new_student_enrollment": "تسجيل طالب جديد",
+    "new_admin_added": "تم إضافة مسؤول جديد",
+    "new_super_admin_added": "تم إضافة مسؤول ممتاز جديد",
+    "new_question_in": "سؤال جديد في",
+    "new_announcement": "إعلان جديد",
+    "total_courses": "إجمالي الدورات",
+    "pending_courses": "الدورات المعلقة",
+    "pending_lessons": "الدروس المعلقة",
+    "new_question_msg": "سأل طالب سؤالاً جديداً في دورتك.",
+    "course_suspended_msg": "تم تعليق دورتك \"{{title}}\".",
+    "course_approved_msg": "تمت الموافقة على دورتك \"{{title}}\"!",
+    "republish_instructions": "يمكنك إعادة نشر دورتك بالنقر على بطاقة الدورة بعد معالجة سبب التعليق."
   },
   "student": {
     "welcome_back": "مرحباً بعودتك",
@@ -51,8 +72,11 @@
     "all_courses": "جميع الدورات",
     "continue_learning": "متابعة التعلم",
     "completed": "مكتمل",
+    "get_started": "ابدأ الآن",
+    "offered_by_program": "مقدمه من بروجرام",
     "certificates": "الشهادات",
     "progress": "التقدم",
+
     "sidebar": {
       "explore": "استكشف",
       "my_courses": "دوراتي",
@@ -63,23 +87,32 @@
       "settings": "الإعدادات",
       "home": "الرئيسية"
     },
-    "nav": {
-      "search_placeholder": "ابحث عن دورات، دروس، مواضيع...",
-      "notifications": "الإشعارات",
-      "clear_all": "مسح الكل",
-      "no_notifications": "لا توجد إشعارات جديدة"
-    },
     "learning": {
       "loading_portal": "جاري تحميل بوابة التعلم...",
       "load_error": "فشل تحميل بوابة التعلم.",
+      "be_first_review": "كن أول من يشارك تجربته مع هذه الدورة!",
+      "loading_questions": "جاري تحميل الأسئلة...",
+      "question_saved": "تم حفظ السؤال بنجاح",
+      "question_sent": "تم إرسال السؤال بنجاح",
+      "question_failed": "فشل إرسال السؤال",
+      "question_deleted": "تم حذف السؤال بنجاح",
+      "delete_failed": "فشل حذف السؤال",
+      "generic_error": "حدث خطأ ما",
       "complete": "مكتمل",
       "video_unavailable": "الفيديو غير متوفر",
       "overview": "نظرة عامة",
-      "qa": "أسئلة وأجوبة",
+      "qa": "الأسئلة",
       "attachments": "المرفقات",
       "lesson_placeholder": "في هذا الدرس، سنتعمق في المفاهيم الأساسية. ستتعلم كيفية بناء تطبيقات واسعة النطاق بحيث تكون قابلة للصيانة والتطوير، وسهلة الانضمام للمطورين الجدد. تأكد من تنزيل ورقة المعلومات المرفقة قبل المتابعة!",
       "no_questions": "لم يتم طرح أي أسئلة بعد. كن أول من يبدأ النقاش!",
       "ask_question": "اطرح سؤالاً",
+      "ask_question_placeholder": "اطرح سؤالاً حول هذه الدورة...",
+      "my_questions": "أسئلتي",
+      "student_questions": "أسئلة الطلاب",
+      "pending_reply": "في انتظار الرد",
+      "replied": "تم الرد",
+      "delete_question_title": "حذف السؤال",
+      "delete_question_msg": "هل أنت تأكد من أنك تريد حذف هذا السؤال؟ لا يمكن التراجع عن هذا الإجراء.",
       "resources": "الموارد",
       "document": "مستند",
       "no_attachments": "لا توجد مرفقات متاحة لهذا الدرس.",
@@ -102,6 +135,9 @@
     "explore_catalog": "استكشف الكتالوج",
     "no_completed_courses": "لم تكمل أي دورات بعد. واصل التعلم!",
     "home": {
+      "set_college_prompt": "قم بتعيين كليتك في الإعدادات لتخصيص صفحتك الرئيسية بدورات مناسبة لبرنامجك.",
+      "courses_for_college": "دورات {{college}}",
+      "no_college_courses": "لا توجد دورات لـ {{college}} متاحة بعد. تحقق مرة أخرى قريباً.",
       "welcome_name": "مرحبًا بعودتك، {{name}}",
       "subtitle_major": "إليك ما ينتظرك في مسار {{major}}.",
       "subtitle_default": "اكتشف مهارات جديدة، تعرّف على أحدث المواضيع، وتعلّم من أفضل المدربين في المجال.",
@@ -118,6 +154,7 @@
       "all": "الكل",
       "instructors": "المحاضرون",
       "select_category": "اختر الفئة",
+      "select_college": "اختر الكلية",
       "no_instructors_for": "لم يتم العثور على محاضرين باسم \"{{query}}\".",
       "no_instructors_yet": "لا يوجد محاضرون بعد.",
       "no_courses_search_category": "لم يتم العثور على دورات باسم \"{{query}}\" في {{category}}.",
@@ -163,10 +200,14 @@
         "approved": "معتمد",
         "pending": "قيد الانتظار",
         "rejected": "مرفوض",
+        "suspended": "موقوف",
+        "unpublished": "غير منشور",
         "reason": "السبب",
         "no_lessons_yet": "لا توجد دروس بعد",
         "lesson": "درس",
-        "lessons": "دروس"
+        "lessons": "دروس",
+        "draft": "مسودة",
+        "published": "منشور"
       },
       "actions": {
         "edit": "تعديل",
@@ -189,7 +230,7 @@
         "major": "التخصص (اختياري)",
         "major_placeholder": "غير مرتبط بمنهج تخصص معين",
         "major_hint": "يتيح ظهور هذا المقرر في أقسام التخصص/الفصل الدراسي بالصفحة الرئيسية.",
-        "semester": "الفصل الدراسي (اختياري)",
+        "semester": "الفصل الدراسي",
         "semester_placeholder": "اختر فصلًا دراسيًا",
         "semester_placeholder_no_major": "اختر تخصصًا أولًا",
         "semester_n": "الفصل الدراسي {{n}}"
@@ -225,7 +266,8 @@
       "ph_lesson_title": "مثال: مقدمة إلى الحالة",
       "ph_attachment_title": "مثال: ملف PDF مرجعي",
       "delete_course_confirm": "هل أنت متأكد أنك تريد حذف هذه الدورة؟ لا يمكن التراجع عن هذا الإجراء.",
-      "edit_lesson": "تعديل الدرس"
+      "edit_lesson": "تعديل الدرس",
+      "video_content": "محتوى الفيديو"
     },
     "analytics": {
       "title": "لوحة التحليلات",
@@ -245,6 +287,9 @@
       "subtitle": "تفاعل مع طلابك وأجب على أسئلتهم.",
       "qna": "الأسئلة والأجوبة",
       "announcements": "الإعلانات",
+      "pending": "قيد الانتظار",
+      "approved": "معتمد",
+      "deleted": "محذوف",
       "no_questions": "لا توجد أسئلة من الطلاب بعد.",
       "type_response": "اكتب ردك...",
       "cancel": "إلغاء",
@@ -263,7 +308,16 @@
       "message": "الرسالة",
       "type_message": "اكتب رسالتك هنا...",
       "send_announcement": "إرسال الإعلان",
-      "loading_questions": "جاري تحميل الأسئلة..."
+      "loading_questions": "جاري تحميل الأسئلة...",
+      "send_announcement_title": "إرسال إعلان",
+      "send_announcement_msg": "هل أنت متأكد أنك تريد إشعار جميع الطلاب في هذه الدورة؟",
+      "send_now": "إرسال الآن",
+      "delete_question_title": "حذف السؤال",
+      "delete_question_msg": "هل أنت متأكد أنك تريد حذف هذا السؤال؟ لا يمكن التراجع عن هذا الإجراء.",
+      "delete_reply_title": "حذف الرد",
+      "delete_reply_msg": "هل أنت متأكد أنك تريد حذف هذا الرد؟ لا يمكن التراجع عن هذا الإجراء.",
+      "reply_deleted": "تم حذف الرد",
+      "delete_reply_failed": "فشل في حذف الرد"
     },
     "financials": {
       "title": "المالية",
@@ -285,6 +339,9 @@
       "rejected_suffix": " (مرفوض)"
     },
     "notyf": {
+      "lesson_published": "تم نشر الدرس",
+      "lesson_drafted": "تم حفظ الدرس كمسودة",
+      "lesson_update_failed": "فشل تحديث حالة الدرس",
       "lesson_updated": "تم تحديث الدرس بنجاح",
       "course_updated": "تم تحديث الدورة بنجاح!",
       "course_created": "تم إنشاء الدورة بنجاح!",
@@ -305,7 +362,8 @@
       "based_on_reviews": "بناءً على تقييمات {{count}} من الطلاب",
       "no_reviews_yet": "لا توجد تقييمات بعد",
       "no_reviews_desc": "بمجرد قيام الطلاب بتقييم دوراتك، ستظهر تقييماتهم وملاحظاتهم هنا.",
-      "loading_reviews": "جاري تحميل التقييمات..."
+      "loading_reviews": "جاري تحميل التقييمات...",
+      "reported": "تم الإبلاغ"
     },
     "no_courses": "لم تقم بإنشاء أي دورات بعد. ابدأ بمشاركة معرفتك مع العالم!"
   },
@@ -443,6 +501,7 @@
   },
   "settings": {
     "title": "الإعدادات",
+    "subtitle": "إدارة ملفك الشخصي والتفضيلات والحساب.",
     "nav": {
       "profile": "الملف الشخصي",
       "appearance": "المظهر",
@@ -571,6 +630,9 @@
     "instructor_label": "المدرب",
     "instructor_fallback": "المدرب",
     "syllabus": "منهج الدورة",
+    "reviews": "التقييمات",
+    "reviews_tab": "التقييمات ({{count}})",
+    "review_label": "تقييم",
     "lessons_title": "الدروس",
     "lesson_singular": "درس",
     "lesson_plural": "دروس",
@@ -585,6 +647,7 @@
   },
   "categories": {
     "computer_science": "علوم الحاسوب",
+    "development": "التطوير",
     "web_development": "تطوير الويب",
     "business": "أعمال",
     "cybersecurity": "أمن سيبراني",
@@ -614,5 +677,51 @@
     "Law": "القانون",
     "Sciences": "العلوم",
     "Education": "التعليم"
+  },
+  "colleges": {
+    "engineering": "كلية الهندسة",
+    "computer_science": "كلية علوم الحاسب وتقنية المعلومات",
+    "business": "كلية إدارة الأعمال",
+    "medicine": "كلية الطب",
+    "pharmacy": "كلية الصيدلة",
+    "dentistry": "كلية طب الأسنان",
+    "applied_medical": "كلية العلوم الطبية التطبيقية",
+    "science": "كلية العلوم",
+    "arts": "كلية الآداب والعلوم الإنسانية",
+    "education": "كلية التربية",
+    "law": "كلية الحقوق",
+    "architecture": "كلية العمارة والتصميم"
+  },
+  "instructorProfile": {
+    "loading": "جاري تحميل المدرب",
+    "notFound": "لم يتم العثور على المدرب.",
+    "roleInstructor": "مدرب",
+    "roleProgram": "PROGRAM",
+    "course": "دورة",
+    "courses": "دورات",
+    "new": "جديد",
+    "reviews": "تقييمات",
+    "students": "طلاب",
+    "coursesBy": "دورات بواسطة {{name}}",
+    "noCourses": "لا توجد دورات منشورة بعد.",
+    "coursesCount": "{{count}} دورات",
+    "reviewsCount": "({{count}} تقييمات)",
+    "studentsCount": "{{count}} طلاب"
+  },
+  "studentProfile": {
+    "loading": "جاري تحميل الملف الشخصي",
+    "notFound": "لم يتم العثور على الطالب.",
+    "roleStudent": "طالب",
+    "enrolled": "مسجل",
+    "course": "دورة",
+    "courses": "دورات",
+    "enrolledCourses": "الدورات المسجلة",
+    "noCoursesYet": "لا توجد دورات مسجلة بعد",
+    "noCoursesDesc": "هذا الطالب لم يسجل في أي دورات.",
+    "enrolledCount": "{{count}} دورات مسجلة"
+  },
+  "expertise": {
+    "Computer Science": "علوم الحاسوب",
+    "Development": "التطوير"
   }
 }

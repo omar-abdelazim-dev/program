@@ -1,5 +1,6 @@
 import User from '../models/User.js';
 import Course from '../models/Course.js';
+import { attachReviewStats } from './courseController.js';
 import Review from '../models/Review.js';
 import Enrollment from '../models/Enrollment.js';
 import { escapeRegex } from '../utils/escapeRegex.js';
@@ -77,7 +78,7 @@ export const listInstructors = async (req, res) => {
       ];
     }
 
-    const instructors = await User.find(filter).select('name lastName avatarUrl goalsText');
+    const instructors = await User.find(filter).select('name lastName avatarUrl goalsText isProgramInstructor');
     const stats = await buildInstructorStats(instructors.map((i) => i._id));
 
     const result = instructors.map((i) => ({
@@ -86,6 +87,7 @@ export const listInstructors = async (req, res) => {
       lastName: i.lastName,
       avatarUrl: i.avatarUrl,
       bio: i.goalsText,
+      isProgramInstructor: i.isProgramInstructor,
       ...stats[i._id.toString()],
     }));
 
@@ -105,11 +107,13 @@ export const getInstructorProfile = async (req, res) => {
       return res.status(404).json({ message: 'Instructor not found' });
     }
 
+    const rawCourses = await Course.find({ instructor: instructor._id, status: 'approved' })
+      .populate('instructor', 'name avatarUrl isProgramInstructor')
+      .sort({ createdAt: -1 });
+
     const [stats, courses] = await Promise.all([
       buildInstructorStats([instructor._id]),
-      Course.find({ instructor: instructor._id, status: 'approved' })
-        .populate('instructor', 'name avatarUrl isProgramInstructor')
-        .sort({ createdAt: -1 }),
+      attachReviewStats(rawCourses),
     ]);
 
     res.status(200).json({
@@ -119,6 +123,7 @@ export const getInstructorProfile = async (req, res) => {
         lastName: instructor.lastName,
         avatarUrl: instructor.avatarUrl,
         bio: instructor.goalsText,
+        isProgramInstructor: instructor.isProgramInstructor,
         ...stats[instructor._id.toString()],
       },
       courses,

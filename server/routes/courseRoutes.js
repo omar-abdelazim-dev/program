@@ -8,6 +8,7 @@ import {
   approveCourse,
   rejectCourse,
   getInstructorStats,
+
   updateCourse,
   deleteCourse,
   requestDeleteCourse,
@@ -15,8 +16,11 @@ import {
   rejectDeletionRequest,
   getCourseEnrollments,
   unpublishCourse,
+  suspendCourse,
+  republishCourse,
+  publishCourse,
 } from '../controllers/courseController.js';
-import { addLesson, getLessonContent, updateLesson } from '../controllers/lessonController.js';
+import { addLesson, getLessonContent, updateLesson, deleteLesson, reorderLessons } from '../controllers/lessonController.js';
 import { protect, authorize, verifyOwnership } from '../middleware/authMiddleware.js';
 import { optionalAuth } from '../middleware/optionalAuth.js';
 import { validateObjectId } from '../middleware/validationMiddleware.js';
@@ -37,9 +41,12 @@ router.post('/', protect, authorize('instructor'), validateCreateCourse, createC
 router.get('/mine', protect, authorize('instructor'), getMyCourses);
 router.get('/stats', protect, authorize('instructor'), getInstructorStats);
 router.patch('/:id/request-delete', protect, authorize('instructor'), validateObjectId('id'), verifyOwnership(Course, 'id', 'instructor'), requestDeleteCourse);
+router.patch('/:id/publish', protect, authorize('instructor'), validateObjectId('id'), verifyOwnership(Course, 'id', 'instructor'), publishCourse);
 router.post('/:courseId/lessons', protect, authorize('instructor'), validateObjectId('courseId'), verifyOwnership(Course, 'courseId', 'instructor'), addLesson);
 router.put('/:courseId/lessons/:lessonId', protect, authorize('instructor'), validateObjectId('courseId', 'lessonId'), verifyOwnership(Course, 'courseId', 'instructor'), updateLesson);
 router.get('/:courseId/lessons/:lessonId', protect, validateObjectId('courseId', 'lessonId'), getLessonContent);
+router.delete('/:courseId/lessons/:lessonId', protect, authorize('instructor'), validateObjectId('courseId', 'lessonId'), verifyOwnership(Course, 'courseId', 'instructor'), deleteLesson);
+router.put('/:courseId/lessons-reorder', protect, authorize('instructor'), validateObjectId('courseId'), verifyOwnership(Course, 'courseId', 'instructor'), reorderLessons);
 
 // --- Instructor (own course) or Admin/Superadmin (compliance edits) ---
 router.put('/:id', protect, authorize('instructor', 'admin', 'superadmin'), validateObjectId('id'), verifyOwnership(Course, 'id', 'instructor'), validateUpdateCourse, updateCourse);
@@ -51,8 +58,10 @@ router.delete('/:id', protect, authorize('admin', 'superadmin'), validateObjectI
 router.patch('/:id/approve', protect, authorize('admin', 'superadmin'), validateObjectId('id'), approveCourse);
 router.patch('/:id/reject', protect, authorize('admin', 'superadmin'), validateObjectId('id'), rejectCourse);
 router.patch('/:id/reject-deletion', protect, authorize('admin', 'superadmin'), validateObjectId('id'), rejectDeletionRequest);
+router.patch('/:id/suspend', protect, authorize('admin', 'superadmin'), validateObjectId('id'), suspendCourse);
 
 // --- Course details (public + owner/admin see extra) ---
 router.get('/:id', optionalAuth, validateObjectId('id'), getCourseById);
+router.patch('/:id/republish', protect, validateObjectId('id'), republishCourse);
 
 export default router;

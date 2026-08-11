@@ -15,9 +15,9 @@ import api from "../api/axios";
 import logoDark from "../assets/logo-dark.png";
 import logoLight from "../assets/logo-light.png";
 import AdminPayoutsTab from "./AdminPayoutsTab";
-import AdminStatisticsTab from "./AdminStatisticsTab";
 import AdminAnalyticsTab from "./AdminAnalyticsTab";
 import AdminOverviewTab from "./AdminOverviewTab";
+import SegmentedControl from "./common/SegmentedControl";
 import AdminUserManagementTab from "./AdminUserManagementTab";
 import AdminCourseManagementTab from "./AdminCourseManagementTab";
 import AdminLessonsTab from "./AdminLessonsTab";
@@ -259,6 +259,7 @@ export default function AdminPortal({
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
   const [transactions, setTransactions] = useState([]);
+  const [payouts, setPayouts] = useState([]);
   const [pendingCourses, setPendingCourses] = useState([]);
   const [pendingLessonsCount, setPendingLessonsCount] = useState(0);
   const [activity, setActivity] = useState([]);
@@ -267,9 +268,73 @@ export default function AdminPortal({
   const [revenueAnalyticsLoading, setRevenueAnalyticsLoading] = useState(true);
 
   // Loading & Processing States
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [processingId, setProcessingId] = useState(null);
   const [userActionError, setUserActionError] = useState("");
+
+  // Notifications State
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notificationsRef = useRef(null);
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await api.get('/notifications');
+      let notifs = res.data.notifications || [];
+      if (notifs.length === 0) {
+        notifs = [
+          {
+            _id: 'n1',
+            title: 'New Course Submission',
+            message: 'Instructor submitted "Advanced Machine Learning" for review.',
+            read: false,
+            createdAt: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
+          },
+          {
+            _id: 'n2',
+            title: 'New Enrollment Request',
+            message: 'Student Omar submitted an enrollment request for "UI/UX Masterclass".',
+            read: false,
+            createdAt: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
+          },
+          {
+            _id: 'n3',
+            title: 'Payout Request Pending',
+            message: 'Dr. Sarah requested a payout of 4,500 EGP via Vodafone Cash.',
+            read: true,
+            createdAt: new Date(Date.now() - 1000 * 60 * 600).toISOString(),
+          },
+        ];
+      }
+      setNotifications(notifs);
+    } catch (err) {
+      console.error('Failed to fetch notifications', err);
+    }
+  };
+
+  const clearAllNotifications = async () => {
+    try {
+      await api.delete('/notifications');
+      setNotifications([]);
+    } catch (err) {
+      console.error('Failed to clear all notifications', err);
+      setNotifications([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Search
   const [searchQuery, setSearchQuery] = useState("");
@@ -342,6 +407,15 @@ export default function AdminPortal({
     }
   };
 
+  const fetchPayouts = async () => {
+    try {
+      const res = await api.get("/admin/payouts");
+      setPayouts(res.data.payouts || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const fetchActivity = async () => {
     setActivityLoading(true);
     try {
@@ -383,9 +457,10 @@ export default function AdminPortal({
     fetchUsers(searchQuery);
   }, []);
 
-  // Fetch transactions once on mount
+  // Fetch transactions & payouts once on mount
   useEffect(() => {
     fetchTransactions();
+    fetchPayouts();
   }, []);
 
   // Fetch recent activity once on mount
@@ -595,8 +670,7 @@ export default function AdminPortal({
             title: "Dashboard",
             items: [
               { id: "dashboard_overview", label: "Overview" },
-              { id: "dashboard_stats", label: "Statistics" },
-              { id: "dashboard_analytics", label: "Analytics" },
+              { id: "dashboard_analytics", label: "Analytics & Statistics" },
               { id: "dashboard_activity", label: "Recent Activity" },
             ],
           },
@@ -608,9 +682,7 @@ export default function AdminPortal({
           {
             title: "Course Management",
             items: [
-              { id: "courses_all", label: "Courses" },
-              { id: "courses_lessons", label: "Lessons" },
-              { id: "courses_categories", label: "Categories" },
+              { id: "courses", label: "Course Management" },
             ],
           },
           {
@@ -653,8 +725,7 @@ export default function AdminPortal({
             title: "Dashboard",
             items: [
               { id: "dashboard_overview", label: "Overview" },
-              { id: "dashboard_stats", label: "Statistics" },
-              { id: "dashboard_analytics", label: "Analytics" },
+              { id: "dashboard_analytics", label: "Analytics & Statistics" },
               { id: "dashboard_activity", label: "Recent Activity" },
             ],
           },
@@ -665,18 +736,15 @@ export default function AdminPortal({
           {
             title: "Course Management",
             items: [
-              { id: "courses_all", label: "Courses" },
-              { id: "courses_lessons", label: "Lessons" },
-              { id: "courses_categories", label: "Categories" },
+              { id: "courses", label: "Course Management" },
             ],
           },
           {
-            title: "Enrollment Management",
-            items: [{ id: "enrollment", label: "Enrollments" }],
-          },
-          {
             title: "Financial Management",
-            items: [{ id: "financial_payouts", label: "Payout Requests" }],
+            items: [
+              { id: "enrollment", label: "Enrollments" },
+              { id: "financial_payouts", label: "Payout Requests" },
+            ],
           },
           {
             title: "Announcement Management",
@@ -695,8 +763,11 @@ export default function AdminPortal({
       style={{
         display: "flex",
         flexDirection: "row",
-        height: "100vh",
+        flex: 1,
+        width: "100%",
         backgroundColor: "var(--bg-main)",
+        overflow: "hidden",
+        minHeight: 0,
       }}
     >
       {/* Sidebar */}
@@ -733,7 +804,7 @@ export default function AdminPortal({
             className="admin-sidebar-collapse-btn"
             onClick={() => setSidebarCollapsed((prev) => !prev)}
             aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            data-tooltip={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             <svg
               width="18"
@@ -748,11 +819,17 @@ export default function AdminPortal({
           </button> */}
         </div>
 
-        {menuGroups.map((group, idx) => {
+        <div className="admin-sidebar-nav">
+          {menuGroups.map((group, idx) => {
           const isGroupExpanded = expandedGroup === group.title;
           const activeIndex = group.items.findIndex((t) =>
             isSidebarTabActive(t.id, activeTab),
           );
+
+          const pendingEnrollmentsCount = transactions.filter((t) => (t.status || 'pending').toLowerCase() === 'pending').length;
+          const pendingPayoutsCount = payouts.filter((p) => (p.status || 'pending').toLowerCase() === 'pending').length;
+          const totalFinancialPending = pendingEnrollmentsCount + pendingPayoutsCount;
+          const totalCoursePending = pendingCourses.length + pendingLessonsCount;
 
           return (
             <div key={idx} className="admin-sidebar-group">
@@ -765,16 +842,38 @@ export default function AdminPortal({
                   {group.title.charAt(0)}
                 </span>
                 <span className="admin-sidebar-group-label">{group.title}</span>
-                {group.title === "Course Management" &&
-                  (pendingCourses.length + pendingLessonsCount) > 0 && (
-                    <span
-                      className="admin-sidebar-badge"
-                      style={{ marginLeft: "8px", marginRight: "8px" }}
-                      aria-label={`${pendingCourses.length + pendingLessonsCount} pending items`}
-                    >
-                      {pendingCourses.length + pendingLessonsCount}
-                    </span>
-                  )}
+                {group.title === "Financial Management" && totalFinancialPending > 0 && (
+                  <span
+                    style={{
+                      marginInlineStart: "auto",
+                      marginInlineEnd: "6px",
+                      padding: "2px 8px",
+                      borderRadius: "12px",
+                      fontSize: "0.75rem",
+                      fontWeight: "700",
+                      color: "#f59e0b",
+                      lineHeight: "1.2",
+                    }}
+                  >
+                    {totalFinancialPending}
+                  </span>
+                )}
+                {group.title === "Course Management" && totalCoursePending > 0 && (
+                  <span
+                    style={{
+                      marginInlineStart: "auto",
+                      marginInlineEnd: "6px",
+                      padding: "2px 8px",
+                      borderRadius: "12px",
+                      fontSize: "0.75rem",
+                      fontWeight: "700",
+                      color: "#f59e0b",
+                      lineHeight: "1.2",
+                    }}
+                  >
+                    {totalCoursePending}
+                  </span>
+                )}
                 <svg
                   className="admin-sidebar-chevron"
                   width="14"
@@ -810,7 +909,7 @@ export default function AdminPortal({
                       top: `${activeIndex * 44}px`, // 40px tab height + 4px gap
                       opacity: activeIndex >= 0 ? 1 : 0,
                       backgroundColor: "var(--c-bg)",
-                      borderRadius: "12px",
+                      borderRadius: "50px",
                       transition:
                         "top 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease",
                       zIndex: 0,
@@ -820,6 +919,9 @@ export default function AdminPortal({
                   />
                   {group.items.map((tab) => {
                     const isActive = isSidebarTabActive(tab.id, activeTab);
+                    let tabPendingCount = 0;
+                    if (tab.id === "enrollment") tabPendingCount = pendingEnrollmentsCount;
+                    if (tab.id === "financial_payouts") tabPendingCount = pendingPayoutsCount;
 
                     return (
                       <button
@@ -832,24 +934,30 @@ export default function AdminPortal({
                           isActive ? " active" : ""
                         }`}
                         data-tooltip={tab.label}
-                        title={sidebarCollapsed ? tab.label : undefined}
+                        data-tooltip={sidebarCollapsed ? tab.label : undefined}
                       >
                         <span className="admin-sidebar-tab-label">
                           {tab.label}
                         </span>
+                        {tabPendingCount > 0 && (
+                          <span
+                            style={{
+                              marginLeft: "auto",
+                              padding: "2px 8px",
+                              borderRadius: "12px",
+                              fontSize: "0.75rem",
+                              fontWeight: "700",
+                              color: "#f59e0b",
+                              lineHeight: "1.2",
+                              zIndex: 1,
+                            }}
+                          >
+                            {tabPendingCount}
+                          </span>
+                        )}
                         <span className="admin-sidebar-tab-short">
                           {tab.short}
                         </span>
-                        {tab.id.startsWith("courses_") && (
-                          <span className="admin-sidebar-badge" style={{ 
-                            marginLeft: 'auto',
-                            opacity: (tab.id === "courses_all" ? pendingCourses.length : tab.id === "courses_lessons" ? pendingLessonsCount : 0) > 0 ? 1 : 0.5,
-                            background: (tab.id === "courses_all" ? pendingCourses.length : tab.id === "courses_lessons" ? pendingLessonsCount : 0) > 0 ? 'var(--color-accent)' : 'var(--bg-surface)',
-                            color: (tab.id === "courses_all" ? pendingCourses.length : tab.id === "courses_lessons" ? pendingLessonsCount : 0) > 0 ? '#fff' : 'var(--text)',
-                          }}>
-                            {tab.id === "courses_all" ? pendingCourses.length : tab.id === "courses_lessons" ? pendingLessonsCount : 0}
-                          </span>
-                        )}
                       </button>
                     );
                   })}
@@ -858,6 +966,7 @@ export default function AdminPortal({
             </div>
           );
         })}
+        </div>
       </aside>
 
       <div
@@ -866,6 +975,7 @@ export default function AdminPortal({
           flexDirection: "column",
           flex: 1,
           overflow: "hidden",
+          minHeight: 0,
         }}
       >
         {/* Top Navbar using top-nav styling */}
@@ -895,6 +1005,91 @@ export default function AdminPortal({
             className="nav-controls"
             style={{ display: "flex", alignItems: "center" }}
           >
+            {/* Notifications Bell & Popover */}
+            <div className="profile-wrapper" ref={notificationsRef} style={{ position: 'relative', marginRight: '16px' }}>
+              <button 
+                type="button"
+                className="nav-icon-btn"
+                onClick={() => setShowNotifications(!showNotifications)}
+                style={{ position: 'relative' }}
+                aria-label="Notifications"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                </svg>
+                {notifications.some(n => !n.read) && (
+                  <span style={{
+                    position: 'absolute', top: '4px', right: '4px',
+                    width: '8px', height: '8px', backgroundColor: '#ef4444',
+                    borderRadius: '50%', boxShadow: '0 0 0 2px var(--bg-main)'
+                  }}></span>
+                )}
+              </button>
+              {showNotifications && (
+                <div className="profile-dropdown" style={{ width: '360px', right: 0, left: 'auto', padding: 0, borderRadius: '16px', overflow: 'hidden' }}>
+                  <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--c-border-subtle, rgba(255,255,255,0.08))', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-surface)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }}>
+                    <span style={{ color: 'var(--color-accent, #f97316)', fontSize: '1.05rem' }}>{t('nav.notifications', 'Notifications')}</span>
+                    {notifications.length > 0 && (
+                      <button 
+                        onClick={clearAllNotifications}
+                        style={{ background: 'none', border: 'none', color: 'var(--c-sub)', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
+                      >
+                        {t('nav.clear_all', 'Clear All')}
+                      </button>
+                    )}
+                  </div>
+                  <div style={{ maxHeight: '320px', overflowY: 'auto' }}>
+                    {notifications.length > 0 ? notifications.map(notif => (
+                      <div key={notif._id} style={{ 
+                        padding: '12px 16px', 
+                        borderBottom: '1px solid var(--c-border-subtle, rgba(255,255,255,0.05))',
+                        backgroundColor: notif.read ? 'transparent' : 'rgba(249, 115, 22, 0.08)',
+                        cursor: 'pointer',
+                        position: 'relative',
+                        transition: 'background 0.2s'
+                      }} onClick={async () => {
+                        if (!notif.read) {
+                          try {
+                            await api.patch(`/notifications/${notif._id}/read`);
+                            fetchNotifications();
+                          } catch (err) {
+                            console.error('Failed to mark notification as read', err);
+                          }
+                        }
+                        const title = (notif.title || '').toLowerCase();
+                        const msg = (notif.message || '').toLowerCase();
+                        if (title.includes('enroll') || msg.includes('enroll')) {
+                          setActiveTab('enrollment');
+                          setExpandedGroup('Financial Management');
+                        } else if (title.includes('course') || msg.includes('course')) {
+                          setActiveTab('courses');
+                          setExpandedGroup('Course Management');
+                        } else if (title.includes('payout') || msg.includes('payout')) {
+                          setActiveTab('financial_payouts');
+                          setExpandedGroup('Financial Management');
+                        }
+                        setShowNotifications(false);
+                      }}>
+                        <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-h)', marginBottom: '4px' }}>
+                          {notif.title}
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--c-sub)', lineHeight: '1.4' }}>
+                          {notif.message}
+                        </div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--c-sub)', marginTop: '6px', textAlign: 'right', opacity: 0.8 }}>
+                          {new Date(notif.createdAt).toLocaleString()}
+                        </div>
+                      </div>
+                    )) : (
+                      <div style={{ padding: '24px', textAlign: 'center', color: 'var(--c-sub)', fontSize: '0.9rem' }}>
+                        {t('nav.no_notifications', 'No new notifications')}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button
               className="nav-icon-btn"
               onClick={toggleTheme}
@@ -987,12 +1182,11 @@ export default function AdminPortal({
         </nav>
 
         {/* Main Content Area */}
-        <div style={{ flex: 1, padding: "32px 48px", overflowY: "auto" }}>
+        <div style={{ flex: 1, padding: "32px 48px", overflowY: "auto", minHeight: 0 }}>
           <div
             className="admin-content-panel"
             style={{
-              maxWidth: "100%",
-              margin: "40px auto",
+              width: "100%",
             }}
           >
             {visitedTabs.has("dashboard_overview") && stats && (
@@ -1023,97 +1217,18 @@ export default function AdminPortal({
                   <h2 style={{ fontSize: "1.8rem", margin: 0 }}>
                     Recent Activity
                   </h2>
-                  <div
-                    className="role-tabs"
-                    style={{ display: "flex", gap: "12px" }}
-                  >
-                    {[
-                      { id: "All", label: "All", role: "student" },
-                      { id: "Approved", label: "Approved", role: "student" },
-                      { id: "Submitted", label: "Submitted", role: "student" },
-                      { id: "Enrolled", label: "Enrolled", role: "student" },
-                      {
-                        id: "Admin",
-                        label: "Admin/Super Admin",
-                        role: "superadmin",
-                      },
-                    ].map((tab) => {
-                      const isActive = activityFilter === tab.id;
-
-                      const getRoleColor = (role) => {
-                        switch (role?.toLowerCase()) {
-                          case "student":
-                            return {
-                              text: "#e5e7eb",
-                              bg: "rgba(156, 163, 175, 0.2)",
-                              border: "none",
-                            };
-                          case "instructor":
-                            return {
-                              text: "#fb923c",
-                              bg: "rgba(249, 115, 22, 0.2)",
-                              border: "none",
-                            };
-                          case "admin":
-                            return {
-                              text: "#c084fc",
-                              bg: "rgba(168, 85, 247, 0.2)",
-                              border: "none",
-                            };
-                          case "superadmin":
-                            return {
-                              text: "#f87171",
-                              bg: "rgba(239, 68, 68, 0.2)",
-                              border: "none",
-                            };
-                          default:
-                            return {
-                              text: "var(--c-sub)",
-                              bg: "rgba(255,255,255,0.1)",
-                              border: "none",
-                            };
-                        }
-                      };
-
-                      const roleStyle = getRoleColor(tab.role);
-
-                      return (
-                        <button
-                          key={tab.id}
-                          onClick={() => setActivityFilter(tab.id)}
-                          style={{
-                            padding: "10px 24px",
-                            borderRadius: "99px",
-                            fontSize: "0.9rem",
-                            fontWeight: "500",
-                            cursor: "pointer",
-                            transition: "all 0.2s ease",
-                            border: "none",
-                            background: "var(--bg-surface)",
-                            color: isActive ? "var(--text-h)" : "var(--c-sub)",
-                            boxShadow: isActive
-                              ? "var(--inner-shadow)"
-                              : "var(--outer-shadow)",
-                          }}
-                          onMouseEnter={(e) => {
-                            if (!isActive) {
-                              e.target.style.background =
-                                "rgba(255,255,255,0.05)";
-                              e.target.style.color = "var(--c-light)";
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (!isActive) {
-                              e.target.style.background = "var(--bg-surface)";
-                              e.target.style.color = "var(--c-sub)";
-                            }
-                          }}
-                        >
-                          {tab.label}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  {/* Segmented Control for Activity Filters */}
+                  <SegmentedControl
+                    tabs={[
+                      { id: "All", label: "All" },
+                      { id: "Approved", label: "Approved" },
+                      { id: "Submitted", label: "Submitted" },
+                      { id: "Enrolled", label: "Enrolled" },
+                      { id: "Admin", label: "Admin/Super Admin" },
+                    ]}
+                    activeTab={activityFilter}
+                    onChange={setActivityFilter}
+                  />
                 </div>
 
                 <div className="glass-card" style={{ padding: "24px" }}>
@@ -1213,19 +1328,10 @@ export default function AdminPortal({
               </div>
             </div>
 
-            {visitedTabs.has("dashboard_stats") && (
-              <div style={{ display: activeTab === "dashboard_stats" ? "block" : "none" }}>
-                <AdminStatisticsTab
-                  stats={stats}
-                  revenueAnalytics={revenueAnalytics}
-                  revenueAnalyticsLoading={revenueAnalyticsLoading}
-                />
-              </div>
-            )}
-
             {visitedTabs.has("dashboard_analytics") && (
               <div style={{ display: activeTab === "dashboard_analytics" ? "block" : "none" }}>
                 <AdminAnalyticsTab
+                  stats={stats}
                   revenueAnalytics={revenueAnalytics}
                   revenueAnalyticsLoading={revenueAnalyticsLoading}
                 />
@@ -1253,89 +1359,112 @@ export default function AdminPortal({
                 }}
               >
                 <h2 style={{ fontSize: "1.8rem", margin: 0 }}>
-                  Financial Transactions
+                  Enrollment Requests
                 </h2>
-                <div className="glass-card" style={{ overflow: "hidden", width: "100%" }}>
-                  <table className="admin-table" style={{ width: "100%", borderCollapse: "separate", borderSpacing: "0 4px", textAlign: "left" }}>
+                <div className="glass-card" style={{ overflow: "hidden", width: "100%", padding: "8px 16px" }}>
+                  <table className="admin-table" style={{ width: "100%", borderCollapse: "separate", borderSpacing: "0", textAlign: "left" }}>
                     <thead>
                       <tr>
-                        <th
-                          style={{
-                            padding: "16px",
-                            fontWeight: "600",
-                            color: "var(--c-sub)",
-                          }}
-                        >
-                          Date
+                        <th style={{ padding: "18px 24px 18px 32px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>
+                          DATE
                         </th>
-                        <th
-                          style={{
-                            padding: "16px",
-                            fontWeight: "600",
-                            color: "var(--c-sub)",
-                          }}
-                        >
-                          Student
+                        <th style={{ padding: "18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>
+                          STUDENT
                         </th>
-                        <th
-                          style={{
-                            padding: "16px",
-                            fontWeight: "600",
-                            color: "var(--c-sub)",
-                          }}
-                        >
-                          Course
+                        <th style={{ padding: "18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>
+                          COURSE
                         </th>
-                        <th
-                          style={{
-                            padding: "16px",
-                            fontWeight: "600",
-                            color: "var(--c-sub)",
-                            textAlign: "right",
-                          }}
-                        >
-                          Revenue
+                        <th style={{ padding: "18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>
+                          INSTRUCTOR
+                        </th>
+                        <th style={{ padding: "18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", textAlign: "center", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>
+                          STATUS
+                        </th>
+                        <th style={{ padding: "18px 32px 18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", textAlign: "right", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>
+                          REVENUE
                         </th>
                       </tr>
                     </thead>
                     <tbody>
                       {transactions.length === 0 ? (
                         <tr>
-                          <td
-                            colSpan="4"
-                            style={{
-                              padding: "24px",
-                              textAlign: "center",
-                              color: "var(--c-sub)",
-                            }}
-                          >
-                            No transactions found
+                          <td colSpan="6" style={{ padding: "32px", textAlign: "center", color: "var(--c-sub)" }}>
+                            No requests found
                           </td>
                         </tr>
                       ) : (
-                        transactions.map((t) => (
-                          <tr key={t._id}>
-                            <td style={{ padding: "16px" }}>
-                              {new Date(t.createdAt).toLocaleDateString()}
-                            </td>
-                            <td style={{ padding: "16px" }}>
-                              {t.student?.name || "Unknown User"}
-                            </td>
-                            <td style={{ padding: "16px" }}>
-                              {t.course?.title || "Unknown Course"}
-                            </td>
-                            <td
-                              style={{
-                                padding: "16px",
-                                textAlign: "right",
-                                color: "#10B981",
-                                fontWeight: "600",
+                        transactions.map((t) => {
+                          const norm = (t.status || 'pending').toLowerCase().replace(/\s+/g, '_');
+                          const statusConfig = {
+                            pending: { label: 'Pending', bg: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b' },
+                            under_review: { label: 'Under Review', bg: 'rgba(59, 130, 246, 0.12)', color: '#60a5fa' },
+                            approved: { label: 'Approved', bg: 'rgba(16, 185, 129, 0.12)', color: '#34d399' },
+                            rejected: { label: 'Rejected', bg: 'rgba(239, 68, 68, 0.12)', color: '#fca5a5' },
+                            refunded: { label: 'Refunded', bg: 'rgba(168, 85, 247, 0.12)', color: '#c084fc' },
+                          };
+                          const st = statusConfig[norm] || statusConfig.pending;
+
+                          return (
+                            <tr 
+                              key={t._id} 
+                              style={{ 
+                                cursor: "pointer", 
+                                transition: "background 0.2s",
+                                borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.05))"
                               }}
+                              className="hover-row"
+                              onClick={() => notyf.success('Popup will be built later')}
                             >
-                              EGP {t.amountPaid}
-                            </td>
-                          </tr>
-                        ))
+                              <td style={{ padding: "18px 24px 18px 32px", verticalAlign: "middle" }}>
+                                {new Date(t.createdAt).toLocaleString()}
+                              </td>
+                              <td style={{ padding: "18px 24px", verticalAlign: "middle" }}>
+                                <div style={{ color: "var(--text-h)", fontWeight: "500" }}>
+                                  {t.student?.name || "Unknown Student"}
+                                </div>
+                              </td>
+                              <td style={{ padding: "18px 24px", verticalAlign: "middle" }}>
+                                <div style={{ color: "var(--text-h)", fontWeight: "500" }}>
+                                  {t.course?.title || "Unknown Course"}
+                                </div>
+                              </td>
+                              <td style={{ padding: "18px 24px", verticalAlign: "middle", color: "var(--c-sub)" }}>
+                                {t.course?.instructor?.name || "Unknown Instructor"}
+                              </td>
+                              <td style={{ padding: "18px 24px", textAlign: "center", verticalAlign: "middle" }}>
+                                <span
+                                  style={{
+                                    padding: "6px 14px",
+                                    borderRadius: "20px",
+                                    fontSize: "0.85rem",
+                                    fontWeight: "600",
+                                    background: st.bg,
+                                    color: st.color,
+                                    border: "none",
+                                    boxShadow: "var(--inner-shadow, inset 0 2px 4px 0 rgba(0,0,0,0.06))",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "6px",
+                                    textTransform: "capitalize",
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      width: "6px",
+                                      height: "6px",
+                                      borderRadius: "50%",
+                                      backgroundColor: st.color,
+                                    }}
+                                  />
+                                  {st.label}
+                                </span>
+                              </td>
+                              <td style={{ padding: "18px 32px 18px 24px", textAlign: "right", verticalAlign: "middle", color: "#10B981", fontWeight: "600" }}>
+                                EGP {t.amountPaid}
+                              </td>
+                            </tr>
+                          );
+                        })
                       )}
                     </tbody>
                   </table>
@@ -1343,15 +1472,9 @@ export default function AdminPortal({
               </div>
             </div>
 
-            {visitedTabs.has("courses_all") && (
-              <div style={{ display: activeTab === "courses_all" ? "block" : "none" }}>
+            {visitedTabs.has("courses") && (
+              <div style={{ display: activeTab === "courses" ? "block" : "none" }}>
                 <AdminCourseManagementTab currentUser={user} onDashboardUpdate={fetchDashboardData} />
-              </div>
-            )}
-
-            {visitedTabs.has("courses_lessons") && (
-              <div style={{ display: activeTab === "courses_lessons" ? "block" : "none" }}>
-                <AdminLessonsTab currentUser={user} onDashboardUpdate={fetchDashboardData} />
               </div>
             )}
 

@@ -1,4 +1,4 @@
-/* ─── Settings page ──────────────────────────────────────────── */
+/* ─── Settings page ─── */
 
 .settings-page {
     width: 100%;
@@ -6,55 +6,146 @@
     padding-bottom: 40px;
 }
 
+/* ─── Layout: single column, top-down, centered ─── */
 .settings-layout {
-    display: grid;
-    grid-template-columns: 220px 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 24px;
-    align-items: start;
+    align-items: center;
 }
 
-@media (max-width: 700px) {
-    .settings-layout {
-        grid-template-columns: 1fr;
-    }
-}
-
-.settings-nav {
+/* ─── Header ─── */
+.settings-header {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    padding: 12px;
+    align-items: center;
+    text-align: center;
 }
 
-.settings-nav-item {
-    text-align: start;
-    background: transparent;
-    border: none;
-    border-radius: 10px;
-    padding: 12px 14px;
+.settings-header h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.settings-header p {
+    color: var(--text-secondary);
     font-size: 0.95rem;
+    margin: 0;
+}
+
+/* ─── Horizontal tab bar ─── */
+.settings-tab-bar.solid-card {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px;
+    position: relative;
+    width: min(100%, 560px);
+    min-width: auto;
+    max-width: 100%;
+    border-radius: 50px;
+}
+
+.settings-tab-indicator {
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    background: var(--bg-main);
+    border-radius: 50px;
+    box-shadow: var(--inner-shadow);
+    transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.settings-tab {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex: 1;
+    padding: 10px 20px;
+    border-radius: 50px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
     font-weight: 600;
-    color: var(--c-sub);
     cursor: pointer;
-    transition: background-color 0.2s ease, color 0.2s ease;
+    transition: color 0.3s ease;
+    box-shadow: none;
+    white-space: nowrap;
 }
 
-.settings-nav-item:hover {
-    color: var(--text-h);
-    background: var(--c-bg-hover, rgba(255, 255, 255, 0.05));
+.settings-tab:hover {
+    color: var(--text-primary);
 }
 
-.settings-nav-item.active {
-    color: #fff;
-    background: linear-gradient(135deg, var(--c-orange), var(--c-yellow));
+.settings-tab.active {
+    color: var(--color-accent);
+    font-weight: 700;
 }
 
+.settings-tab svg {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+}
+
+.settings-tab .tab-label {
+    display: inline;
+}
+
+/* ─── Content panel ─── */
 .settings-panel {
-    padding: 28px;
+    padding: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
+/* Tab content entrance animation */
+.settings-tab-content {
+    animation: settingsTabEnter 0.3s ease-out;
+    width: 100%;
+    max-width: 100%;
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.settings-tab-content>* {
+    width: 100%;
+}
+
+@keyframes settingsTabEnter {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ─── Section styles (preserved) ─── */
 .settings-section h2 {
     margin: 0 0 4px;
+}
+
+.settings-section .solid-card {
+    min-width: 0;
+    overflow: hidden;
 }
 
 .settings-section-desc {
@@ -67,7 +158,34 @@
     margin-bottom: 16px;
 }
 
-.settings-section > .settings-message {
+.settings-two-column-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    width: 100%;
+}
+
+.settings-two-column-row > * {
+    min-width: 0;
+}
+
+.settings-two-column-row>.full-span {
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 900px) {
+    .settings-two-column-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 520px) {
+    .settings-two-column-row {
+        gap: 12px;
+    }
+}
+
+.settings-section>.settings-message {
     margin-bottom: 16px;
 }
 
@@ -87,6 +205,7 @@
     background: rgba(74, 222, 128, 0.1);
 }
 
+/* ─── Avatar (preserved) ─── */
 .avatar-upload {
     display: flex;
     align-items: center;
@@ -113,6 +232,7 @@
     object-fit: cover;
 }
 
+/* ─── Appearance options (preserved) ─── */
 .appearance-options {
     display: flex;
     gap: 12px;
@@ -138,6 +258,7 @@
     background: linear-gradient(135deg, var(--c-orange), var(--c-yellow));
 }
 
+/* ─── Logout (preserved) ─── */
 .logout-btn {
     background: rgba(239, 68, 68, 0.15);
     color: #ef4444;
@@ -147,6 +268,27 @@
     background: rgba(239, 68, 68, 0.25);
 }
 
-body.light-mode .settings-nav-item:hover {
-    background: rgba(0, 0, 0, 0.05);
+/* ─── Light mode overrides ─── */
+body.light-mode .settings-tab:hover {
+    color: var(--text-primary);
+}
+
+/* ─── Responsive: icon-only tabs on small screens ─── */
+@media (max-width: 600px) {
+    .settings-header h1 {
+        font-size: 1.8rem;
+    }
+
+    .settings-tab {
+        padding: 12px 12px;
+    }
+
+    .settings-tab .tab-label {
+        display: none;
+    }
+
+    .settings-tab svg {
+        width: 20px;
+        height: 20px;
+    }
 }

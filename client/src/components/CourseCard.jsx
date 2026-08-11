@@ -119,7 +119,7 @@ export default function CourseCard({ course, idx = 0, isLightMode = false }) {
         {/* 6. Category tag + Program logo box */}
         {(category || isProgramCourse) && (
           <div className="cc-footer">
-            {category ? <span className="cc-category-tag">{category}</span> : <div />}
+            {category ? <span className="cc-category-tag">{t(`categories.${category.replace(/\s+/g, '_').toLowerCase()}`, t(`majors.${category}`, category))}</span> : <div />}
             {isProgramCourse && (
               <div className="cc-logo-box">
                 <img

@@ -26,6 +26,11 @@ const questionSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    status: {
+      type: String,
+      enum: ['pending', 'approved', 'deleted'],
+      default: 'pending',
+    }
   },
   { timestamps: true }
 );

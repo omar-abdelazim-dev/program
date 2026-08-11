@@ -143,7 +143,7 @@ export default function AnnouncementsManager({ user }) {
                       variant="danger" 
                       onClick={() => handleDelete(item._id)}
                       disabled={!isSuperAdmin}
-                      title={!isSuperAdmin ? "Super Admin permission required" : ""}
+                      data-tooltip={!isSuperAdmin ? "Super Admin permission required" : ""}
                       style={{ padding: '6px 16px', borderRadius: '12px' }}
                     >
                       Delete

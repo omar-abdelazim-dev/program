@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import api from "../api/axios";
 import notyf from "../utils/notyf";
 import Spinner from "./Spinner";
+import SegmentedControl from "./common/SegmentedControl";
 
 export function AdminLessonsTab({ currentUser, onDashboardUpdate }) {
   const [lessons, setLessons] = useState([]);
@@ -25,6 +26,9 @@ export function AdminLessonsTab({ currentUser, onDashboardUpdate }) {
   useEffect(() => {
     const fetchLessons = async () => {
       try {
+        if (lessons.length === 0) {
+          setIsLoading(true);
+        }
         const res = await api.get("/admin/lessons");
         setLessons(res.data.lessons || []);
       } catch (error) {
@@ -148,57 +152,53 @@ export function AdminLessonsTab({ currentUser, onDashboardUpdate }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-      {/* Header Area */}
+      {/* Controls Row: Status Bar on LEFT, Search & Filter on RIGHT */}
       <div
-        className="glass-card"
         style={{
-          padding: "24px",
-          background: "var(--bg-surface)",
-          border: "none",
-          overflow: "visible",
-          zIndex: 50,
-          position: "relative",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: "16px",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "24px",
-            flexWrap: "wrap",
-            gap: "16px",
-          }}
-        >
-          <div>
-            <h2
-              style={{
-                fontSize: "1.5rem",
-                fontWeight: "700",
-                color: "var(--text-h)",
-                marginBottom: "4px",
-              }}
-            >
-              Platform Lessons
-            </h2>
-            <p style={{ color: "var(--c-sub)", fontSize: "0.95rem" }}>
-              View and monitor all course lessons across the platform.
-            </p>
-          </div>
-        </div>
+          {/* Left: Status Filter Bar */}
+          <SegmentedControl
+            tabs={[
+              { id: "All", label: "All Lessons" },
+              { id: "approved", label: "Approved" },
+              { id: "pending", label: "Pending Review" }
+            ]}
+            activeTab={statusFilter}
+            onChange={setStatusFilter}
+          />
 
-        {/* Filters */}
-        <div
-          style={{
-            display: "flex",
-            gap: "16px",
-            flexWrap: "wrap",
-            alignItems: "center",
-          }}
-        >
+          {/* Right: Search & Filters */}
           <div
-            className="nav-search"
-            style={{ position: "relative", width: "320px" }}
+            style={{
+              display: "flex",
+              gap: "16px",
+              flexWrap: "wrap",
+              alignItems: "center",
+            }}
+          >
+          {/* Merged Search & Status Filter Control Pill */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              background: "var(--bg-surface)",
+              borderRadius: "99px",
+              boxShadow: isSearchFocused || isDropdownOpen
+                ? "var(--outer-shadow), 0 0 0 3px rgba(249, 115, 22, 0.2)"
+                : "var(--outer-shadow)",
+              border: isSearchFocused || isDropdownOpen
+                ? "1px solid #f97316"
+                : "1px solid transparent",
+              transition: "all 0.3s ease",
+              padding: "4px 8px 4px 16px",
+              position: "relative",
+            }}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -208,6 +208,7 @@ export function AdminLessonsTab({ currentUser, onDashboardUpdate }) {
               viewBox="0 0 24 24"
               stroke="currentColor"
               strokeWidth="2"
+              style={{ color: "var(--c-sub)", flexShrink: 0 }}
             >
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -220,156 +221,16 @@ export function AdminLessonsTab({ currentUser, onDashboardUpdate }) {
               onFocus={() => setIsSearchFocused(true)}
               onBlur={() => setIsSearchFocused(false)}
               style={{
-                background: "var(--bg-main)",
-                border: isSearchFocused
-                  ? "1px solid #f97316"
-                  : "1px solid transparent",
-                borderRadius: "99px",
-                boxShadow: isSearchFocused
-                  ? "var(--inner-shadow), 0 0 0 3px rgba(249, 115, 22, 0.2)"
-                  : "var(--inner-shadow)",
-                paddingLeft: "42px",
+                background: "transparent",
+                border: "none",
                 outline: "none",
-                transition: "all 0.3s ease",
                 color: "var(--c-light)",
-                width: "100%",
+                padding: "8px 12px",
+                fontSize: "0.95rem",
+                width: "200px",
               }}
             />
           </div>
-
-          <div
-            style={{ position: "relative" }}
-            tabIndex={0}
-            onBlur={(e) => {
-              if (!e.currentTarget.contains(e.relatedTarget)) {
-                setIsDropdownOpen(false);
-              }
-            }}
-          >
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              style={{
-                background: "var(--bg-main)",
-                border: isDropdownOpen
-                  ? "1px solid #f97316"
-                  : "1px solid transparent",
-                borderRadius: "99px",
-                boxShadow: isDropdownOpen
-                  ? "var(--outer-shadow), 0 0 0 3px rgba(249, 115, 22, 0.2)"
-                  : "var(--inner-shadow)",
-                padding: "10px 20px",
-                outline: "none",
-                color: "var(--c-light)",
-                cursor: "pointer",
-                fontSize: "0.95rem",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                transition: "all 0.2s ease",
-              }}
-            >
-              {statusOptions.find((o) => o.value === statusFilter)?.label ||
-                "All Statuses"}
-              <span
-                style={{
-                  fontSize: "0.8rem",
-                  color: "var(--c-sub)",
-                  transition: "transform 0.2s",
-                  transform: isDropdownOpen ? "rotate(180deg)" : "rotate(0)",
-                }}
-              >
-                ▼
-              </span>
-            </button>
-
-            {isDropdownOpen && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "calc(100% + 8px)",
-                  left: 0,
-                  width: "200px",
-                  background: "var(--bg-surface)",
-                  borderRadius: "12px",
-                  boxShadow: "0 10px 25px rgba(0,0,0,0.1), var(--outer-shadow)",
-                  padding: "8px",
-                  zIndex: 999,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "4px",
-                }}
-              >
-                {statusOptions.map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => {
-                      setStatusFilter(opt.value);
-                      setIsDropdownOpen(false);
-                    }}
-                    style={{
-                      padding: "10px 12px",
-                      background:
-                        statusFilter === opt.value
-                          ? "var(--bg-main)"
-                          : "transparent",
-                      boxShadow:
-                        statusFilter === opt.value
-                          ? "var(--inner-shadow)"
-                          : "none",
-                      border: "none",
-                      textAlign: "left",
-                      cursor: "pointer",
-                      borderRadius: "8px",
-                      fontSize: "0.95rem",
-                      transition: "all 0.2s ease",
-                      color:
-                        statusFilter === opt.value
-                          ? "transparent"
-                          : "var(--c-sub)",
-                      ...(statusFilter === opt.value
-                        ? {
-                            backgroundImage:
-                              "linear-gradient(90deg, #f97316, #fbad41)",
-                            WebkitBackgroundClip: "text",
-                            WebkitTextFillColor: "transparent",
-                            fontWeight: "600",
-                          }
-                        : {}),
-                    }}
-                    onMouseEnter={(e) => {
-                      if (statusFilter !== opt.value) {
-                        e.target.style.background = "var(--bg-main)";
-                        e.target.style.boxShadow = "var(--inner-shadow)";
-                        e.target.style.color = "var(--c-light)";
-                        e.target.style.WebkitTextFillColor = "var(--c-light)";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (statusFilter !== opt.value) {
-                        e.target.style.background = "transparent";
-                        e.target.style.boxShadow = "none";
-                        e.target.style.color = "var(--c-sub)";
-                        e.target.style.WebkitTextFillColor = "var(--c-sub)";
-                      }
-                    }}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {(searchQuery || statusFilter !== "All") && (
-            <button
-              onClick={() => { setSearchQuery(""); setStatusFilter("All"); }}
-              style={{ padding: "10px 20px", background: "var(--bg-main)", boxShadow: "var(--inner-shadow)", border: "none", borderRadius: "20px", color: "var(--text-h)", cursor: "pointer", transition: "all 0.2s ease" }}
-              onMouseEnter={(e) => { e.target.style.background = "var(--c-bg-subtle)" }}
-              onMouseLeave={(e) => { e.target.style.background = "var(--bg-main)" }}
-            >
-              Clear Filters
-            </button>
-          )}
         </div>
       </div>
 
@@ -436,6 +297,7 @@ export function AdminLessonsTab({ currentUser, onDashboardUpdate }) {
                       color: "var(--c-sub)",
                       fontWeight: "600",
                       borderBottom: "1px solid var(--c-border-subtle)",
+                      textAlign: "center",
                       whiteSpace: "nowrap",
                     }}
                   >
@@ -447,6 +309,7 @@ export function AdminLessonsTab({ currentUser, onDashboardUpdate }) {
                       color: "var(--c-sub)",
                       fontWeight: "600",
                       borderBottom: "1px solid var(--c-border-subtle)",
+                      textAlign: "center",
                       whiteSpace: "nowrap",
                     }}
                   >
@@ -458,6 +321,7 @@ export function AdminLessonsTab({ currentUser, onDashboardUpdate }) {
                       color: "var(--c-sub)",
                       fontWeight: "600",
                       borderBottom: "1px solid var(--c-border-subtle)",
+                      textAlign: "center",
                     }}
                   >
                     TYPE
@@ -468,6 +332,7 @@ export function AdminLessonsTab({ currentUser, onDashboardUpdate }) {
                       color: "var(--c-sub)",
                       fontWeight: "600",
                       borderBottom: "1px solid var(--c-border-subtle)",
+                      textAlign: "center",
                     }}
                   >
                     STATUS
@@ -478,6 +343,7 @@ export function AdminLessonsTab({ currentUser, onDashboardUpdate }) {
                       color: "var(--c-sub)",
                       fontWeight: "600",
                       borderBottom: "1px solid var(--c-border-subtle)",
+                      textAlign: "center",
                     }}
                   >
                     DATE ADDED
@@ -542,7 +408,7 @@ export function AdminLessonsTab({ currentUser, onDashboardUpdate }) {
                         </div>
                       </div>
                     </td>
-                    <td style={{ padding: "16px", verticalAlign: "middle" }}>
+                    <td style={{ padding: "16px", textAlign: "center", verticalAlign: "middle" }}>
                       <div
                         style={{ color: "var(--text-h)", fontWeight: "500" }}
                       >
@@ -561,13 +427,14 @@ export function AdminLessonsTab({ currentUser, onDashboardUpdate }) {
                     <td
                       style={{
                         padding: "16px",
+                        textAlign: "center",
                         verticalAlign: "middle",
                         color: "var(--text-h)",
                       }}
                     >
                       {lesson.section?.course?.instructor?.name || "Unknown"}
                     </td>
-                    <td style={{ padding: "16px", verticalAlign: "middle" }}>
+                    <td style={{ padding: "16px", textAlign: "center", verticalAlign: "middle" }}>
                       <span
                         style={{
                           padding: "6px 12px",
@@ -585,7 +452,7 @@ export function AdminLessonsTab({ currentUser, onDashboardUpdate }) {
                         {lesson.lessonType || "Video"}
                       </span>
                     </td>
-                    <td style={{ padding: "16px", verticalAlign: "middle" }}>
+                    <td style={{ padding: "16px", textAlign: "center", verticalAlign: "middle" }}>
                       {(() => {
                         const style = getStatusColor(lesson.status);
                         return (
@@ -622,6 +489,7 @@ export function AdminLessonsTab({ currentUser, onDashboardUpdate }) {
                     <td
                       style={{
                         padding: "16px",
+                        textAlign: "center",
                         verticalAlign: "middle",
                         color: "var(--c-sub)",
                         fontSize: "0.9rem",

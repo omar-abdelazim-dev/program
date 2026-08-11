@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import notyf from '../utils/notyf';
 import api from '../api/axios';
 import ThreeDotMenu from "./common/ThreeDotMenu";
@@ -42,6 +43,7 @@ const StarRating = ({ rating, size = 18 }) => (
 );
 
 export default function InstructorReviewsTab() {
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const [reviews, setReviews] = useState([]);
   const [averageRating, setAverageRating] = useState(0);
@@ -192,25 +194,44 @@ export default function InstructorReviewsTab() {
                   marginBottom: '16px',
                 }}
               >
-                <img
-                  src={
-                    review.student?.avatar ||
-                    `https://api.dicebear.com/7.x/avataaars/svg?seed=${review.student?.name || 'User'}`
-                  }
-                  alt={review.student?.name || 'Student'}
-                  style={{
-                    width: '44px',
-                    height: '44px',
-                    borderRadius: '50%',
-                    background: 'var(--c-bg)',
-                  }}
-                />
+                {review.student?.avatar ? (
+                  <img
+                    src={review.student.avatar}
+                    alt={review.student.name || 'Student'}
+                    style={{
+                      width: '44px',
+                      height: '44px',
+                      borderRadius: '50%',
+                      background: 'var(--c-bg)',
+                      objectFit: 'cover'
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: '44px',
+                      height: '44px',
+                      borderRadius: '50%',
+                      background: 'var(--c-bg)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="var(--c-sub)" strokeWidth="2">
+                      <circle cx="12" cy="8" r="4"></circle>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 20c0-4 3.6-7 8-7s8 3 8 7"></path>
+                    </svg>
+                  </div>
+                )}
                 <div style={{ flex: 1 }}>
                   <div
+                    onClick={() => review.student?._id && navigate(`/student/${review.student._id}`)}
                     style={{
                       fontWeight: 600,
                       color: 'var(--text-h)',
                       fontSize: '1.05rem',
+                      cursor: review.student?._id ? 'pointer' : 'default',
                     }}
                   >
                     {review.student?.name || 'Anonymous Student'}
@@ -261,7 +282,7 @@ export default function InstructorReviewsTab() {
                     padding: '4px 12px',
                     borderRadius: '20px',
                     background: 'rgba(239, 68, 68, 0.1)',
-                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    boxShadow: 'inset 0 0 0 1px rgba(239, 68, 68, 0.3)',
                     color: '#ef4444',
                     fontSize: '0.75rem',
                     fontWeight: 700,
@@ -269,7 +290,7 @@ export default function InstructorReviewsTab() {
                     letterSpacing: '0.5px',
                   }}
                 >
-                  Reported
+                  {t('instructor.reviews.reported', 'Reported')}
                 </div>
               )}
             </div>

@@ -201,7 +201,7 @@ export default function AdminPayoutsTab() {
 
       <ConfirmModal 
         isOpen={showConfirm}
-        title={actionType === 'clear' ? "Clear Payout" : "Reject Payout"}
+        data-tooltip={actionType === 'clear' ? "Clear Payout" : "Reject Payout"}
         message={actionType === 'clear' 
           ? `Are you sure you want to mark this payout of EGP ${selectedPayout ? Math.abs(selectedPayout.amount).toLocaleString() : ''} to ${selectedPayout?.instructor?.name || 'this instructor'} as cleared? Ensure you have actually transferred the funds before doing this. This will also permanently erase their payment details from the database.`
           : `Are you sure you want to REJECT this payout of EGP ${selectedPayout ? Math.abs(selectedPayout.amount).toLocaleString() : ''}? The requested amount will remain in their available balance.`}

@@ -1,14 +1,18 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import api from '../api/axios';
 import FullPageLoader from './FullPageLoader';
 import '../styles/content.css';
 import { useTranslation } from 'react-i18next';
+import notyf from '../utils/notyf';
+import ConfirmModal from './ConfirmModal';
 
-export default function LearningPortal() {
-  const { t } = useTranslation();
+export default function LearningPortal({ user }) {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.dir() === 'rtl';
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   
   const [course, setCourse] = useState(null);
   const [lessons, setLessons] = useState([]);
@@ -16,11 +20,31 @@ export default function LearningPortal() {
   const [activeVideoUrl, setActiveVideoUrl] = useState('');
   const [completedLessons, setCompletedLessons] = useState([]);
   const [progressPercent, setProgressPercent] = useState(0);
-  const [activeTab, setActiveTab] = useState('overview');
+  
+  const searchParams = new URLSearchParams(location.search);
+  const initialTab = searchParams.get('tab') || 'overview';
+  const [activeTab, setActiveTab] = useState(initialTab);
+  
   const [loading, setLoading] = useState(true);
   const [videoLoading, setVideoLoading] = useState(false);
   const [error, setError] = useState('');
   const [isCourseContentOpen, setIsCourseContentOpen] = useState(true);
+  
+  const [questionToDelete, setQuestionToDelete] = useState(null);
+  
+  const [questions, setQuestions] = useState([]);
+  const [questionsLoading, setQuestionsLoading] = useState(false);
+  const [newQuestionText, setNewQuestionText] = useState('');
+  const [submittingQuestion, setSubmittingQuestion] = useState(false);
+  
+  const [editingQuestionId, setEditingQuestionId] = useState(null);
+  const [editingQuestionText, setEditingQuestionText] = useState('');
+
+  // Q&A Pagination and Tabs state
+  const [qaMainTab, setQaMainTab] = useState('my_questions'); // 'my_questions' | 'student_questions'
+  const [qaSubTab, setQaSubTab] = useState('pending'); // 'pending' | 'replied'
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 5;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -46,7 +70,7 @@ export default function LearningPortal() {
         }
       } catch(err) {
         if (err.code === 'ERR_CANCELED') return;
-        setError('Failed to load learning portal.');
+        setError(err.response?.data?.message || 'Failed to load learning portal.');
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
@@ -81,6 +105,95 @@ export default function LearningPortal() {
     }
   };
 
+  const fetchQuestions = async () => {
+    try {
+      setQuestionsLoading(true);
+      const res = await api.get(`/engagement/course/${id}/questions`);
+      setQuestions(res.data.questions || []);
+    } catch (err) {
+      console.error('Failed to load questions', err);
+    } finally {
+      setQuestionsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'qa') {
+      fetchQuestions();
+    }
+  }, [activeTab, id]);
+
+  const submitQuestion = async (e) => {
+    e.preventDefault();
+    if (!newQuestionText.trim()) return;
+    
+    // Save locally for optimistic UI and instant clear
+    const optimisticText = newQuestionText;
+    setNewQuestionText('');
+    notyf.success(t('student.learning.question_sent', 'Question sent successfully'));
+    
+    setSubmittingQuestion(true);
+    try {
+      const res = await api.post('/engagement/questions', { courseId: id, question: optimisticText });
+      
+      // Optimistically add to UI
+      if (res.data.question) {
+        const createdQuestion = res.data.question;
+        createdQuestion.student = { _id: user?._id || user?.id, name: user?.name, avatarUrl: user?.avatarUrl };
+        setQuestions(prev => [createdQuestion, ...prev]);
+      }
+      
+      // Still fetch questions in the background to ensure consistency
+      fetchQuestions();
+      setQaMainTab('my_questions');
+      setQaSubTab('pending');
+      setCurrentPage(1);
+    } catch (err) {
+      console.error('Failed to submit question', err);
+      notyf.error(t('student.learning.question_failed', 'Failed to send question'));
+      setNewQuestionText(optimisticText); // Restore text on failure
+    } finally {
+      setSubmittingQuestion(false);
+    }
+  };
+
+  const handleEditSubmit = async (e, questionId) => {
+    e.preventDefault();
+    if (!editingQuestionText.trim()) return;
+    try {
+      await api.patch(`/engagement/questions/${questionId}`, { question: editingQuestionText });
+      
+      // Update local state instead of full refetch
+      setQuestions(prev => prev.map(q => 
+        q._id === questionId ? { ...q, question: editingQuestionText } : q
+      ));
+      
+      notyf.success(t('student.learning.question_saved', 'Question saved successfully'));
+      setEditingQuestionId(null);
+      setEditingQuestionText('');
+    } catch (err) {
+      console.error('Failed to edit question', err);
+      notyf.error(t('student.learning.generic_error', 'Something went wrong'));
+    }
+  };
+
+  const handleDeleteQuestion = async (questionId) => {
+    setQuestionToDelete(questionId);
+  };
+
+  const confirmDelete = async () => {
+    if (!questionToDelete) return;
+    try {
+      await api.delete(`/engagement/questions/${questionToDelete}`);
+      notyf.success(t('student.learning.question_deleted', 'Question deleted successfully'));
+      setQuestions(prev => prev.filter(q => q._id !== questionToDelete));
+      setQuestionToDelete(null);
+    } catch (err) {
+      console.error('Failed to delete question', err);
+      notyf.error(t('student.learning.delete_failed', 'Failed to delete question'));
+    }
+  };
+
   if (loading) return (
     <div data-role="student" style={{ background: 'var(--bg-main)', minHeight: '100vh', width: '100%' }}>
       <FullPageLoader message={t('student.learning.loading_portal', 'Loading Learning Portal...')} />
@@ -89,7 +202,8 @@ export default function LearningPortal() {
   if (error) return <div style={{ padding: '100px', textAlign: 'center', color: 'red' }}>{t('student.learning.load_error', 'Failed to load learning portal.')}</div>;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+    <>
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh", backgroundColor: "var(--bg-main)" }}>
       {/* Top Navbar specifically for Learning Portal */}
       <div
         style={{
@@ -121,6 +235,7 @@ export default function LearningPortal() {
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
+              style={{ transform: isRTL ? 'scaleX(-1)' : 'none' }}
             >
               <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
@@ -136,34 +251,48 @@ export default function LearningPortal() {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <div
-            style={{
-              color: "var(--c-light)",
-              fontSize: "0.95rem",
-              fontWeight: "500",
-            }}
-          >
-            {progressPercent}%
-          </div>
-          <div
-            style={{
-              width: "200px",
-              height: "6px",
-              background: "var(--c-bg-hover)",
-              borderRadius: "3px",
-              overflow: "hidden",
-            }}
-          >
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
             <div
               style={{
-                width: `${progressPercent}%`,
-                height: "100%",
-                background:
-                  "linear-gradient(90deg, var(--c-orange), var(--c-yellow))",
-                transition: "width 0.3s",
+                color: "var(--c-light)",
+                fontSize: "0.95rem",
+                fontWeight: "500",
               }}
-            ></div>
+            >
+              {progressPercent}%
+            </div>
+            <div
+              style={{
+                width: "200px",
+                height: "6px",
+                background: "var(--c-bg-hover)",
+                borderRadius: "3px",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  width: `${progressPercent}%`,
+                  height: "100%",
+                  background:
+                    "linear-gradient(90deg, var(--c-orange), var(--c-yellow))",
+                  transition: "width 0.3s",
+                }}
+              ></div>
+            </div>
           </div>
+          <div style={{ width: "1px", height: "24px", background: "var(--c-border-subtle)" }}></div>
+          <button
+            onClick={() => setIsCourseContentOpen(!isCourseContentOpen)}
+            className={`sidebar-toggle-btn ${isCourseContentOpen ? 'active' : ''}`}
+            title={t('student.learning.course_content', 'Course Content')}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="4" y1="6" x2="20" y2="6"></line>
+              <line x1="4" y1="12" x2="20" y2="12"></line>
+              <line x1="4" y1="18" x2="20" y2="18"></line>
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -181,12 +310,13 @@ export default function LearningPortal() {
           <div
             style={{
               width: "100%",
-              background: "#000",
+              background: "var(--bg-main)",
               aspectRatio: "16/9",
               position: "relative",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              borderBottom: "1px solid var(--c-border-medium)",
             }}
           >
             {videoLoading ? (
@@ -241,28 +371,39 @@ export default function LearningPortal() {
                 display: "flex",
                 gap: "24px",
                 borderBottom: "1px solid var(--c-border-medium)",
-                paddingBottom: "24px",
+                paddingBottom: "12px",
                 marginBottom: "24px",
+                position: "relative"
               }}
             >
+              <div style={{
+                position: 'absolute',
+                bottom: '-1px',
+                insetInlineStart: activeTab === 'overview' ? '0' : activeTab === 'qa' ? '124px' : '208px',
+                width: activeTab === 'overview' ? '100px' : activeTab === 'qa' ? '60px' : '120px',
+                height: '2px',
+                background: 'var(--text-primary)',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                zIndex: 10
+              }} />
               <button
                 className={`nav-tab ${activeTab === "overview" ? "active" : ""}`}
                 onClick={() => setActiveTab("overview")}
-                style={{ padding: 0, paddingBottom: "8px" }}
+                style={{ padding: 0, paddingBottom: "8px", width: "100px", justifyContent: "center", transition: 'color 0.3s ease', color: activeTab === 'overview' ? 'var(--text-primary)' : 'var(--c-sub)' }}
               >
                 {t('student.learning.overview', 'Overview')}
               </button>
               <button
                 className={`nav-tab ${activeTab === "qa" ? "active" : ""}`}
                 onClick={() => setActiveTab("qa")}
-                style={{ padding: 0, paddingBottom: "8px" }}
+                style={{ padding: 0, paddingBottom: "8px", width: "60px", justifyContent: "center", transition: 'color 0.3s ease', color: activeTab === 'qa' ? 'var(--text-primary)' : 'var(--c-sub)' }}
               >
                 {t('student.learning.qa', 'Q&A')}
               </button>
               <button
                 className={`nav-tab ${activeTab === "attachments" ? "active" : ""}`}
                 onClick={() => setActiveTab("attachments")}
-                style={{ padding: 0, paddingBottom: "8px" }}
+                style={{ padding: 0, paddingBottom: "8px", width: "120px", justifyContent: "center", transition: 'color 0.3s ease', color: activeTab === 'attachments' ? 'var(--text-primary)' : 'var(--c-sub)' }}
               >
                 {t('student.learning.attachments', 'Attachments')}
               </button>
@@ -285,22 +426,324 @@ export default function LearningPortal() {
             )}
 
             {activeTab === "qa" && (
-              <div>
-                <p style={{ color: "var(--c-sub)" }}>
-                  {t('student.learning.no_questions', 'No questions have been asked yet. Be the first to start a discussion!')}
-                </p>
-                <button
-                  className="sys-btn-secondary"
-                  onClick={() => setIsCourseContentOpen(true)}
-                  style={{  marginTop: "16px",
-                    padding: "8px 16px",
-                    fontSize: "0.9rem",
-                  }}
-                >
-                  {t('student.learning.ask_question', 'Ask a Question')}
-                </button>
-              </div>
-            )}
+              <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+                <form onSubmit={submitQuestion} style={{ display: "flex", gap: "12px", flexDirection: "column" }}>
+                  <textarea
+                    value={newQuestionText}
+                    onChange={(e) => setNewQuestionText(e.target.value)}
+                    placeholder={t('student.learning.ask_question_placeholder', 'Ask a question about this course...')}
+                    className="ask-question-textarea"
+                    required
+                  />
+                  <button
+                    type="submit"
+                    className="sys-btn-primary"
+                    disabled={submittingQuestion}
+                    style={{ alignSelf: "flex-end", padding: "8px 24px" }}
+                  >
+                    {submittingQuestion ? t('common.submitting', 'Submitting...') : t('student.learning.ask_question', 'Ask a Question')}
+                  </button>
+                </form>
+
+                {/* Main QA Tabs */}
+                <div style={{ display: 'flex', position: 'relative', borderBottom: '1px solid var(--c-border-subtle)', paddingBottom: '12px' }}>
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '-1px',
+                    insetInlineStart: qaMainTab === 'my_questions' ? '0' : '135px',
+                    width: qaMainTab === 'my_questions' ? '135px' : '185px',
+                    height: '2px',
+                    background: 'var(--text-primary)',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    zIndex: 10
+                  }} />
+                  <button
+                    onClick={() => { setQaMainTab('my_questions'); setCurrentPage(1); }}
+                    style={{
+                      width: '135px',
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      padding: '8px 12px', fontSize: '1rem', fontWeight: qaMainTab === 'my_questions' ? '600' : '400',
+                      color: qaMainTab === 'my_questions' ? 'var(--text-primary)' : 'var(--c-sub)',
+                      transition: 'color 0.3s ease'
+                    }}
+                  >
+                    {t('student.learning.my_questions', 'My Questions')}
+                  </button>
+                  <button
+                    onClick={() => { setQaMainTab('student_questions'); setCurrentPage(1); }}
+                    style={{
+                      width: '185px',
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      padding: '8px 12px', fontSize: '1rem', fontWeight: qaMainTab === 'student_questions' ? '600' : '400',
+                      color: qaMainTab === 'student_questions' ? 'var(--text-primary)' : 'var(--c-sub)',
+                      transition: 'color 0.3s ease'
+                    }}
+                  >
+                    {t('student.learning.student_questions', "Students' Questions")}
+                  </button>
+                </div>
+
+                {/* Sub QA Tabs (Only for My Questions) */}
+                {qaMainTab === 'my_questions' && (
+                  <div style={{ display: 'flex', position: 'relative', background: 'var(--bg-main)', padding: '6px', borderRadius: '50px', boxShadow: 'var(--inner-shadow)', width: '260px', marginBottom: '8px' }}>
+                    <div style={{
+                      position: 'absolute',
+                      top: '6px', bottom: '6px',
+                      insetInlineStart: qaSubTab === 'pending' ? '6px' : '130px',
+                      width: '124px',
+                      background: 'var(--bg-surface)',
+                      borderRadius: '50px',
+                      boxShadow: 'var(--outer-shadow)',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                    }} />
+                    <button
+                      onClick={() => { setQaSubTab('pending'); setCurrentPage(1); }}
+                      style={{
+                        flex: 1, padding: '6px 0', borderRadius: '50px', border: 'none',
+                        background: 'transparent', position: 'relative', zIndex: 1,
+                        color: qaSubTab === 'pending' ? 'var(--text-h)' : 'var(--c-sub)',
+                        cursor: 'pointer', fontWeight: qaSubTab === 'pending' ? '600' : '400',
+                        transition: 'color 0.2s'
+                      }}
+                    >
+                      {t('student.learning.pending_reply', 'Pending Reply')}
+                    </button>
+                    <button
+                      onClick={() => { setQaSubTab('replied'); setCurrentPage(1); }}
+                      style={{
+                        flex: 1, padding: '6px 0', borderRadius: '50px', border: 'none',
+                        background: 'transparent', position: 'relative', zIndex: 1,
+                        color: qaSubTab === 'replied' ? 'var(--text-h)' : 'var(--c-sub)',
+                        cursor: 'pointer', fontWeight: qaSubTab === 'replied' ? '600' : '400',
+                        transition: 'color 0.2s'
+                      }}
+                    >
+                      {t('student.learning.replied', 'Replied')}
+                    </button>
+                  </div>
+                )}
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                  {(() => {
+                    // Filter questions based on tabs
+                    let filteredQuestions = [];
+                    if (qaMainTab === 'my_questions') {
+                      const myQuestions = questions.filter(q => q.student?._id === user?._id || q.student?._id === user?.id);
+                      if (qaSubTab === 'pending') {
+                        filteredQuestions = myQuestions.filter(q => q.status === 'pending');
+                      } else {
+                        filteredQuestions = myQuestions.filter(q => q.status === 'approved' || q.reply);
+                      }
+                    } else {
+                      // Student questions (all approved)
+                      filteredQuestions = questions.filter(q => q.status === 'approved' || q.reply);
+                    }
+
+                    // Pagination
+                    const totalPages = Math.ceil(filteredQuestions.length / ITEMS_PER_PAGE);
+                    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+                    const paginatedQuestions = filteredQuestions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+                    return (
+                      <>
+                        {questionsLoading ? (
+                          <div style={{ color: "var(--c-sub)", textAlign: "center", padding: "20px" }}>{t('student.learning.loading_questions', 'Loading questions...')}</div>
+                        ) : filteredQuestions.length === 0 ? (
+                          <div style={{ color: "var(--c-sub)", textAlign: "center", padding: "20px" }}>
+                            {t('student.learning.no_questions', 'No questions found.')}
+                          </div>
+                        ) : (
+                          paginatedQuestions.map(q => (
+                            <div key={q._id} style={{
+                        background: "var(--bg-surface)",
+                        border: "none",
+                        borderRadius: "50px",
+                        padding: "25px",
+                        boxShadow: "var(--inner-shadow)"
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
+                          <Link
+                            to={`/student/${q.student?._id}`}
+                            style={{ display: "inline-flex", borderRadius: "50%", flexShrink: 0 }}
+                            aria-label={q.student?.name}
+                          >
+                            <img 
+                              src={q.student?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(q.student?.name || 'User')}&background=random`}
+                              alt={q.student?.name}
+                              style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover" }}
+                            />
+                          </Link>
+                          <div>
+                            <Link
+                              to={`/student/${q.student?._id}`}
+                              style={{ fontWeight: "600", fontSize: "0.9rem", color: "var(--c-light)", textDecoration: "none" }}
+                            >
+                              {q.student?.name || 'Unknown User'}
+                            </Link>
+                            <div style={{ fontSize: "0.75rem", color: "var(--c-sub)" }}>
+                              {new Date(q.createdAt).toLocaleString(undefined, {
+                                year: 'numeric', month: 'short', day: 'numeric',
+                                hour: '2-digit', minute: '2-digit'
+                              })}
+                            </div>
+                          </div>
+                          
+                          {/* Edit / Delete Buttons for Student's own questions */}
+                          {user && (q.student?._id === user._id || q.student?._id === user.id) && (
+                            <div style={{ marginInlineStart: "auto", display: "flex", gap: "8px" }}>
+                              {q.status === 'pending' && (
+                                <button
+                                  onClick={() => {
+                                    setEditingQuestionId(q._id);
+                                    setEditingQuestionText(q.question);
+                                  }}
+                                  style={{
+                                    background: "none",
+                                    border: "none",
+                                    color: "var(--color-accent)",
+                                    cursor: "pointer",
+                                    fontSize: "0.8rem",
+                                    padding: "4px"
+                                  }}
+                                >
+                                  {t('common.edit', 'Edit')}
+                                </button>
+                              )}
+                              <button
+                                onClick={() => handleDeleteQuestion(q._id)}
+                                style={{
+                                  background: "none",
+                                  border: "none",
+                                  color: "var(--error, #ef4444)",
+                                  cursor: "pointer",
+                                  fontSize: "0.8rem",
+                                  padding: "4px"
+                                }}
+                              >
+                                {t('common.delete', 'Delete')}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {editingQuestionId === q._id ? (
+                          <form onSubmit={(e) => handleEditSubmit(e, q._id)}>
+                            <textarea
+                              value={editingQuestionText}
+                              onChange={(e) => setEditingQuestionText(e.target.value)}
+                              rows="3"
+                              required
+                              className="ask-question-textarea"
+                              style={{ 
+                                marginTop: "12px",
+                                background: "var(--bg-main)"
+                              }}
+                            />
+                            <div style={{ display: "flex", gap: "8px", marginTop: "8px", justifyContent: "flex-end" }}>
+                              <button 
+                                type="button"
+                                onClick={() => { setEditingQuestionId(null); setEditingQuestionText(''); }}
+                                style={{
+                                  background: "none", border: "none", color: "var(--c-light)",
+                                  padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "0.9rem"
+                                }}
+                              >
+                                {t('common.cancel', 'Cancel')}
+                              </button>
+                              <button 
+                                type="submit"
+                                style={{
+                                  background: "none", border: "none", color: "#10B981",
+                                  padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "0.9rem"
+                                }}
+                              >
+                                {t('common.save', 'Save')}
+                              </button>
+                            </div>
+                          </form>
+                        ) : (
+                          <div style={{ color: "var(--c-light)", fontSize: "0.95rem", lineHeight: "1.5", whiteSpace: "pre-wrap" }}>
+                            {q.question}
+                          </div>
+                        )}
+                        
+                        {q.reply && (
+                          <div style={{
+                            marginTop: "16px",
+                            padding: "16px 25px",
+                            background: "rgba(16, 185, 129, 0.05)",
+                            borderLeft: isRTL ? "none" : "3px solid #10B981",
+                            borderRight: isRTL ? "3px solid #10B981" : "none",
+                            borderRadius: isRTL ? "25px 0 25px 25px" : "0 25px 25px 25px"
+                          }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                              <img 
+                                src={course?.instructor?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(course?.instructor?.name || 'Instructor')}&background=random`} 
+                                alt={`${course?.instructor?.name || 'Instructor'}'s profile picture`}
+                                style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover' }} 
+                              />
+                              <Link
+                                to={`/instructor/${course?.instructor?._id || course?.instructor?.id}`}
+                                style={{ fontWeight: "600", fontSize: "0.85rem", color: "#10B981", textDecoration: "none" }}
+                              >
+                                {course?.instructor?.name ? `${course.instructor.name}` : 'Instructor Reply'}
+                              </Link>
+                              {q.repliedAt && (
+                                <div style={{ fontSize: "0.75rem", color: "var(--c-sub)" }}>
+                                  • {new Date(q.repliedAt).toLocaleString(undefined, {
+                                    year: 'numeric', month: 'short', day: 'numeric',
+                                    hour: '2-digit', minute: '2-digit'
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                            <div style={{ color: "var(--c-light)", fontSize: "0.9rem", lineHeight: "1.5", whiteSpace: "pre-wrap" }}>
+                              {q.reply}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                
+                {/* Pagination Controls */}
+                {filteredQuestions.length > ITEMS_PER_PAGE && (
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginTop: '16px' }}>
+                    <button
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      style={{
+                        padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--c-border-subtle)',
+                        background: currentPage === 1 ? 'var(--bg-main)' : 'var(--bg-surface)',
+                        color: currentPage === 1 ? 'var(--c-sub)' : 'var(--c-light)',
+                        cursor: currentPage === 1 ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      Previous
+                    </button>
+                    <span style={{ color: 'var(--c-sub)', fontSize: '0.9rem' }}>
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      style={{
+                        padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--c-border-subtle)',
+                        background: currentPage === totalPages ? 'var(--bg-main)' : 'var(--bg-surface)',
+                        color: currentPage === totalPages ? 'var(--c-sub)' : 'var(--c-light)',
+                        cursor: currentPage === totalPages ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </>
+            );
+          })()}
+        </div>
+      </div>
+    )}
 
             {activeTab === "attachments" && (
               <div>
@@ -378,40 +821,32 @@ export default function LearningPortal() {
         </div>
 
         {/* Sidebar */}
-        <div
-          style={{ backgroundColor: 'var(--bg-surface)', width: '350px', borderLeft: '1px solid var(--border)', display: 'flex', flexDirection: 'column' }}
-        >
-          <div style={{ flex: 1, overflowY: "auto" }}>
-            <div style={{ borderBottom: "1px solid var(--c-border-subtle)" }}>
-              <div
-                onClick={() => setIsCourseContentOpen(!isCourseContentOpen)}
-                style={{
-                  padding: "16px 24px",
-                  background: "var(--c-bg-subtle)",
-                  fontWeight: "600",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  cursor: "pointer",
-                }}
-              >
-                {t('student.learning.course_content', 'Course Content')}
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  style={{ transform: isCourseContentOpen ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform 0.3s" }}
+        <div style={{ 
+          width: isCourseContentOpen ? "280px" : "0px", 
+          transition: "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s", 
+          overflow: "hidden", 
+          borderLeft: isCourseContentOpen ? "1px solid var(--c-border-subtle)" : "0px solid transparent", 
+          display: "flex", 
+          flexDirection: "column", 
+          backgroundColor: 'var(--bg-surface)' 
+        }}>
+          <div style={{ width: "280px", flex: 1, display: "flex", flexDirection: "column" }}>
+            <div style={{ flex: 1, overflowY: "auto" }}>
+              <div style={{ borderBottom: "1px solid var(--c-border-subtle)" }}>
+                <div
+                  style={{
+                    padding: "16px 24px",
+                    background: "var(--c-bg-subtle)",
+                    fontWeight: "600",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
                 >
-                  <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-              </div>
+                  {t('student.learning.course_content', 'Course Content')}
+                </div>
 
-              <div style={{ display: 'grid', gridTemplateRows: isCourseContentOpen ? '1fr' : '0fr', transition: 'grid-template-rows 0.3s ease-out' }}>
-                <div style={{ overflow: 'hidden' }}>
-                  <div style={{ position: "relative" }}>
+                <div style={{ position: "relative" }}>
 
                 {lessons.map((lesson) => {
                   const isCompleted = completedLessons.includes(lesson._id);
@@ -471,8 +906,8 @@ export default function LearningPortal() {
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div
                           style={{
-                            fontWeight: isActive ? "600" : "400",
-                            color: isActive ? "var(--c-light)" : "var(--c-sub)",
+                            fontWeight: isCurrent ? "600" : "400",
+                            color: isCurrent ? "var(--c-light)" : "var(--c-sub)",
                             marginBottom: "4px",
                             whiteSpace: "nowrap",
                             overflow: "hidden",
@@ -512,8 +947,19 @@ export default function LearningPortal() {
           </div>
         </div>
       </div>
-      </div>
     </div>
   </div>
+      
+  <ConfirmModal 
+        isOpen={!!questionToDelete}
+        title={t('student.learning.delete_question_title', 'Delete Question')}
+        message={t('student.learning.delete_question_msg', 'Are you sure you want to delete this question? This action cannot be undone.')}
+        confirmText={t('common.delete', 'Delete')}
+        cancelText={t('common.cancel', 'Cancel')}
+        intent="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setQuestionToDelete(null)}
+      />
+    </>
   );
 }

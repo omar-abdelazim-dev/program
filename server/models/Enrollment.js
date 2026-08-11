@@ -33,6 +33,11 @@ const enrollmentSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    status: {
+      type: String,
+      enum: ['pending', 'under_review', 'approved', 'rejected', 'refunded'],
+      default: 'pending',
+    },
   },
   { timestamps: true }
 );
