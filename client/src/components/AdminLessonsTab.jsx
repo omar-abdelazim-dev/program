@@ -114,10 +114,10 @@ export function AdminLessonsTab({ currentUser, onDashboardUpdate }) {
   const filteredLessons = lessons.filter((lesson) => {
     const q = searchQuery.toLowerCase();
     const titleMatch = lesson.title?.toLowerCase().includes(q);
-    const courseMatch = lesson.section?.course?.title
+    const courseMatch = lesson.module?.course?.title
       ?.toLowerCase()
       .includes(q);
-    const instructorMatch = lesson.section?.course?.instructor?.name
+    const instructorMatch = lesson.module?.course?.instructor?.name
       ?.toLowerCase()
       .includes(q);
     const matchesSearch = titleMatch || courseMatch || instructorMatch;
@@ -403,7 +403,7 @@ export function AdminLessonsTab({ currentUser, onDashboardUpdate }) {
                             }}
                           >
                             Section:{" "}
-                            {lesson.section?.title || "Unknown Section"}
+                            {lesson.module?.title || "Unknown Module"}
                           </div>
                         </div>
                       </div>
@@ -412,7 +412,7 @@ export function AdminLessonsTab({ currentUser, onDashboardUpdate }) {
                       <div
                         style={{ color: "var(--text-h)", fontWeight: "500" }}
                       >
-                        {lesson.section?.course?.title || "Unknown Course"}
+                        {lesson.module?.course?.title || "Unknown Course"}
                       </div>
                       <div
                         style={{
@@ -421,7 +421,7 @@ export function AdminLessonsTab({ currentUser, onDashboardUpdate }) {
                           marginTop: "4px",
                         }}
                       >
-                        {lesson.section?.course?.category || "Uncategorized"}
+                        {lesson.module?.course?.category || "Uncategorized"}
                       </div>
                     </td>
                     <td
@@ -432,7 +432,7 @@ export function AdminLessonsTab({ currentUser, onDashboardUpdate }) {
                         color: "var(--text-h)",
                       }}
                     >
-                      {lesson.section?.course?.instructor?.name || "Unknown"}
+                      {lesson.module?.course?.instructor?.name || "Unknown"}
                     </td>
                     <td style={{ padding: "16px", textAlign: "center", verticalAlign: "middle" }}>
                       <span
