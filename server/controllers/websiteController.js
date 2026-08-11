@@ -85,15 +85,9 @@ export const createFAQ = async (req, res) => {
 export const updateFAQ = async (req, res) => {
   try {
     const { status } = req.body;
-    // Only super admin can change status to something restricted, but for MVP we'll just allow admins to edit text.
-    // Wait, requirement: Admins cannot publish or delete permanently.
-    if (status && status !== 'active' && req.user.role !== 'superadmin') {
-      checkSuperAdmin(req, res); // This will return 403 if they try to archive/hide? The requirement says "Cannot Publish, Delete permanently, Restore".
-      // Let's assume 'active' is publish.
-      if (status === 'active' || status === 'archived') {
-        const check = checkSuperAdmin(req, res);
-        if (check) return check;
-      }
+    if (status === 'active' || status === 'archived') {
+      const check = checkSuperAdmin(req, res);
+      if (check) return check;
     }
 
     const faq = await FAQ.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -131,6 +125,11 @@ export const getTestimonials = async (req, res) => {
 
 export const createTestimonial = async (req, res) => {
   try {
+    if (['approved', 'featured'].includes(req.body.status)) {
+      const check = checkSuperAdmin(req, res);
+      if (check) return check;
+    }
+
     const testimonial = await Testimonial.create(req.body);
     res.status(201).json(testimonial);
   } catch (error) {

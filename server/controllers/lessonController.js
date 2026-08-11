@@ -1,40 +1,33 @@
 import Lesson from '../models/Lesson.js';
+import Module from '../models/Module.js';
 import Course from '../models/Course.js';
 import Enrollment from '../models/Enrollment.js';
-import Section from '../models/Section.js';
 
-// @route   POST /api/courses/:courseId/lessons
+// @route   POST /api/courses/:courseId/modules/:moduleId/lessons
 // @access  Private (instructor only, must own the course)
 export const addLesson = async (req, res) => {
   try {
-    const { title, videoUrl, attachmentUrl, attachmentTitle } = req.body;
-    const { courseId } = req.params;
+    const { title, videoUrl, attachmentUrl, attachmentTitle, description } = req.body;
+    const { courseId, moduleId } = req.params;
 
     if (!title || !videoUrl) {
       return res.status(400).json({ message: 'Title and video URL are required' });
     }
 
-    const course = req.resource; // Provided by verifyOwnership middleware
-
-    // Backward compatibility: Find or create a default section for this course
-    let section = await Section.findOne({ course: courseId }).sort({ order: 1 });
-    if (!section) {
-      section = await Section.create({
-        course: courseId,
-        title: 'Course Content',
-        order: 1,
-        status: 'published'
-      });
+    const module = await Module.findOne({ _id: moduleId, course: courseId });
+    if (!module) {
+      return res.status(404).json({ message: 'Module not found in this course' });
     }
 
-    const existingCount = await Lesson.countDocuments({ section: section._id });
+    const existingCount = await Lesson.countDocuments({ module: module._id });
 
     const lesson = await Lesson.create({
       title,
+      description: description || '',
       videoUrl,
       attachmentUrl: attachmentUrl || '',
       attachmentTitle: attachmentTitle || '',
-      section: section._id,
+      module: module._id,
       order: existingCount + 1,
       status: 'pending'
     });
@@ -73,8 +66,8 @@ export const getLessonContent = async (req, res) => {
       }
     }
 
-    const lesson = await Lesson.findById(lessonId).populate('section');
-    if (!lesson || !lesson.section || lesson.section.course.toString() !== courseId) {
+    const lesson = await Lesson.findById(lessonId).populate('module');
+    if (!lesson || !lesson.module || lesson.module.course.toString() !== courseId) {
       return res.status(404).json({ message: 'Lesson not found in this course' });
     }
 
@@ -89,20 +82,20 @@ export const getLessonContent = async (req, res) => {
 // @access  Private (instructor only, must own the course)
 export const updateLesson = async (req, res) => {
   try {
-    const { title, videoUrl, attachmentUrl, attachmentTitle } = req.body;
+    const { title, videoUrl, attachmentUrl, attachmentTitle, description, status } = req.body;
     const { courseId, lessonId } = req.params;
 
-    const course = req.resource; // Provided by verifyOwnership middleware
-
-    const lesson = await Lesson.findById(lessonId).populate('section');
-    if (!lesson || !lesson.section || lesson.section.course.toString() !== courseId) {
+    const lesson = await Lesson.findById(lessonId).populate('module');
+    if (!lesson || !lesson.module || lesson.module.course.toString() !== courseId) {
       return res.status(404).json({ message: 'Lesson not found in this course' });
     }
 
     if (title) lesson.title = title;
     if (videoUrl) lesson.videoUrl = videoUrl;
+    if (description !== undefined) lesson.description = description;
     if (attachmentUrl !== undefined) lesson.attachmentUrl = attachmentUrl;
     if (attachmentTitle !== undefined) lesson.attachmentTitle = attachmentTitle;
+    if (status) lesson.status = status;
 
     await lesson.save();
 
@@ -128,16 +121,16 @@ export const deleteLesson = async (req, res) => {
       return res.status(403).json({ message: 'You do not own this course' });
     }
 
-    const lesson = await Lesson.findById(lessonId).populate('section');
-    if (!lesson || !lesson.section || lesson.section.course.toString() !== courseId) {
+    const lesson = await Lesson.findById(lessonId).populate('module');
+    if (!lesson || !lesson.module || lesson.module.course.toString() !== courseId) {
       return res.status(404).json({ message: 'Lesson not found in this course' });
     }
 
-    const sectionId = lesson.section._id;
+    const moduleId = lesson.module._id;
     await lesson.deleteOne();
 
-    // Re-number remaining lessons in the same section so there are no gaps
-    const remaining = await Lesson.find({ section: sectionId }).sort({ order: 1 });
+    // Re-number remaining lessons in the same module so there are no gaps
+    const remaining = await Lesson.find({ module: moduleId }).sort({ order: 1 });
     for (let i = 0; i < remaining.length; i++) {
       remaining[i].order = i + 1;
       await remaining[i].save();
@@ -150,29 +143,34 @@ export const deleteLesson = async (req, res) => {
   }
 };
 
-// @route   PUT /api/courses/:courseId/lessons-reorder
+// @route   PUT /api/courses/:courseId/modules/:moduleId/lessons-reorder
 // @access  Private (instructor only, must own the course)
 export const reorderLessons = async (req, res) => {
   try {
-    const { courseId } = req.params;
+    const { courseId, moduleId } = req.params;
     const { lessonIds } = req.body;
 
     if (!Array.isArray(lessonIds) || lessonIds.length === 0) {
       return res.status(400).json({ message: 'lessonIds array is required' });
     }
 
-    const course = await Course.findById(courseId);
-    if (!course) {
-      return res.status(404).json({ message: 'Course not found' });
+    const module = await Module.findOne({ _id: moduleId, course: courseId });
+    if (!module) {
+      return res.status(404).json({ message: 'Module not found in this course' });
     }
 
-    if (course.instructor.toString() !== req.user.id.toString()) {
-      return res.status(403).json({ message: 'You do not own this course' });
+    const existing = await Lesson.find({ module: module._id }).select('_id');
+    const existingIds = new Set(existing.map((l) => l._id.toString()));
+
+    if (lessonIds.length !== existingIds.size || !lessonIds.every((id) => existingIds.has(id))) {
+      return res.status(400).json({ message: 'lessonIds must exactly match this module\'s lessons' });
     }
 
-    for (let i = 0; i < lessonIds.length; i++) {
-      await Lesson.findByIdAndUpdate(lessonIds[i], { order: i + 1 });
-    }
+    await Lesson.bulkWrite(
+      lessonIds.map((id, i) => ({
+        updateOne: { filter: { _id: id, module: module._id }, update: { order: i + 1 } },
+      }))
+    );
 
     res.status(200).json({ message: 'Lessons reordered' });
   } catch (error) {

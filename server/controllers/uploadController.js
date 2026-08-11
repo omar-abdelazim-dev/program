@@ -178,8 +178,12 @@ export const uploadDocument = async (req, res) => {
     }
 
     const result = await streamUpload(req.file.buffer, {
-      resource_type: 'raw', 
+      resource_type: 'raw',
       folder: 'program/documents',
+      // Force the browser to download rather than render the file inline —
+      // 'raw' resources skip Cloudinary's image pipeline, so nothing else
+      // stops an HTML/SVG upload from executing as a page if visited directly.
+      flags: 'attachment',
     });
 
     res.status(200).json({ url: result.secure_url });

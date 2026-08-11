@@ -533,7 +533,7 @@ export const getAllLessons = async (req, res) => {
   try {
     const lessons = await Lesson.find()
       .populate({
-        path: 'section',
+        path: 'module',
         populate: {
           path: 'course',
           select: 'title instructor status category',
@@ -725,12 +725,20 @@ export const toggleProgramInstructor = async (req, res) => {
 // @access  Private (Admin/SuperAdmin)
 export const approveEnrollment = async (req, res) => {
   try {
-    const enrollment = await Enrollment.findById(req.params.id);
+    // Atomic find-and-update on status: 'pending' closes the race window
+    // between two concurrent approve calls (e.g. a double-click) — only the
+    // first one can ever flip status away from 'pending', so at most one
+    // revenue-split Transaction is ever created per enrollment.
+    const enrollment = await Enrollment.findOneAndUpdate(
+      { _id: req.params.id, status: 'pending' },
+      { status: 'approved' },
+      { new: true }
+    );
     if (!enrollment) {
-      return res.status(404).json({ message: 'Enrollment request not found' });
+      const existing = await Enrollment.findById(req.params.id);
+      if (!existing) return res.status(404).json({ message: 'Enrollment request not found' });
+      return res.status(409).json({ message: `Enrollment request already ${existing.status}` });
     }
-    enrollment.status = 'approved';
-    await enrollment.save();
 
     // Generate revenue split transaction for the instructor (if course has price)
     const course = await Course.findById(enrollment.course);
@@ -781,13 +789,17 @@ export const approveEnrollment = async (req, res) => {
 export const rejectEnrollment = async (req, res) => {
   try {
     const { reason } = req.body;
-    const enrollment = await Enrollment.findById(req.params.id);
+    // Same atomic guard as approveEnrollment — see comment there.
+    const enrollment = await Enrollment.findOneAndUpdate(
+      { _id: req.params.id, status: 'pending' },
+      { status: 'rejected', rejectionReason: reason || '' },
+      { new: true }
+    );
     if (!enrollment) {
-      return res.status(404).json({ message: 'Enrollment request not found' });
+      const existing = await Enrollment.findById(req.params.id);
+      if (!existing) return res.status(404).json({ message: 'Enrollment request not found' });
+      return res.status(409).json({ message: `Enrollment request already ${existing.status}` });
     }
-    enrollment.status = 'rejected';
-    enrollment.rejectionReason = reason || '';
-    await enrollment.save();
 
     await enrollment.populate('course');
 

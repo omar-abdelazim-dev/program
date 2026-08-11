@@ -27,14 +27,14 @@ const lessonSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
-    section: {
+    module: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Section',
+      ref: 'Module',
       required: true,
     },
-    // Determines playback order within a course. We set this automatically
-    // based on how many lessons already exist (see lessonController.js) so
-    // instructors don't have to manually number anything.
+    // Determines playback order within a module. We set this automatically
+    // based on how many lessons already exist in the module (see
+    // lessonController.js) so instructors don't have to manually number anything.
     order: {
       type: Number,
       required: true,
