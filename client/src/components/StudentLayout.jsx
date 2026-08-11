@@ -32,6 +32,7 @@ export default function StudentLayout({
   const isSettingsPage = location.pathname.includes('/settings');
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
 
   const toggleLanguage = () => {
     const newLang = i18n.language === "en" ? "ar" : "en";
@@ -409,7 +410,7 @@ export default function StudentLayout({
                 )}
               </button>
 
-              <div className="profile-dropdown" style={{ width: '360px', right: 0, left: 'auto', padding: 0, borderRadius: '16px', overflow: 'hidden' }}>
+              <div className="profile-dropdown" style={{ width: '360px', right: isRTL ? 'auto' : 0, left: isRTL ? 0 : 'auto', padding: 0, borderRadius: '16px', overflow: 'hidden' }}>
                 <div style={{ padding: 0, display: "flex", flexDirection: "column" }}>
                   <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--c-border-subtle, rgba(255,255,255,0.08))', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-surface)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }}>
                     <span style={{ color: 'var(--color-accent, #f97316)', fontSize: '1.05rem' }}>{t('student.nav.notifications', 'Notifications')}</span>
@@ -440,15 +441,15 @@ export default function StudentLayout({
                         .map((notif, idx) => {
                           const content = (
                             <>
-                              <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-h)', marginBottom: '4px' }}>
+                              <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-h)', marginBottom: '4px', textAlign: isRTL ? 'right' : 'left' }}>
                                 {formatNotificationTitle(notif.text || notif.title, t)}
                               </div>
                               {notif.message && (
-                                <div style={{ fontSize: '0.8rem', color: 'var(--c-sub)', lineHeight: '1.4', marginBottom: '4px' }}>
+                                <div style={{ fontSize: '0.8rem', color: 'var(--c-sub)', lineHeight: '1.4', marginBottom: '4px', textAlign: isRTL ? 'right' : 'left' }}>
                                   {formatNotificationMessage(notif.message, t)}
                                 </div>
                               )}
-                              <div style={{ fontSize: '0.72rem', color: 'var(--c-sub)', marginTop: '6px', textAlign: 'right', opacity: 0.8 }}>
+                              <div style={{ fontSize: '0.72rem', color: 'var(--c-sub)', marginTop: '6px', textAlign: isRTL ? 'left' : 'right', opacity: 0.8 }}>
                                 {new Date(notif.timestamp).toLocaleString(undefined, { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                               </div>
                             </>
