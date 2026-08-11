@@ -14,7 +14,7 @@ export const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: rateLimitMessage,
-  skip: () => process.env.NODE_ENV === 'test',
+  skip: () => process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test',
 });
 
 // ─── Granular limiters (Sprint 1 additions) ──────────────────────────────────
@@ -27,7 +27,7 @@ export const loginLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: rateLimitMessage,
-  skip: () => process.env.NODE_ENV === 'test',
+  skip: () => process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test',
 });
 
 // Register: very restrictive — 3 registrations / hour per IP.
@@ -38,7 +38,7 @@ export const registerLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: rateLimitMessage,
-  skip: () => process.env.NODE_ENV === 'test',
+  skip: () => process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test',
 });
 
 // Forgot password: prevents email enumeration via rate pressure.
@@ -48,7 +48,7 @@ export const forgotPasswordLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: rateLimitMessage,
-  skip: () => process.env.NODE_ENV === 'test',
+  skip: () => process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test',
 });
 
 // OTP: prevents SMS/email OTP brute-force.
@@ -58,6 +58,7 @@ export const otpLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: rateLimitMessage,
+  skip: () => process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test',
 });
 
 // Uploads: prevents malicious bots from exhausting storage quotas or disk space.
@@ -67,6 +68,7 @@ export const uploadLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Upload limit reached. Please try again later.' },
+  skip: () => process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test',
 });
 
 // Global API limiter — applied to all routes as a catch-all backstop.
@@ -78,7 +80,7 @@ export const globalApiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: rateLimitMessage,
-  // Skip rate limiting for health checks — monitoring tools poll frequently
-  skip: (req) => req.path === '/api/health',
+  // Skip rate limiting for health checks and dev environment
+  skip: (req) => process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' || req.path === '/api/health',
 });
 

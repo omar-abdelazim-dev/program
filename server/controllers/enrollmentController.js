@@ -6,6 +6,7 @@ import Transaction from '../models/Transaction.js';
 import Section from '../models/Section.js';
 import PromoCode from '../models/PromoCode.js';
 import { getInternalConfig } from '../utils/configFetcher.js';
+import Notification from '../models/Notification.js';
 
 // @route   POST /api/enrollments/:courseId
 // @access  Private (student)
@@ -60,16 +61,45 @@ export const enroll = async (req, res) => {
       commissionRate = commissionPercent;
     }
 
+    const status = course.price > 0 ? 'pending' : 'approved';
     const enrollment = await Enrollment.create({
       student: req.user.id,
       course: courseId,
       amountPaid: course.price,
       platformCommission,
-      instructorShare
+      instructorShare,
+      status,
+      transactionId: req.body.transactionId,
+      paymentAccount: req.body.paymentAccount,
+      paymentMethod: req.body.paymentMethod,
+      screenshot: req.body.screenshot,
+      invoiceId: req.body.invoiceId,
     });
 
+    if (status === 'pending') {
+      try {
+        const admins = await User.find({ role: 'admin' });
+        const student = await User.findById(req.user.id);
+        const studentName = student ? student.name : 'A student';
+        
+        const notifications = admins.map(admin => ({
+          user: admin._id,
+          title: 'New Enrollment Request',
+          message: `${studentName} has requested to enroll in "${course.title}". Invoice ID: ${req.body.invoiceId || 'N/A'}.`,
+          type: 'system',
+          link: '/admin/dashboard'
+        }));
+        
+        if (notifications.length > 0) {
+          await Notification.insertMany(notifications);
+        }
+      } catch (err) {
+        console.error('Failed to create admin notifications', err);
+      }
+    }
+
     // Generate revenue split transaction for the instructor
-    if (course.price > 0 && course.instructor) {
+    if (status === 'approved' && course.price > 0 && course.instructor) {
       await Transaction.create({
         instructor: course.instructor,
         amount: instructorShare,
@@ -163,6 +193,7 @@ export const getEnrollmentStatus = async (req, res) => {
 
     res.status(200).json({
       enrolled: true,
+      status: enrollment.status,
       completedLessonIds: enrollment.completedLessons,
       totalLessons,
       progressPercent,

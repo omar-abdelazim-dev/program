@@ -1,10 +1,10 @@
-import axios from 'axios';
+import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: import.meta.env.VITE_API_URL || "/api",
   withCredentials: true,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -13,7 +13,7 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   const match = document.cookie.match(/(?:^|; )csrfToken=([^;]*)/);
   if (match) {
-    config.headers['X-CSRF-Token'] = decodeURIComponent(match[1]);
+    config.headers["X-CSRF-Token"] = decodeURIComponent(match[1]);
   }
   return config;
 });
@@ -37,18 +37,20 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     const status = error.response?.status;
-    
-    const isAuthEndpoint = (originalRequest.url || '').includes('/auth/');
-    
+
+    const isAuthEndpoint = (originalRequest.url || "").includes("/auth/");
+
     if (status === 401 && !isAuthEndpoint && !originalRequest._retry) {
       if (isRefreshing) {
-        return new Promise(function(resolve, reject) {
+        return new Promise(function (resolve, reject) {
           failedQueue.push({ resolve, reject });
-        }).then(() => {
-          return api(originalRequest);
-        }).catch(err => {
-          return Promise.reject(err);
-        });
+        })
+          .then(() => {
+            return api(originalRequest);
+          })
+          .catch((err) => {
+            return Promise.reject(err);
+          });
       }
 
       originalRequest._retry = true;
@@ -56,9 +58,10 @@ api.interceptors.response.use(
 
       try {
         await axios.post(
-          (import.meta.env.VITE_API_URL || 'http://localhost:5000/api') + '/auth/refresh',
+          (import.meta.env.VITE_API_URL || "http://localhost:5050/api") +
+            "/auth/refresh",
           {},
-          { withCredentials: true }
+          { withCredentials: true },
         );
         isRefreshing = false;
         processQueue(null);
@@ -66,20 +69,23 @@ api.interceptors.response.use(
       } catch (err) {
         isRefreshing = false;
         processQueue(err, null);
-        if (!window.location.pathname.startsWith('/auth')) {
-          window.location.href = '/auth';
+        if (!window.location.pathname.startsWith("/auth")) {
+          window.location.href = "/auth";
         }
         return Promise.reject(err);
       }
     }
 
-    if (status === 401 && !isAuthEndpoint && !window.location.pathname.startsWith('/auth')) {
-       window.location.href = '/auth';
+    if (
+      status === 401 &&
+      !isAuthEndpoint &&
+      !window.location.pathname.startsWith("/auth")
+    ) {
+      window.location.href = "/auth";
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;
-

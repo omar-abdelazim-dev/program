@@ -57,12 +57,32 @@ export default function LearningPortal({ user }) {
 
         try {
           const enrollRes = await api.get(`/enrollments/${id}`, { signal: controller.signal });
+          
+          const isStaff = user && (
+            user.role === 'admin' || 
+            user.role === 'superadmin' || 
+            (courseRes.data.course.instructor?._id || courseRes.data.course.instructor) === (user._id || user.id)
+          );
+
+          if (!isStaff && (!enrollRes.data?.enrolled || enrollRes.data?.status !== 'approved')) {
+            navigate(`/course/${id}`, { replace: true });
+            return;
+          }
+
           if (enrollRes.data && enrollRes.data.enrolled) {
             setCompletedLessons(enrollRes.data.completedLessonIds || []);
             setProgressPercent(enrollRes.data.progressPercent || 0);
           }
         } catch(e) {
-          // If not enrolled or error, just continue
+          const isStaff = user && (
+            user.role === 'admin' || 
+            user.role === 'superadmin' || 
+            (courseRes.data.course.instructor?._id || courseRes.data.course.instructor) === (user._id || user.id)
+          );
+          if (!isStaff) {
+            navigate(`/course/${id}`, { replace: true });
+            return;
+          }
         }
 
         if (courseRes.data.lessons.length > 0 && !controller.signal.aborted) {

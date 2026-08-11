@@ -6,6 +6,7 @@ import Lesson from '../models/Lesson.js';
 import PromoCode from '../models/PromoCode.js';
 import { escapeRegex } from '../utils/escapeRegex.js';
 import { logAudit } from '../utils/auditLogger.js';
+import Notification from '../models/Notification.js';
 
 // @route   GET /api/admin/stats
 // @access  Private (Admin)
@@ -717,5 +718,88 @@ export const toggleProgramInstructor = async (req, res) => {
   } catch (error) {
     console.error('Error toggling program instructor:', error);
     res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+// @route   PATCH /api/admin/enrollments/:id/approve
+// @access  Private (Admin/SuperAdmin)
+export const approveEnrollment = async (req, res) => {
+  try {
+    const enrollment = await Enrollment.findById(req.params.id);
+    if (!enrollment) {
+      return res.status(404).json({ message: 'Enrollment request not found' });
+    }
+    enrollment.status = 'approved';
+    await enrollment.save();
+
+    // Generate revenue split transaction for the instructor (if course has price)
+    const course = await Course.findById(enrollment.course);
+    if (course && course.price > 0 && course.instructor) {
+      let platformCommission = enrollment.platformCommission;
+      let instructorShare = enrollment.instructorShare;
+      let commissionPercent = 15;
+      
+      const instructor = await User.findById(course.instructor);
+      if (instructor && instructor.isProgramInstructor) {
+        commissionPercent = 15;
+      } else {
+        commissionPercent = Math.round((platformCommission / course.price) * 100) || 15;
+      }
+
+      await Transaction.create({
+        instructor: course.instructor,
+        amount: instructorShare,
+        type: 'course_sale',
+        status: 'cleared',
+        description: `Course Sale - ${course.title}`,
+        course: course._id,
+        commissionRate: commissionPercent,
+      });
+    }
+
+    // Notify the student
+    await Notification.create({
+      user: enrollment.student,
+      title: 'Enrollment Request Approved',
+      message: `Your enrollment request for "${course?.title || 'Course'}" has been approved! You can start learning now.`,
+      type: 'system',
+      link: `/learn/${enrollment.course}`
+    });
+
+    res.status(200).json({ message: 'Enrollment request approved', enrollment });
+  } catch (error) {
+    console.error('Error approving enrollment:', error);
+    res.status(500).json({ message: 'Server error approving enrollment' });
+  }
+};
+
+// @route   PATCH /api/admin/enrollments/:id/reject
+// @access  Private (Admin/SuperAdmin)
+export const rejectEnrollment = async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const enrollment = await Enrollment.findById(req.params.id);
+    if (!enrollment) {
+      return res.status(404).json({ message: 'Enrollment request not found' });
+    }
+    enrollment.status = 'rejected';
+    enrollment.rejectionReason = reason || '';
+    await enrollment.save();
+
+    await enrollment.populate('course');
+
+    // Notify the student
+    await Notification.create({
+      user: enrollment.student,
+      title: 'Enrollment Request Rejected',
+      message: `Your enrollment request for "${enrollment.course?.title || 'Course'}" was rejected. Reason: ${reason || 'No reason provided.'}`,
+      type: 'system',
+      link: `/courses/${enrollment.course?._id || enrollment.course}`
+    });
+
+    res.status(200).json({ message: 'Enrollment request rejected', enrollment });
+  } catch (error) {
+    console.error('Error rejecting enrollment:', error);
+    res.status(500).json({ message: 'Server error rejecting enrollment' });
   }
 };
