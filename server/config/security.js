@@ -74,20 +74,19 @@ export const getAllowedOrigins = () => {
 
 // ─── Rate limiter windows ───────────────────────────────────────────────────
 export const RATE_LIMITS = {
-  // Login: 85 attempts per 1 minute (Baseline)
-  login: { windowMs: 1 * 60 * 1000, max: 85 },
-  // Register: ~15% of login ratio (13 attempts per minute)
-  register: { windowMs: 1 * 60 * 1000, max: 13 },
-  // Forgot password / OTP: ~15% of login ratio (13 attempts per minute)
-  forgotPassword: { windowMs: 1 * 60 * 1000, max: 13 },
-  // OTP: 100% of login ratio (85 attempts per minute)
-  otp: { windowMs: 1 * 60 * 1000, max: 85 },
-  // General auth endpoints: 200% of login ratio (170 attempts per minute)
-  auth: { windowMs: 1 * 60 * 1000, max: 170 },
-  // File uploads: 50% of login ratio (43 uploads per minute)
-  uploads: { windowMs: 1 * 60 * 1000, max: 43 },
-  // Global API catch-all: 4000% of login ratio (3400 req per minute)
-  global: { windowMs: 1 * 60 * 1000, max: 3400 },
+  // Login: tight — 5 attempts per 15 minutes to prevent brute-force
+  login: { windowMs: 15 * 60 * 1000, max: 5 },
+  // Register: very tight — 3 registrations per hour per IP
+  register: { windowMs: 60 * 60 * 1000, max: 3 },
+  // Forgot password / OTP: 3 per hour per IP
+  forgotPassword: { windowMs: 60 * 60 * 1000, max: 3 },
+  otp: { windowMs: 15 * 60 * 1000, max: 5 },
+  // General auth endpoints (check-email, change-password)
+  auth: { windowMs: 15 * 60 * 1000, max: 10 },
+  // File uploads: maximum 10 uploads per hour per IP to prevent disk/quota exhaustion
+  uploads: { windowMs: 60 * 60 * 1000, max: 10 },
+  // Global API catch-all — 200 req/15 min is generous but still protective
+  global: { windowMs: 15 * 60 * 1000, max: 200 },
 };
 
 // ─── Authentication & Session Configuration ────────────────────────────────
