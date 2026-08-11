@@ -59,7 +59,7 @@
     "enrollment_request_rejected": "تم رفض طلب التسجيل",
     "new_enrollment_request": "طلب تسجيل جديد",
     "instructor_reply_msg": "رد المحاضر على تعليقك في {{course}}.",
-    "announcement_posted_in": "تم نشر إعلان في",
+    "announcement_posted_msg": "تم نشر إعلان في دورتك \"{{course}}\".",
     "total_courses": "إجمالي الدورات",
     "pending_courses": "الدورات المعلقة",
     "pending_lessons": "الدروس المعلقة",

@@ -59,7 +59,7 @@
     "enrollment_request_rejected": "Enrollment Request Rejected",
     "new_enrollment_request": "New Enrollment Request",
     "instructor_reply_msg": "Instructor replied to your comment on {{course}}.",
-    "announcement_posted_in": "An announcement was posted in",
+    "announcement_posted_msg": "An announcement was posted in {{course}}.",
     "total_courses": "Total Courses",
     "pending_courses": "Pending Courses",
     "pending_lessons": "Pending Lessons",

@@ -34,7 +34,7 @@ export const formatNotificationMessage = (rawMessage, t) => {
 
   if (msg.startsWith('An announcement was posted in ')) {
     const course = msg.replace('An announcement was posted in ', '').replace(/\.$/, '');
-    return `${t('notifications.announcement_posted_in', 'An announcement was posted in')} ${course}.`;
+    return t('notifications.announcement_posted_msg', { course, defaultValue: `An announcement was posted in ${course}.` });
   }
 
   return msg;

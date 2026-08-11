@@ -413,13 +413,13 @@ export default function StudentLayout({
               <div className="profile-dropdown" style={{ width: '360px', right: isRTL ? 'auto' : 0, left: isRTL ? 0 : 'auto', padding: 0, borderRadius: '16px', overflow: 'hidden' }}>
                 <div style={{ padding: 0, display: "flex", flexDirection: "column" }}>
                   <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--c-border-subtle, rgba(255,255,255,0.08))', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-surface)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }}>
-                    <span style={{ color: 'var(--color-accent, #f97316)', fontSize: '1.05rem' }}>{t('student.nav.notifications', 'Notifications')}</span>
+                    <span style={{ color: 'var(--color-accent, #f97316)', fontSize: '1.05rem' }}>{t('nav.notifications', 'Notifications')}</span>
                     {notifications && notifications.length > 0 && (
                       <button 
-                        onClick={() => setNotifications([])}
+                        onClick={clearAllNotifications}
                         style={{ background: 'none', border: 'none', color: 'var(--c-sub)', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
                       >
-                        {t('student.nav.clear_all', 'Clear all')}
+                        {t('nav.clear_all', 'Clear all')}
                       </button>
                     )}
                   </div>
@@ -432,7 +432,7 @@ export default function StudentLayout({
                         fontSize: "0.9rem",
                       }}
                     >
-                      {t('student.nav.no_notifications', 'No new notifications')}
+                      {t('nav.no_notifications', 'No new notifications')}
                     </div>
                   ) : (
                     <div style={{ maxHeight: "320px", overflowY: "auto" }}>
