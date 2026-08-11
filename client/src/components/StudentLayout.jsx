@@ -288,7 +288,7 @@ export default function StudentLayout({
                   }}
                   placeholder={t('student.explore.select_college', 'Select College')}
                   triggerClassName="search-pill"
-                  triggerStyle={{ width: '220px', margin: 0, paddingInlineStart: '20px', paddingInlineEnd: '40px', textAlign: 'start' }}
+                  triggerStyle={{ width: 'auto', minWidth: '180px', margin: 0, paddingInlineStart: '24px', paddingInlineEnd: '44px', textAlign: 'start' }}
                 />
               </div>
             )}
