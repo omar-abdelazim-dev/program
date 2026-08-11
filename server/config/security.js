@@ -74,19 +74,20 @@ export const getAllowedOrigins = () => {
 
 // ─── Rate limiter windows ───────────────────────────────────────────────────
 export const RATE_LIMITS = {
-  // Login: standard — 20 attempts per 15 minutes
-  login: { windowMs: 15 * 60 * 1000, max: 20 },
-  // Register: standard — 10 registrations per hour per IP
-  register: { windowMs: 60 * 60 * 1000, max: 10 },
-  // Forgot password / OTP: 10 per hour per IP
-  forgotPassword: { windowMs: 60 * 60 * 1000, max: 10 },
-  otp: { windowMs: 15 * 60 * 1000, max: 10 },
-  // General auth endpoints (check-email, change-password)
-  auth: { windowMs: 15 * 60 * 1000, max: 50 },
-  // File uploads: standard 50 uploads per hour per IP
-  uploads: { windowMs: 60 * 60 * 1000, max: 50 },
-  // Global API catch-all — 1000 req/15 min is standard for most APIs
-  global: { windowMs: 15 * 60 * 1000, max: 1000 },
+  // Login: 85 attempts per 1 minute (Baseline)
+  login: { windowMs: 1 * 60 * 1000, max: 85 },
+  // Register: ~15% of login ratio (13 attempts per minute)
+  register: { windowMs: 1 * 60 * 1000, max: 13 },
+  // Forgot password / OTP: ~15% of login ratio (13 attempts per minute)
+  forgotPassword: { windowMs: 1 * 60 * 1000, max: 13 },
+  // OTP: 100% of login ratio (85 attempts per minute)
+  otp: { windowMs: 1 * 60 * 1000, max: 85 },
+  // General auth endpoints: 200% of login ratio (170 attempts per minute)
+  auth: { windowMs: 1 * 60 * 1000, max: 170 },
+  // File uploads: 50% of login ratio (43 uploads per minute)
+  uploads: { windowMs: 1 * 60 * 1000, max: 43 },
+  // Global API catch-all: 4000% of login ratio (3400 req per minute)
+  global: { windowMs: 1 * 60 * 1000, max: 3400 },
 };
 
 // ─── Authentication & Session Configuration ────────────────────────────────
