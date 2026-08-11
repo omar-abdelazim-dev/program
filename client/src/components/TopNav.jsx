@@ -105,18 +105,24 @@ export default function TopNav({
         {/* Notifications */}
         <div className="profile-wrapper">
           <button className="utility-icon-btn">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="1.8"
-            >
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-            </svg>
+            {notifications && notifications.length > 0 ? (
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 005 14h14a1 1 0 00.707-1.707L19 11.586V8a6 6 0 00-6-6zM10 18a2 2 0 044 0h-4z" />
+              </svg>
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              >
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+            )}
             {notifications && notifications.length > 0 && (
               <span className="notification-dot"></span>
             )}
@@ -162,7 +168,7 @@ export default function TopNav({
                             </div>
                           )}
                           <div style={{ fontSize: '0.72rem', color: 'var(--c-sub)', marginTop: '6px', textAlign: 'right', opacity: 0.8 }}>
-                            {new Date(notif.timestamp).toLocaleString()}
+                            {new Date(notif.timestamp).toLocaleString(undefined, { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                           </div>
                         </>
                       );
@@ -175,7 +181,8 @@ export default function TopNav({
                         position: 'relative',
                         transition: 'background 0.2s',
                         display: 'block',
-                        textDecoration: 'none'
+                        textDecoration: 'none',
+                        color: 'inherit'
                       };
 
                       if (notif.link) {

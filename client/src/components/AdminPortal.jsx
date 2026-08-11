@@ -1043,10 +1043,16 @@ export default function AdminPortal({
                 style={{ position: 'relative' }}
                 aria-label="Notifications"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                </svg>
-                {notifications.some(n => !n.read) && (
+                {notifications && notifications.some(n => !n.read) ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 005 14h14a1 1 0 00.707-1.707L19 11.586V8a6 6 0 00-6-6zM10 18a2 2 0 004 0h-4z" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                  </svg>
+                )}
+                {notifications && notifications.some(n => !n.read) && (
                   <span style={{
                     position: 'absolute', top: '4px', right: '4px',
                     width: '8px', height: '8px', backgroundColor: '#ef4444',
@@ -1106,7 +1112,7 @@ export default function AdminPortal({
                           {notif.message}
                         </div>
                         <div style={{ fontSize: '0.72rem', color: 'var(--c-sub)', marginTop: '6px', textAlign: 'right', opacity: 0.8 }}>
-                          {new Date(notif.createdAt).toLocaleString()}
+                          {new Date(notif.createdAt).toLocaleString(undefined, { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         </div>
                       </div>
                     )) : (
@@ -1749,7 +1755,7 @@ export default function AdminPortal({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            zIndex: 100,
+            zIndex: 2000,
             padding: "20px",
           }}
         >
@@ -1779,6 +1785,12 @@ export default function AdminPortal({
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
                 <span style={{ color: 'var(--c-sub)' }}>Course Price:</span>
                 <span style={{ fontWeight: '600', color: '#10B981' }}>{selectedEnrollment.amountPaid || selectedEnrollment.course?.price || 0} EGP</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                <span style={{ color: 'var(--c-sub)' }}>Fees (1%):</span>
+                <span style={{ fontWeight: '600', color: 'var(--text-h)' }}>
+                  {(((selectedEnrollment.amountPaid || selectedEnrollment.course?.price || 0) * 0.01)).toFixed(2)} EGP
+                </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
                 <span style={{ color: 'var(--c-sub)' }}>Phone Number Used:</span>
@@ -1818,7 +1830,7 @@ export default function AdminPortal({
                   className="glass-btn hover-glow"
                   style={{ width: '100%', padding: '10px', fontSize: '0.9rem' }}
                 >
-                  🖼️ View Payment Screenshot
+                  View Payment Screenshot
                 </button>
               </div>
             )}
@@ -1847,7 +1859,14 @@ export default function AdminPortal({
                     onClick={() => handleApproveEnrollment(selectedEnrollment._id)}
                     disabled={processingEnrollmentAction !== null}
                     className="glass-btn auth-submit-btn"
-                    style={{ flex: 1, marginTop: '0px' }}
+                    style={{ 
+                      flex: 1, 
+                      background: 'var(--bg-main)', 
+                      color: '#10b981', 
+                      border: '1px solid var(--border)',
+                      boxShadow: 'var(--inner-shadow)',
+                      marginTop: '0px' 
+                    }}
                   >
                     {processingEnrollmentAction === 'approving' ? "Approving..." : "Approve"}
                   </button>
@@ -1877,7 +1896,7 @@ export default function AdminPortal({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            zIndex: 110,
+            zIndex: 2100,
             padding: "20px",
           }}
           onClick={() => setShowScreenshotModal(false)}
@@ -1928,7 +1947,7 @@ export default function AdminPortal({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            zIndex: 120,
+            zIndex: 2200,
             padding: "20px",
           }}
         >
@@ -1962,6 +1981,7 @@ export default function AdminPortal({
                   fontSize: "0.95rem",
                   boxSizing: "border-box",
                   resize: "vertical",
+                  boxShadow: "var(--inner-shadow, inset 0 2px 4px rgba(0, 0, 0, 0.4))",
                 }}
               />
             </div>

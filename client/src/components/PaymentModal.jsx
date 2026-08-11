@@ -156,7 +156,7 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
                 <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{course.price} EGP</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Expected Fees (1%):</span>
+                <span style={{ color: 'var(--text-secondary)' }}>Fees (1%):</span>
                 <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{expectedFees} EGP</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '12px', borderTop: '1px solid var(--border)', marginTop: '12px' }}>
