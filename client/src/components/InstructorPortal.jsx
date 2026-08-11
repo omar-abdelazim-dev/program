@@ -265,9 +265,11 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
       if (selectedCourseId === courseId) {
         setSelectedCourseId(null);
       }
+      notyf.success('Course deleted successfully');
       fetchMyCourses();
     } catch (err) {
       console.error('Failed to delete course:', err);
+      notyf.error(err.response?.data?.message || 'Failed to delete course');
     }
   };
 

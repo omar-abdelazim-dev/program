@@ -298,7 +298,7 @@ export const getCourseById = async (req, res) => {
     }
 
     // deliberately excludes videoUrl — see getLessonContent for the gated endpoint
-    const grouped = await getModulesWithLessons(course._id, 'title order module');
+    const grouped = await getModulesWithLessons(course._id, '-videoUrl -attachmentUrl');
     const modules = grouped.map(({ module, lessons }) => ({
       _id: module._id,
       title: module.title,
@@ -564,9 +564,8 @@ export const republishCourse = async (req, res) => {
 };
 
 // @route   DELETE /api/courses/:id
-// @access  Private (admin/superadmin only) — instructors can no longer delete
-// a course directly; they request deletion (see requestDeleteCourse) and an
-// admin performs the actual delete after review.
+// @access  Private (instructor, admin, superadmin)
+// Instructors can delete their own courses. Admins can delete any course.
 export const deleteCourse = async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);

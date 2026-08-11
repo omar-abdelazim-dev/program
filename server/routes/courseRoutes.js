@@ -63,7 +63,7 @@ router.put('/:id', protect, authorize('instructor', 'admin', 'superadmin'), vali
 // --- Admin actions on a specific course ---
 router.get('/:id/enrollments', protect, authorize('admin', 'superadmin'), validateObjectId('id'), getCourseEnrollments);
 router.patch('/:id/unpublish', protect, authorize('admin', 'superadmin'), validateObjectId('id'), unpublishCourse);
-router.delete('/:id', protect, authorize('admin', 'superadmin'), validateObjectId('id'), deleteCourse);
+router.delete('/:id', protect, authorize('instructor', 'admin', 'superadmin'), validateObjectId('id'), verifyOwnership(Course, 'id', 'instructor'), deleteCourse);
 router.patch('/:id/approve', protect, authorize('admin', 'superadmin'), validateObjectId('id'), approveCourse);
 router.patch('/:id/reject', protect, authorize('admin', 'superadmin'), validateObjectId('id'), rejectCourse);
 router.patch('/:id/reject-deletion', protect, authorize('admin', 'superadmin'), validateObjectId('id'), rejectDeletionRequest);
