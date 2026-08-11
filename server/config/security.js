@@ -74,19 +74,19 @@ export const getAllowedOrigins = () => {
 
 // ─── Rate limiter windows ───────────────────────────────────────────────────
 export const RATE_LIMITS = {
-  // Login: tight — 5 attempts per 15 minutes to prevent brute-force
-  login: { windowMs: 15 * 60 * 1000, max: 5 },
-  // Register: very tight — 3 registrations per hour per IP
-  register: { windowMs: 60 * 60 * 1000, max: 3 },
-  // Forgot password / OTP: 3 per hour per IP
-  forgotPassword: { windowMs: 60 * 60 * 1000, max: 3 },
-  otp: { windowMs: 15 * 60 * 1000, max: 5 },
+  // Login: standard — 20 attempts per 15 minutes
+  login: { windowMs: 15 * 60 * 1000, max: 20 },
+  // Register: standard — 10 registrations per hour per IP
+  register: { windowMs: 60 * 60 * 1000, max: 10 },
+  // Forgot password / OTP: 10 per hour per IP
+  forgotPassword: { windowMs: 60 * 60 * 1000, max: 10 },
+  otp: { windowMs: 15 * 60 * 1000, max: 10 },
   // General auth endpoints (check-email, change-password)
-  auth: { windowMs: 15 * 60 * 1000, max: 10 },
-  // File uploads: maximum 10 uploads per hour per IP to prevent disk/quota exhaustion
-  uploads: { windowMs: 60 * 60 * 1000, max: 10 },
-  // Global API catch-all — 200 req/15 min is generous but still protective
-  global: { windowMs: 15 * 60 * 1000, max: 200 },
+  auth: { windowMs: 15 * 60 * 1000, max: 50 },
+  // File uploads: standard 50 uploads per hour per IP
+  uploads: { windowMs: 60 * 60 * 1000, max: 50 },
+  // Global API catch-all — 1000 req/15 min is standard for most APIs
+  global: { windowMs: 15 * 60 * 1000, max: 1000 },
 };
 
 // ─── Authentication & Session Configuration ────────────────────────────────
