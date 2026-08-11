@@ -1,4 +1,5 @@
 import Notification from '../models/Notification.js';
+import logger from '../utils/logger.js';
 
 // @desc    Get user notifications
 // @route   GET /api/notifications
@@ -10,7 +11,7 @@ export const getUserNotifications = async (req, res) => {
       .limit(50);
     res.status(200).json({ notifications });
   } catch (error) {
-    console.error('Error fetching notifications:', error);
+    logger.error('Error fetching notifications:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to fetch notifications' });
   }
 };
@@ -30,7 +31,7 @@ export const markAsRead = async (req, res) => {
     }
     res.status(200).json({ notification });
   } catch (error) {
-    console.error('Error marking notification as read:', error);
+    logger.error('Error marking notification as read:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to mark notification as read' });
   }
 };
@@ -46,7 +47,7 @@ export const clearNotification = async (req, res) => {
     }
     res.status(200).json({ message: 'Notification cleared' });
   } catch (error) {
-    console.error('Error clearing notification:', error);
+    logger.error('Error clearing notification:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to clear notification' });
   }
 };
@@ -59,7 +60,7 @@ export const clearAllNotifications = async (req, res) => {
     await Notification.deleteMany({ user: req.user.id });
     res.status(200).json({ message: 'All notifications cleared' });
   } catch (error) {
-    console.error('Error clearing all notifications:', error);
+    logger.error('Error clearing all notifications:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to clear all notifications' });
   }
 };

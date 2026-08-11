@@ -5,6 +5,7 @@ import Lesson from '../models/Lesson.js';
 import Transaction from '../models/Transaction.js';
 import PromoCode from '../models/PromoCode.js';
 import { getInternalConfig } from '../utils/configFetcher.js';
+import logger from '../utils/logger.js';
 import { getModulesWithLessons } from '../utils/courseContent.js';
 
 // Builds the per-module completion breakdown returned alongside overall progress.
@@ -104,7 +105,7 @@ export const enroll = async (req, res) => {
     if (error.code === 11000) {
       return res.status(409).json({ message: 'You are already enrolled in this course' });
     }
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error enrolling in course' });
   }
 };
@@ -153,7 +154,7 @@ export const getMyEnrollments = async (req, res) => {
 
     res.status(200).json({ enrollments: withProgress });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching your enrollments' });
   }
 };
@@ -183,7 +184,7 @@ export const getEnrollmentStatus = async (req, res) => {
       moduleProgress: computeModuleProgress(grouped, enrollment.completedLessons),
     });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error checking enrollment' });
   }
 };
@@ -223,7 +224,7 @@ export const markLessonComplete = async (req, res) => {
       moduleProgress: computeModuleProgress(grouped, enrollment.completedLessons),
     });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error marking lesson complete' });
   }
 };

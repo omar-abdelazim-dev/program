@@ -1,6 +1,7 @@
 import Review from '../models/Review.js';
 import Course from '../models/Course.js';
 import Enrollment from '../models/Enrollment.js';
+import logger from '../utils/logger.js';
 
 // @desc    Get all reviews for courses owned by the instructor
 // @route   GET /api/reviews/instructor
@@ -28,7 +29,7 @@ export const getInstructorReviews = async (req, res) => {
       totalReviews: reviews.length,
     });
   } catch (error) {
-    console.error('Error fetching instructor reviews:', error);
+    logger.error('Error fetching instructor reviews:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to fetch reviews' });
   }
 };
@@ -54,7 +55,7 @@ export const reportReview = async (req, res) => {
 
     res.status(200).json({ message: 'Review reported to admins', review });
   } catch (error) {
-    console.error('Error reporting review:', error);
+    logger.error('Error reporting review:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to report review' });
   }
 };
@@ -71,7 +72,7 @@ export const getCourseReviews = async (req, res) => {
       
     res.status(200).json({ reviews });
   } catch (error) {
-    console.error('Error fetching course reviews:', error);
+    logger.error('Error fetching course reviews:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to fetch course reviews' });
   }
 };
@@ -109,7 +110,7 @@ export const createReview = async (req, res) => {
     if (error.code === 11000) {
       return res.status(400).json({ message: 'You have already reviewed this course' });
     }
-    console.error('Error creating review:', error);
+    logger.error('Error creating review:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to submit review' });
   }
 };
@@ -143,7 +144,7 @@ export const updateReview = async (req, res) => {
 
     res.status(200).json({ message: 'Review updated successfully', review: populatedReview });
   } catch (error) {
-    console.error('Error updating review:', error);
+    logger.error('Error updating review:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to update review' });
   }
 };
@@ -167,7 +168,7 @@ export const deleteReview = async (req, res) => {
 
     res.status(200).json({ message: 'Review deleted successfully' });
   } catch (error) {
-    console.error('Error deleting review:', error);
+    logger.error('Error deleting review:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to delete review' });
   }
 };

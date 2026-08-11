@@ -1,5 +1,6 @@
 import Report from '../models/Report.js';
 import { logAudit } from '../utils/auditLogger.js';
+import logger from '../utils/logger.js';
 
 // @route   POST /api/reports
 // @access  Private/Student
@@ -20,7 +21,7 @@ export const createReport = async (req, res) => {
 
     res.status(201).json({ message: 'Report submitted successfully', report });
   } catch (error) {
-    console.error('Error creating report:', error);
+    logger.error('Error creating report:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to submit report' });
   }
 };
@@ -40,7 +41,7 @@ export const getReports = async (req, res) => {
 
     res.status(200).json({ reports });
   } catch (error) {
-    console.error('Error fetching reports:', error);
+    logger.error('Error fetching reports:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to fetch reports' });
   }
 };
@@ -70,7 +71,7 @@ export const resolveReport = async (req, res) => {
 
     res.status(200).json({ message: 'Report updated', report });
   } catch (error) {
-    console.error('Error resolving report:', error);
+    logger.error('Error resolving report:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to update report' });
   }
 };
