@@ -652,6 +652,8 @@
       "transaction_id": "Transaction ID",
       "enter_reference_id": "Enter reference ID",
       "payment_screenshot": "Payment Screenshot",
+      "choose_file": "Choose File",
+      "no_file_chosen": "No file chosen",
       "cancel": "Cancel",
       "submit_payment": "Submit Payment",
       "submitting": "Submitting...",

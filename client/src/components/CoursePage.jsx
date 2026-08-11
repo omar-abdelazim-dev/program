@@ -1045,11 +1045,13 @@ export default function CoursePage({ cart = [], setCart, user }) {
                     setCart([...cart, course]);
                   }
                 }}
+                disabled={cart.find((c) => c._id === course._id)}
                 style={{
                   width: "100%",
                   height: "54px",
-                  background: "transparent",
-                  border: "2px solid var(--border)",
+                  background: "var(--bg-main)",
+                  boxShadow: "var(--inner-shadow)",
+                  border: "1px solid var(--border)",
                   borderRadius: "50px",
                   color: "var(--text-primary)",
                   fontWeight: "700",
@@ -1062,14 +1064,12 @@ export default function CoursePage({ cart = [], setCart, user }) {
                 }}
                 onMouseEnter={(e) => {
                   if (!cart.find((c) => c._id === course._id)) {
-                    e.currentTarget.style.background = "var(--bg-main)";
-                    e.currentTarget.style.borderColor = "var(--text-primary)";
+                    e.currentTarget.style.background = "var(--bg-surface)";
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!cart.find((c) => c._id === course._id)) {
-                    e.currentTarget.style.background = "transparent";
-                    e.currentTarget.style.borderColor = "var(--border)";
+                    e.currentTarget.style.background = "var(--bg-main)";
                   }
                 }}
               >

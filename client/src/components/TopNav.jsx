@@ -63,40 +63,6 @@ export default function TopNav({
 
       {/* RIGHT: Utilities & Profile */}
       <div className="header-right">
-        {/* Language Toggle */}
-        <button
-          className="utility-icon-btn"
-          onClick={toggleLanguage}
-          aria-label="Toggle language"
-          style={{
-            fontWeight: '600',
-            fontSize: '0.9rem',
-            fontFamily: 'Inter, sans-serif'
-          }}
-        >
-          {i18n.language === "ar" ? "EN" : "AR"}
-        </button>
-
-        {/* Theme Toggle */}
-        <button
-          className="utility-icon-btn"
-          onClick={toggleTheme}
-          aria-label="Toggle theme"
-        >
-          <svg
-            className={`theme-toggle-icon ${isLightMode ? "is-active" : ""}`}
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth="1.8"
-          >
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-          </svg>
-        </button>
-
         {/* Cart */}
         <Link to="/checkout/cart" className="utility-icon-btn">
           <svg

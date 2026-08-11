@@ -658,6 +658,8 @@
       "transaction_id": "رقم العملية",
       "enter_reference_id": "أدخل رقم المرجع",
       "payment_screenshot": "صورة إيصال الدفع",
+      "choose_file": "اختر ملف",
+      "no_file_chosen": "لم يتم اختيار ملف",
       "cancel": "إلغاء",
       "submit_payment": "تأكيد الدفع",
       "submitting": "جاري الإرسال...",
