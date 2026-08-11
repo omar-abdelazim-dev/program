@@ -34,6 +34,8 @@ const run = async () => {
     description: 'Learn the fundamentals of algorithmic thinking.',
     price: 49,
     category: 'Computer Science',
+    college: 'College of Computer Science and Information Technology',
+    semester: 1,
   });
   assert(res.status === 201, `Create course failed: ${JSON.stringify(res.body)}`);
   assert(res.body.course.status === 'pending', 'New course should default to pending');
@@ -82,16 +84,28 @@ const run = async () => {
   assert(res.body.courses.length === 1, 'Admin should see exactly 1 pending course');
   console.log('✓ Admin sees pending course');
 
-  // 8. Admin approves it
+  // 8. Admin approves it -> lands as a draft, not yet live (INS-03: instructor
+  // must explicitly publish before it's visible to students)
   res = await agentAdmin.patch(`/api/courses/${courseId}/approve`).set('X-CSRF-Token', adminCsrf);
   assert(res.status === 200, `Approve failed: ${JSON.stringify(res.body)}`);
-  assert(res.body.course.status === 'approved', 'Course should now be approved');
-  console.log('✓ Admin approved course');
+  assert(res.body.course.status === 'draft', 'Approved course should land as a draft, pending publish');
+  console.log('✓ Admin approved course (status: draft)');
+
+  // 8b. Approved-but-unpublished course should NOT be public yet
+  res = await agentPublic.get('/api/courses');
+  assert(res.body.courses.length === 0, 'Draft course should not appear in public catalog yet');
+  console.log('✓ Draft course correctly hidden from public catalog');
+
+  // 8c. Instructor publishes the course to go live
+  res = await agentInstructor.patch(`/api/courses/${courseId}/publish`).set('X-CSRF-Token', instructorCsrf);
+  assert(res.status === 200, `Publish failed: ${JSON.stringify(res.body)}`);
+  assert(res.body.course.status === 'approved', 'Published course should move to approved (live)');
+  console.log('✓ Instructor published course (status: approved)');
 
   // 9. Public catalog now shows it
   res = await agentPublic.get('/api/courses');
-  assert(res.body.courses.length === 1, 'Approved course should now appear in public catalog');
-  console.log('✓ Approved course now visible in public catalog');
+  assert(res.body.courses.length === 1, 'Published course should now appear in public catalog');
+  console.log('✓ Published course now visible in public catalog');
 
   // 10. Course details endpoint returns lessons too
   res = await agentPublic.get(`/api/courses/${courseId}`);

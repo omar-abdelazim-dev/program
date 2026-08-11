@@ -1,4 +1,4 @@
-﻿import express from 'express';
+import express from 'express';
 import {
   toggleProgramInstructor,
   getStats, getRecentActivity, getRevenueAnalytics, getUsers, toggleBlockUser, changeUserRole,
@@ -6,6 +6,7 @@ import {
   manualEnroll, createPromoCode, getPromoCodes, togglePromoCode,
 } from '../controllers/adminController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
+import { validateObjectId } from '../middleware/validationMiddleware.js';
 import { validateUserIdParam, validateRoleChange } from '../validators/adminValidators.js';
 
 const router = express.Router();
@@ -30,9 +31,9 @@ router.get('/payouts', getPendingPayouts);
 router.post('/enroll', manualEnroll);
 router.post('/promo-codes', createPromoCode);
 router.get('/promo-codes', getPromoCodes);
-router.patch('/promo-codes/:id/toggle', togglePromoCode);
+router.patch('/promo-codes/:id/toggle', validateObjectId('id'), togglePromoCode);
 router.get('/lessons', getAllLessons);
-router.patch('/lessons/:id/approve', approveLesson);
-router.patch('/lessons/:id/reject', rejectLesson);
+router.patch('/lessons/:id/approve', validateObjectId('id'), approveLesson);
+router.patch('/lessons/:id/reject', validateObjectId('id'), rejectLesson);
 
 export default router;

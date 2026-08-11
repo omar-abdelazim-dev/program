@@ -76,9 +76,25 @@ const userSchema = new mongoose.Schema(
     socialUrl: { type: String, default: '' },
     goalsText: { type: String, default: '' },
     selectedPills: { type: [String], default: [] },
+    
+    // --- Account Lockout Fields ---
+    failedLoginAttempts: { type: Number, default: 0 },
+    lockoutStage: { type: Number, default: 0 },
+    lockUntil: { type: Date },
+
+    // --- Email Verification Fields ---
+    isEmailVerified: { type: Boolean, default: false },
+    emailVerificationTokenHash: { type: String, select: false },
+    emailVerificationExpires: { type: Date, select: false },
   },
   { timestamps: true }
 );
+
+// Virtual for checking if the account is currently locked
+userSchema.virtual('isLocked').get(function() {
+  return !!(this.lockUntil && this.lockUntil > Date.now());
+});
+
 
 // Runs automatically before a user document is saved.
 // We hash the password here (not in the controller) so it's IMPOSSIBLE to

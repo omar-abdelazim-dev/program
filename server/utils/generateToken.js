@@ -1,56 +1,77 @@
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import { getInternalConfig } from './configFetcher.js';
+import Session from '../models/Session.js';
 
-// Creates a signed JWT and sets it as an HTTP-only cookie on the response.
-//
-// Why HTTP-only cookies instead of localStorage?
-// A JWT in localStorage is readable by any JavaScript running on the page —
-// including malicious scripts injected via an XSS bug in some dependency.
-// An HTTP-only cookie is invisible to JavaScript entirely; the browser attaches
-// it to requests automatically, and only the server can read it. This doesn't
-// eliminate all risk (CSRF becomes the concern instead of XSS), but it's the
-// safer default for most apps, which is why we set sameSite + secure below.
-// rememberMe (default true — unchanged behavior for register() and any other
-// caller that doesn't pass it) controls whether the cookie persists across
-// browser restarts. The JWT itself is always valid for the same duration
-// either way; what changes is whether the *cookie* survives closing the
-// browser (maxAge set) or not (session cookie, no maxAge). Token duration
-// itself comes from SystemConfig (security.jwtExpiration), admin-configurable
-// in MINUTES (not days — a stolen 7-day token was a standing risk), falling
-// back to 60 minutes.
-const generateTokenAndSetCookie = async (res, userId, rememberMe = true) => {
-  const config = await getInternalConfig();
-  const jwtExpirationMinutes = config?.security?.jwtExpiration || 60;
+// Parses string like "30m", "7d" into ms
+const parseDurationMs = (durationStr) => {
+  if (typeof durationStr === 'number') return durationStr;
+  const match = durationStr.match(/^(\d+)([smhd])$/);
+  if (!match) return 60 * 60 * 1000;
+  const val = parseInt(match[1], 10);
+  const unit = match[2];
+  const mult = { s: 1000, m: 60 * 1000, h: 60 * 60 * 1000, d: 24 * 60 * 60 * 1000 };
+  return val * mult[unit];
+};
 
+const generateTokenAndSetCookie = async (res, userId, req = null) => {
+  const { AUTH_CONFIG } = await import('../config/security.js');
+
+  const accessTokenMs = parseDurationMs(AUTH_CONFIG.ACCESS_TOKEN_LIFETIME);
+  const refreshTokenMs = parseDurationMs(AUTH_CONFIG.REFRESH_TOKEN_LIFETIME);
+
+  // 1. Generate Access Token (30m)
   const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
-    expiresIn: `${jwtExpirationMinutes}m`,
+    expiresIn: AUTH_CONFIG.ACCESS_TOKEN_LIFETIME,
   });
 
-  const maxAge = rememberMe ? jwtExpirationMinutes * 60 * 1000 : undefined; // configured duration, or a session cookie
+  // 2. Generate Refresh Token (cryptographically secure random)
+  const refreshToken = crypto.randomBytes(40).toString('hex');
+  const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
 
+  // 3. Enforce Max Active Sessions (revoke oldest if over limit)
+  const activeSessions = await Session.find({ userId, revoked: false }).sort('issuedAt');
+  if (activeSessions.length >= AUTH_CONFIG.MAX_ACTIVE_SESSIONS) {
+    // Revoke the oldest session
+    activeSessions[0].revoked = true;
+    await activeSessions[0].save();
+  }
+
+  // 4. Create New Session
+  const session = await Session.create({
+    userId,
+    refreshTokenHash,
+    expiresAt: new Date(Date.now() + refreshTokenMs),
+    ipAddress: req?.ip || 'Unknown IP',
+    device: req?.get('user-agent') || 'Unknown Device',
+  });
+
+  // 5. Set Access Token Cookie
   res.cookie('token', token, {
-    httpOnly: true, // JavaScript on the frontend can never read this cookie
-    secure: process.env.NODE_ENV === 'production', // HTTPS-only in production
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' needed cross-site (Vercel <-> Render)
-    maxAge,
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    maxAge: accessTokenMs, // 30m
   });
 
-  // Double-submit CSRF cookie: sameSite:'none' in production means the browser
-  // will happily attach the auth cookie to a cross-site request, so the cookie
-  // alone can no longer prove the request came from our frontend. This second
-  // cookie must be readable by frontend JS (httpOnly: false) so it can be echoed
-  // back as a header — a third-party page can trigger the request but can't
-  // read this cookie's value to forge the header.
+  // 6. Set Refresh Token Cookie (strictly HttpOnly, longer lifetime)
+  res.cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    path: '/api/auth/refresh', // Restricted path
+    maxAge: refreshTokenMs, // 7d
+  });
+
+  // 7. CSRF Cookie
   const csrfToken = crypto.randomBytes(32).toString('hex');
   res.cookie('csrfToken', csrfToken, {
     httpOnly: false,
     secure: process.env.NODE_ENV === 'production',
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    maxAge,
+    maxAge: accessTokenMs,
   });
 
-  return token;
+  return { token, refreshToken, sessionId: session._id };
 };
 
 export default generateTokenAndSetCookie;

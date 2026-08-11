@@ -8,6 +8,7 @@ import {
   deleteReview,
 } from '../controllers/reviewController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
+import { validateObjectId } from '../middleware/validationMiddleware.js';
 
 const router = express.Router();
 
@@ -27,6 +28,6 @@ router.get('/course/:id', getCourseReviews);
 router.get('/instructor', protect, authorize('instructor'), getInstructorReviews);
 
 // Instructor reports a review
-router.patch('/:id/report', protect, authorize('instructor'), reportReview);
+router.patch('/:id/report', protect, authorize('instructor'), validateObjectId('id'), reportReview);
 
 export default router;
