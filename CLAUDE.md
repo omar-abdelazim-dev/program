@@ -45,22 +45,30 @@ merged. The current frontend (in `client/src/`) has real, working:
 - `POST /api/auth/logout`
 - `GET /api/auth/me` 🔒 — returns `{ user }`
 
-**Courses**
+**Courses** — content hierarchy is `Course → Module → Lesson` (not a flat lesson list)
 - `GET /api/courses?search=&category=` — public catalog, approved only
-- `GET /api/courses/:id` — returns `{ course, lessons }`. `lessons` has `{ _id, title, order }` only — videoUrl deliberately excluded here.
+- `GET /api/courses/:id` — returns `{ course, modules }`. Each module: `{ _id, title, description, order, lessons }`, and each lesson has `{ _id, title, order }` only — videoUrl deliberately excluded here.
 - `POST /api/courses` 🔒 instructor — body: `{ title, description, price, category, thumbnailUrl }`
 - `GET /api/courses/mine` 🔒 instructor — own courses, any status
-- `POST /api/courses/:courseId/lessons` 🔒 instructor — body: `{ title, videoUrl }`
+- `POST /api/courses/:courseId/modules` 🔒 instructor — body: `{ title, description }`
+- `PUT /api/courses/:courseId/modules/:moduleId` 🔒 instructor
+- `DELETE /api/courses/:courseId/modules/:moduleId` 🔒 instructor — cascades, deletes the module's lessons too
+- `PUT /api/courses/:courseId/modules-reorder` 🔒 instructor — body: `{ moduleIds: [...] }` (full ordered array)
+- `POST /api/courses/:courseId/modules/:moduleId/lessons` 🔒 instructor — body: `{ title, videoUrl }`
+- `PUT /api/courses/:courseId/modules/:moduleId/lessons-reorder` 🔒 instructor — body: `{ lessonIds: [...] }`
+- `PUT /api/courses/:courseId/lessons/:lessonId` 🔒 instructor
+- `DELETE /api/courses/:courseId/lessons/:lessonId` 🔒 instructor
 - `GET /api/courses/:courseId/lessons/:lessonId` 🔒 — returns `{ lesson }` WITH videoUrl. Requires enrollment, ownership, or admin.
+- `PATCH /api/courses/:id/publish` 🔒 instructor — `draft → approved` (live) requires at least one module with at least one lesson, else 400
 - `GET /api/courses/pending` 🔒 admin
 - `PATCH /api/courses/:id/approve` 🔒 admin
 - `PATCH /api/courses/:id/reject` 🔒 admin
 
 **Enrollment**
 - `POST /api/enrollments/:courseId` 🔒 student — 201 success, 409 already enrolled, 403 course not approved
-- `GET /api/enrollments/:courseId` 🔒 — returns `{ enrolled, completedLessonIds, totalLessons, progressPercent }`
+- `GET /api/enrollments/:courseId` 🔒 — returns `{ enrolled, completedLessonIds, totalLessons, progressPercent, moduleProgress }`, where `moduleProgress` is `[{ moduleId, title, completedCount, totalCount, percent }]`
 - `GET /api/enrollments/mine` 🔒 student
-- `PATCH /api/enrollments/:courseId/lessons/:lessonId/complete` 🔒 student — idempotent, safe to call repeatedly
+- `PATCH /api/enrollments/:courseId/lessons/:lessonId/complete` 🔒 student — idempotent, safe to call repeatedly, returns the same shape as `GET /api/enrollments/:courseId` minus `enrolled`
 
 **Uploads**
 - `POST /api/uploads/video` 🔒 instructor — multipart field name `video`, 500MB limit, returns `{ url }`

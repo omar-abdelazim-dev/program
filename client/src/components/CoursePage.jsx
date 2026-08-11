@@ -16,7 +16,8 @@ export default function CoursePage({ cart = [], setCart, user }) {
   const [activeTab, setActiveTab] = useState('syllabus');
 
   const [course, setCourse] = useState(null);
-  const [lessons, setLessons] = useState([]);
+  const [modules, setModules] = useState([]);
+  const [collapsedModules, setCollapsedModules] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -41,7 +42,7 @@ export default function CoursePage({ cart = [], setCart, user }) {
       try {
         const { data } = await api.get(`/courses/${id}`, { signal: controller.signal });
         setCourse(data.course);
-        setLessons(data.lessons || []);
+        setModules(data.modules || []);
 
         try {
           const enrollRes = await api.get(`/enrollments/${id}`, { signal: controller.signal });
@@ -381,21 +382,26 @@ export default function CoursePage({ cart = [], setCart, user }) {
                   >
                     {t("course_page.lessons_title")}
                   </h3>
-                  <span
-                    style={{
-                      color: "var(--text-secondary)",
-                      fontWeight: "600",
-                      fontSize: "0.9rem",
-                    }}
-                  >
-                    {lessons.length}{" "}
-                    {lessons.length === 1
-                      ? t("course_page.lesson_singular")
-                      : t("course_page.lesson_plural")}
-                  </span>
+                  {(() => {
+                    const totalLessons = modules.reduce((sum, m) => sum + (m.lessons?.length || 0), 0);
+                    return (
+                      <span
+                        style={{
+                          color: "var(--text-secondary)",
+                          fontWeight: "600",
+                          fontSize: "0.9rem",
+                        }}
+                      >
+                        {totalLessons}{" "}
+                        {totalLessons === 1
+                          ? t("course_page.lesson_singular")
+                          : t("course_page.lesson_plural")}
+                      </span>
+                    );
+                  })()}
                 </div>
 
-                {lessons.length === 0 ? (
+                {modules.length === 0 ? (
                   <div
                     style={{
                       padding: "32px",
@@ -409,48 +415,101 @@ export default function CoursePage({ cart = [], setCart, user }) {
                     {t("course_page.no_lessons")}
                   </div>
                 ) : (
-                  lessons.map((lesson, i) => (
-                    <div
-                      key={lesson._id}
-                      style={{
-                        padding: "20px 24px",
-                        background: "var(--bg-main)",
-                        borderRadius: "12px",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "16px",
-                        boxShadow: "var(--inner-shadow)",
-                      }}
-                    >
+                  modules.map((module, mIndex) => {
+                    const isCollapsed = !!collapsedModules[module._id];
+                    const moduleLessons = module.lessons || [];
+                    return (
                       <div
+                        key={module._id}
                         style={{
-                          width: "32px",
-                          height: "32px",
-                          borderRadius: "8px",
-                          background: "var(--bg-surface)",
-                          color: "var(--text-primary)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontWeight: "700",
-                          fontSize: "0.9rem",
-                          boxShadow: "var(--outer-shadow)",
+                          background: "var(--bg-main)",
+                          borderRadius: "12px",
+                          boxShadow: "var(--inner-shadow)",
+                          overflow: "hidden",
                         }}
                       >
-                        {i + 1}
+                        <button
+                          onClick={() => setCollapsedModules((prev) => ({ ...prev, [module._id]: !prev[module._id] }))}
+                          style={{
+                            width: "100%",
+                            padding: "18px 24px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            background: "transparent",
+                            border: "none",
+                            cursor: "pointer",
+                            textAlign: "start",
+                          }}
+                        >
+                          <div>
+                            <h4 style={{ margin: 0, fontSize: "1.05rem", fontWeight: "700", color: "var(--text-primary)" }}>
+                              {t("course_page.module_label", "Module")} {mIndex + 1} — {module.title}
+                            </h4>
+                            <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+                              {moduleLessons.length}{" "}
+                              {moduleLessons.length === 1 ? t("course_page.lesson_singular") : t("course_page.lesson_plural")}
+                            </span>
+                          </div>
+                          <svg
+                            width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                            style={{ transition: "transform 0.25s", transform: isCollapsed ? "rotate(-90deg)" : "rotate(0deg)", flexShrink: 0, color: "var(--text-secondary)" }}
+                          >
+                            <polyline points="6 9 12 15 18 9" />
+                          </svg>
+                        </button>
+
+                        <div className={`expandable-section ${!isCollapsed ? 'expanded' : ''}`}>
+                          <div style={{ overflow: "hidden" }}>
+                            <div style={{ display: "flex", flexDirection: "column", gap: "10px", padding: moduleLessons.length ? "0 16px 16px 16px" : "0" }}>
+                              {moduleLessons.map((lesson, i) => (
+                                <div
+                                  key={lesson._id}
+                                  style={{
+                                    padding: "16px 20px",
+                                    background: "var(--bg-surface)",
+                                    borderRadius: "10px",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "16px",
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      width: "28px",
+                                      height: "28px",
+                                      borderRadius: "8px",
+                                      background: "var(--bg-main)",
+                                      color: "var(--text-primary)",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      fontWeight: "700",
+                                      fontSize: "0.85rem",
+                                      boxShadow: "var(--outer-shadow)",
+                                      flexShrink: 0,
+                                    }}
+                                  >
+                                    {i + 1}
+                                  </div>
+                                  <h4
+                                    style={{
+                                      margin: 0,
+                                      fontSize: "1.0rem",
+                                      fontWeight: "600",
+                                      color: "var(--text-primary)",
+                                    }}
+                                  >
+                                    {lesson.title}
+                                  </h4>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <h4
-                        style={{
-                          margin: 0,
-                          fontSize: "1.05rem",
-                          fontWeight: "600",
-                          color: "var(--text-primary)",
-                        }}
-                      >
-                        {lesson.title}
-                      </h4>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             )}

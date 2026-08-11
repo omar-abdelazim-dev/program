@@ -2,6 +2,7 @@ import 'dotenv/config';
 import mongoose from 'mongoose';
 import User from './models/User.js';
 import Course from './models/Course.js';
+import Module from './models/Module.js';
 import Lesson from './models/Lesson.js';
 
 // Public domain sample clips (Google's GTV test bucket) so the video player
@@ -31,9 +32,10 @@ const seedDatabase = async () => {
       });
     }
 
-    console.log('Clearing old courses and lessons...');
-    // Clear existing mock courses/lessons if any
+    console.log('Clearing old courses, modules, and lessons...');
+    // Clear existing mock courses/modules/lessons if any
     await Course.deleteMany({});
+    await Module.deleteMany({});
     await Lesson.deleteMany({});
 
     console.log('Seeding mock courses...');
@@ -101,10 +103,16 @@ const seedDatabase = async () => {
 
     for (const { lessons, ...courseData } of courses) {
       const course = await Course.create(courseData);
+      const module = await Module.create({
+        course: course._id,
+        title: 'Course Content',
+        order: 1,
+        status: 'published',
+      });
       const lessonDocs = lessons.map((title, i) => ({
         title,
         videoUrl: SAMPLE_VIDEO_URLS[i % SAMPLE_VIDEO_URLS.length],
-        course: course._id,
+        module: module._id,
         order: i + 1,
       }));
       await Lesson.insertMany(lessonDocs);

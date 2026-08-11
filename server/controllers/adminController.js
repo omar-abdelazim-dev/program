@@ -533,7 +533,7 @@ export const getAllLessons = async (req, res) => {
   try {
     const lessons = await Lesson.find()
       .populate({
-        path: 'section',
+        path: 'module',
         populate: {
           path: 'course',
           select: 'title instructor status category',

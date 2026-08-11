@@ -1,10 +1,11 @@
 import Course from '../models/Course.js';
 import Lesson from '../models/Lesson.js';
+import Module from '../models/Module.js';
 import Enrollment from '../models/Enrollment.js';
-import Section from '../models/Section.js';
 import Review from '../models/Review.js';
 import Notification from '../models/Notification.js';
 import { escapeRegex } from '../utils/escapeRegex.js';
+import { getModulesWithLessons, getLessonIdsForCourse } from '../utils/courseContent.js';
 import mongoose from 'mongoose';
 import fs from 'fs';
 import logger from '../utils/logger.js';
@@ -108,9 +109,17 @@ export const getInstructorStats = async (req, res) => {
       },
       {
         $lookup: {
-          from: 'lessons',
+          from: 'modules',
           localField: '_id',
           foreignField: 'course',
+          as: 'modules'
+        }
+      },
+      {
+        $lookup: {
+          from: 'lessons',
+          localField: 'modules._id',
+          foreignField: 'module',
           as: 'lessons'
         }
       },
@@ -288,14 +297,17 @@ export const getCourseById = async (req, res) => {
       return res.status(403).json({ message: 'This course is not yet available.' });
     }
 
-    const sections = await Section.find({ course: course._id });
-    const sectionIds = sections.map(s => s._id);
+    // deliberately excludes videoUrl — see getLessonContent for the gated endpoint
+    const grouped = await getModulesWithLessons(course._id, 'title order module');
+    const modules = grouped.map(({ module, lessons }) => ({
+      _id: module._id,
+      title: module.title,
+      description: module.description,
+      order: module.order,
+      lessons,
+    }));
 
-    const lessons = await Lesson.find({ section: { $in: sectionIds } })
-      .select('title order section') // deliberately excludes videoUrl — see getLessonContent for the gated endpoint
-      .sort({ order: 1 });
-
-    res.status(200).json({ course, lessons });
+    res.status(200).json({ course, modules });
   } catch (error) {
     logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching course' });
@@ -384,6 +396,10 @@ export const publishCourse = async (req, res) => {
     }
 
     if (course.status === 'draft') {
+      const lessonIds = await getLessonIdsForCourse(course._id);
+      if (lessonIds.length === 0) {
+        return res.status(400).json({ message: 'Add at least one lesson before publishing this course live' });
+      }
       course.status = 'approved';
     } else if (course.status === 'approved') {
       course.status = 'draft';
@@ -558,12 +574,12 @@ export const deleteCourse = async (req, res) => {
       return res.status(404).json({ message: 'Course not found' });
     }
 
-    // Cleanup associated lessons and sections. Lessons are keyed off
-    // Section, not Course directly, so sections must be resolved first.
-    const sections = await Section.find({ course: course._id });
-    const sectionIds = sections.map((s) => s._id);
-    await Lesson.deleteMany({ section: { $in: sectionIds } });
-    await Section.deleteMany({ course: course._id });
+    // Cleanup associated lessons and modules. Lessons are keyed off
+    // Module, not Course directly, so modules must be resolved first.
+    const modules = await Module.find({ course: course._id });
+    const moduleIds = modules.map((m) => m._id);
+    await Lesson.deleteMany({ module: { $in: moduleIds } });
+    await Module.deleteMany({ course: course._id });
     await Course.findByIdAndDelete(req.params.id);
     // Enrollments generally shouldn't be deleted so students maintain history,
     // or they could be depending on business logic. We'll leave them or soft-delete.
