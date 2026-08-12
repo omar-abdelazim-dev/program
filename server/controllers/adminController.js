@@ -6,6 +6,8 @@ import Lesson from '../models/Lesson.js';
 import PromoCode from '../models/PromoCode.js';
 import { escapeRegex } from '../utils/escapeRegex.js';
 import { logAudit } from '../utils/auditLogger.js';
+import Notification from '../models/Notification.js';
+import logger from '../utils/logger.js';
 
 // @route   GET /api/admin/stats
 // @access  Private (Admin)
@@ -102,7 +104,7 @@ export const getStats = async (req, res) => {
       growth
     });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching stats' });
   }
 };
@@ -152,7 +154,7 @@ export const getRevenueAnalytics = async (req, res) => {
 
     res.status(200).json({ series, totalRevenue, totalEnrollments, avgOrderValue });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching revenue analytics' });
   }
 };
@@ -221,7 +223,7 @@ export const getRecentActivity = async (req, res) => {
 
     res.status(200).json({ activities: activities.slice(0, 10) });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching activity' });
   }
 };
@@ -272,7 +274,7 @@ export const getUsers = async (req, res) => {
 
     res.status(200).json({ users, pagination: { page: pageNum, limit: limitNum, totalPages, totalItems } });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching users' });
   }
 };
@@ -319,7 +321,7 @@ export const toggleBlockUser = async (req, res) => {
 
     res.status(200).json({ message: `User ${user.isBlocked ? 'blocked' : 'unblocked'}`, user });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error blocking user' });
   }
 };
@@ -379,7 +381,7 @@ export const changeUserRole = async (req, res) => {
 
     res.status(200).json({ message: `User's role changed to ${role}`, user });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error changing user role' });
   }
 };
@@ -424,7 +426,7 @@ export const softDeleteUser = async (req, res) => {
 
     res.status(200).json({ message: 'User deleted', user });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error deleting user' });
   }
 };
@@ -456,7 +458,7 @@ export const restoreUser = async (req, res) => {
 
     res.status(200).json({ message: 'User restored', user });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error restoring user' });
   }
 };
@@ -505,7 +507,7 @@ export const getTransactions = async (req, res) => {
 
     res.status(200).json({ transactions: enrollments, pagination: { page: pageNum, limit: limitNum, totalPages, totalItems } });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching transactions' });
   }
 };
@@ -521,8 +523,57 @@ export const getPendingPayouts = async (req, res) => {
     
     res.status(200).json({ payouts });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching payouts' });
+  }
+};
+
+// @route   GET /api/admin/payouts/:id/revenue-trace
+// @access  Private (Admin)
+export const getPayoutRevenueTrace = async (req, res) => {
+  try {
+    const payout = await Transaction.findById(req.params.id);
+    if (!payout || payout.type !== 'payout_request') {
+      return res.status(404).json({ message: 'Payout request not found' });
+    }
+
+    const instructorId = payout.instructor;
+
+    // Find the previous successful/cleared payout for this instructor
+    const lastPayout = await Transaction.findOne({
+      instructor: instructorId,
+      type: 'payout_request',
+      status: { $in: ['cleared', 'paid'] },
+      createdAt: { $lt: payout.createdAt }
+    }).sort({ createdAt: -1 });
+
+    const sinceDate = lastPayout ? lastPayout.createdAt : new Date(0);
+
+    // Find all courses owned by this instructor
+    const courses = await Course.find({ instructor: instructorId }).select('_id');
+    const courseIds = courses.map(c => c._id);
+
+    // Find all approved enrollments for these courses created since sinceDate up to payout.createdAt
+    const enrollments = await Enrollment.find({
+      course: { $in: courseIds },
+      status: 'approved',
+      createdAt: { $gte: sinceDate, $lte: payout.createdAt }
+    })
+      .populate('student', 'name email')
+      .populate('course', 'title price')
+      .sort({ createdAt: -1 });
+
+    const totalSum = enrollments.reduce((sum, e) => sum + (e.amountPaid || (e.course && e.course.price) || 0), 0);
+
+    res.status(200).json({ 
+      enrollments, 
+      totalSum, 
+      sinceDate, 
+      payoutDate: payout.createdAt 
+    });
+  } catch (error) {
+    logger.error('An error occurred in getPayoutRevenueTrace', { error: error.message, stack: error.stack });
+    res.status(500).json({ message: 'Server error fetching revenue trace' });
   }
 };
 
@@ -532,7 +583,7 @@ export const getAllLessons = async (req, res) => {
   try {
     const lessons = await Lesson.find()
       .populate({
-        path: 'section',
+        path: 'module',
         populate: {
           path: 'course',
           select: 'title instructor status category',
@@ -546,7 +597,7 @@ export const getAllLessons = async (req, res) => {
     
     res.status(200).json({ lessons });
   } catch (error) {
-    console.error('Error fetching lessons:', error);
+    logger.error('Error fetching lessons:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching lessons' });
   }
 };
@@ -560,7 +611,7 @@ export const approveLesson = async (req, res) => {
     if (!lesson) return res.status(404).json({ message: 'Lesson not found' });
     res.status(200).json({ message: 'Lesson approved', lesson });
   } catch (error) {
-    console.error('Error approving lesson:', error);
+    logger.error('Error approving lesson:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error approving lesson' });
   }
 };
@@ -573,7 +624,7 @@ export const rejectLesson = async (req, res) => {
     if (!lesson) return res.status(404).json({ message: 'Lesson not found' });
     res.status(200).json({ message: 'Lesson rejected', lesson });
   } catch (error) {
-    console.error('Error rejecting lesson:', error);
+    logger.error('Error rejecting lesson:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error rejecting lesson' });
   }
 };
@@ -626,7 +677,7 @@ export const manualEnroll = async (req, res) => {
     if (error.code === 11000) {
       return res.status(409).json({ message: 'Student is already enrolled in this course' });
     }
-    console.error('Error manually enrolling student:', error);
+    logger.error('Error manually enrolling student:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error enrolling student' });
   }
 };
@@ -652,7 +703,7 @@ export const createPromoCode = async (req, res) => {
     if (error.code === 11000) {
       return res.status(409).json({ message: 'That promo code already exists' });
     }
-    console.error('Error creating promo code:', error);
+    logger.error('Error creating promo code:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error creating promo code' });
   }
 };
@@ -664,7 +715,7 @@ export const getPromoCodes = async (req, res) => {
     const promoCodes = await PromoCode.find().populate('instructor', 'name email isProgramInstructor').sort({ createdAt: -1 });
     res.status(200).json({ promoCodes });
   } catch (error) {
-    console.error('Error fetching promo codes:', error);
+    logger.error('Error fetching promo codes:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching promo codes' });
   }
 };
@@ -683,7 +734,7 @@ export const togglePromoCode = async (req, res) => {
 
     res.status(200).json({ message: `Promo code ${promo.active ? 'activated' : 'deactivated'}`, promo });
   } catch (error) {
-    console.error('Error toggling promo code:', error);
+    logger.error('Error toggling promo code:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error toggling promo code' });
   }
 };
@@ -715,7 +766,110 @@ export const toggleProgramInstructor = async (req, res) => {
 
     res.json({ message: `Instructor ${user.isProgramInstructor ? 'added to' : 'removed from'} program`, user });
   } catch (error) {
-    console.error('Error toggling program instructor:', error);
+    logger.error('Error toggling program instructor:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+// @route   PATCH /api/admin/enrollments/:id/approve
+// @access  Private (Admin/SuperAdmin)
+export const approveEnrollment = async (req, res) => {
+  try {
+    // Atomic find-and-update on status: 'pending' closes the race window
+    // between two concurrent approve calls (e.g. a double-click) — only the
+    // first one can ever flip status away from 'pending', so at most one
+    // revenue-split Transaction is ever created per enrollment.
+    const enrollment = await Enrollment.findOneAndUpdate(
+      { _id: req.params.id, status: 'pending' },
+      { status: 'approved' },
+      { new: true }
+    );
+    if (!enrollment) {
+      const existing = await Enrollment.findById(req.params.id);
+      if (!existing) return res.status(404).json({ message: 'Enrollment request not found' });
+      return res.status(409).json({ message: `Enrollment request already ${existing.status}` });
+    }
+
+    // Generate revenue split transaction for the instructor (if course has price)
+    const course = await Course.findById(enrollment.course);
+    if (course && course.price > 0 && course.instructor) {
+      let platformCommission = enrollment.platformCommission;
+      let instructorShare = enrollment.instructorShare;
+      let commissionPercent = 15;
+      
+      const instructor = await User.findById(course.instructor);
+      if (instructor && instructor.isProgramInstructor) {
+        commissionPercent = 15;
+      } else {
+        commissionPercent = Math.round((platformCommission / course.price) * 100) || 15;
+      }
+
+      await Transaction.create({
+        instructor: course.instructor,
+        amount: instructorShare,
+        type: 'course_sale',
+        status: 'pending',
+        availableAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7-day settlement
+        description: `Course Sale - ${course.title}`,
+        course: course._id,
+        commissionRate: commissionPercent,
+        referenceId: enrollment.invoiceId || enrollment.transactionId || ('INV-' + enrollment._id.toString().slice(-8).toUpperCase()),
+      });
+    }
+
+    // Remove the admin-side enrollment request notifications
+    await Notification.deleteMany({ refId: enrollment._id, title: 'New Enrollment Request' });
+
+    // Notify the student
+    await Notification.create({
+      user: enrollment.student,
+      title: 'Enrollment Request Approved',
+      message: `Your enrollment request for "${course?.title || 'Course'}" has been approved! You can start learning now.`,
+      type: 'system',
+      link: `/learn/${enrollment.course}`
+    });
+
+    res.status(200).json({ message: 'Enrollment request approved', enrollment });
+  } catch (error) {
+    logger.error('Error approving enrollment', { error: error.message, stack: error.stack });
+    res.status(500).json({ message: 'Server error approving enrollment' });
+  }
+};
+
+// @route   PATCH /api/admin/enrollments/:id/reject
+// @access  Private (Admin/SuperAdmin)
+export const rejectEnrollment = async (req, res) => {
+  try {
+    const { reason } = req.body;
+    // Same atomic guard as approveEnrollment — see comment there.
+    const enrollment = await Enrollment.findOneAndUpdate(
+      { _id: req.params.id, status: 'pending' },
+      { status: 'rejected', rejectionReason: reason || '' },
+      { new: true }
+    );
+    if (!enrollment) {
+      const existing = await Enrollment.findById(req.params.id);
+      if (!existing) return res.status(404).json({ message: 'Enrollment request not found' });
+      return res.status(409).json({ message: `Enrollment request already ${existing.status}` });
+    }
+
+    await enrollment.populate('course');
+
+    // Remove the admin-side enrollment request notifications
+    await Notification.deleteMany({ refId: enrollment._id, title: 'New Enrollment Request' });
+
+    // Notify the student
+    await Notification.create({
+      user: enrollment.student,
+      title: 'Enrollment Request Rejected',
+      message: `Your enrollment request for "${enrollment.course?.title || 'Course'}" was rejected. Reason: ${reason || 'No reason provided.'}`,
+      type: 'system',
+      link: `/courses/${enrollment.course?._id || enrollment.course}`
+    });
+
+    res.status(200).json({ message: 'Enrollment request rejected', enrollment });
+  } catch (error) {
+    logger.error('Error rejecting enrollment', { error: error.message, stack: error.stack });
+    res.status(500).json({ message: 'Server error rejecting enrollment' });
   }
 };

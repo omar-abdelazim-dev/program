@@ -3430,10 +3430,10 @@ body .no-border {
 
 .analytics-row:hover .status-badge,
 .status-badge:hover {
-    background: var(--bg-surface);
-    box-shadow: var(--outer-shadow);
-    transform: translateY(-1px);
+    box-shadow: none;
 }
+
+
 
 
 .profile-avatar-btn {

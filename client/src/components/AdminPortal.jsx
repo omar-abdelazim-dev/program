@@ -18,6 +18,7 @@ import AdminPayoutsTab from "./AdminPayoutsTab";
 import AdminAnalyticsTab from "./AdminAnalyticsTab";
 import AdminOverviewTab from "./AdminOverviewTab";
 import SegmentedControl from "./common/SegmentedControl";
+import { formatNotificationTitle, formatNotificationMessage } from "../utils/notificationFormatter";
 import AdminUserManagementTab from "./AdminUserManagementTab";
 import AdminCourseManagementTab from "./AdminCourseManagementTab";
 import AdminLessonsTab from "./AdminLessonsTab";
@@ -241,6 +242,7 @@ export default function AdminPortal({
     setActiveTabRaw(tab);
   };
   const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
 
   const toggleLanguage = () => {
     const newLang = i18n.language === "en" ? "ar" : "en";
@@ -272,6 +274,56 @@ export default function AdminPortal({
   const [processingId, setProcessingId] = useState(null);
   const [userActionError, setUserActionError] = useState("");
 
+  const [selectedEnrollment, setSelectedEnrollment] = useState(null);
+  const [showScreenshotModal, setShowScreenshotModal] = useState(false);
+  const [processingEnrollmentAction, setProcessingEnrollmentAction] = useState(null);
+  const [enrollmentPage, setEnrollmentPage] = useState(1);
+  const [pendingEnrollmentReject, setPendingEnrollmentReject] = useState(null);
+  const [enrollmentRejectReason, setEnrollmentRejectReason] = useState("");
+  const [enrollmentRejectReasonError, setEnrollmentRejectReasonError] = useState("");
+
+  const handleApproveEnrollment = async (id) => {
+    setProcessingEnrollmentAction('approving');
+    try {
+      await api.patch(`/admin/enrollments/${id}/approve`);
+      notyf.success('Enrollment request approved successfully');
+      setTransactions(prev => prev.map(t => t._id === id ? { ...t, status: 'approved' } : t));
+      setSelectedEnrollment(null);
+    } catch (err) {
+      console.error(err);
+      notyf.error(err.response?.data?.message || 'Failed to approve enrollment');
+    } finally {
+      setProcessingEnrollmentAction(null);
+    }
+  };
+
+  const handleRejectEnrollment = async (id, reason) => {
+    setProcessingEnrollmentAction('rejecting');
+    try {
+      await api.patch(`/admin/enrollments/${id}/reject`, { reason });
+      notyf.success('Enrollment request rejected successfully');
+      setTransactions(prev => prev.map(t => t._id === id ? { ...t, status: 'rejected' } : t));
+      setSelectedEnrollment(null);
+      setPendingEnrollmentReject(null);
+      setEnrollmentRejectReason("");
+      setEnrollmentRejectReasonError("");
+    } catch (err) {
+      console.error(err);
+      notyf.error(err.response?.data?.message || 'Failed to reject enrollment');
+    } finally {
+      setProcessingEnrollmentAction(null);
+    }
+  };
+
+  const confirmEnrollmentReject = async () => {
+    if (!pendingEnrollmentReject) return;
+    if (!enrollmentRejectReason.trim()) {
+      setEnrollmentRejectReasonError("Please enter a reason for rejecting this request.");
+      return;
+    }
+    await handleRejectEnrollment(pendingEnrollmentReject._id, enrollmentRejectReason.trim());
+  };
+
   // Notifications State
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -280,33 +332,7 @@ export default function AdminPortal({
   const fetchNotifications = async () => {
     try {
       const res = await api.get('/notifications');
-      let notifs = res.data.notifications || [];
-      if (notifs.length === 0) {
-        notifs = [
-          {
-            _id: 'n1',
-            title: 'New Course Submission',
-            message: 'Instructor submitted "Advanced Machine Learning" for review.',
-            read: false,
-            createdAt: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
-          },
-          {
-            _id: 'n2',
-            title: 'New Enrollment Request',
-            message: 'Student Omar submitted an enrollment request for "UI/UX Masterclass".',
-            read: false,
-            createdAt: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-          },
-          {
-            _id: 'n3',
-            title: 'Payout Request Pending',
-            message: 'Dr. Sarah requested a payout of 4,500 EGP via Vodafone Cash.',
-            read: true,
-            createdAt: new Date(Date.now() - 1000 * 60 * 600).toISOString(),
-          },
-        ];
-      }
-      setNotifications(notifs);
+      setNotifications(res.data.notifications || []);
     } catch (err) {
       console.error('Failed to fetch notifications', err);
     }
@@ -324,6 +350,9 @@ export default function AdminPortal({
 
   useEffect(() => {
     fetchNotifications();
+    // Poll every 15s so new enrollment requests appear without refresh
+    const interval = setInterval(fetchNotifications, 15000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -756,6 +785,8 @@ export default function AdminPortal({
           },
         ];
 
+  const displayedTransactions = transactions.slice((enrollmentPage - 1) * 10, enrollmentPage * 10);
+
   return (
     <div
       data-role={user?.role}
@@ -827,7 +858,7 @@ export default function AdminPortal({
           );
 
           const pendingEnrollmentsCount = transactions.filter((t) => (t.status || 'pending').toLowerCase() === 'pending').length;
-          const pendingPayoutsCount = payouts.filter((p) => (p.status || 'pending').toLowerCase() === 'pending').length;
+          const pendingPayoutsCount = payouts.filter((p) => ['pending', 'otp_verified', 'approved', 'processing'].includes(p.status)).length;
           const totalFinancialPending = pendingEnrollmentsCount + pendingPayoutsCount;
           const totalCoursePending = pendingCourses.length + pendingLessonsCount;
 
@@ -1014,10 +1045,16 @@ export default function AdminPortal({
                 style={{ position: 'relative' }}
                 aria-label="Notifications"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                </svg>
-                {notifications.some(n => !n.read) && (
+                {notifications && notifications.some(n => !n.read) ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 005 14h14a1 1 0 00.707-1.707L19 11.586V8a6 6 0 00-6-6zM10 18a2 2 0 004 0h-4z" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                  </svg>
+                )}
+                {notifications && notifications.some(n => !n.read) && (
                   <span style={{
                     position: 'absolute', top: '4px', right: '4px',
                     width: '8px', height: '8px', backgroundColor: '#ef4444',
@@ -1026,7 +1063,7 @@ export default function AdminPortal({
                 )}
               </button>
               {showNotifications && (
-                <div className="profile-dropdown" style={{ width: '360px', right: 0, left: 'auto', padding: 0, borderRadius: '16px', overflow: 'hidden' }}>
+                <div className="profile-dropdown" style={{ width: '360px', right: isRTL ? 'auto' : 0, left: isRTL ? 0 : 'auto', padding: 0, borderRadius: '16px', overflow: 'hidden' }}>
                   <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--c-border-subtle, rgba(255,255,255,0.08))', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-surface)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }}>
                     <span style={{ color: 'var(--color-accent, #f97316)', fontSize: '1.05rem' }}>{t('nav.notifications', 'Notifications')}</span>
                     {notifications.length > 0 && (
@@ -1071,13 +1108,13 @@ export default function AdminPortal({
                         setShowNotifications(false);
                       }}>
                         <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-h)', marginBottom: '4px' }}>
-                          {notif.title}
+                          {formatNotificationTitle(notif.title || notif.text, t)}
                         </div>
                         <div style={{ fontSize: '0.8rem', color: 'var(--c-sub)', lineHeight: '1.4' }}>
-                          {notif.message}
+                          {formatNotificationMessage(notif.message, t)}
                         </div>
                         <div style={{ fontSize: '0.72rem', color: 'var(--c-sub)', marginTop: '6px', textAlign: 'right', opacity: 0.8 }}>
-                          {new Date(notif.createdAt).toLocaleString()}
+                          {new Date(notif.createdAt).toLocaleString(undefined, { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         </div>
                       </div>
                     )) : (
@@ -1386,14 +1423,14 @@ export default function AdminPortal({
                       </tr>
                     </thead>
                     <tbody>
-                      {transactions.length === 0 ? (
+                      {displayedTransactions.length === 0 ? (
                         <tr>
                           <td colSpan="6" style={{ padding: "32px", textAlign: "center", color: "var(--c-sub)" }}>
                             No requests found
                           </td>
                         </tr>
                       ) : (
-                        transactions.map((t) => {
+                        displayedTransactions.map((t) => {
                           const norm = (t.status || 'pending').toLowerCase().replace(/\s+/g, '_');
                           const statusConfig = {
                             pending: { label: 'Pending', bg: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b' },
@@ -1413,10 +1450,10 @@ export default function AdminPortal({
                                 borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.05))"
                               }}
                               className="hover-row"
-                              onClick={() => notyf.success('Popup will be built later')}
+                              onClick={() => setSelectedEnrollment(t)}
                             >
                               <td style={{ padding: "18px 24px 18px 32px", verticalAlign: "middle" }}>
-                                {new Date(t.createdAt).toLocaleString()}
+                                {new Date(t.createdAt).toLocaleDateString()}
                               </td>
                               <td style={{ padding: "18px 24px", verticalAlign: "middle" }}>
                                 <div style={{ color: "var(--text-h)", fontWeight: "500" }}>
@@ -1468,6 +1505,30 @@ export default function AdminPortal({
                       )}
                     </tbody>
                   </table>
+                  
+                  {transactions.length > 10 && (
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', margin: '20px 0 12px 0', alignItems: 'center' }}>
+                      <button 
+                        disabled={enrollmentPage === 1} 
+                        onClick={() => setEnrollmentPage(prev => prev - 1)}
+                        className="glass-btn hover-glow"
+                        style={{ padding: '8px 20px', fontSize: '0.85rem', cursor: enrollmentPage === 1 ? 'not-allowed' : 'pointer', opacity: enrollmentPage === 1 ? 0.5 : 1 }}
+                      >
+                        Previous
+                      </button>
+                      <span style={{ color: 'var(--c-sub)', fontSize: '0.9rem', fontWeight: '500' }}>
+                        Page {enrollmentPage} of {Math.ceil(transactions.length / 10)}
+                      </span>
+                      <button 
+                        disabled={enrollmentPage >= Math.ceil(transactions.length / 10)} 
+                        onClick={() => setEnrollmentPage(prev => prev + 1)}
+                        className="glass-btn hover-glow"
+                        style={{ padding: '8px 20px', fontSize: '0.85rem', cursor: enrollmentPage >= Math.ceil(transactions.length / 10) ? 'not-allowed' : 'pointer', opacity: enrollmentPage >= Math.ceil(transactions.length / 10) ? 0.5 : 1 }}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1680,6 +1741,294 @@ export default function AdminPortal({
                 {processingId === pendingReject.id
                   ? "Rejecting..."
                   : "Reject Course"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Selected Enrollment details modal */}
+      {selectedEnrollment && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.8)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 2000,
+            padding: "20px",
+          }}
+        >
+          <div
+            className="glass-card animate-entrance"
+            style={{ width: "100%", maxWidth: "500px", padding: "32px" }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h2 style={{ margin: "0", fontSize: "1.3rem", textTransform: 'uppercase', letterSpacing: '1px' }}>
+                Enrollment Request Details
+              </h2>
+              <button 
+                onClick={() => setSelectedEnrollment(null)} 
+                style={{ background: 'none', border: 'none', color: 'var(--c-sub)', fontSize: '1.5rem', cursor: 'pointer' }}
+              >×</button>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                <span style={{ color: 'var(--c-sub)' }}>Course Name:</span>
+                <span style={{ fontWeight: '600', color: 'var(--text-h)' }}>{selectedEnrollment.course?.title || 'N/A'}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                <span style={{ color: 'var(--c-sub)' }}>Instructor Name:</span>
+                <span style={{ fontWeight: '600', color: 'var(--text-h)' }}>{selectedEnrollment.course?.instructor?.name || 'N/A'}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                <span style={{ color: 'var(--c-sub)' }}>Course Price:</span>
+                <span style={{ fontWeight: '600', color: '#10B981' }}>{selectedEnrollment.amountPaid || selectedEnrollment.course?.price || 0} EGP</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                <span style={{ color: 'var(--c-sub)' }}>Fees (1%):</span>
+                <span style={{ fontWeight: '600', color: 'var(--text-h)' }}>
+                  {(((selectedEnrollment.amountPaid || selectedEnrollment.course?.price || 0) * 0.01)).toFixed(2)} EGP
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                <span style={{ color: 'var(--c-sub)' }}>Phone Number Used:</span>
+                <span style={{ fontWeight: '600', color: 'var(--text-h)' }}>{selectedEnrollment.paymentAccount || 'N/A'}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                <span style={{ color: 'var(--c-sub)' }}>Transaction ID:</span>
+                <span style={{ fontWeight: '600', color: 'var(--text-h)' }}>{selectedEnrollment.transactionId || 'N/A'}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                <span style={{ color: 'var(--c-sub)' }}>Invoice ID:</span>
+                <span style={{ fontWeight: '600', color: 'var(--text-h)', fontSize: '0.85rem' }}>{selectedEnrollment.invoiceId || 'N/A'}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                <span style={{ color: 'var(--c-sub)' }}>Payment Method:</span>
+                <span style={{ fontWeight: '600', color: 'var(--text-h)' }}>{selectedEnrollment.paymentMethod || 'N/A'}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                <span style={{ color: 'var(--c-sub)' }}>Transaction Date & Time:</span>
+                <span style={{ fontWeight: '600', color: 'var(--text-h)' }}>
+                  {selectedEnrollment.createdAt ? new Date(selectedEnrollment.createdAt).toLocaleString() : 'N/A'}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                <span style={{ color: 'var(--c-sub)' }}>Status:</span>
+                <span style={{ fontWeight: '700', textTransform: 'uppercase', color: selectedEnrollment.status === 'approved' ? '#34d399' : selectedEnrollment.status === 'rejected' ? '#fca5a5' : '#f59e0b' }}>
+                  {selectedEnrollment.status || 'pending'}
+                </span>
+              </div>
+            </div>
+
+            {selectedEnrollment.screenshot && (
+              <div style={{ marginBottom: '24px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowScreenshotModal(true)}
+                  className="glass-btn hover-glow"
+                  style={{ width: '100%', padding: '10px', fontSize: '0.9rem' }}
+                >
+                  View Payment Screenshot
+                </button>
+              </div>
+            )}
+
+            <div style={{ display: "flex", gap: "16px" }}>
+              {selectedEnrollment.status === 'pending' || !selectedEnrollment.status ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setPendingEnrollmentReject(selectedEnrollment)}
+                    disabled={processingEnrollmentAction !== null}
+                    className="glass-btn auth-submit-btn"
+                    style={{ 
+                      flex: 1, 
+                      background: 'var(--bg-main)', 
+                      color: '#ef4444', 
+                      border: '1px solid var(--border)',
+                      boxShadow: 'var(--inner-shadow)',
+                      marginTop: '0px'
+                    }}
+                  >
+                    Reject
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleApproveEnrollment(selectedEnrollment._id)}
+                    disabled={processingEnrollmentAction !== null}
+                    className="glass-btn auth-submit-btn"
+                    style={{ 
+                      flex: 1, 
+                      background: 'var(--bg-main)', 
+                      color: '#10b981', 
+                      border: '1px solid var(--border)',
+                      boxShadow: 'var(--inner-shadow)',
+                      marginTop: '0px' 
+                    }}
+                  >
+                    {processingEnrollmentAction === 'approving' ? "Approving..." : "Approve"}
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setSelectedEnrollment(null)}
+                  className="glass-btn hover-glow"
+                  style={{ flex: 1 }}
+                >
+                  Close
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Nested Modal to view Screenshot */}
+      {showScreenshotModal && selectedEnrollment && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.9)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 2100,
+            padding: "20px",
+          }}
+          onClick={() => setShowScreenshotModal(false)}
+        >
+          <div
+            style={{ position: 'relative', maxWidth: '90%', maxHeight: '90%' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowScreenshotModal(false)}
+              style={{
+                position: 'absolute',
+                top: '-40px',
+                right: '0',
+                background: 'none',
+                border: 'none',
+                color: '#fff',
+                fontSize: '2rem',
+                cursor: 'pointer'
+              }}
+            >×</button>
+            <img
+              src={selectedEnrollment.screenshot}
+              alt="Payment Screenshot"
+              style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain', borderRadius: '8px' }}
+            />
+            <div style={{ textAlign: 'center', marginTop: '12px' }}>
+              <a 
+                href={selectedEnrollment.screenshot} 
+                target="_blank" 
+                rel="noreferrer" 
+                style={{ color: 'var(--color-accent)', textDecoration: 'underline', fontSize: '0.9rem' }}
+              >
+                Open image in new tab
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Enrollment Reject Reason Modal */}
+      {pendingEnrollmentReject && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.85)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 2200,
+            padding: "20px",
+          }}
+        >
+          <div
+            className="glass-card animate-entrance"
+            style={{ width: "100%", maxWidth: "500px", padding: "32px" }}
+          >
+            <h2 style={{ margin: "0 0 24px 0", fontSize: "1.3rem", textTransform: "uppercase", letterSpacing: "1px" }}>
+              Enrollment Rejection Reason
+            </h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <label style={{ color: "var(--c-sub)", fontSize: "0.85rem" }}>
+                Course: {pendingEnrollmentReject.course?.title}
+              </label>
+              <label style={{ color: "var(--c-sub)", fontSize: "0.85rem", marginBottom: '12px' }}>
+                Student: {pendingEnrollmentReject.student?.name}
+              </label>
+              <textarea
+                value={enrollmentRejectReason}
+                onChange={(e) => setEnrollmentRejectReason(e.target.value)}
+                placeholder="e.g. Transaction ID does not match, screenshot is blurry, phone number is incorrect..."
+                style={{
+                  minHeight: "100px",
+                  width: "100%",
+                  padding: "10px 14px",
+                  background: "var(--bg-main)",
+                  border: "none",
+                  borderRadius: "12px",
+                  color: "var(--text-h)",
+                  fontFamily: "inherit",
+                  fontSize: "0.95rem",
+                  boxSizing: "border-box",
+                  resize: "vertical",
+                  boxShadow: "var(--inner-shadow, inset 0 2px 4px rgba(0, 0, 0, 0.4))",
+                }}
+              />
+            </div>
+            {enrollmentRejectReasonError && (
+              <div
+                style={{
+                  color: "#ef4444",
+                  margin: "8px 0 0 0",
+                  fontSize: "0.9rem",
+                }}
+              >
+                {enrollmentRejectReasonError}
+              </div>
+            )}
+            <div style={{ display: "flex", gap: "16px", marginTop: "24px" }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setPendingEnrollmentReject(null);
+                  setEnrollmentRejectReason("");
+                  setEnrollmentRejectReasonError("");
+                }}
+                disabled={processingEnrollmentAction === 'rejecting'}
+                className="glass-btn auth-submit-btn"
+                style={{ flex: 1, marginTop: '0px' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmEnrollmentReject}
+                disabled={processingEnrollmentAction === 'rejecting'}
+                className="glass-btn auth-submit-btn"
+                style={{ 
+                  flex: 1, 
+                  background: 'var(--bg-main)', 
+                  color: '#ef4444', 
+                  border: '1px solid var(--border)',
+                  boxShadow: 'var(--inner-shadow)',
+                  marginTop: '0px'
+                }}
+              >
+                {processingEnrollmentAction === 'rejecting'
+                  ? "Rejecting..."
+                  : "Reject Request"}
               </button>
             </div>
           </div>

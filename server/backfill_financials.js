@@ -27,7 +27,8 @@ const backfill = async () => {
           instructor: enrollment.course.instructor,
           amount: instructorCut,
           type: 'course_sale',
-          status: 'cleared',
+          status: 'paid',
+          availableAt: new Date(enrollment.createdAt.getTime() + 14 * 24 * 60 * 60 * 1000),
           description: `Course Sale - ${enrollment.course.title}`,
           course: enrollment.course._id,
           createdAt: enrollment.createdAt, // Backdate the transaction to when the enrollment happened!
