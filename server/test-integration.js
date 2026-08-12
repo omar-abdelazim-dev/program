@@ -195,15 +195,35 @@ const run = async () => {
   assert(res.status === 403, 'Student should be blocked from lesson content before enrolling');
   console.log('✓ Un-enrolled student correctly blocked from lesson video (403)');
 
-  // 13. Student enrolls
+  // 13. Student enrolls in a paid course -> lands as 'pending', not immediate access
   res = await agentStudent.post(`/api/enrollments/${courseId}`).set('X-CSRF-Token', studentCsrf);
   assert(res.status === 201, `Enroll failed: ${JSON.stringify(res.body)}`);
-  console.log('✓ Student enrolled in course');
+  assert(res.body.enrollment.status === 'pending', `Paid enrollment should start pending: ${JSON.stringify(res.body)}`);
+  const enrollmentId = res.body.enrollment._id;
+  console.log('✓ Student enrolled in course (status: pending)');
 
   // 14. Double-enroll should be rejected
   res = await agentStudent.post(`/api/enrollments/${courseId}`).set('X-CSRF-Token', studentCsrf);
   assert(res.status === 409, 'Duplicate enrollment should be rejected with 409');
   console.log('✓ Duplicate enrollment correctly rejected (409)');
+
+  // 14b. While pending, the student is still blocked from lesson content
+  res = await agentStudent.get(`/api/courses/${courseId}/lessons/${lessonId}`);
+  assert(res.status === 403, `Pending enrollment should still be blocked from lesson video: ${JSON.stringify(res.body)}`);
+  console.log('✓ Pending enrollment correctly blocked from lesson video (403)');
+
+  // 14c. Admin approves the enrollment request
+  res = await agentAdmin.patch(`/api/admin/enrollments/${enrollmentId}/approve`).set('X-CSRF-Token', adminCsrf);
+  assert(res.status === 200, `Approve enrollment failed: ${JSON.stringify(res.body)}`);
+  assert(res.body.enrollment.status === 'approved', 'Enrollment should be approved');
+  console.log('✓ Admin approved the enrollment request');
+
+  // 14d. Approving an already-approved enrollment must be rejected, not
+  // silently re-processed (regression test: this used to create a second
+  // instructor revenue-split Transaction on every duplicate approve call).
+  res = await agentAdmin.patch(`/api/admin/enrollments/${enrollmentId}/approve`).set('X-CSRF-Token', adminCsrf);
+  assert(res.status === 409, `Double-approving an enrollment should be rejected: ${JSON.stringify(res.body)}`);
+  console.log('✓ Double-approving an enrollment correctly rejected (409)');
 
   // 15. Now the student CAN watch the lesson
   res = await agentStudent.get(`/api/courses/${courseId}/lessons/${lessonId}`);

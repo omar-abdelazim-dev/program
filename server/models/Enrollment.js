@@ -38,6 +38,12 @@ const enrollmentSchema = new mongoose.Schema(
       enum: ['pending', 'under_review', 'approved', 'rejected', 'refunded'],
       default: 'pending',
     },
+    transactionId: String,
+    paymentAccount: String,
+    paymentMethod: String,
+    screenshot: String,
+    invoiceId: String,
+    rejectionReason: String,
   },
   { timestamps: true }
 );

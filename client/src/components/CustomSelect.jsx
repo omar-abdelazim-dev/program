@@ -21,7 +21,7 @@ const CustomSelect = ({ options, value, onChange, placeholder, icon, triggerClas
       <div 
         className={`icon-input-wrapper custom-select-trigger ${isOpen ? 'focus' : ''} ${!icon ? 'no-icon' : ''} ${triggerClassName}`}
         onClick={() => setIsOpen(!isOpen)}
-        style={{ ...(!icon ? { paddingLeft: '14px' } : {}), ...triggerStyle }}
+        style={{ ...(!icon ? { paddingInlineStart: '16px' } : {}), ...triggerStyle }}
       >
         {icon}
         <div 

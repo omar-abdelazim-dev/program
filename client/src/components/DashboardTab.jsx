@@ -55,15 +55,31 @@ const InProgressCard = ({
             {t('student.learning.video', 'فيديو')} ({enrollment.currentLesson?.duration || 5} {t('student.learning.min', 'minutes')})
           </span>
         </div>
-        <button
-          className="continue-btn"
-          onClick={(e) => {
-            e.stopPropagation();
-            onOpen(course._id);
-          }}
-        >
-          {t('student.get_started', 'Get started')}
-        </button>
+        {enrollment.status === 'pending' ? (
+          <button
+            className="continue-btn"
+            disabled
+            style={{
+              background: "var(--bg-surface)",
+              color: "var(--text-secondary)",
+              cursor: "not-allowed",
+              boxShadow: "none",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {t('admin.pending_approval', 'Pending Approval')}
+          </button>
+        ) : (
+          <button
+            className="continue-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpen(course._id);
+            }}
+          >
+            {t('student.get_started', 'Get started')}
+          </button>
+        )}
         <div onClick={(e) => e.stopPropagation()}>
           <ThreeDotMenu
             options={[

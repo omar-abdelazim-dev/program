@@ -62,6 +62,9 @@ export const getLessonContent = async (req, res) => {
       if (!enrollment) {
         return res.status(403).json({ message: 'Enroll in this course to watch its lessons' });
       }
+      if (enrollment.status !== 'approved') {
+        return res.status(403).json({ message: 'Your enrollment is pending approval' });
+      }
     }
 
     const lesson = await Lesson.findById(lessonId).populate('module');

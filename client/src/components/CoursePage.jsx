@@ -5,6 +5,7 @@ import api from '../api/axios';
 import FullPageLoader from './FullPageLoader';
 import ThreeDotMenu from './common/ThreeDotMenu';
 import notyf from '../utils/notyf';
+import PaymentModal from './PaymentModal';
 
 export default function CoursePage({ cart = [], setCart, user }) {
   const { t, i18n } = useTranslation();
@@ -22,8 +23,10 @@ export default function CoursePage({ cart = [], setCart, user }) {
   const [error, setError] = useState('');
 
   const [isEnrolled, setIsEnrolled] = useState(false);
+  const [enrollStatus, setEnrollStatus] = useState(null);
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [enrollError, setEnrollError] = useState('');
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   const [reviews, setReviews] = useState([]);
   const [reviewRating, setReviewRating] = useState(5);
@@ -48,6 +51,7 @@ export default function CoursePage({ cart = [], setCart, user }) {
           const enrollRes = await api.get(`/enrollments/${id}`, { signal: controller.signal });
           if (enrollRes.data && enrollRes.data.enrolled) {
             setIsEnrolled(true);
+            setEnrollStatus(enrollRes.data.status || 'approved');
           }
         } catch(e) {
           // Ignore — likely 404 (not enrolled) or the request was cancelled
@@ -75,12 +79,39 @@ export default function CoursePage({ cart = [], setCart, user }) {
     return () => controller.abort();
   }, [id]);
 
-  const handleEnroll = async () => {
+  useEffect(() => {
+    if (isEnrolled && enrollStatus === 'pending') {
+      const interval = setInterval(async () => {
+        try {
+          const enrollRes = await api.get(`/enrollments/${id}`);
+          if (enrollRes.data && enrollRes.data.enrolled && enrollRes.data.status === 'approved') {
+            setEnrollStatus('approved');
+            clearInterval(interval);
+          }
+        } catch (e) {
+          // Ignore
+        }
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [isEnrolled, enrollStatus, id]);
+
+  const handleEnrollClick = () => {
+    if (course.price > 0) {
+      setShowPaymentModal(true);
+    } else {
+      handleEnroll();
+    }
+  };
+
+  const handleEnroll = async (paymentDetails = {}) => {
     setIsEnrolling(true);
     setEnrollError('');
+    setShowPaymentModal(false);
     try {
-      await api.post(`/enrollments/${id}`);
+      const res = await api.post(`/enrollments/${id}`, paymentDetails);
       setIsEnrolled(true);
+      setEnrollStatus(res.data.enrollment?.status || (course.price > 0 ? 'pending' : 'approved'));
     } catch (err) {
       if (err.response?.status === 409) {
         setIsEnrolled(true);
@@ -957,23 +988,40 @@ export default function CoursePage({ cart = [], setCart, user }) {
             }}
           >
             {isEnrolled ? (
-              <button
-                onClick={() => navigate(`/learn/${course._id}`)}
-                className="solid-btn"
-                style={{
-                  width: "100%",
-                  height: "54px",
-                  fontSize: "1.05rem",
-                  background:
-                    "linear-gradient(135deg, #10B981 0%, #059669 100%)",
-                  boxShadow: "var(--inner-shadow)",
-                }}
-              >
-                {t("course_page.go_to_course")}
-              </button>
+              enrollStatus === 'pending' ? (
+                <button
+                  className="solid-btn"
+                  style={{
+                    width: "100%",
+                    height: "54px",
+                    fontSize: "1.05rem",
+                    background: "var(--bg-surface)",
+                    color: "var(--text-secondary)",
+                    cursor: "not-allowed",
+                  }}
+                  disabled
+                >
+                  {t('admin.pending_approval', 'Pending Approval')}
+                </button>
+              ) : (
+                <button
+                  onClick={() => navigate(`/learn/${course._id}`)}
+                  className="solid-btn"
+                  style={{
+                    width: "100%",
+                    height: "54px",
+                    fontSize: "1.05rem",
+                    background:
+                      "linear-gradient(135deg, #10B981 0%, #059669 100%)",
+                    boxShadow: "var(--inner-shadow)",
+                  }}
+                >
+                  {t("course_page.go_to_course")}
+                </button>
+              )
             ) : (
               <button
-                onClick={handleEnroll}
+                onClick={handleEnrollClick}
                 disabled={isEnrolling}
                 className="solid-btn"
                 style={{
@@ -997,11 +1045,13 @@ export default function CoursePage({ cart = [], setCart, user }) {
                     setCart([...cart, course]);
                   }
                 }}
+                disabled={cart.find((c) => c._id === course._id)}
                 style={{
                   width: "100%",
                   height: "54px",
-                  background: "transparent",
-                  border: "2px solid var(--border)",
+                  background: "var(--bg-main)",
+                  boxShadow: "var(--inner-shadow)",
+                  border: "1px solid var(--border)",
                   borderRadius: "50px",
                   color: "var(--text-primary)",
                   fontWeight: "700",
@@ -1014,14 +1064,12 @@ export default function CoursePage({ cart = [], setCart, user }) {
                 }}
                 onMouseEnter={(e) => {
                   if (!cart.find((c) => c._id === course._id)) {
-                    e.currentTarget.style.background = "var(--bg-main)";
-                    e.currentTarget.style.borderColor = "var(--text-primary)";
+                    e.currentTarget.style.background = "var(--bg-surface)";
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!cart.find((c) => c._id === course._id)) {
-                    e.currentTarget.style.background = "transparent";
-                    e.currentTarget.style.borderColor = "var(--border)";
+                    e.currentTarget.style.background = "var(--bg-main)";
                   }
                 }}
               >
@@ -1033,6 +1081,15 @@ export default function CoursePage({ cart = [], setCart, user }) {
           </div>
         </div>
       </div>
+
+      {showPaymentModal && (
+        <PaymentModal
+          course={course}
+          isEnrolling={isEnrolling}
+          onConfirm={handleEnroll}
+          onCancel={() => setShowPaymentModal(false)}
+        />
+      )}
     </div>
   );
 }
