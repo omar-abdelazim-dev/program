@@ -280,24 +280,30 @@ export default function PayoutOtpVerification({
       {/* Feedback messages */}
       {error && (
         <div style={{
-          background: 'rgba(239,68,68,0.12)',
-          border: '1px solid rgba(239,68,68,0.4)',
+          background: 'var(--bg-main)',
+          border: 'none',
+          boxShadow: 'var(--inner-shadow)',
           borderRadius: '10px',
           padding: '10px 14px',
           fontSize: '0.85rem',
-          color: '#fca5a5',
+          color: '#ef4444',
+          width: 'fit-content',
+          fontWeight: 600,
         }}>
           {error}
         </div>
       )}
       {info && !error && (
         <div style={{
-          background: 'rgba(16,185,129,0.12)',
-          border: '1px solid rgba(16,185,129,0.4)',
+          background: 'var(--bg-main)',
+          border: 'none',
+          boxShadow: 'var(--inner-shadow)',
           borderRadius: '10px',
           padding: '10px 14px',
           fontSize: '0.85rem',
-          color: '#6ee7b7',
+          color: '#10b981',
+          width: 'fit-content',
+          fontWeight: 600,
         }}>
           ✓ {info}
         </div>
