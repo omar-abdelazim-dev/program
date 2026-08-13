@@ -183,7 +183,7 @@ export default function PayoutOtpVerification({
             type="email"
             className="auth-input"
             value={payoutEmail}
-            onChange={e => { setPayoutEmail(e.target.value.replace(/[^a-zA-Z0-9._%+-@]/g, '')); setCodeSent(false); setCode(''); }}
+            onChange={e => { setPayoutEmail(e.target.value.replace(/[^a-zA-Z0-9._%+\\-@]/g, '')); setCodeSent(false); setCode(''); }}
             placeholder="you@example.com"
             disabled={sendingOtp || verifying}
             style={{ 
