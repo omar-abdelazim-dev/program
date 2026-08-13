@@ -81,7 +81,7 @@ export default function PayoutOtpVerification({
       const resendAt = new Date(res.data.resendAvailableAt);
       const secsLeft = Math.ceil((resendAt - Date.now()) / 1000);
       setCooldown(Math.max(0, secsLeft));
-      setInfo(`Verification code sent to ${emailTrimmed}.`);
+      setInfo(t('instructor.financials.code_sent_info', { email: emailTrimmed, defaultValue: `Verification code sent to ${emailTrimmed}` }));
     } catch (err) {
       const msg = err.response?.data?.message || 'Failed to send code. Please try again.';
       if (err.response?.status === 429) {
@@ -91,19 +91,31 @@ export default function PayoutOtpVerification({
           setCooldown(Math.max(0, secsLeft));
         }
       }
-      setError(msg);
-      onError?.(msg);
+      setError(translateError(msg));
+      onError?.(translateError(msg));
     } finally {
       setSendingOtp(false);
     }
   };
 
   // ── Verify OTP ───────────────────────────────────────────────────────────────
+    const translateError = (msg) => {
+    if (!msg) return '';
+    if (msg.includes('No OTP found')) return t('instructor.financials.no_otp_found', 'No OTP found. Please request a verification code first.');
+    if (msg.includes('already been used')) return t('instructor.financials.otp_already_used', 'This code has already been used.');
+    if (msg.includes('code has expired') || msg.includes('expired')) return t('instructor.financials.otp_expired', 'Verification code has expired. Please request a new one.');
+    if (msg.includes('Maximum verification attempts')) return t('instructor.financials.max_attempts_exceeded', 'Maximum verification attempts exceeded. Please request a new code.');
+    if (msg.includes('Incorrect verification code')) return t('instructor.financials.incorrect_code', 'Incorrect verification code. Please check and try again.');
+    if (msg.includes('Please enter the 6-digit code')) return t('instructor.financials.enter_6_digit_error', 'Please enter the 6-digit code from your email.');
+    if (msg.includes('Failed to send code')) return t('instructor.financials.failed_send_code', 'Failed to send code. Please try again.');
+    return msg;
+  };
+
   const handleVerify = async () => {
     setError('');
     setInfo('');
     if (!code || code.length !== 6 || !/^\d{6}$/.test(code)) {
-      setError('Please enter the 6-digit code from your email.');
+      setError(translateError('Please enter the 6-digit code from your email.'));
       return;
     }
 
@@ -114,8 +126,8 @@ export default function PayoutOtpVerification({
       onVerified?.({ status: res.data.status, requiresApproval: res.data.requiresApproval });
     } catch (err) {
       const msg = err.response?.data?.message || 'Verification failed.';
-      setError(msg);
-      onError?.(msg);
+      setError(translateError(msg));
+      onError?.(translateError(msg));
       // If the code expired, prompt them to request a new one
       if (err.response?.status === 400 && msg.toLowerCase().includes('expired')) {
         setCodeSent(false);

@@ -399,7 +399,15 @@
       "sending": "Sending…",
       "security_code_notice": "The 6-digit code will be emailed to the address above. Never share it with anyone.",
       "payout_amount_label": "Payout:",
-      "email_mismatch_warning": "⚠️ You are sending the code to a different email than your account email ({{email}}). If this wasn't intentional, update the email below."
+      "email_mismatch_warning": "⚠️ You are sending the code to a different email than your account email ({{email}}). If this wasn't intentional, update the email below.",
+      "code_sent_info": "Verification code sent to {{email}}",
+      "no_otp_found": "No OTP found. Please request a verification code first.",
+      "otp_already_used": "This code has already been used.",
+      "otp_expired": "Verification code has expired. Please request a new one.",
+      "max_attempts_exceeded": "Maximum verification attempts exceeded. Please request a new code.",
+      "incorrect_code": "Incorrect verification code. Please check and try again.",
+      "enter_6_digit_error": "Please enter the 6-digit code from your email.",
+      "failed_send_code": "Failed to send code. Please try again."
     },
     "notyf": {
       "lesson_updated": "Lesson updated successfully",
