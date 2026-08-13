@@ -19,6 +19,8 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
   const [moduleTitleDraft, setModuleTitleDraft] = useState('');
   const [addingModule, setAddingModule] = useState(false);
   const [newModuleTitle, setNewModuleTitle] = useState('');
+  const [isAddModuleFocused, setIsAddModuleFocused] = useState(false);
+  const [isEditModuleFocused, setIsEditModuleFocused] = useState(false);
 
   const selectedCourse = courses.find(c => c._id === selectedCourseId);
 
@@ -290,18 +292,21 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                     className="auth-input"
                     value={newModuleTitle}
                     onChange={(e) => setNewModuleTitle(e.target.value)}
+                    onFocus={() => setIsAddModuleFocused(true)}
+                    onBlur={() => setIsAddModuleFocused(false)}
                     onKeyDown={(e) => { if (e.key === 'Enter') handleAddModule(); if (e.key === 'Escape') { setAddingModule(false); setNewModuleTitle(''); } }}
                     placeholder={t('instructor.curriculum.ph_module_title', 'Module title (e.g. "Introduction to Java")')}
                     style={{
                       flex: 1,
                       background: 'var(--bg-main)',
-                      boxShadow: 'var(--inner-shadow)',
-                      border: '1px solid var(--border)',
+                      boxShadow: isAddModuleFocused ? '0 0 0 2px rgba(249, 115, 22, 0.3)' : 'var(--inner-shadow)',
+                      border: isAddModuleFocused ? '1px solid #f97316' : '1px solid var(--border)',
                       color: 'var(--text-h)',
                       padding: '10px 16px',
                       borderRadius: '12px',
                       outline: 'none',
-                      fontSize: '0.95rem'
+                      fontSize: '0.95rem',
+                      transition: 'all 0.2s ease-in-out'
                     }}
                   />
                   <button onClick={handleAddModule} className="solid-btn" style={{ width: 'auto', padding: '10px 20px' }}>
@@ -363,19 +368,21 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                                 className="auth-input"
                                 value={moduleTitleDraft}
                                 onChange={(e) => setModuleTitleDraft(e.target.value)}
-                                onBlur={() => handleRenameModule(module._id)}
+                                onFocus={() => setIsEditModuleFocused(true)}
+                                onBlur={() => { setIsEditModuleFocused(false); handleRenameModule(module._id); }}
                                 onKeyDown={(e) => { if (e.key === 'Enter') handleRenameModule(module._id); if (e.key === 'Escape') setEditingModuleId(null); }}
                                 style={{
                                   flex: 1,
                                   background: 'var(--bg-main)',
-                                  boxShadow: 'var(--inner-shadow)',
-                                  border: '1px solid var(--border)',
+                                  boxShadow: isEditModuleFocused ? '0 0 0 2px rgba(249, 115, 22, 0.3)' : 'var(--inner-shadow)',
+                                  border: isEditModuleFocused ? '1px solid #f97316' : '1px solid var(--border)',
                                   color: 'var(--text-h)',
                                   padding: '8px 14px',
                                   borderRadius: '12px',
                                   outline: 'none',
                                   fontSize: '1rem',
-                                  fontWeight: 600
+                                  fontWeight: 600,
+                                  transition: 'all 0.2s ease-in-out'
                                 }}
                               />
                             ) : (
