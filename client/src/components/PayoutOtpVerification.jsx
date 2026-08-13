@@ -62,8 +62,9 @@ export default function PayoutOtpVerification({
   const handleRequestOtp = async () => {
     setError('');
     setInfo('');
-    const emailTrimmed = payoutEmail.trim();
-    if (!emailTrimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrimmed)) {
+    const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,63}$/;
+    const emailTrimmed = payoutEmail.trim().toLowerCase();
+    if (!emailTrimmed || !EMAIL_REGEX.test(emailTrimmed)) {
       setError('Please enter a valid email address.');
       return;
     }

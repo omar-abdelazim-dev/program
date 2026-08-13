@@ -84,6 +84,13 @@ export default function InstructorFinancialsTab({ user }) {
       return;
     }
     
+    const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,63}$/;
+    const cleanEmail = payoutEmail.trim().toLowerCase();
+    if (!cleanEmail || !EMAIL_REGEX.test(cleanEmail)) {
+      notyf.error('Please enter a valid email address');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const res = await api.post('/financials/payout', {
