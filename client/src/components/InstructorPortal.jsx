@@ -703,7 +703,6 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                                 const amt = amtMatch ? amtMatch[1] : '';
                                 formattedMain = t('notifications.payout_approved_msg', { amount: amt, defaultValue: `Your payout request of EGP ${amt} has been approved and processed.` });
                               }
-                              }
 
                               return (
                                 <>
