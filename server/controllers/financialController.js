@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import Transaction from '../models/Transaction.js';
 import User from '../models/User.js';
+import Notification from '../models/Notification.js';
 import mongoose from 'mongoose';
 import logger from '../utils/logger.js';
 
@@ -231,20 +232,31 @@ export const completePayout = async (req, res) => {
 
     await tx.save();
 
-    if (tx.instructor && tx.instructor.email) {
+    if (tx.instructor) {
       try {
-        const { default: PayoutOTP } = await import('../models/PayoutOTP.js');
-        const otpRecord = await PayoutOTP.findOne({ payoutRequestId: tx._id }).sort({ createdAt: -1 });
-        const targetEmail = otpRecord?.email || tx.instructor.email;
-
-        const { sendPayoutStatusEmail } = await import('../utils/payoutOtp.js');
-        await sendPayoutStatusEmail({
-          toEmail: targetEmail,
-          instructorName: tx.instructor.name || 'Instructor',
-          status: 'approved'
+        const instructorId = tx.instructor._id || tx.instructor;
+        await Notification.create({
+          user: instructorId,
+          title: 'Payout Request Approved',
+          message: `Your payout request of EGP ${Math.abs(tx.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })} has been approved and processed.`,
+          type: 'system',
+          refId: tx._id,
         });
+
+        if (tx.instructor.email) {
+          const { default: PayoutOTP } = await import('../models/PayoutOTP.js');
+          const otpRecord = await PayoutOTP.findOne({ payoutRequestId: tx._id }).sort({ createdAt: -1 });
+          const targetEmail = otpRecord?.email || tx.instructor.email;
+
+          const { sendPayoutStatusEmail } = await import('../utils/payoutOtp.js');
+          await sendPayoutStatusEmail({
+            toEmail: targetEmail,
+            instructorName: tx.instructor.name || 'Instructor',
+            status: 'approved'
+          });
+        }
       } catch (err) {
-        console.error('Failed to send payout approval email:', err);
+        console.error('Failed to send payout approval notification/email:', err);
       }
     }
 
@@ -300,21 +312,32 @@ export const rejectPayout = async (req, res) => {
 
     await tx.save();
 
-    if (tx.instructor && tx.instructor.email) {
+    if (tx.instructor) {
       try {
-        const { default: PayoutOTP } = await import('../models/PayoutOTP.js');
-        const otpRecord = await PayoutOTP.findOne({ payoutRequestId: tx._id }).sort({ createdAt: -1 });
-        const targetEmail = otpRecord?.email || tx.instructor.email;
-
-        const { sendPayoutStatusEmail } = await import('../utils/payoutOtp.js');
-        await sendPayoutStatusEmail({
-          toEmail: targetEmail,
-          instructorName: tx.instructor.name || 'Instructor',
-          status: 'rejected',
-          reason: tx.rejectionReason
+        const instructorId = tx.instructor._id || tx.instructor;
+        await Notification.create({
+          user: instructorId,
+          title: 'Payout Request Rejected',
+          message: `Your payout request of EGP ${Math.abs(tx.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })} was rejected. Reason: ${tx.rejectionReason}`,
+          type: 'system',
+          refId: tx._id,
         });
+
+        if (tx.instructor.email) {
+          const { default: PayoutOTP } = await import('../models/PayoutOTP.js');
+          const otpRecord = await PayoutOTP.findOne({ payoutRequestId: tx._id }).sort({ createdAt: -1 });
+          const targetEmail = otpRecord?.email || tx.instructor.email;
+
+          const { sendPayoutStatusEmail } = await import('../utils/payoutOtp.js');
+          await sendPayoutStatusEmail({
+            toEmail: targetEmail,
+            instructorName: tx.instructor.name || 'Instructor',
+            status: 'rejected',
+            reason: tx.rejectionReason
+          });
+        }
       } catch (err) {
-        console.error('Failed to send payout rejection email:', err);
+        console.error('Failed to send payout rejection notification/email:', err);
       }
     }
 
