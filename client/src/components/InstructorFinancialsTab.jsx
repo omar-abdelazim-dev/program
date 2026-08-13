@@ -14,6 +14,8 @@ export default function InstructorFinancialsTab({ user }) {
   const [walletNumber, setWalletNumber] = useState(user?.phone || '');
   const [instapayAccount, setInstapayAccount] = useState('');
   const [payoutEmail, setPayoutEmail] = useState(user?.email || '');
+  const [isWalletFocused, setIsWalletFocused] = useState(false);
+  const [isPayoutEmailFocused, setIsPayoutEmailFocused] = useState(false);
   const [createdPayoutId, setCreatedPayoutId] = useState(null);
   const [payoutRequestedAmount, setPayoutRequestedAmount] = useState(0);
 
@@ -435,7 +437,13 @@ export default function InstructorFinancialsTab({ user }) {
                       pattern="\d*"
                       maxLength={11}
                       className="auth-input"
-                      style={{ width: '100%' }}
+                      onFocus={() => setIsWalletFocused(true)}
+                      onBlur={() => setIsWalletFocused(false)}
+                      style={{ 
+                        width: '100%',
+                        border: isWalletFocused ? '1px solid #f97316' : undefined,
+                        boxShadow: isWalletFocused ? '0 0 0 2px rgba(249, 115, 22, 0.3)' : undefined
+                      }}
                       placeholder="e.g. 010xxxxxxxx"
                       value={walletNumber}
                       onChange={(e) => setWalletNumber(e.target.value.replace(/\D/g, '').slice(0, 11))}
@@ -478,7 +486,13 @@ export default function InstructorFinancialsTab({ user }) {
                 <input 
                   type="email" 
                   className="auth-input"
-                  style={{ width: '100%' }}
+                  onFocus={() => setIsPayoutEmailFocused(true)}
+                  onBlur={() => setIsPayoutEmailFocused(false)}
+                  style={{ 
+                    width: '100%',
+                    border: isPayoutEmailFocused ? '1px solid #f97316' : undefined,
+                    boxShadow: isPayoutEmailFocused ? '0 0 0 2px rgba(249, 115, 22, 0.3)' : undefined
+                  }}
                   placeholder="e.g. email@example.com"
                   value={payoutEmail}
                   onChange={(e) => setPayoutEmail(e.target.value.replace(/[^a-zA-Z0-9._%+@-]/g, ''))}

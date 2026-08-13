@@ -30,6 +30,8 @@ export default function PayoutOtpVerification({
   const [sendingOtp, setSendingOtp]           = useState(false);
   const [verifying, setVerifying]             = useState(false);
   const [cooldown, setCooldown]               = useState(0); // seconds remaining
+  const [isEmailFocused, setIsEmailFocused]   = useState(false);
+  const [isCodeFocused, setIsCodeFocused]     = useState(false);
   const [expiresAt, setExpiresAt]             = useState(null);
   const [timeLeft, setTimeLeft]               = useState(null); // seconds until code expires
   const cooldownRef                           = useRef(null);
@@ -200,16 +202,19 @@ export default function PayoutOtpVerification({
             onChange={e => { setPayoutEmail(e.target.value.replace(/[^a-zA-Z0-9._%+@-]/g, '')); setCodeSent(false); setCode(''); }}
             placeholder="you@example.com"
             disabled={sendingOtp || verifying}
+            onFocus={() => setIsEmailFocused(true)}
+            onBlur={() => setIsEmailFocused(false)}
             style={{ 
               width: '100%',
               background: 'var(--bg-main)',
-              boxShadow: 'var(--inner-shadow)',
-              border: '1px solid var(--border, rgba(255,255,255,0.1))',
+              boxShadow: isEmailFocused ? '0 0 0 2px rgba(249, 115, 22, 0.3)' : 'var(--inner-shadow)',
+              border: isEmailFocused ? '1px solid #f97316' : '1px solid var(--border, rgba(255,255,255,0.1))',
               color: 'var(--text, #fff)',
               padding: '12px 16px',
               borderRadius: '12px',
               outline: 'none',
-              boxSizing: 'border-box'
+              boxSizing: 'border-box',
+              transition: 'all 0.2s ease-in-out'
             }}
           />
         </div>
@@ -232,6 +237,8 @@ export default function PayoutOtpVerification({
                 pattern="\d*"
                 maxLength={6}
                 className="auth-input"
+                onFocus={() => setIsCodeFocused(true)}
+                onBlur={() => setIsCodeFocused(false)}
                 style={{ 
                   flex: 1, 
                   letterSpacing: '4px', 
@@ -239,13 +246,14 @@ export default function PayoutOtpVerification({
                   fontSize: '1.1rem', 
                   textAlign: 'center',
                   background: 'var(--bg-main)',
-                  boxShadow: 'var(--inner-shadow)',
-                  border: '1px solid var(--border, rgba(255,255,255,0.1))',
+                  boxShadow: isCodeFocused ? '0 0 0 2px rgba(249, 115, 22, 0.3)' : 'var(--inner-shadow)',
+                  border: isCodeFocused ? '1px solid #f97316' : '1px solid var(--border, rgba(255,255,255,0.1))',
                   color: 'var(--text, #fff)',
                   padding: '12px 16px',
                   borderRadius: '12px',
                   outline: 'none',
-                  boxSizing: 'border-box'
+                  boxSizing: 'border-box',
+                  transition: 'all 0.2s ease-in-out'
                 }}
                 placeholder="000000"
                 value={code}
