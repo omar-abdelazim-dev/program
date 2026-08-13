@@ -242,12 +242,13 @@ export default function PayoutOtpVerification({
                 type="button"
                 className="glass-btn"
                 onClick={handleVerify}
-                disabled={verifying || code.length !== 6 || timeLeft === 0}
+                disabled={verifying || sendingOtp || code.length !== 6 || timeLeft === 0}
                 style={{
                   padding: '0 20px',
                   fontWeight: 700,
-                  opacity: verifying || code.length !== 6 || timeLeft === 0 ? 0.6 : 1,
-                  cursor: verifying || code.length !== 6 || timeLeft === 0 ? 'not-allowed' : 'pointer',
+                  opacity: verifying || sendingOtp || code.length !== 6 || timeLeft === 0 ? 0.5 : 1,
+                  cursor: verifying || sendingOtp || code.length !== 6 || timeLeft === 0 ? 'not-allowed' : 'pointer',
+                  pointerEvents: verifying || sendingOtp ? 'none' : 'auto',
                 }}
               >
                 {verifying ? 'Verifying…' : 'Verify'}
@@ -273,7 +274,9 @@ export default function PayoutOtpVerification({
               border: 'none',
               borderRadius: '24px',
               color: 'var(--c-sub)',
+              opacity: sendingOtp || verifying ? 0.5 : 1,
               cursor: sendingOtp || verifying ? 'not-allowed' : 'pointer',
+              pointerEvents: sendingOtp || verifying ? 'none' : 'auto',
               fontWeight: 600
             }}
           >
@@ -285,12 +288,13 @@ export default function PayoutOtpVerification({
           type="button"
           className="glass-btn"
           onClick={handleRequestOtp}
-          disabled={sendingOtp || cooldown > 0}
+          disabled={sendingOtp || verifying || cooldown > 0}
           style={{
             padding: '10px 20px',
             fontSize: '0.9rem',
-            opacity: sendingOtp || cooldown > 0 ? 0.6 : 1,
-            cursor: sendingOtp || cooldown > 0 ? 'not-allowed' : 'pointer',
+            opacity: sendingOtp || verifying || cooldown > 0 ? 0.5 : 1,
+            cursor: sendingOtp || verifying || cooldown > 0 ? 'not-allowed' : 'pointer',
+            pointerEvents: sendingOtp || verifying ? 'none' : 'auto',
           }}
         >
           {sendingOtp
