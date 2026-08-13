@@ -64,19 +64,14 @@ export { MAX_ATTEMPTS, OTP_EXPIRY_MINUTES, RESEND_COOLDOWN_SEC };
 
 // ── Gmail Transporter ─────────────────────────────────────────────────────────
 
-let _transporter = null;
-
 function getTransporter() {
-  if (!_transporter) {
-    _transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
-      },
-    });
-  }
-  return _transporter;
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.GMAIL_USER,
+      pass: process.env.GMAIL_APP_PASSWORD,
+    },
+  });
 }
 
 // ── Email Sending ─────────────────────────────────────────────────────────────
