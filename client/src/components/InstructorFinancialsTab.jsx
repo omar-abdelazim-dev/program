@@ -346,7 +346,7 @@ export default function InstructorFinancialsTab({ user }) {
             {createdPayoutId ? (
               <PayoutOtpVerification
                 payoutId={createdPayoutId}
-                accountEmail={user?.email}
+                accountEmail={payoutEmail || user?.email}
                 payoutAmount={payoutRequestedAmount}
                 onVerified={({ status, requiresApproval }) => {
                   setShowPayoutModal(false);
@@ -354,6 +354,7 @@ export default function InstructorFinancialsTab({ user }) {
                   setPaymentMethod('');
                   setWalletNumber(user?.phone || '');
                   setInstapayAccount('');
+                  setPayoutEmail(user?.email || '');
                   notyf.success(
                     requiresApproval
                       ? 'Payout request submitted for secondary approval.'
