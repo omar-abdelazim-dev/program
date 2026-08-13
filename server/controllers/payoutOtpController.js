@@ -49,10 +49,12 @@ export const requestOtp = async (req, res) => {
       return res.status(400).json({ message: `Cannot send OTP for a payout in status '${tx.status}'` });
     }
 
-    const payoutEmail = req.body.payoutEmail || req.user.email;
+    const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const emailRaw = typeof req.body.payoutEmail === 'string' ? req.body.payoutEmail : (req.user.email || '');
+    let payoutEmail = emailRaw.replace(/[^a-zA-Z0-9._%+\-@]/g, '').replace(/[.\-+]+$/, '').trim().toLowerCase();
 
-    // Validate email format (basic)
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payoutEmail)) {
+    // Validate email format
+    if (!payoutEmail || !EMAIL_REGEX.test(payoutEmail)) {
       return res.status(400).json({ message: 'Invalid email address format' });
     }
 

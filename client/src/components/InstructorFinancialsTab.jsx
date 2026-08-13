@@ -89,7 +89,7 @@ export default function InstructorFinancialsTab({ user }) {
       const res = await api.post('/financials/payout', {
         method: paymentMethod,
         payoutDetails: isWalletMethod ? walletNumber : instapayAccount,
-        payoutEmail,
+        payoutEmail: payoutEmail.replace(/[^a-zA-Z0-9._%+\-@]/g, '').replace(/[.\-+]+$/, '').trim().toLowerCase(),
         referenceId: invoiceCode
       });
       setCreatedPayoutId(res.data.transaction._id);
