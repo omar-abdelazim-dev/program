@@ -135,7 +135,7 @@ export default function AdminPayoutsTab() {
                   const feeAmount = tx.expectedFees !== undefined ? tx.expectedFees : (grossAmount * 0.02);
                   const netPayout = tx.expectedPayout !== undefined ? tx.expectedPayout : (grossAmount - feeAmount);
                   return (
-                    <tr key={tx._id} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} className="table-row-hover">
+                    <tr key={tx._id} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s', cursor: 'pointer' }} className="table-row-hover" onClick={() => openReviewModal(tx)}>
                       <td style={{ padding: '16px', color: 'var(--text)' }}>
                         {new Date(tx.createdAt).toLocaleDateString()}
                       </td>
@@ -204,7 +204,7 @@ export default function AdminPayoutsTab() {
                   const grossAmount = Math.abs(tx.amount || 0);
                   const netPayout = tx.expectedPayout !== undefined ? tx.expectedPayout : (grossAmount * 0.98);
                   return (
-                    <tr key={tx._id} className="analytics-row" style={{ backgroundColor: 'transparent', transition: 'all 0.3s' }}>
+                    <tr key={tx._id} className="analytics-row" onClick={() => openReviewModal(tx)} style={{ backgroundColor: 'transparent', transition: 'all 0.3s', cursor: 'pointer' }}>
                       <td style={{ padding: '16px', color: 'var(--text)', borderBottom: '1px solid var(--border)', borderTopLeftRadius: '16px', borderBottomLeftRadius: '16px' }}>
                         {new Date(tx.updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                       </td>
@@ -262,9 +262,23 @@ export default function AdminPayoutsTab() {
             >
               ✕
             </button>
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '24px', color: 'var(--text-h)' }}>
-              {isViewingTrace ? 'Revenue Trace' : 'Review Payout Request'}
-            </h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', paddingRight: '40px' }}>
+              <h2 style={{ fontSize: '1.4rem', margin: 0, color: 'var(--text-h)', fontWeight: 700 }}>
+                {isViewingTrace ? 'Revenue Trace' : 'Payout Process Details'}
+              </h2>
+              {!isViewingTrace && (
+                <span className="status-badge" style={{
+                  padding: '4px 14px',
+                  borderRadius: '50px',
+                  fontSize: '0.8rem',
+                  fontWeight: 'bold',
+                  color: selectedPayout.status === 'cleared' || selectedPayout.status === 'paid' ? '#10b981' : selectedPayout.status === 'rejected' ? '#ef4444' : '#f59e0b',
+                  background: selectedPayout.status === 'cleared' || selectedPayout.status === 'paid' ? 'rgba(16, 185, 129, 0.15)' : selectedPayout.status === 'rejected' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)'
+                }}>
+                  {selectedPayout.status ? selectedPayout.status.toUpperCase() : 'PENDING'}
+                </span>
+              )}
+            </div>
 
             {!isViewingTrace ? (
               isConfirmingReject ? (
@@ -300,54 +314,120 @@ export default function AdminPayoutsTab() {
                 </>
               ) : (
                 <>
-                  <div style={{ display: 'grid', gap: '16px', marginBottom: '32px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '1px solid var(--border)' }}>
+                  <div style={{ padding: '20px', borderRadius: '20px', background: 'var(--bg-main)', boxShadow: 'var(--inner-shadow)', border: 'none', display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '24px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem' }}>
+                      <span style={{ color: 'var(--c-sub)' }}>Date & Time:</span>
+                      <strong style={{ color: 'var(--text-h)', fontWeight: 600 }}>
+                        {new Date(selectedPayout.createdAt || selectedPayout.updatedAt).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </strong>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem' }}>
+                      <span style={{ color: 'var(--c-sub)' }}>Invoice Code / Ref:</span>
+                      <strong style={{ color: '#3b82f6', fontFamily: 'monospace', fontSize: '0.95rem' }}>
+                        {selectedPayout.referenceId || 'N/A'}
+                      </strong>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem' }}>
                       <span style={{ color: 'var(--c-sub)' }}>Instructor Name:</span>
-                      <strong style={{ color: 'var(--text)' }}>{selectedPayout.instructor?.name || 'N/A'}</strong>
+                      <strong style={{ color: 'var(--text-h)', fontWeight: 600 }}>{selectedPayout.instructor?.name || 'N/A'}</strong>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '1px solid var(--border)' }}>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem' }}>
                       <span style={{ color: 'var(--c-sub)' }}>Instructor Email:</span>
-                      <strong style={{ color: 'var(--text)' }}>{selectedPayout.instructor?.email || 'N/A'}</strong>
+                      <strong style={{ color: 'var(--text-h)', fontWeight: 600 }}>{selectedPayout.instructor?.email || 'N/A'}</strong>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '1px solid var(--border)' }}>
-                      <span style={{ color: 'var(--c-sub)' }}>Phone Number Provided:</span>
-                      <strong style={{ color: 'var(--text)' }}>{selectedPayout.payoutDetails || 'N/A'}</strong>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem' }}>
+                      <span style={{ color: 'var(--c-sub)' }}>Payout Method:</span>
+                      <strong style={{ color: 'var(--text-h)', fontWeight: 600, textTransform: 'capitalize' }}>
+                        {selectedPayout.payoutMethod ? selectedPayout.payoutMethod.replace('_', ' ') : 'N/A'}
+                      </strong>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '1px solid var(--border)' }}>
-                      <span style={{ color: 'var(--c-sub)' }}>Invoice ID:</span>
-                      <strong style={{ color: 'var(--text)' }}>{selectedPayout.referenceId || 'N/A'}</strong>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem' }}>
+                      <span style={{ color: 'var(--c-sub)' }}>Account Number / Phone:</span>
+                      <strong style={{ color: 'var(--text-h)', fontWeight: 600 }}>{selectedPayout.payoutDetails || 'N/A'}</strong>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '1px solid var(--border)' }}>
-                      <span style={{ color: 'var(--c-sub)' }}>Payout Amount Requested:</span>
-                      <strong style={{ color: 'var(--text)', fontSize: '1.1rem' }}>EGP {(selectedPayout.expectedPayout !== undefined ? selectedPayout.expectedPayout : (Math.abs(selectedPayout.amount) * 0.98)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem' }}>
+                      <span style={{ color: 'var(--c-sub)' }}>Payout Email (OTP):</span>
+                      <strong style={{ color: 'var(--text-h)', fontWeight: 600 }}>{selectedPayout.payoutEmail || selectedPayout.instructor?.email || 'N/A'}</strong>
+                    </div>
+
+                    <div style={{ borderTop: '1px dashed var(--border)', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+                        <span style={{ color: 'var(--c-sub)' }}>Gross Requested:</span>
+                        <strong style={{ color: 'var(--text-h)' }}>EGP {Math.abs(selectedPayout.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#ef4444' }}>
+                        <span>Platform Fee (2%):</span>
+                        <span>- EGP {(selectedPayout.expectedFees !== undefined ? selectedPayout.expectedFees : (Math.abs(selectedPayout.amount || 0) * 0.02)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.05rem', paddingTop: '4px' }}>
+                        <span style={{ fontWeight: 700, color: 'var(--text-h)' }}>Net Payout (To Send):</span>
+                        <strong style={{ fontWeight: 800, color: '#10b981' }}>
+                          EGP {(selectedPayout.expectedPayout !== undefined ? selectedPayout.expectedPayout : (Math.abs(selectedPayout.amount || 0) * 0.98)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </strong>
+                      </div>
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px' }}>
+                  {(selectedPayout.rejectionReason || selectedPayout.failureReason) && (
+                    <div style={{ 
+                      marginBottom: '24px', 
+                      padding: '16px 20px', 
+                      borderRadius: '16px', 
+                      background: 'var(--bg-main)', 
+                      boxShadow: 'var(--inner-shadow)',
+                      border: 'none'
+                    }}>
+                      <div style={{ color: '#ef4444', fontWeight: 700, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
+                        {selectedPayout.status === 'rejected' ? 'Rejection Reason' : 'Failure Reason'}
+                      </div>
+                      <div style={{ color: 'var(--text)', fontSize: '0.95rem', lineHeight: '1.4' }}>
+                        {selectedPayout.rejectionReason || selectedPayout.failureReason}
+                      </div>
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
                     <button 
                       onClick={fetchRevenueTrace}
                       disabled={isFetchingTrace}
-                      style={{ padding: '10px 24px', background: 'var(--bg-main)', border: 'none', boxShadow: 'var(--inner-shadow)', color: 'var(--c-orange)', borderRadius: '24px', cursor: isFetchingTrace ? 'not-allowed' : 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', opacity: isFetchingTrace ? 0.6 : 1 }}
+                      style={{ padding: '10px 20px', background: 'var(--bg-main)', border: 'none', boxShadow: 'var(--inner-shadow)', color: 'var(--c-orange)', borderRadius: '24px', cursor: isFetchingTrace ? 'not-allowed' : 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', opacity: isFetchingTrace ? 0.6 : 1 }}
                     >
                       {isFetchingTrace ? 'Loading...' : 'View Revenue Trace'}
                     </button>
 
-                    <div style={{ display: 'flex', gap: '16px' }}>
+                    {['pending', 'otp_verified', 'approved', 'processing'].includes(selectedPayout.status) ? (
+                      <div style={{ display: 'flex', gap: '12px' }}>
+                        <button 
+                          onClick={() => setIsConfirmingReject(true)}
+                          disabled={isFetchingTrace}
+                          style={{ padding: '10px 20px', fontSize: '0.95rem', color: '#ef4444', background: 'var(--bg-main)', border: 'none', boxShadow: 'var(--inner-shadow)', borderRadius: '24px', cursor: isFetchingTrace ? 'not-allowed' : 'pointer', fontWeight: 700, opacity: isFetchingTrace ? 0.6 : 1 }}
+                        >
+                          Reject
+                        </button>
+                        <button 
+                          onClick={() => openConfirmModal(selectedPayout, 'clear')}
+                          disabled={isFetchingTrace}
+                          style={{ padding: '10px 20px', fontSize: '0.95rem', color: '#10b981', background: 'var(--bg-main)', border: 'none', boxShadow: 'var(--inner-shadow)', borderRadius: '24px', cursor: isFetchingTrace ? 'not-allowed' : 'pointer', fontWeight: 700, opacity: isFetchingTrace ? 0.6 : 1 }}
+                        >
+                          Approve & Clear
+                        </button>
+                      </div>
+                    ) : (
                       <button 
-                        onClick={() => setIsConfirmingReject(true)}
-                        disabled={isFetchingTrace}
-                        style={{ padding: '10px 24px', fontSize: '1rem', color: '#ef4444', background: 'var(--bg-main)', border: 'none', boxShadow: 'var(--inner-shadow)', borderRadius: '24px', cursor: isFetchingTrace ? 'not-allowed' : 'pointer', fontWeight: 700, opacity: isFetchingTrace ? 0.6 : 1 }}
+                        onClick={() => { setShowReviewModal(false); setSelectedPayout(null); }}
+                        style={{ padding: '10px 24px', background: 'var(--bg-main)', border: 'none', boxShadow: 'var(--inner-shadow)', color: 'var(--c-sub)', borderRadius: '24px', cursor: 'pointer', fontWeight: 600 }}
                       >
-                        Reject
+                        Close
                       </button>
-                      <button 
-                        onClick={() => openConfirmModal(selectedPayout, 'clear')}
-                        disabled={isFetchingTrace}
-                        style={{ padding: '10px 24px', fontSize: '1rem', color: '#10b981', background: 'var(--bg-main)', border: 'none', boxShadow: 'var(--inner-shadow)', borderRadius: '24px', cursor: isFetchingTrace ? 'not-allowed' : 'pointer', fontWeight: 700, opacity: isFetchingTrace ? 0.6 : 1 }}
-                      >
-                        Approve
-                      </button>
-                    </div>
+                    )}
                   </div>
                 </>
               )
