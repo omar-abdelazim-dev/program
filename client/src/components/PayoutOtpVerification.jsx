@@ -156,12 +156,15 @@ export default function PayoutOtpVerification({
       {/* Email mismatch warning */}
       {emailMismatch && (
         <div style={{
-          background: 'rgba(245,158,11,0.12)',
-          border: '1px solid rgba(245,158,11,0.4)',
+          background: 'var(--bg-main)',
+          border: 'none',
+          boxShadow: 'var(--inner-shadow)',
           borderRadius: '10px',
           padding: '10px 14px',
           fontSize: '0.82rem',
-          color: '#fbbf24',
+          color: '#f59e0b',
+          width: 'fit-content',
+          fontWeight: 600,
         }}>
           ⚠️ You are sending the code to a different email than your account email ({accountEmail}).
           If this wasn't intentional, update the email below.
