@@ -398,7 +398,21 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                             <button
                               onClick={() => onOpenAddLesson(selectedCourseId, module._id)}
-                              style={{ width: 'auto', borderRadius: '20px', padding: '8px 16px', fontWeight: 600, fontSize: '0.85rem', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: 'none', cursor: 'pointer' }}
+                              style={{
+                                width: 'auto',
+                                borderRadius: '20px',
+                                padding: '8px 16px',
+                                fontWeight: 600,
+                                fontSize: '0.85rem',
+                                background: 'rgba(16, 185, 129, 0.1)',
+                                color: '#10b981',
+                                border: 'none',
+                                boxShadow: 'var(--inner-shadow)',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                              }}
+                              onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
+                              onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'; e.currentTarget.style.filter = 'none'; }}
                             >
                               {t('instructor.curriculum.add_lesson')}
                             </button>
