@@ -195,3 +195,88 @@ export async function sendPayoutStatusEmail({ toEmail, instructorName, status, r
     html,
   });
 }
+
+/**
+ * Send an email to admins notifying them of a new payout request.
+ *
+ * @param {object} opts
+ * @param {string[]} opts.adminEmails     - Array of admin email addresses.
+ * @param {string} opts.instructorName   - Instructor name.
+ * @param {string} opts.instructorEmail  - Instructor email.
+ * @param {number} opts.amount           - Gross requested amount.
+ * @param {number} opts.expectedPayout   - Net payout amount.
+ * @param {string} opts.method           - Payout method name.
+ * @param {string} opts.details          - Account/phone number details.
+ * @param {string} opts.referenceId      - Invoice ID / reference ID.
+ */
+export async function sendAdminPayoutAlertEmail({
+  adminEmails,
+  instructorName,
+  instructorEmail,
+  amount,
+  expectedPayout,
+  method,
+  details,
+  referenceId,
+}) {
+  if (!adminEmails || adminEmails.length === 0) return;
+
+  const formattedGross = Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const formattedNet = Number(expectedPayout || amount * 0.98).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const formattedMethod = (method || '').replace('_', ' ').toUpperCase();
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"/></head>
+<body style="font-family:sans-serif;background:#0f172a;color:#e2e8f0;margin:0;padding:0;">
+  <div style="max-width:520px;margin:40px auto;background:#1e293b;border-radius:16px;overflow:hidden;">
+    <div style="background:linear-gradient(135deg,#f97316,#e11d48);padding:24px 32px;">
+      <h1 style="margin:0;font-size:1.4rem;color:#fff;">🔔 New Payout Request Initiated</h1>
+    </div>
+    <div style="padding:32px;">
+      <p style="font-size:15px;margin-top:0;">A new payout request has been verified and requires admin attention.</p>
+      
+      <div style="background:#0f172a;border-radius:12px;padding:20px;margin:24px 0;line-height:1.8;font-size:14px;">
+        <div style="border-bottom:1px solid #334155;padding-bottom:8px;margin-bottom:8px;">
+          <span style="color:#94a3b8;">Instructor Name:</span> <strong style="color:#fff;">${instructorName}</strong>
+        </div>
+        <div style="border-bottom:1px solid #334155;padding-bottom:8px;margin-bottom:8px;">
+          <span style="color:#94a3b8;">Instructor Email:</span> <strong style="color:#fff;">${instructorEmail}</strong>
+        </div>
+        <div style="border-bottom:1px solid #334155;padding-bottom:8px;margin-bottom:8px;">
+          <span style="color:#94a3b8;">Payout Method:</span> <strong style="color:#fbbf24;">${formattedMethod}</strong>
+        </div>
+        <div style="border-bottom:1px solid #334155;padding-bottom:8px;margin-bottom:8px;">
+          <span style="color:#94a3b8;">Phone / Details Provided:</span> <strong style="color:#fff;">${details || 'N/A'}</strong>
+        </div>
+        <div style="border-bottom:1px solid #334155;padding-bottom:8px;margin-bottom:8px;">
+          <span style="color:#94a3b8;">Invoice ID:</span> <strong style="color:#fff;">${referenceId || 'N/A'}</strong>
+        </div>
+        <div style="border-bottom:1px solid #334155;padding-bottom:8px;margin-bottom:8px;">
+          <span style="color:#94a3b8;">Gross Requested:</span> <strong style="color:#fff;">EGP ${formattedGross}</strong>
+        </div>
+        <div>
+          <span style="color:#94a3b8;">Net Payout Amount:</span> <strong style="color:#10b981;font-size:1.1rem;">EGP ${formattedNet}</strong>
+        </div>
+      </div>
+
+      <p style="font-size:13px;color:#94a3b8;margin-bottom:0;">
+        Please log into the Admin Portal to review and approve or reject this payout.
+      </p>
+    </div>
+    <div style="padding:16px 32px;font-size:11px;color:#475569;border-top:1px solid #334155;">
+      Program Platform · Automated Admin Notification System
+    </div>
+  </div>
+</body>
+</html>`;
+
+  await getTransporter().sendMail({
+    from: `"Program Platform" <${process.env.GMAIL_USER}>`,
+    to: adminEmails.join(','),
+    subject: `🔔 Payout Request: EGP ${formattedNet} (${instructorName})`,
+    text: `New Payout Request:\nInstructor: ${instructorName} (${instructorEmail})\nMethod: ${formattedMethod}\nDetails: ${details}\nInvoice ID: ${referenceId}\nNet Payout: EGP ${formattedNet}`,
+    html,
+  });
+}

@@ -12,6 +12,7 @@ import {
   otpExpiresAt,
   resendCooldownEnd,
   sendPayoutOtpEmail,
+  sendAdminPayoutAlertEmail,
   MAX_ATTEMPTS,
 } from '../utils/payoutOtp.js';
 
@@ -236,14 +237,35 @@ export const verifyPayoutOtp = async (req, res) => {
         amount,
       }, session);
 
-      result = { status: nextStatus, requiresApproval };
+      result = { status: nextStatus, requiresApproval, tx };
     });
+
+    // Send email notification to all admins asynchronously
+    try {
+      const admins = await User.find({ role: { $in: ['admin', 'superadmin'] } }).select('email');
+      const adminEmails = admins.map(a => a.email).filter(Boolean);
+      if (adminEmails.length > 0) {
+        await sendAdminPayoutAlertEmail({
+          adminEmails,
+          instructorName: req.user.name || 'Instructor',
+          instructorEmail: req.user.email,
+          amount: Math.abs(result.tx.amount),
+          expectedPayout: result.tx.expectedPayout,
+          method: result.tx.payoutMethod,
+          details: result.tx.payoutDetails,
+          referenceId: result.tx.referenceId,
+        });
+      }
+    } catch (adminEmailErr) {
+      logger.error('Failed to send admin payout alert email', { err: adminEmailErr.message });
+    }
 
     return res.json({
       message: result.requiresApproval
         ? 'OTP verified. This payout requires a second approver before execution.'
         : 'OTP verified. Payout approved and ready for execution.',
-      ...result,
+      status: result.status,
+      requiresApproval: result.requiresApproval,
     });
   } catch (err) {
     if (err.status) {
