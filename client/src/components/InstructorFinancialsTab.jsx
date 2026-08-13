@@ -29,7 +29,7 @@ export default function InstructorFinancialsTab({ user }) {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  const visibleTransactions = transactions.filter(tx => tx.status !== 'pending');
+  const visibleTransactions = transactions.filter(tx => tx.type === 'course_sale' || ['otp_verified', 'approved', 'processing', 'cleared', 'paid', 'rejected', 'failed'].includes(tx.status));
   const totalPages = Math.ceil(visibleTransactions.length / itemsPerPage) || 1;
   const currentTransactions = visibleTransactions.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 

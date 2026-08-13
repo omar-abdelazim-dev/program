@@ -79,7 +79,10 @@ export const getFinancials = async (req, res) => {
     
     const transactions = await Transaction.find({ 
       instructor: instructorId,
-      status: { $ne: 'pending' }
+      $or: [
+        { type: 'course_sale' },
+        { type: 'payout_request', status: { $in: ['otp_verified', 'approved', 'processing', 'cleared', 'paid', 'rejected', 'failed'] } }
+      ]
     })
       .sort({ createdAt: -1 })
       .lean();
