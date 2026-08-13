@@ -27,8 +27,9 @@ export default function InstructorFinancialsTab({ user }) {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  const totalPages = Math.ceil(transactions.length / itemsPerPage) || 1;
-  const currentTransactions = transactions.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const visibleTransactions = transactions.filter(tx => tx.status !== 'pending');
+  const totalPages = Math.ceil(visibleTransactions.length / itemsPerPage) || 1;
+  const currentTransactions = visibleTransactions.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   useEffect(() => {
     let timer;
@@ -239,13 +240,14 @@ export default function InstructorFinancialsTab({ user }) {
                         const isCleared = tx.type === 'course_sale'
                           ? (!tx.availableAt || new Date(tx.availableAt) <= new Date())
                           : (tx.status === 'paid' || tx.status === 'cleared');
+                        const isProcessing = ['processing', 'otp_verified', 'approved'].includes(tx.status);
                         return (
                           <span className="status-badge" style={{
-                            color: isCleared ? '#10b981' : tx.status === 'processing' ? '#3b82f6' : tx.status === 'rejected' ? '#ef4444' : '#f59e0b',
+                            color: isCleared ? '#10b981' : isProcessing ? '#3b82f6' : tx.status === 'rejected' ? '#ef4444' : '#f59e0b',
                           }}>
                             {isCleared 
                               ? (tx.type === 'course_sale' ? (t('instructor.financials.status_received') || 'Received') : (t('instructor.financials.status_paid') || 'Paid')) 
-                              : tx.status === 'processing' ? 'Processing' :
+                              : isProcessing ? (t('instructor.financials.status_processing') || 'Processing') :
                               tx.status === 'rejected' ? (t('instructor.financials.status_rejected') || 'Rejected') : 
                               (t('instructor.financials.status_pending') || 'Pending')}
                           </span>
@@ -258,10 +260,10 @@ export default function InstructorFinancialsTab({ user }) {
             </tbody>
           </table>
         </div>
-        {transactions.length > itemsPerPage && (
+        {visibleTransactions.length > itemsPerPage && (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', padding: '0 8px', flexWrap: 'wrap', gap: '12px' }}>
             <div style={{ fontSize: '0.85rem', color: 'var(--c-sub)' }}>
-              Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, transactions.length)} of {transactions.length} transactions
+              Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, visibleTransactions.length)} of {visibleTransactions.length} transactions
             </div>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <button
@@ -546,18 +548,19 @@ export default function InstructorFinancialsTab({ user }) {
                   const isCleared = selectedTxForDetails.type === 'course_sale'
                     ? (!selectedTxForDetails.availableAt || new Date(selectedTxForDetails.availableAt) <= new Date())
                     : (selectedTxForDetails.status === 'paid' || selectedTxForDetails.status === 'cleared');
+                  const isProcessing = ['processing', 'otp_verified', 'approved'].includes(selectedTxForDetails.status);
                   return (
                     <span className="status-badge" style={{
                       padding: '4px 12px',
                       borderRadius: '50px',
                       fontSize: '0.75rem',
                       fontWeight: 'bold',
-                      color: isCleared ? '#10b981' : selectedTxForDetails.status === 'processing' ? '#3b82f6' : selectedTxForDetails.status === 'rejected' ? '#ef4444' : '#f59e0b',
-                      background: isCleared ? 'rgba(16, 185, 129, 0.15)' : selectedTxForDetails.status === 'processing' ? 'rgba(59, 130, 246, 0.15)' : selectedTxForDetails.status === 'rejected' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)'
+                      color: isCleared ? '#10b981' : isProcessing ? '#3b82f6' : selectedTxForDetails.status === 'rejected' ? '#ef4444' : '#f59e0b',
+                      background: isCleared ? 'rgba(16, 185, 129, 0.15)' : isProcessing ? 'rgba(59, 130, 246, 0.15)' : selectedTxForDetails.status === 'rejected' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)'
                     }}>
                       {isCleared 
                         ? (selectedTxForDetails.type === 'course_sale' ? (t('instructor.financials.status_received') || 'RECEIVED') : (t('instructor.financials.status_paid') || 'PAID')) : 
-                       selectedTxForDetails.status === 'processing' ? 'PROCESSING' :
+                       isProcessing ? 'PROCESSING' :
                        selectedTxForDetails.status === 'rejected' ? (t('instructor.financials.status_rejected') || 'REJECTED') : (t('instructor.financials.status_pending') || 'PENDING')}
                     </span>
                   );
