@@ -66,7 +66,15 @@
     "new_question_msg": "A student asked a new question in your course.",
     "course_suspended_msg": "Your course \"{{title}}\" has been suspended.",
     "course_approved_msg": "Your course \"{{title}}\" has been approved!",
-    "republish_instructions": "You can republish your course by clicking on the course card after resolving the suspended reason."
+    "republish_instructions": "You can republish your course by clicking on the course card after resolving the suspended reason.",
+    "payout_received": "Payout Request Received",
+    "payout_approved": "Payout Request Approved",
+    "payout_rejected": "Payout Request Rejected",
+    "new_payout_request": "New Payout Request",
+    "payout_received_msg": "We have received your payout request and it is now under review.",
+    "payout_approved_msg": "Your payout request of EGP {{amount}} has been approved and processed.",
+    "payout_rejected_msg": "Your payout request of EGP {{amount}} was rejected.",
+    "admin_new_payout_msg": "Instructor {{name}} has submitted a payout request of EGP {{amount}}."
   },
   "student": {
     "welcome_back": "Welcome back",

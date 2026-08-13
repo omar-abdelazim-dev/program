@@ -635,6 +635,10 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                               if (title === 'Course Approved') return t('notifications.course_approved', 'Course Approved');
                               if (title === 'Course Submitted') return t('notifications.course_submitted', 'Course Submitted');
                               if (title === 'Course Rejected') return t('notifications.course_rejected', 'Course Rejected');
+                              if (title === 'Payout Request Received') return t('notifications.payout_received', 'Payout Request Received');
+                              if (title === 'Payout Request Approved') return t('notifications.payout_approved', 'Payout Request Approved');
+                              if (title === 'Payout Request Rejected') return t('notifications.payout_rejected', 'Payout Request Rejected');
+                              if (title === 'New Payout Request') return t('notifications.new_payout_request', 'New Payout Request');
                               if (title === 'New Reply') return t('notifications.new_reply', 'New Reply');
                               if (title === 'New Student Enrollment') return t('notifications.new_student_enrollment', 'New Student Enrollment');
                               if (title.startsWith('New Admin Added')) return t('notifications.new_admin_added', 'New Admin Added');
@@ -688,6 +692,17 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                                 if (match) {
                                   formattedMain = t('notifications.course_approved_msg', { title: match[1], defaultValue: `Your course "${match[1]}" has been approved!` });
                                 }
+                              } else if (formattedMain.includes('We have received your payout request')) {
+                                formattedMain = t('notifications.payout_received_msg', 'We have received your payout request and it is now under review.');
+                              } else if (formattedMain.includes('was rejected.')) {
+                                const amtMatch = formattedMain.match(/payout request of EGP ([0-9,.]+)/);
+                                const amt = amtMatch ? amtMatch[1] : '';
+                                formattedMain = t('notifications.payout_rejected_msg', { amount: amt, defaultValue: `Your payout request of EGP ${amt} was rejected.` });
+                              } else if (formattedMain.includes('has been approved and processed.')) {
+                                const amtMatch = formattedMain.match(/payout request of EGP ([0-9,.]+)/);
+                                const amt = amtMatch ? amtMatch[1] : '';
+                                formattedMain = t('notifications.payout_approved_msg', { amount: amt, defaultValue: `Your payout request of EGP ${amt} has been approved and processed.` });
+                              }
                               }
 
                               return (

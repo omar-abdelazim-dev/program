@@ -66,7 +66,15 @@
     "new_question_msg": "سأل طالب سؤالاً جديداً في دورتك.",
     "course_suspended_msg": "تم تعليق دورتك \"{{title}}\".",
     "course_approved_msg": "تمت الموافقة على دورتك \"{{title}}\"!",
-    "republish_instructions": "يمكنك إعادة نشر دورتك بالنقر على بطاقة الدورة بعد معالجة سبب التعليق."
+    "republish_instructions": "يمكنك إعادة نشر دورتك بالنقر على بطاقة الدورة بعد معالجة سبب التعليق.",
+    "payout_received": "تم استلام طلب السحب",
+    "payout_approved": "تمت الموافقة على طلب السحب",
+    "payout_rejected": "تم رفض طلب السحب",
+    "new_payout_request": "طلب سحب جديد",
+    "payout_received_msg": "لقد استلمنا طلب السحب الخاص بك وهو الآن قيد المراجعة.",
+    "payout_approved_msg": "تمت الموافقة على طلب السحب الخاص بك بمبلغ {{amount}} جنيه ومعالجته.",
+    "payout_rejected_msg": "تم رفض طلب السحب الخاص بك بمبلغ {{amount}} جنيه.",
+    "admin_new_payout_msg": "قام المحاضر {{name}} بتقديم طلب سحب بمبلغ {{amount}} جنيه."
   },
   "student": {
     "welcome_back": "مرحباً بعودتك",
