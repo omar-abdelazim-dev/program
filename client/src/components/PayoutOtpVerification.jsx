@@ -258,7 +258,29 @@ export default function PayoutOtpVerification({
       </div>
 
       {/* Send/Resend & Back buttons */}
-      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: '12px' }}>
+        {onBack ? (
+          <button
+            type="button"
+            className="glass-btn"
+            onClick={onBack}
+            disabled={sendingOtp || verifying}
+            style={{
+              padding: '10px 20px',
+              fontSize: '0.9rem',
+              background: 'var(--bg-main)',
+              boxShadow: 'var(--inner-shadow)',
+              border: 'none',
+              borderRadius: '24px',
+              color: 'var(--c-sub)',
+              cursor: sendingOtp || verifying ? 'not-allowed' : 'pointer',
+              fontWeight: 600
+            }}
+          >
+            ← Back
+          </button>
+        ) : <div />}
+
         <button
           type="button"
           className="glass-btn"
@@ -279,28 +301,6 @@ export default function PayoutOtpVerification({
                 ? 'Resend Code'
                 : 'Send Code'}
         </button>
-
-        {onBack && (
-          <button
-            type="button"
-            className="glass-btn"
-            onClick={onBack}
-            disabled={sendingOtp || verifying}
-            style={{
-              padding: '10px 20px',
-              fontSize: '0.9rem',
-              background: 'var(--bg-main)',
-              boxShadow: 'var(--inner-shadow)',
-              border: 'none',
-              borderRadius: '24px',
-              color: 'var(--c-sub)',
-              cursor: sendingOtp || verifying ? 'not-allowed' : 'pointer',
-              fontWeight: 600
-            }}
-          >
-            ← Back
-          </button>
-        )}
       </div>
 
       {/* Feedback messages */}
