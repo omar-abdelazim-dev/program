@@ -19,6 +19,8 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
   const [moduleTitleDraft, setModuleTitleDraft] = useState('');
   const [addingModule, setAddingModule] = useState(false);
   const [newModuleTitle, setNewModuleTitle] = useState('');
+  const [isAddModuleFocused, setIsAddModuleFocused] = useState(false);
+  const [isEditModuleFocused, setIsEditModuleFocused] = useState(false);
 
   const selectedCourse = courses.find(c => c._id === selectedCourseId);
 
@@ -32,7 +34,10 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
   }, [selectedCourseId, modulesByCourse]);
 
   const toggleModuleCollapsed = (moduleId) => {
-    setCollapsedModules(prev => ({ ...prev, [moduleId]: !prev[moduleId] }));
+    setCollapsedModules(prev => {
+      const currentlyCollapsed = prev[moduleId] !== false;
+      return { ...prev, [moduleId]: !currentlyCollapsed };
+    });
   };
 
   const handleAddModule = async () => {
@@ -40,6 +45,7 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
     try {
       const { data } = await api.post(`/courses/${selectedCourseId}/modules`, { title: newModuleTitle.trim() });
       setLocalModules(prev => [...prev, { ...data.module, lessons: [] }]);
+      setCollapsedModules(prev => ({ ...prev, [data.module._id]: false }));
       setNewModuleTitle('');
       setAddingModule(false);
       if (onAction) onAction();
@@ -283,16 +289,46 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                   <input
                     autoFocus
                     type="text"
+                    className="auth-input"
                     value={newModuleTitle}
                     onChange={(e) => setNewModuleTitle(e.target.value)}
+                    onFocus={() => setIsAddModuleFocused(true)}
+                    onBlur={() => setIsAddModuleFocused(false)}
                     onKeyDown={(e) => { if (e.key === 'Enter') handleAddModule(); if (e.key === 'Escape') { setAddingModule(false); setNewModuleTitle(''); } }}
                     placeholder={t('instructor.curriculum.ph_module_title', 'Module title (e.g. "Introduction to Java")')}
-                    style={{ flex: 1 }}
+                    style={{
+                      flex: 1,
+                      background: 'var(--bg-main)',
+                      boxShadow: isAddModuleFocused ? '0 0 0 2px rgba(249, 115, 22, 0.3)' : 'var(--inner-shadow)',
+                      border: isAddModuleFocused ? '1px solid #f97316' : '1px solid transparent',
+                      color: 'var(--text-h)',
+                      padding: '10px 16px',
+                      borderRadius: '12px',
+                      outline: 'none',
+                      fontSize: '0.95rem',
+                      transition: 'all 0.2s ease-in-out'
+                    }}
                   />
                   <button onClick={handleAddModule} className="solid-btn" style={{ width: 'auto', padding: '10px 20px' }}>
-                    {t('instructor.create_course.save', 'Save')}
+                    {t('instructor.curriculum.save_module', 'Save Module')}
                   </button>
-                  <button onClick={() => { setAddingModule(false); setNewModuleTitle(''); }} style={{ width: 'auto', padding: '10px 20px', background: 'transparent', border: 'none', color: 'var(--c-sub)', cursor: 'pointer' }}>
+                  <button
+                    onClick={() => { setAddingModule(false); setNewModuleTitle(''); }}
+                    style={{
+                      width: 'auto',
+                      padding: '10px 20px',
+                      background: 'var(--bg-main)',
+                      boxShadow: 'var(--inner-shadow)',
+                      borderRadius: '24px',
+                      border: 'none',
+                      color: 'var(--text-h)',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseOver={(e) => { e.currentTarget.style.filter = 'brightness(1.15)'; }}
+                    onMouseOut={(e) => { e.currentTarget.style.filter = 'none'; }}
+                  >
                     {t('instructor.create_course.cancel', 'Cancel')}
                   </button>
                 </div>
@@ -305,7 +341,7 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                   </div>
                 ) : (
                   localModules.map((module, mIndex) => {
-                    const isCollapsed = !!collapsedModules[module._id];
+                    const isCollapsed = collapsedModules[module._id] !== false;
                     const lessons = module.lessons || [];
                     return (
                       <div key={module._id} className="glass-card" style={{ padding: 0, overflow: 'hidden' }}>
@@ -345,11 +381,25 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                               <input
                                 autoFocus
                                 type="text"
+                                className="auth-input"
                                 value={moduleTitleDraft}
                                 onChange={(e) => setModuleTitleDraft(e.target.value)}
-                                onBlur={() => handleRenameModule(module._id)}
+                                onFocus={() => setIsEditModuleFocused(true)}
+                                onBlur={() => { setIsEditModuleFocused(false); handleRenameModule(module._id); }}
                                 onKeyDown={(e) => { if (e.key === 'Enter') handleRenameModule(module._id); if (e.key === 'Escape') setEditingModuleId(null); }}
-                                style={{ flex: 1 }}
+                                style={{
+                                  flex: 1,
+                                  background: 'var(--bg-main)',
+                                  boxShadow: isEditModuleFocused ? '0 0 0 2px rgba(249, 115, 22, 0.3)' : 'var(--inner-shadow)',
+                                  border: isEditModuleFocused ? '1px solid #f97316' : '1px solid transparent',
+                                  color: 'var(--text-h)',
+                                  padding: '8px 14px',
+                                  borderRadius: '12px',
+                                  outline: 'none',
+                                  fontSize: '1rem',
+                                  fontWeight: 600,
+                                  transition: 'all 0.2s ease-in-out'
+                                }}
                               />
                             ) : (
                               <div style={{ minWidth: 0 }}>
@@ -364,7 +414,21 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                             <button
                               onClick={() => onOpenAddLesson(selectedCourseId, module._id)}
-                              style={{ width: 'auto', borderRadius: '20px', padding: '8px 16px', fontWeight: 600, fontSize: '0.85rem', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: 'none', cursor: 'pointer' }}
+                              style={{
+                                width: 'auto',
+                                borderRadius: '20px',
+                                padding: '8px 16px',
+                                fontWeight: 600,
+                                fontSize: '0.85rem',
+                                background: 'rgba(16, 185, 129, 0.1)',
+                                color: '#10b981',
+                                border: 'none',
+                                boxShadow: 'var(--inner-shadow)',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                              }}
+                              onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
+                              onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'; e.currentTarget.style.filter = 'none'; }}
                             >
                               {t('instructor.curriculum.add_lesson')}
                             </button>
@@ -429,7 +493,7 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                                       {(() => {
                                         const isPublished = (pendingStatuses[lesson._id] || lesson.status) === 'published';
                                         return (
-                                          <div style={{ position: 'relative', display: 'flex', background: 'var(--bg-surface)', padding: '4px', borderRadius: '50px', boxShadow: 'var(--inner-shadow)', width: '180px', height: '34px' }}>
+                                          <div style={{ position: 'relative', display: 'flex', background: 'var(--bg-surface)', padding: '4px', borderRadius: '50px', boxShadow: 'var(--outer-shadow)', width: '180px', height: '34px' }}>
                                             <div style={{
                                               position: 'absolute',
                                               top: '4px',
@@ -438,7 +502,7 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                                               height: 'calc(100% - 8px)',
                                               borderRadius: '50px',
                                               background: 'var(--bg-main)',
-                                              boxShadow: 'var(--outer-shadow)',
+                                              boxShadow: 'var(--inner-shadow)',
                                               transition: 'inset-inline-start 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                                               zIndex: 0,
                                             }} />

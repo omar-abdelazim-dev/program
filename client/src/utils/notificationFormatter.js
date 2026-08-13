@@ -9,6 +9,10 @@ export const formatNotificationTitle = (rawTitle, t) => {
   if (title === 'Course Approved') return t('notifications.course_approved', 'Course Approved');
   if (title === 'Course Submitted') return t('notifications.course_submitted', 'Course Submitted');
   if (title === 'Course Rejected') return t('notifications.course_rejected', 'Course Rejected');
+  if (title === 'Payout Request Received') return t('notifications.payout_received', 'Payout Request Received');
+  if (title === 'Payout Request Approved') return t('notifications.payout_approved', 'Payout Request Approved');
+  if (title === 'Payout Request Rejected') return t('notifications.payout_rejected', 'Payout Request Rejected');
+  if (title === 'New Payout Request') return t('notifications.new_payout_request', 'New Payout Request');
   if (title === 'New Student Enrollment') return t('notifications.new_student_enrollment', 'New Student Enrollment');
 
   if (title.startsWith('New Announcement: ')) {
@@ -37,5 +41,18 @@ export const formatNotificationMessage = (rawMessage, t) => {
     return t('notifications.announcement_posted_msg', { course, defaultValue: `An announcement was posted in ${course}.` });
   }
 
+    if (msg.includes('We have received your payout request')) {
+    return t('notifications.payout_received_msg', 'We have received your payout request and it is now under review.');
+  }
+  if (msg.includes('was rejected.')) {
+    const match = msg.match(/payout request of EGP ([0-9,.]+)/);
+    const amt = match ? match[1] : '';
+    return t('notifications.payout_rejected_msg', { amount: amt, defaultValue: `Your payout request of EGP ${amt} was rejected.` });
+  }
+  if (msg.includes('has been approved and processed.')) {
+    const match = msg.match(/payout request of EGP ([0-9,.]+)/);
+    const amt = match ? match[1] : '';
+    return t('notifications.payout_approved_msg', { amount: amt, defaultValue: `Your payout request of EGP ${amt} has been approved and processed.` });
+  }
   return msg;
 };

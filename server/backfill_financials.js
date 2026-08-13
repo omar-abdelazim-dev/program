@@ -30,6 +30,7 @@ const backfill = async () => {
           status: 'cleared',
           description: `Course Sale - ${enrollment.course.title}`,
           course: enrollment.course._id,
+          referenceId: enrollment.invoiceId || enrollment.transactionId || ('INV-' + enrollment._id.toString().slice(-8).toUpperCase()),
           createdAt: enrollment.createdAt, // Backdate the transaction to when the enrollment happened!
         });
         count++;

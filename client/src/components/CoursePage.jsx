@@ -447,7 +447,7 @@ export default function CoursePage({ cart = [], setCart, user }) {
                   </div>
                 ) : (
                   modules.map((module, mIndex) => {
-                    const isCollapsed = !!collapsedModules[module._id];
+                    const isCollapsed = collapsedModules[module._id] !== false;
                     const moduleLessons = module.lessons || [];
                     return (
                       <div

@@ -46,13 +46,6 @@ export default function InstructorAnalyticsTab({ courses = [], stats = [], timeS
             <ResponsiveContainer>
               <AreaChart data={revenueData} margin={{ top: 20, right: 20, left: 0, bottom: 5 }}>
                 <defs>
-                  <filter id="glow-orange" x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
-                    <feMerge>
-                      <feMergeNode in="coloredBlur"/>
-                      <feMergeNode in="SourceGraphic"/>
-                    </feMerge>
-                  </filter>
                   <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#f97316" stopOpacity={0.3}/>
                     <stop offset="95%" stopColor="#fbbf24" stopOpacity={0}/>
@@ -69,7 +62,7 @@ export default function InstructorAnalyticsTab({ courses = [], stats = [], timeS
                   contentStyle={{ backgroundColor: 'var(--bg-main)', border: 'none', borderRadius: '8px', color: 'var(--text-h)', boxShadow: 'var(--inner-shadow), var(--outer-shadow)' }}
                   itemStyle={{ backgroundImage: 'linear-gradient(135deg, #f97316 0%, #fbbf24 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: 600 }}
                 />
-                <Area type="monotone" dataKey="revenue" name={t('instructor.analytics.revenue', 'revenue')} stroke="url(#line-gradient)" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" filter="url(#glow-orange)" />
+                <Area type="monotone" dataKey="revenue" name={t('instructor.analytics.revenue', 'revenue')} stroke="url(#line-gradient)" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -82,13 +75,6 @@ export default function InstructorAnalyticsTab({ courses = [], stats = [], timeS
             <ResponsiveContainer>
               <AreaChart data={studentGrowthData} margin={{ top: 20, right: 20, left: 0, bottom: 5 }}>
                 <defs>
-                  <filter id="glow-line" x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
-                    <feMerge>
-                      <feMergeNode in="coloredBlur"/>
-                      <feMergeNode in="SourceGraphic"/>
-                    </feMerge>
-                  </filter>
                   <linearGradient id="line-gradient-growth" x1="0" y1="0" x2="1" y2="0">
                     <stop offset="0%" stopColor="#f97316" />
                     <stop offset="100%" stopColor="#fbbf24" />
@@ -105,7 +91,7 @@ export default function InstructorAnalyticsTab({ courses = [], stats = [], timeS
                   contentStyle={{ backgroundColor: 'var(--bg-main)', border: 'none', borderRadius: '8px', color: 'var(--text-h)', boxShadow: 'var(--inner-shadow), var(--outer-shadow)' }}
                   itemStyle={{ backgroundImage: 'linear-gradient(135deg, #f97316 0%, #fbbf24 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: 600 }}
                 />
-                <Area type="monotone" dataKey="students" name={t('instructor.analytics.students', 'students')} stroke="url(#line-gradient-growth)" strokeWidth={3} fillOpacity={1} fill="url(#colorGrowth)" dot={{ fill: 'var(--bg)', stroke: '#f97316', strokeWidth: 2, r: 4 }} activeDot={{ r: 6, fill: '#fbbf24' }} filter="url(#glow-line)" />
+                <Area type="monotone" dataKey="students" name={t('instructor.analytics.students', 'students')} stroke="url(#line-gradient-growth)" strokeWidth={3} fillOpacity={1} fill="url(#colorGrowth)" dot={{ fill: 'var(--bg)', stroke: '#f97316', strokeWidth: 2, r: 4 }} activeDot={{ r: 6, fill: '#fbbf24' }} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -126,21 +112,29 @@ export default function InstructorAnalyticsTab({ courses = [], stats = [], timeS
               </tr>
             </thead>
             <tbody>
-              {coursePerformanceData.map(course => (
-                <tr key={course.id} className="analytics-row" style={{ backgroundColor: 'transparent', transition: 'all 0.3s' }}>
-                  <td style={{ padding: '16px', fontWeight: '600', color: 'var(--text-h)', borderBottom: '1px solid var(--border)', borderStartStartRadius: '16px', borderEndStartRadius: '16px' }}>{course.title}</td>
-                  <td style={{ padding: '16px', borderBottom: '1px solid var(--border)' }}>{course.enrolled}</td>
-                  <td style={{ padding: '16px', borderBottom: '1px solid var(--border)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{ flex: 1, maxWidth: '120px', height: '6px', background: 'var(--border)', borderRadius: '4px', overflow: 'hidden' }}>
-                        <div style={{ width: course.completionRate, height: '100%', backgroundImage: 'linear-gradient(135deg, #f97316 0%, #fbbf24 100%)' }}></div>
+              {coursePerformanceData.length > 0 ? (
+                coursePerformanceData.map(course => (
+                  <tr key={course.id} className="analytics-row" style={{ backgroundColor: 'transparent', transition: 'all 0.3s' }}>
+                    <td style={{ padding: '16px', fontWeight: '600', color: 'var(--text-h)', borderBottom: '1px solid var(--border)', borderStartStartRadius: '16px', borderEndStartRadius: '16px' }}>{course.title}</td>
+                    <td style={{ padding: '16px', borderBottom: '1px solid var(--border)' }}>{course.enrolled}</td>
+                    <td style={{ padding: '16px', borderBottom: '1px solid var(--border)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ flex: 1, maxWidth: '120px', height: '6px', background: 'var(--border)', borderRadius: '4px', overflow: 'hidden' }}>
+                          <div style={{ width: course.completionRate, height: '100%', backgroundImage: 'linear-gradient(135deg, #f97316 0%, #fbbf24 100%)' }}></div>
+                        </div>
+                        <span style={{ fontSize: '0.85rem', fontWeight: '500', width: '40px' }}>{course.completionRate}</span>
                       </div>
-                      <span style={{ fontSize: '0.85rem', fontWeight: '500', width: '40px' }}>{course.completionRate}</span>
-                    </div>
+                    </td>
+                    <td style={{ padding: '16px', fontWeight: '700', backgroundImage: 'linear-gradient(135deg, #f97316 0%, #fbbf24 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', borderBottom: '1px solid var(--border)', borderStartEndRadius: '16px', borderEndEndRadius: '16px' }}>{course.revenue}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="4" style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--c-sub)' }}>
+                    {t('instructor.analytics.no_data', 'No course data available yet.')}
                   </td>
-                  <td style={{ padding: '16px', fontWeight: '700', backgroundImage: 'linear-gradient(135deg, #f97316 0%, #fbbf24 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', borderBottom: '1px solid var(--border)', borderStartEndRadius: '16px', borderEndEndRadius: '16px' }}>{course.revenue}</td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>

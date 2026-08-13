@@ -192,6 +192,15 @@ export default function InstructorEngagementTab({ courses = [], onAction }) {
               ]}
               activeTab={qaStatusTab}
               onChange={setQaStatusTab}
+              trackStyle={{
+                background: 'var(--bg-main)',
+                boxShadow: 'var(--inner-shadow)',
+                marginBottom: 0
+              }}
+              indicatorStyle={{
+                background: 'var(--bg-surface)',
+                boxShadow: 'var(--outer-shadow)'
+              }}
             />
           </div>
           {(() => {

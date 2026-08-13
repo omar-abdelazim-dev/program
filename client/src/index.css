@@ -280,3 +280,5 @@ body[data-role="superadmin"] .notyf {
   transform: scale(0.75);
   transform-origin: top right;
 }
+
+.auth-input:focus { border-color: var(--c-orange) !important; outline: none; transition: border-color 0.2s ease; }

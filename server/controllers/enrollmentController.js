@@ -122,10 +122,12 @@ export const enroll = async (req, res) => {
         instructor: course.instructor,
         amount: instructorShare,
         type: 'course_sale',
-        status: 'cleared',
+        status: 'pending',
+        availableAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7-day settlement
         description: `Course Sale - ${course.title}`,
         course: course._id,
         commissionRate,
+        referenceId: enrollment.invoiceId || enrollment.transactionId || ('INV-' + enrollment._id.toString().slice(-8).toUpperCase()),
       });
     }
 
