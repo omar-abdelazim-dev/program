@@ -144,24 +144,26 @@ export const requestPayout = async (req, res) => {
       { $set: { status: 'failed', failureReason: 'Abandoned (New request initiated before OTP verification)' } }
     );
 
-    // Cooldown: at least 7 days must pass between payout requests, measured
-    // from the instructor's most recent valid payout (not rejected/failed).
+    // Cooldown check: get the most recent payout request
     const lastPayout = await Transaction.findOne({ 
       instructor: instructorId, 
       type: 'payout_request',
-      status: { $in: ['otp_verified', 'approved', 'processing', 'paid', 'cleared'] }
     }).sort({ createdAt: -1 });
     
     if (lastPayout) {
       // If it's still being processed, block a new request regardless of date
-      if (['otp_verified', 'approved', 'processing'].includes(lastPayout.status)) {
+      if (['otp_verified', 'approved', 'processing', 'pending'].includes(lastPayout.status)) {
          return res.status(429).json({ message: 'You already have a payout request being processed.' });
       }
       
-      const cooldownEnds = new Date(lastPayout.createdAt.getTime() + PAYOUT_COOLDOWN_DAYS * 24 * 60 * 60 * 1000);
-      if (cooldownEnds > new Date()) {
-        return res.status(429).json({ message: `You can request another payout starting ${cooldownEnds.toDateString()}` });
+      if (['cleared', 'paid'].includes(lastPayout.status)) {
+        const approvalDate = lastPayout.updatedAt || lastPayout.approvedAt || lastPayout.createdAt;
+        const cooldownEnds = new Date(new Date(approvalDate).getTime() + PAYOUT_COOLDOWN_DAYS * 24 * 60 * 60 * 1000);
+        if (cooldownEnds > new Date()) {
+          return res.status(429).json({ message: `You can request another payout starting ${cooldownEnds.toDateString()}` });
+        }
       }
+      // If lastPayout is 'rejected' or 'failed', allow immediate re-request
     }
 
     const availableBalance = await getAvailableBalance(instructorId);

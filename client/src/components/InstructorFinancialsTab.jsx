@@ -111,17 +111,14 @@ export default function InstructorFinancialsTab({ user }) {
     { value: 'instapay', label: 'InstaPay' }
   ];
 
-  const lastPayoutTx = transactions.find(t => 
-    t.type === 'payout_request' && 
-    ['otp_verified', 'approved', 'processing', 'paid', 'cleared'].includes(t.status)
-  );
+  const lastPayoutTx = transactions.find(t => t.type === 'payout_request');
   let isPayoutDisabled = availableBalance < 100;
   let payoutDisabledReason = '';
 
   if (lastPayoutTx) {
     if (['otp_verified', 'approved', 'processing', 'pending'].includes(lastPayoutTx.status)) {
       isPayoutDisabled = true;
-      payoutDisabledReason = 'Payout Processing';
+      payoutDisabledReason = t('instructor.financials.payout_processing', 'Payout Processing');
     } else if (['cleared', 'paid'].includes(lastPayoutTx.status)) {
       const approvalDate = lastPayoutTx.updatedAt || lastPayoutTx.approvedAt || lastPayoutTx.createdAt;
       const cooldownEnds = new Date(new Date(approvalDate).getTime() + 7 * 24 * 60 * 60 * 1000);
