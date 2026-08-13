@@ -17,6 +17,7 @@ export default function PayoutOtpVerification({
   payoutAmount,
   onVerified,
   onError,
+  onBack,
 }) {
   const [payoutEmail, setPayoutEmail]         = useState(accountEmail || '');
   const [emailMismatch, setEmailMismatch]     = useState(false);
@@ -256,29 +257,51 @@ export default function PayoutOtpVerification({
         )}
       </div>
 
-      {/* Send/Resend button */}
-      <button
-        type="button"
-        className="glass-btn"
-        onClick={handleRequestOtp}
-        disabled={sendingOtp || cooldown > 0}
-        style={{
-          padding: '10px 20px',
-          fontSize: '0.9rem',
-          opacity: sendingOtp || cooldown > 0 ? 0.6 : 1,
-          cursor: sendingOtp || cooldown > 0 ? 'not-allowed' : 'pointer',
-          alignSelf: 'flex-start',
-          marginTop: '-4px'
-        }}
-      >
-        {sendingOtp
-          ? 'Sending…'
-          : cooldown > 0
-            ? `Resend in ${cooldown}s`
-            : codeSent
-              ? 'Resend Code'
-              : 'Send Code'}
-      </button>
+      {/* Send/Resend & Back buttons */}
+      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+        <button
+          type="button"
+          className="glass-btn"
+          onClick={handleRequestOtp}
+          disabled={sendingOtp || cooldown > 0}
+          style={{
+            padding: '10px 20px',
+            fontSize: '0.9rem',
+            opacity: sendingOtp || cooldown > 0 ? 0.6 : 1,
+            cursor: sendingOtp || cooldown > 0 ? 'not-allowed' : 'pointer',
+          }}
+        >
+          {sendingOtp
+            ? 'Sending…'
+            : cooldown > 0
+              ? `Resend in ${cooldown}s`
+              : codeSent
+                ? 'Resend Code'
+                : 'Send Code'}
+        </button>
+
+        {onBack && (
+          <button
+            type="button"
+            className="glass-btn"
+            onClick={onBack}
+            disabled={sendingOtp || verifying}
+            style={{
+              padding: '10px 20px',
+              fontSize: '0.9rem',
+              background: 'var(--bg-main)',
+              boxShadow: 'var(--inner-shadow)',
+              border: 'none',
+              borderRadius: '24px',
+              color: 'var(--c-sub)',
+              cursor: sendingOtp || verifying ? 'not-allowed' : 'pointer',
+              fontWeight: 600
+            }}
+          >
+            ← Back
+          </button>
+        )}
+      </div>
 
       {/* Feedback messages */}
       {error && (

@@ -363,6 +363,7 @@ export default function InstructorFinancialsTab({ user }) {
                   fetchFinancials();
                 }}
                 onError={(msg) => notyf.error(msg)}
+                onBack={() => setCreatedPayoutId(null)}
               />
             ) : (
               <form onSubmit={handleRequestPayout} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
