@@ -89,7 +89,7 @@ export default function InstructorFinancialsTab({ user }) {
       const res = await api.post('/financials/payout', {
         method: paymentMethod,
         payoutDetails: isWalletMethod ? walletNumber : instapayAccount,
-        payoutEmail: payoutEmail.replace(/[^a-zA-Z0-9._%+\-@]/g, '').replace(/[.\-+]+$/, '').trim().toLowerCase(),
+        payoutEmail,
         referenceId: invoiceCode
       });
       setCreatedPayoutId(res.data.transaction._id);
@@ -475,7 +475,7 @@ export default function InstructorFinancialsTab({ user }) {
                   style={{ width: '100%' }}
                   placeholder="e.g. email@example.com"
                   value={payoutEmail}
-                  onChange={(e) => setPayoutEmail(e.target.value.replace(/[^a-zA-Z0-9._%+\\-@]/g, ''))}
+                  onChange={(e) => setPayoutEmail(e.target.value.replace(/[^a-zA-Z0-9._%+@-]/g, ''))}
                   required
                 />
                 <small style={{ color: 'var(--c-sub)', marginTop: '4px', display: 'block', fontSize: '0.75rem' }}>

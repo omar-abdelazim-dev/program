@@ -62,9 +62,8 @@ export default function PayoutOtpVerification({
   const handleRequestOtp = async () => {
     setError('');
     setInfo('');
-    const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    let emailTrimmed = payoutEmail.replace(/[^a-zA-Z0-9._%+\-@]/g, '').replace(/[.\-+]+$/, '').trim().toLowerCase();
-    if (!emailTrimmed || !EMAIL_REGEX.test(emailTrimmed)) {
+    const emailTrimmed = payoutEmail.trim();
+    if (!emailTrimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrimmed)) {
       setError('Please enter a valid email address.');
       return;
     }
@@ -184,7 +183,7 @@ export default function PayoutOtpVerification({
             type="email"
             className="auth-input"
             value={payoutEmail}
-            onChange={e => { setPayoutEmail(e.target.value.replace(/[^a-zA-Z0-9._%+\\-@]/g, '')); setCodeSent(false); setCode(''); }}
+            onChange={e => { setPayoutEmail(e.target.value.replace(/[^a-zA-Z0-9._%+@-]/g, '')); setCodeSent(false); setCode(''); }}
             placeholder="you@example.com"
             disabled={sendingOtp || verifying}
             style={{ 

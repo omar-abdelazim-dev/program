@@ -132,10 +132,8 @@ export const requestPayout = async (req, res) => {
       return res.status(400).json({ message: 'Invalid payout method' });
     }
 
-    const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    const emailRaw = typeof payoutEmail === 'string' ? payoutEmail : (req.user.email || '');
-    let emailTrimmed = emailRaw.replace(/[^a-zA-Z0-9._%+\-@]/g, '').replace(/[.\-+]+$/, '').trim().toLowerCase();
-    if (!emailTrimmed || !EMAIL_REGEX.test(emailTrimmed)) {
+    const emailTrimmed = payoutEmail ? payoutEmail.toLowerCase().trim() : req.user.email.toLowerCase().trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrimmed)) {
       return res.status(400).json({ message: 'Invalid email address format' });
     }
 
