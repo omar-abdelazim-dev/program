@@ -546,16 +546,8 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                   )}
                 </button>
                 {showNotifications && (
-                  <div className="profile-dropdown" style={{ 
-                    width: '350px',
-                    padding: 0,
-                    borderRadius: '24px',
-                    overflow: 'hidden',
-                    background: 'var(--bg-main)',
-                    boxShadow: 'var(--inner-shadow)',
-                    border: 'none'
-                  }}>
-                    <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'transparent' }}>
+                  <div className="profile-dropdown" style={{ width: '350px' }}>
+                    <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-surface-hover)' }}>
                       <span style={{ color: 'var(--color-accent)', fontSize: '1.1rem' }}>{t('nav.notifications', 'Notifications')}</span>
                       {notifications.length > 0 && (
                         <button 
@@ -850,7 +842,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
               let nextWithdrawText = t('instructor.financials.available_now');
               if (lastWithdrawTx) {
                 if (['otp_verified', 'approved', 'processing', 'pending'].includes(lastWithdrawTx.status)) {
-                  nextWithdrawText = 'Under Review';
+                  nextWithdrawText = t('instructor.financials.under_review', 'Under Review');
                 } else if (['cleared', 'paid'].includes(lastWithdrawTx.status)) {
                   const approvalDate = lastWithdrawTx.updatedAt || lastWithdrawTx.approvedAt || lastWithdrawTx.createdAt;
                   const nextTime = new Date(new Date(approvalDate).getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -859,7 +851,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                     const d = Math.floor(diff / (1000 * 60 * 60 * 24));
                     const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                     const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                    nextWithdrawText = `${d}d ${h}h ${m}m`;
+                    nextWithdrawText = i18n.language === 'ar' ? `${d}ي ${h}س ${m}د` : `${d}d ${h}h ${m}m`;
                   }
                 }
               }

@@ -381,7 +381,8 @@
       "onsite_cash_help": "يُحول للرصيد المتاح تلقائياً بعد 7 أيام",
       "status_processing": "قيد المعالجة",
       "payout_processing": "جاري معالجة طلب السحب",
-      "email_used": "البريد الإلكتروني المستخدم:"
+      "email_used": "البريد الإلكتروني المستخدم:",
+      "under_review": "قيد المراجعة"
     },
     "notyf": {
       "lesson_published": "تم نشر الدرس",

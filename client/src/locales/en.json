@@ -378,7 +378,8 @@
       "onsite_cash_help": "Settles into available balance after 7 days",
       "status_processing": "Processing",
       "payout_processing": "Payout Processing",
-      "email_used": "Email Used:"
+      "email_used": "Email Used:",
+      "under_review": "Under Review"
     },
     "notyf": {
       "lesson_updated": "Lesson updated successfully",
