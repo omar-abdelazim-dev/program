@@ -376,7 +376,9 @@
       "last_withdrawal": "Last Withdrawal:",
       "onsite_cash": "On-Site Cash (Pending)",
       "onsite_cash_help": "Settles into available balance after 7 days",
-      "status_processing": "Processing"
+      "status_processing": "Processing",
+      "payout_processing": "Payout Processing",
+      "email_used": "Email Used:"
     },
     "notyf": {
       "lesson_updated": "Lesson updated successfully",

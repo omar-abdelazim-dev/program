@@ -560,7 +560,7 @@ export default function InstructorFinancialsTab({ user }) {
                     }}>
                       {isCleared 
                         ? (selectedTxForDetails.type === 'course_sale' ? (t('instructor.financials.status_received') || 'RECEIVED') : (t('instructor.financials.status_paid') || 'PAID')) : 
-                       isProcessing ? 'PROCESSING' :
+                       isProcessing ? (t('instructor.financials.status_processing') || 'PROCESSING') :
                        selectedTxForDetails.status === 'rejected' ? (t('instructor.financials.status_rejected') || 'REJECTED') : (t('instructor.financials.status_pending') || 'PENDING')}
                     </span>
                   );
@@ -625,7 +625,7 @@ export default function InstructorFinancialsTab({ user }) {
 
               {(selectedTxForDetails.payoutMethod || selectedTxForDetails.type === 'payout_request') && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem' }}>
-                  <span style={{ color: 'var(--c-sub)' }}>{t('instructor.financials.email_used', 'Email Used')}:</span>
+                  <span style={{ color: 'var(--c-sub)' }}>{t('instructor.financials.email_used', 'Email Used:')}</span>
                   <strong style={{ color: 'var(--text-h)', fontWeight: 600 }}>
                     {selectedTxForDetails.payoutEmail || user?.email || 'N/A'}
                   </strong>

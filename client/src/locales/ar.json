@@ -379,7 +379,9 @@
       "last_withdrawal": "آخر سحب:",
       "onsite_cash": "النقد المعلق (على الموقع)",
       "onsite_cash_help": "يُحول للرصيد المتاح تلقائياً بعد 7 أيام",
-      "status_processing": "قيد المعالجة"
+      "status_processing": "قيد المعالجة",
+      "payout_processing": "جاري معالجة طلب السحب",
+      "email_used": "البريد الإلكتروني المستخدم:"
     },
     "notyf": {
       "lesson_published": "تم نشر الدرس",
