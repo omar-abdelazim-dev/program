@@ -13,7 +13,7 @@ const lessonSchema = new mongoose.Schema(
     },
     videoUrl: {
       type: String,
-      required: [true, 'Video URL is required'],
+      required: [function () { return this.lessonType !== 'quiz'; }, 'Video URL is required'],
     },
     thumbnailUrl: {
       type: String,
@@ -43,6 +43,38 @@ const lessonSchema = new mongoose.Schema(
       type: String,
       enum: ['video', 'reading', 'quiz', 'assignment', 'live'],
       default: 'video',
+    },
+    // Only populated when lessonType === 'quiz'. Each question is either a
+    // multiple-choice question (graded automatically on submit) or a
+    // written/free-text question (queued for manual instructor grading —
+    // see QuizSubmission).
+    quiz: {
+      questions: [
+        {
+          type: {
+            type: String,
+            enum: ['mcq', 'written'],
+            required: true,
+          },
+          prompt: {
+            type: String,
+            required: true,
+            trim: true,
+          },
+          options: {
+            type: [String], // mcq only — instructor UI enforces 4-6, also re-validated server-side
+            default: undefined,
+          },
+          correctOptionIndex: {
+            type: Number, // mcq only — index into `options`
+          },
+          points: {
+            type: Number,
+            default: 1,
+            min: 0,
+          },
+        },
+      ],
     },
     status: {
       type: String,

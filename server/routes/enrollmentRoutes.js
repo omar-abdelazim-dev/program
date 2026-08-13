@@ -5,6 +5,7 @@ import {
   getEnrollmentStatus,
   markLessonComplete,
 } from '../controllers/enrollmentController.js';
+import { submitQuiz, getMySubmission } from '../controllers/quizController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 import { validateObjectId } from '../middleware/validationMiddleware.js';
 
@@ -17,5 +18,7 @@ router.get('/mine', protect, authorize('student'), getMyEnrollments);
 router.post('/:courseId', protect, authorize('student'), validateObjectId('courseId'), enroll);
 router.get('/:courseId', protect, validateObjectId('courseId'), getEnrollmentStatus);
 router.patch('/:courseId/lessons/:lessonId/complete', protect, authorize('student'), validateObjectId('courseId', 'lessonId'), markLessonComplete);
+router.post('/:courseId/lessons/:lessonId/quiz-submit', protect, authorize('student'), validateObjectId('courseId', 'lessonId'), submitQuiz);
+router.get('/:courseId/lessons/:lessonId/quiz-submission', protect, authorize('student'), validateObjectId('courseId', 'lessonId'), getMySubmission);
 
 export default router;
