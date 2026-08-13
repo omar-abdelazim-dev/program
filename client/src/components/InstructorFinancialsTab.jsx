@@ -75,8 +75,8 @@ export default function InstructorFinancialsTab({ user }) {
       notyf.error('Minimum payout amount is EGP 100');
       return;
     }
-    if (isWalletMethod && !walletNumber) {
-      notyf.error('Mobile wallet phone number is required');
+    if (isWalletMethod && (!walletNumber || !/^\d{11}$/.test(walletNumber))) {
+      notyf.error('Mobile wallet phone number must be exactly 11 digits');
       return;
     }
     if (paymentMethod === 'instapay' && !instapayAccount) {
@@ -425,11 +425,14 @@ export default function InstructorFinancialsTab({ user }) {
                     </label>
                     <input 
                       type="tel" 
+                      inputMode="numeric"
+                      pattern="\d*"
+                      maxLength={11}
                       className="auth-input"
                       style={{ width: '100%' }}
                       placeholder="e.g. 010xxxxxxxx"
                       value={walletNumber}
-                      onChange={(e) => setWalletNumber(e.target.value)}
+                      onChange={(e) => setWalletNumber(e.target.value.replace(/\D/g, '').slice(0, 11))}
                       required
                     />
                   </div>
