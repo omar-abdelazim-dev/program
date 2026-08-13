@@ -493,7 +493,7 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                                       {(() => {
                                         const isPublished = (pendingStatuses[lesson._id] || lesson.status) === 'published';
                                         return (
-                                          <div style={{ position: 'relative', display: 'flex', background: 'var(--bg-surface)', padding: '4px', borderRadius: '50px', boxShadow: 'var(--inner-shadow)', width: '180px', height: '34px' }}>
+                                          <div style={{ position: 'relative', display: 'flex', background: 'var(--bg-surface)', padding: '4px', borderRadius: '50px', boxShadow: 'var(--outer-shadow)', width: '180px', height: '34px' }}>
                                             <div style={{
                                               position: 'absolute',
                                               top: '4px',
@@ -502,7 +502,7 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                                               height: 'calc(100% - 8px)',
                                               borderRadius: '50px',
                                               background: 'var(--bg-main)',
-                                              boxShadow: 'var(--outer-shadow)',
+                                              boxShadow: 'var(--inner-shadow)',
                                               transition: 'inset-inline-start 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                                               zIndex: 0,
                                             }} />
