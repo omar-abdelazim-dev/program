@@ -287,11 +287,22 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                   <input
                     autoFocus
                     type="text"
+                    className="auth-input"
                     value={newModuleTitle}
                     onChange={(e) => setNewModuleTitle(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') handleAddModule(); if (e.key === 'Escape') { setAddingModule(false); setNewModuleTitle(''); } }}
                     placeholder={t('instructor.curriculum.ph_module_title', 'Module title (e.g. "Introduction to Java")')}
-                    style={{ flex: 1 }}
+                    style={{
+                      flex: 1,
+                      background: 'var(--bg-main)',
+                      boxShadow: 'var(--inner-shadow)',
+                      border: '1px solid var(--border)',
+                      color: 'var(--text-h)',
+                      padding: '10px 16px',
+                      borderRadius: '12px',
+                      outline: 'none',
+                      fontSize: '0.95rem'
+                    }}
                   />
                   <button onClick={handleAddModule} className="solid-btn" style={{ width: 'auto', padding: '10px 20px' }}>
                     {t('instructor.create_course.save', 'Save')}
@@ -349,11 +360,23 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                               <input
                                 autoFocus
                                 type="text"
+                                className="auth-input"
                                 value={moduleTitleDraft}
                                 onChange={(e) => setModuleTitleDraft(e.target.value)}
                                 onBlur={() => handleRenameModule(module._id)}
                                 onKeyDown={(e) => { if (e.key === 'Enter') handleRenameModule(module._id); if (e.key === 'Escape') setEditingModuleId(null); }}
-                                style={{ flex: 1 }}
+                                style={{
+                                  flex: 1,
+                                  background: 'var(--bg-main)',
+                                  boxShadow: 'var(--inner-shadow)',
+                                  border: '1px solid var(--border)',
+                                  color: 'var(--text-h)',
+                                  padding: '8px 14px',
+                                  borderRadius: '12px',
+                                  outline: 'none',
+                                  fontSize: '1rem',
+                                  fontWeight: 600
+                                }}
                               />
                             ) : (
                               <div style={{ minWidth: 0 }}>
