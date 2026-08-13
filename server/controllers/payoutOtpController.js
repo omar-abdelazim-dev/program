@@ -71,22 +71,6 @@ export const requestOtp = async (req, res) => {
     const expires = otpExpiresAt();
     const resendAt = resendCooldownEnd();
 
-    // Upsert: replace any existing OTP for this payout (invalidates the old code)
-    await PayoutOTP.findOneAndUpdate(
-      { payoutRequestId: tx._id },
-      {
-        payoutRequestId: tx._id,
-        email: payoutEmail.toLowerCase().trim(),
-        otpHash: hash,
-        attempts: 0,
-        maxAttempts: MAX_ATTEMPTS,
-        expiresAt: expires,
-        resendAvailableAt: resendAt,
-        usedAt: null,
-      },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
-
     // Detect email mismatch (fraud signal)
     const emailMismatch = payoutEmail.toLowerCase().trim() !== req.user.email.toLowerCase().trim();
     if (emailMismatch) {
@@ -102,14 +86,30 @@ export const requestOtp = async (req, res) => {
       });
     }
 
-    // Send email
+    // Send email FIRST so if email transport fails, DB cooldown is not set prematurely
     await sendPayoutOtpEmail({
       toEmail: payoutEmail,
       code,
       amount: Math.abs(tx.amount),
-      instructorName: req.user.name,
+      instructorName: req.user.name || 'Instructor',
       emailMismatch,
     });
+
+    // Upsert: replace any existing OTP for this payout AFTER email successfully sent
+    await PayoutOTP.findOneAndUpdate(
+      { payoutRequestId: tx._id },
+      {
+        payoutRequestId: tx._id,
+        email: payoutEmail.toLowerCase().trim(),
+        otpHash: hash,
+        attempts: 0,
+        maxAttempts: MAX_ATTEMPTS,
+        expiresAt: expires,
+        resendAvailableAt: resendAt,
+        usedAt: null,
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
 
     const action = existing ? 'otp_resent' : 'otp_requested';
     await audit(tx._id, action, req.user.id, req.ip, { payoutEmail, emailMismatch });
@@ -121,8 +121,8 @@ export const requestOtp = async (req, res) => {
       emailMismatch,
     });
   } catch (err) {
-    logger.error('requestOtp error', { err: err.message });
-    return res.status(500).json({ message: 'Failed to send verification code' });
+    logger.error('requestOtp error', { err: err.message, stack: err.stack });
+    return res.status(500).json({ message: err.message || 'Failed to send verification code' });
   }
 };
 
@@ -214,6 +214,21 @@ export const verifyPayoutOtp = async (req, res) => {
         type: 'system',
         refId: tx._id,
       }], { session });
+
+      // Notify all admins about the new payout request
+      const admins = await User.find({ role: { $in: ['admin', 'superadmin'] } }).session(session);
+      const formattedAmount = amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const adminNotifications = admins.map(admin => ({
+        user: admin._id,
+        title: 'New Payout Request',
+        message: `Instructor ${req.user.name || 'An instructor'} has submitted a payout request of EGP ${formattedAmount}.`,
+        type: 'system',
+        link: '/admin',
+        refId: tx._id,
+      }));
+      if (adminNotifications.length > 0) {
+        await Notification.insertMany(adminNotifications, { session });
+      }
 
       await audit(tx._id, 'otp_verified', req.user.id, req.ip, {
         nextStatus,
