@@ -3,9 +3,27 @@ import Course from '../models/Course.js';
 import User from '../models/User.js';
 import Lesson from '../models/Lesson.js';
 import Transaction from '../models/Transaction.js';
-import Section from '../models/Section.js';
 import PromoCode from '../models/PromoCode.js';
 import { getInternalConfig } from '../utils/configFetcher.js';
+import Notification from '../models/Notification.js';
+import logger from '../utils/logger.js';
+import { getModulesWithLessons } from '../utils/courseContent.js';
+
+// Builds the per-module completion breakdown returned alongside overall progress.
+const computeModuleProgress = (grouped, completedIds) => {
+  const completedSet = new Set(completedIds.map((id) => id.toString()));
+  return grouped.map(({ module, lessons }) => {
+    const totalCount = lessons.length;
+    const completedCount = lessons.filter((l) => completedSet.has(l._id.toString())).length;
+    return {
+      moduleId: module._id,
+      title: module.title,
+      completedCount,
+      totalCount,
+      percent: totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100),
+    };
+  });
+};
 
 // @route   POST /api/enrollments/:courseId
 // @access  Private (student)
@@ -60,26 +78,54 @@ export const enroll = async (req, res) => {
       commissionRate = commissionPercent;
     }
 
+    const status = course.price > 0 ? 'pending' : 'approved';
     const enrollment = await Enrollment.create({
       student: req.user.id,
       course: courseId,
       amountPaid: course.price,
       platformCommission,
-      instructorShare
+      instructorShare,
+      status,
+      transactionId: req.body.transactionId,
+      paymentAccount: req.body.paymentAccount,
+      paymentMethod: req.body.paymentMethod,
+      screenshot: req.body.screenshot,
+      invoiceId: req.body.invoiceId,
     });
 
+    if (status === 'pending') {
+      try {
+        const admins = await User.find({ role: { $in: ['admin', 'superadmin'] } });
+        const student = await User.findById(req.user.id);
+        const studentName = student ? student.name : 'A student';
+        
+        const notifications = admins.map(admin => ({
+          user: admin._id,
+          title: 'New Enrollment Request',
+          message: `${studentName} has requested to enroll in "${course.title}". Invoice ID: ${req.body.invoiceId || 'N/A'}.`,
+          type: 'system',
+          link: '/admin',
+          refId: enrollment._id,
+        }));
+        
+        if (notifications.length > 0) {
+          await Notification.insertMany(notifications);
+        }
+      } catch (err) {
+        logger.error('Failed to create admin notifications', { error: err.message, stack: err.stack });
+      }
+    }
+
     // Generate revenue split transaction for the instructor
-    if (course.status === 'approved' && course.price > 0 && course.instructor) {
+    if (status === 'approved' && course.price > 0 && course.instructor) {
       await Transaction.create({
         instructor: course.instructor,
         amount: instructorShare,
         type: 'course_sale',
-        status: 'pending',
-        availableAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7-day settlement
+        status: 'cleared',
         description: `Course Sale - ${course.title}`,
         course: course._id,
         commissionRate,
-        referenceId: enrollment.invoiceId || enrollment.transactionId || ('INV-' + enrollment._id.toString().slice(-8).toUpperCase()),
       });
     }
 
@@ -90,7 +136,7 @@ export const enroll = async (req, res) => {
     if (error.code === 11000) {
       return res.status(409).json({ message: 'You are already enrolled in this course' });
     }
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error enrolling in course' });
   }
 };
@@ -115,10 +161,9 @@ export const getMyEnrollments = async (req, res) => {
     // frontend doesn't have to fetch lesson counts separately for every card.
     const withProgress = await Promise.all(
       validEnrollments.map(async (enrollment) => {
-        // Fetch all lessons for the course (via its sections), sorted by order
-        const sections = await Section.find({ course: enrollment.course._id });
-        const sectionIds = sections.map(s => s._id);
-        const allLessons = await Lesson.find({ section: { $in: sectionIds } }).sort({ order: 1 });
+        // Fetch all lessons for the course (via its modules), in module -> lesson order
+        const grouped = await getModulesWithLessons(enrollment.course._id);
+        const allLessons = grouped.flatMap(({ lessons }) => lessons);
         const totalLessons = allLessons.length;
         
         // Use completedLessons to calculate progress
@@ -140,7 +185,7 @@ export const getMyEnrollments = async (req, res) => {
 
     res.status(200).json({ enrollments: withProgress });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching your enrollments' });
   }
 };
@@ -157,20 +202,21 @@ export const getEnrollmentStatus = async (req, res) => {
       return res.status(200).json({ enrolled: false });
     }
 
-    const sections = await Section.find({ course: courseId });
-    const sectionIds = sections.map(s => s._id);
-    const totalLessons = await Lesson.countDocuments({ section: { $in: sectionIds } });
+    const grouped = await getModulesWithLessons(courseId);
+    const totalLessons = grouped.reduce((sum, { lessons }) => sum + lessons.length, 0);
     const progressPercent =
       totalLessons === 0 ? 0 : Math.round((enrollment.completedLessons.length / totalLessons) * 100);
 
     res.status(200).json({
       enrolled: true,
+      status: enrollment.status,
       completedLessonIds: enrollment.completedLessons,
       totalLessons,
       progressPercent,
+      moduleProgress: computeModuleProgress(grouped, enrollment.completedLessons),
     });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error checking enrollment' });
   }
 };
@@ -185,11 +231,14 @@ export const markLessonComplete = async (req, res) => {
     if (!enrollment) {
       return res.status(403).json({ message: 'You must enroll in this course first' });
     }
+    if (enrollment.status !== 'approved') {
+      return res.status(403).json({ message: 'Your enrollment is pending approval' });
+    }
 
     // Confirm the lesson actually belongs to this course — prevents a student
     // from marking a lesson from a DIFFERENT course as complete on this enrollment.
-    const lesson = await Lesson.findById(lessonId).populate('section');
-    if (!lesson || !lesson.section || lesson.section.course.toString() !== courseId) {
+    const lesson = await Lesson.findById(lessonId).populate('module');
+    if (!lesson || !lesson.module || lesson.module.course.toString() !== courseId) {
       return res.status(404).json({ message: 'Lesson not found in this course' });
     }
 
@@ -198,9 +247,8 @@ export const markLessonComplete = async (req, res) => {
     enrollment.completedLessons.addToSet(lessonId);
     await enrollment.save();
 
-    const sections = await Section.find({ course: courseId });
-    const sectionIds = sections.map(s => s._id);
-    const totalLessons = await Lesson.countDocuments({ section: { $in: sectionIds } });
+    const grouped = await getModulesWithLessons(courseId);
+    const totalLessons = grouped.reduce((sum, { lessons }) => sum + lessons.length, 0);
     const progressPercent =
       totalLessons === 0 ? 0 : Math.round((enrollment.completedLessons.length / totalLessons) * 100);
 
@@ -208,9 +256,10 @@ export const markLessonComplete = async (req, res) => {
       completedLessonIds: enrollment.completedLessons,
       totalLessons,
       progressPercent,
+      moduleProgress: computeModuleProgress(grouped, enrollment.completedLessons),
     });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error marking lesson complete' });
   }
 };

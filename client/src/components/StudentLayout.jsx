@@ -402,99 +402,87 @@ export default function StudentLayout({
                 )}
               </button>
 
-              <div className="profile-dropdown" style={{ width: "320px" }}>
-                <div style={{ padding: 0, paddingRight: "4px", display: "flex", flexDirection: "column" }}>
-                <div className="dropdown-name" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span>{t('student.nav.notifications', 'Notifications')}</span>
-                  {notifications && notifications.length > 0 && (
-                    <button 
-                      onClick={() => setNotifications([])}
-                      style={{ background: 'none', border: 'none', color: 'var(--color-accent)', cursor: 'pointer', fontSize: '0.8rem', padding: 0 }}
-                    >
-                      {t('student.nav.clear_all', 'Clear all')}
-                    </button>
-                  )}
-                </div>
-                <hr className="dropdown-divider" />
-                {!notifications || notifications.length === 0 ? (
-                  <div
-                    style={{
-                      padding: "16px",
-                      textAlign: "center",
-                      color: "var(--text-secondary)",
-                      fontSize: "0.9rem",
-                    }}
-                  >
-                    {t('student.nav.no_notifications', 'No new notifications')}
+              <div className="profile-dropdown" style={{ width: '360px', right: 0, left: 'auto', padding: 0, borderRadius: '16px', overflow: 'hidden' }}>
+                <div style={{ padding: 0, display: "flex", flexDirection: "column" }}>
+                  <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--c-border-subtle, rgba(255,255,255,0.08))', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-surface)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }}>
+                    <span style={{ color: 'var(--color-accent, #f97316)', fontSize: '1.05rem' }}>{t('student.nav.notifications', 'Notifications')}</span>
+                    {notifications && notifications.length > 0 && (
+                      <button 
+                        onClick={() => setNotifications([])}
+                        style={{ background: 'none', border: 'none', color: 'var(--c-sub)', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
+                      >
+                        {t('student.nav.clear_all', 'Clear all')}
+                      </button>
+                    )}
                   </div>
-                ) : (
-                  <div style={{ maxHeight: "300px", overflowY: "auto" }}>
-                    {notifications
-                      .sort((a, b) => b.timestamp - a.timestamp)
-                      .map((notif, idx) => (
-                        <div
-                          key={notif.id || idx}
-                          style={{
-                            padding: "12px 8px",
-                            borderBottom:
-                              idx !== notifications.length - 1
-                                ? "1px solid var(--border-solid)"
-                                : "none",
-                          }}
-                        >
-                          {notif.link ? (
-                            <Link to={notif.link} style={{ textDecoration: 'none' }} onClick={() => setNotifications(prev => prev.filter(n => n.id !== notif.id))}>
-                              <div
-                                style={{
-                                  fontSize: "0.9rem",
-                                  color: "var(--color-accent)",
-                                  fontWeight: "600",
-                                  marginBottom: "4px",
-                                }}
-                              >
+                  {!notifications || notifications.length === 0 ? (
+                    <div
+                      style={{
+                        padding: "24px",
+                        textAlign: "center",
+                        color: "var(--c-sub)",
+                        fontSize: "0.9rem",
+                      }}
+                    >
+                      {t('student.nav.no_notifications', 'No new notifications')}
+                    </div>
+                  ) : (
+                    <div style={{ maxHeight: "320px", overflowY: "auto" }}>
+                      {notifications
+                        .sort((a, b) => b.timestamp - a.timestamp)
+                        .map((notif, idx) => {
+                          const content = (
+                            <>
+                              <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-h)', marginBottom: '4px' }}>
                                 {notif.text}
                               </div>
                               {notif.message && (
-                                <div style={{ fontSize: "0.85rem", color: "var(--text-primary)", marginBottom: "4px" }}>
+                                <div style={{ fontSize: '0.8rem', color: 'var(--c-sub)', lineHeight: '1.4', marginBottom: '4px' }}>
                                   {notif.message}
                                 </div>
                               )}
-                              <div
-                                style={{
-                                  fontSize: "0.75rem",
-                                  color: "var(--text-secondary)",
-                                  textAlign: "right",
-                                }}
-                              >
-                                {new Date(notif.timestamp).toLocaleString()}
-                              </div>
-                            </Link>
-                          ) : (
-                            <>
-                              <div
-                                style={{
-                                  fontSize: "0.9rem",
-                                  color: "var(--text-primary)",
-                                  marginBottom: "4px",
-                                }}
-                              >
-                                {notif.text}
-                              </div>
-                              <div
-                                style={{
-                                  fontSize: "0.75rem",
-                                  color: "var(--text-secondary)",
-                                  textAlign: "right",
-                                }}
-                              >
+                              <div style={{ fontSize: '0.72rem', color: 'var(--c-sub)', marginTop: '6px', textAlign: 'right', opacity: 0.8 }}>
                                 {new Date(notif.timestamp).toLocaleString()}
                               </div>
                             </>
-                          )}
-                        </div>
-                      ))}
-                  </div>
-                )}
+                          );
+
+                          const itemStyle = {
+                            padding: '12px 16px',
+                            borderBottom: '1px solid var(--c-border-subtle, rgba(255,255,255,0.05))',
+                            backgroundColor: notif.read ? 'transparent' : 'rgba(249, 115, 22, 0.08)',
+                            cursor: 'pointer',
+                            position: 'relative',
+                            transition: 'background 0.2s',
+                            display: 'block',
+                            textDecoration: 'none'
+                          };
+
+                          if (notif.link) {
+                            return (
+                              <Link 
+                                key={notif.id || idx}
+                                to={notif.link} 
+                                style={itemStyle} 
+                                onClick={() => setNotifications(prev => prev.filter(n => n.id !== notif.id))}
+                              >
+                                {content}
+                              </Link>
+                            );
+                          }
+
+                          return (
+                            <div 
+                              key={notif.id || idx}
+                              style={itemStyle}
+                            >
+                              {content}
+                            </div>
+                          );
+                        })
+                      }
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

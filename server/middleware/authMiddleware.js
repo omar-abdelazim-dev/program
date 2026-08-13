@@ -27,13 +27,18 @@ export const protect = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Fetch the fresh user from the DB rather than trusting the token's
-    // payload alone — this way, if a user's role changes or their account
-    // is deleted after the token was issued, we catch it on every request.
-    const user = await User.findById(decoded.userId);
+    const user = await User.findById(decoded.userId).select('+passwordChangedAt');
 
     if (!user) {
       return res.status(401).json({ message: 'User no longer exists' });
+    }
+
+    if (user.passwordChangedAt) {
+      const changedTimestamp = parseInt(user.passwordChangedAt.getTime() / 1000, 10);
+      // Give a tiny 1-second grace period in case they were generated on the exact same second
+      if (decoded.iat < changedTimestamp - 1) {
+        return res.status(401).json({ message: 'Session invalidated. Password was recently changed. Please log in again.' });
+      }
     }
 
     if (user.isBlocked) {
@@ -76,5 +81,52 @@ export const authorize = (...allowedRoles) => {
       });
     }
     next();
+  };
+};
+
+/**
+ * Centralized IDOR / Ownership Middleware
+ * Replaces fragile manual checks in controllers.
+ * 
+ * @param {mongoose.Model} Model - The Mongoose model to query
+ * @param {string} idParamName - The name of the route parameter containing the resource ID (e.g. 'id')
+ * @param {string} ownerField - The field on the document containing the owner's user ID
+ */
+export const verifyOwnership = (Model, idParamName = 'id', ownerField = 'instructor') => {
+  return async (req, res, next) => {
+    try {
+      const resourceId = req.params[idParamName];
+      const doc = await Model.findById(resourceId);
+      
+      if (!doc) {
+        // We return 404 instead of 403. While this slightly enables 404 enumeration,
+        // it's an accepted tradeoff per the security assessment for standard REST behavior.
+        return res.status(404).json({ message: 'Resource not found' });
+      }
+
+      const isOwner = doc[ownerField] && doc[ownerField].toString() === req.user.id.toString();
+      const isAdmin = req.user.role === 'admin' || req.user.role === 'superadmin';
+
+      if (!isOwner && !isAdmin) {
+        import('../utils/auditLogger.js').then(({ logAudit }) => {
+          logAudit({
+            action: 'UNAUTHORIZED_RESOURCE_ACCESS',
+            module: 'auth',
+            userId: req.user.id,
+            targetId: resourceId,
+            targetModel: Model.modelName,
+            ipAddress: req.ip,
+            severity: 'warn'
+          });
+        });
+        return res.status(403).json({ message: 'Not authorized to access this resource' });
+      }
+
+      // Attach to request so the controller doesn't have to query the DB again
+      req.resource = doc;
+      next();
+    } catch (error) {
+      next(error); // Let global error handler deal with CastErrors etc.
+    }
   };
 };

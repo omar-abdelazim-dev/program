@@ -48,6 +48,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
   const [editingCourse, setEditingCourse] = useState(null);
   const [showLessonModal, setShowLessonModal] = useState(false);
   const [selectedCourseId, setSelectedCourseId] = useState(null);
+  const [selectedModuleId, setSelectedModuleId] = useState(null);
 
   // Form states
   // INS-03: Replaced category/major with college
@@ -122,15 +123,16 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
       const myCourses = res.data.courses || [];
       setCourses(myCourses);
 
-      // The owner-gated GET /api/courses/:id already returns { course, lessons },
+      // The owner-gated GET /api/courses/:id already returns { course, modules },
       // but only if the user is the instructor. Let's just do a series of fetches for now.
       const modulesMap = {};
       for (const c of myCourses) {
         try {
-          const detail = await api.get(`/courses/${c._id}`);
-          modulesMap[c._id] = detail.data.modules || [];
-        } catch (err) {
-          console.error(`Failed to load modules for course ${c._id}`, err);
+          const modRes = await api.get(`/courses/${c._id}/modules`);
+          modulesMap[c._id] = modRes.data.modules || [];
+        } catch (mErr) {
+          console.error(`Failed to load modules for course ${c._id}`, mErr);
+          modulesMap[c._id] = [];
         }
       }
       setModulesByCourse(modulesMap);
@@ -153,7 +155,6 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
       } catch (finErr) {
         console.error('Failed to load financial summary in portal', finErr);
       }
-
       fetchUnreadCount();
       fetchNotifications();
     } catch (err) {
@@ -343,11 +344,12 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
       if (editingLessonId) {
         await api.put(`/courses/${selectedCourseId}/lessons/${editingLessonId}`, payload);
       } else {
-        await api.post(`/courses/${selectedCourseId}/lessons`, payload);
+        await api.post(`/courses/${selectedCourseId}/modules/${selectedModuleId}/lessons`, payload);
       }
 
       setShowLessonModal(false);
       setEditingLessonId(null);
+      setSelectedModuleId(null);
       setLessonData({ title: '', attachmentTitle: '' });
       setVideoFile(null);
       setAttachmentFile(null);
@@ -775,9 +777,10 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                 courses={courses} 
                 modulesByCourse={modulesByCourse} 
                 onAction={fetchMyCourses}
-                onOpenAddLesson={(courseId) => {
+                onOpenAddLesson={(courseId, moduleId) => {
                   setError('');
                   setSelectedCourseId(courseId);
+                  setSelectedModuleId(moduleId);
                   setEditingLessonId(null);
                   setLessonData({ title: '', attachmentTitle: '' });
                   setVideoFile(null);

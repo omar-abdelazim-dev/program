@@ -3,6 +3,7 @@ import AuditLog from '../models/AuditLog.js';
 import Enrollment from '../models/Enrollment.js';
 
 import { getInternalConfig, clearConfigCache } from '../utils/configFetcher.js';
+import logger from '../utils/logger.js';
 
 // Helper to get or create the global config
 const getGlobalConfig = async () => {
@@ -20,7 +21,7 @@ export const getConfig = async (req, res) => {
     const config = await getGlobalConfig();
     res.json(config);
   } catch (err) {
-    console.error(err);
+    logger.error('An error occurred', { error: err.message, stack: err.stack });
     res.status(500).json({ message: 'Server error retrieving system configuration' });
   }
 };
@@ -41,7 +42,7 @@ export const getPublicConfig = async (req, res) => {
       landingPage: config.landingPage
     });
   } catch (err) {
-    console.error(err);
+    logger.error('An error occurred', { error: err.message, stack: err.stack });
     res.status(500).json({ message: 'Server error retrieving public configuration' });
   }
 };
@@ -111,7 +112,7 @@ export const updateConfigSection = async (req, res) => {
 
     res.json(config);
   } catch (err) {
-    console.error(err);
+    logger.error('An error occurred', { error: err.message, stack: err.stack });
     res.status(500).json({ message: 'Server error updating configuration' });
   }
 };
@@ -153,7 +154,7 @@ export const previewFinancials = async (req, res) => {
     });
 
   } catch (err) {
-    console.error(err);
+    logger.error('An error occurred', { error: err.message, stack: err.stack });
     res.status(500).json({ message: 'Server error generating financial preview' });
   }
 };

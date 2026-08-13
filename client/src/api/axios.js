@@ -1,10 +1,10 @@
-import axios from 'axios';
+import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: import.meta.env.VITE_API_URL || "/api",
   withCredentials: true,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -13,26 +13,79 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   const match = document.cookie.match(/(?:^|; )csrfToken=([^;]*)/);
   if (match) {
-    config.headers['X-CSRF-Token'] = decodeURIComponent(match[1]);
+    config.headers["X-CSRF-Token"] = decodeURIComponent(match[1]);
   }
   return config;
 });
 
-// A 401 mid-session (expired/invalidated cookie) previously surfaced as a
-// generic inline error wherever the request happened to be made. Any
-// /auth/* endpoint is excluded — a login failure or the initial "am I
-// logged in" check on app load are expected 401s, not session expiry, and
-// already have their own handling.
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
     const status = error.response?.status;
-    const isAuthEndpoint = (error.config?.url || '').includes('/auth/');
-    if (status === 401 && !isAuthEndpoint && !window.location.pathname.startsWith('/auth')) {
-      window.location.href = '/auth';
+
+    const isAuthEndpoint = (originalRequest.url || "").includes("/auth/");
+
+    if (status === 401 && !isAuthEndpoint && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise(function (resolve, reject) {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(() => {
+            return api(originalRequest);
+          })
+          .catch((err) => {
+            return Promise.reject(err);
+          });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        await axios.post(
+          (import.meta.env.VITE_API_URL || "http://localhost:5050/api") +
+            "/auth/refresh",
+          {},
+          { withCredentials: true },
+        );
+        isRefreshing = false;
+        processQueue(null);
+        return api(originalRequest);
+      } catch (err) {
+        isRefreshing = false;
+        processQueue(err, null);
+        if (!window.location.pathname.startsWith("/auth")) {
+          window.location.href = "/auth";
+        }
+        return Promise.reject(err);
+      }
     }
+
+    if (
+      status === 401 &&
+      !isAuthEndpoint &&
+      !window.location.pathname.startsWith("/auth")
+    ) {
+      window.location.href = "/auth";
+    }
+
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;

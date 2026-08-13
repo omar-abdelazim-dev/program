@@ -2852,6 +2852,21 @@ body.light-mode .sys-btn-success {
     transform: none;
 }
 
+/* Course-player sidebar lesson rows (module/lesson list in LearningPortal) */
+.saas-card {
+    background: transparent;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.saas-card.interactive:hover {
+    background: var(--c-bg-hover);
+}
+
+.saas-card.active-lesson {
+    background: var(--c-bg-hover);
+    border-left-color: var(--c-orange) !important;
+}
+
 /* --------------------------------------------------------------------------
    Global Typography & Spacing (Per Reference Design System)
    -------------------------------------------------------------------------- */
@@ -3430,10 +3445,10 @@ body .no-border {
 
 .analytics-row:hover .status-badge,
 .status-badge:hover {
-    box-shadow: none;
+    background: var(--bg-surface);
+    box-shadow: var(--outer-shadow);
+    transform: translateY(-1px);
 }
-
-
 
 
 .profile-avatar-btn {

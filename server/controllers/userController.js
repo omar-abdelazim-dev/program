@@ -1,5 +1,6 @@
 import User from '../models/User.js';
 import Enrollment from '../models/Enrollment.js';
+import logger from '../utils/logger.js';
 
 // @route   GET /api/users/:id/profile
 // @access  Private — only an instructor, an admin, or the user themselves
@@ -37,7 +38,7 @@ export const getUserProfile = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error fetching user profile:', error);
+    logger.error('Error fetching user profile:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching user profile' });
   }
 };
@@ -69,7 +70,7 @@ export const getStudentEnrollments = async (req, res) => {
 
     res.status(200).json({ courses });
   } catch (error) {
-    console.error('Error fetching student enrollments:', error);
+    logger.error('Error fetching student enrollments:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching student enrollments' });
   }
 };

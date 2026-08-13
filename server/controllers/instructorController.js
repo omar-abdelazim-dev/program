@@ -4,6 +4,7 @@ import { attachReviewStats } from './courseController.js';
 import Review from '../models/Review.js';
 import Enrollment from '../models/Enrollment.js';
 import { escapeRegex } from '../utils/escapeRegex.js';
+import logger from '../utils/logger.js';
 
 // Shared helper: given a list of instructor ObjectIds, compute
 // { [instructorId]: { courseCount, avgRating, totalStudents, expertise } }
@@ -93,7 +94,7 @@ export const listInstructors = async (req, res) => {
 
     res.status(200).json({ instructors: result });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching instructors' });
   }
 };
@@ -129,7 +130,7 @@ export const getInstructorProfile = async (req, res) => {
       courses,
     });
   } catch (error) {
-    console.error(error);
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error fetching instructor profile' });
   }
 };

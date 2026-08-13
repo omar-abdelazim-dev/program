@@ -93,7 +93,7 @@ export const getFinancials = async (req, res) => {
       transactions,
     });
   } catch (error) {
-    console.error('Error fetching financials:', error);
+    logger.error('Error fetching financials:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to fetch financials' });
   }
 };
@@ -119,7 +119,7 @@ export const requestPayoutOtp = async (req, res) => {
 
     res.status(200).json({ message: `Verification code sent to your registered phone number (${registeredPhone})`, phone: registeredPhone });
   } catch (error) {
-    console.error('Error requesting payout OTP:', error);
+    logger.error('Error requesting payout OTP:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to send verification code' });
   }
 };
@@ -207,7 +207,7 @@ export const requestPayout = async (req, res) => {
 
     res.status(201).json({ message: 'Payout request initiated successfully. Please complete email OTP verification.', transaction: payoutTx });
   } catch (error) {
-    console.error('Error requesting payout:', error);
+    logger.error('Error requesting payout:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to request payout' });
   }
 };
@@ -266,7 +266,7 @@ export const completePayout = async (req, res) => {
 
     res.json({ message: 'Payout marked as completed and sensitive data wiped', transaction: tx });
   } catch (error) {
-    console.error('Error completing payout:', error);
+    logger.error('Error completing payout:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to complete payout' });
   }
 };
@@ -347,7 +347,7 @@ export const rejectPayout = async (req, res) => {
 
     res.json({ message: 'Payout rejected', transaction: tx });
   } catch (error) {
-    console.error('Error rejecting payout:', error);
+    logger.error('Error rejecting payout:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to reject payout' });
   }
 };
