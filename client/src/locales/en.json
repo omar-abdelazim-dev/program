@@ -81,7 +81,6 @@
     "offered_by_program": "Offered by Program Platform",
     "certificates": "Certificates",
     "progress": "Progress",
-
     "sidebar": {
       "explore": "Explore",
       "my_courses": "My Courses",
@@ -376,7 +375,8 @@
       "available_now": "Available Now",
       "last_withdrawal": "Last Withdrawal:",
       "onsite_cash": "On-Site Cash (Pending)",
-      "onsite_cash_help": "Settles into available balance after 7 days"
+      "onsite_cash_help": "Settles into available balance after 7 days",
+      "status_processing": "Processing"
     },
     "notyf": {
       "lesson_updated": "Lesson updated successfully",

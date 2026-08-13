@@ -247,7 +247,7 @@ export default function InstructorFinancialsTab({ user }) {
                           }}>
                             {isCleared 
                               ? (tx.type === 'course_sale' ? (t('instructor.financials.status_received') || 'Received') : (t('instructor.financials.status_paid') || 'Paid')) 
-                              : isProcessing ? (t('instructor.financials.status_processing') || 'Processing') :
+                              : isProcessing ? (t('instructor.financials.status_processing', 'Processing') || 'Processing') :
                               tx.status === 'rejected' ? (t('instructor.financials.status_rejected') || 'Rejected') : 
                               (t('instructor.financials.status_pending') || 'Pending')}
                           </span>

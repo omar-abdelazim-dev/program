@@ -81,7 +81,6 @@
     "offered_by_program": "مقدمه من بروجرام",
     "certificates": "الشهادات",
     "progress": "التقدم",
-
     "sidebar": {
       "explore": "استكشف",
       "my_courses": "دوراتي",
@@ -371,7 +370,7 @@
       "tx_details": "تفاصيل المعاملة",
       "payout_details": "تفاصيل السحب",
       "date_time": "التاريخ والوقت:",
-      "available_on": "متاحة في:",
+      "available_on": "تاريخ الإتاحة:",
       "account_number": "رقم الحساب / الهاتف:",
       "rejection_reason": "سبب الرفض",
       "ready_to_withdraw": "جاهز للسحب",
@@ -379,7 +378,8 @@
       "available_now": "متاح الآن",
       "last_withdrawal": "آخر سحب:",
       "onsite_cash": "النقد المعلق (على الموقع)",
-      "onsite_cash_help": "يُحول للرصيد المتاح تلقائياً بعد 7 أيام"
+      "onsite_cash_help": "يُحول للرصيد المتاح تلقائياً بعد 7 أيام",
+      "status_processing": "قيد المعالجة"
     },
     "notyf": {
       "lesson_published": "تم نشر الدرس",
