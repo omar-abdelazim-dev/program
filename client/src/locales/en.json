@@ -367,7 +367,7 @@
       "sends_to": "Sends to ",
       "send_code": "Send Code",
       "resend_code": "Resend Code",
-      "resend_in": "Resend in ",
+      "resend_in": "Resend in {{seconds}}s",
       "enter_otp_placeholder": "Enter 6-digit code",
       "otp_help": "The 6-digit security code will be sent to your registered account phone number",
       "submit_request": "Submit Request",
@@ -387,7 +387,17 @@
       "status_processing": "Processing",
       "payout_processing": "Payout Processing",
       "email_used": "Email Used:",
-      "under_review": "Under Review"
+      "under_review": "Under Review",
+      "payout_email_label": "Payout Email (For Verification OTP)",
+      "otp_help_text": "The 6-digit security code will be sent to this email address.",
+      "send_code_to_email": "Send code to email",
+      "enter_otp": "Enter OTP",
+      "expired": "Expired",
+      "verifying": "Verifying…",
+      "verify": "Verify",
+      "back": "Back",
+      "sending": "Sending…",
+      "security_code_notice": "The 6-digit code will be emailed to the address above. Never share it with anyone."
     },
     "notyf": {
       "lesson_updated": "Lesson updated successfully",

@@ -477,7 +477,7 @@ export default function InstructorFinancialsTab({ user }) {
 
               {/* Payout Email input field */}
               <div className="input-group">
-                <label style={{ color: 'var(--c-sub)', marginBottom: '8px', display: 'block', textTransform: 'uppercase', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.05em' }}>Payout Email (For Verification OTP)</label>
+                <label style={{ color: 'var(--c-sub)', marginBottom: '8px', display: 'block', textTransform: 'uppercase', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.05em' }}>{t('instructor.financials.payout_email_label', 'Payout Email (For Verification OTP)')}</label>
                 <input 
                   type="email" 
                   className="auth-input"
@@ -488,7 +488,7 @@ export default function InstructorFinancialsTab({ user }) {
                   required
                 />
                 <small style={{ color: 'var(--c-sub)', marginTop: '4px', display: 'block', fontSize: '0.75rem' }}>
-                  The 6-digit security code will be sent to this email address.
+                  {t('instructor.financials.otp_help_text', 'The 6-digit security code will be sent to this email address.')}
                 </small>
               </div>
 

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import api from '../api/axios';
 
 /**
@@ -19,6 +20,7 @@ export default function PayoutOtpVerification({
   onError,
   onBack,
 }) {
+  const { t } = useTranslation();
   const [payoutEmail, setPayoutEmail]         = useState(accountEmail || '');
   const [emailMismatch, setEmailMismatch]     = useState(false);
   const [codeSent, setCodeSent]               = useState(false);
@@ -178,7 +180,7 @@ export default function PayoutOtpVerification({
         {/* Payout email input */}
         <div style={{ flex: '1 1 200px' }}>
           <label style={{ fontSize: '0.8rem', color: 'var(--c-sub)', display: 'block', marginBottom: 6 }}>
-            Send code to email
+            {t('instructor.financials.send_code_to_email', 'Send code to email')}
           </label>
           <input
             type="email"
@@ -205,10 +207,10 @@ export default function PayoutOtpVerification({
         {codeSent && (
           <div style={{ flex: '1 1 200px' }}>
             <label style={{ fontSize: '0.8rem', color: 'var(--c-sub)', display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-              <span>Enter OTP</span>
+              <span>{t('instructor.financials.enter_otp', 'Enter OTP')}</span>
               {timeLeft !== null && (
                 <span style={{ color: timeLeft < 60 ? '#ef4444' : 'var(--c-sub)' }}>
-                  {timeLeft === 0 ? 'Expired' : `${Math.floor(timeLeft / 60)}:${(timeLeft % 60).toString().padStart(2, '0')}`}
+                  {timeLeft === 0 ? t('instructor.financials.expired', 'Expired') : `${Math.floor(timeLeft / 60)}:${(timeLeft % 60).toString().padStart(2, '0')}`}
                 </span>
               )}
             </label>
@@ -252,7 +254,7 @@ export default function PayoutOtpVerification({
                   pointerEvents: verifying || sendingOtp ? 'none' : 'auto',
                 }}
               >
-                {verifying ? 'Verifying…' : 'Verify'}
+                {verifying ? t('instructor.financials.verifying', 'Verifying…') : t('instructor.financials.verify', 'Verify')}
               </button>
             </div>
           </div>
@@ -281,7 +283,7 @@ export default function PayoutOtpVerification({
               fontWeight: 600
             }}
           >
-            ← Back
+            ← {t('instructor.financials.back', 'Back')}
           </button>
         ) : <div />}
 
@@ -299,12 +301,12 @@ export default function PayoutOtpVerification({
           }}
         >
           {sendingOtp
-            ? 'Sending…'
+            ? t('instructor.financials.sending', 'Sending…')
             : cooldown > 0
-              ? `Resend in ${cooldown}s`
+              ? t('instructor.financials.resend_in', { seconds: cooldown, defaultValue: `Resend in ${cooldown}s` })
               : codeSent
-                ? 'Resend Code'
-                : 'Send Code'}
+                ? t('instructor.financials.resend_code', 'Resend Code')
+                : t('instructor.financials.send_code', 'Send Code')}
         </button>
       </div>
 
@@ -341,7 +343,7 @@ export default function PayoutOtpVerification({
       )}
 
       <small style={{ color: 'var(--c-sub)', fontSize: '0.78rem' }}>
-        🔒 The 6-digit code will be emailed to the address above. Never share it with anyone.
+        🔒 {t('instructor.financials.security_code_notice', 'The 6-digit code will be emailed to the address above. Never share it with anyone.')}
       </small>
     </div>
   );
