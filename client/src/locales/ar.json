@@ -279,7 +279,8 @@
       "ph_attachment_title": "مثال: ملف PDF مرجعي",
       "delete_course_confirm": "هل أنت متأكد أنك تريد حذف هذه الدورة؟ لا يمكن التراجع عن هذا الإجراء.",
       "edit_lesson": "تعديل الدرس",
-      "video_content": "محتوى الفيديو"
+      "video_content": "محتوى الفيديو",
+      "save_module": "حفظ الموديول"
     },
     "analytics": {
       "title": "لوحة التحليلات",

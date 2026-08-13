@@ -276,7 +276,8 @@
       "ph_lesson_title": "e.g. Introduction to State",
       "ph_attachment_title": "e.g. Cheat Sheet PDF",
       "delete_course_confirm": "Are you sure you want to delete this course? This action cannot be undone.",
-      "edit_lesson": "Edit Lesson"
+      "edit_lesson": "Edit Lesson",
+      "save_module": "Save Module"
     },
     "analytics": {
       "title": "Analytics Dashboard",

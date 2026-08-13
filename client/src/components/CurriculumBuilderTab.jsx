@@ -310,7 +310,7 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                     }}
                   />
                   <button onClick={handleAddModule} className="solid-btn" style={{ width: 'auto', padding: '10px 20px' }}>
-                    {t('instructor.create_course.save', 'Save')}
+                    {t('instructor.curriculum.save_module', 'Save Module')}
                   </button>
                   <button onClick={() => { setAddingModule(false); setNewModuleTitle(''); }} style={{ width: 'auto', padding: '10px 20px', background: 'transparent', border: 'none', color: 'var(--c-sub)', cursor: 'pointer' }}>
                     {t('instructor.create_course.cancel', 'Cancel')}
