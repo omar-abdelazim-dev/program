@@ -312,7 +312,23 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                   <button onClick={handleAddModule} className="solid-btn" style={{ width: 'auto', padding: '10px 20px' }}>
                     {t('instructor.curriculum.save_module', 'Save Module')}
                   </button>
-                  <button onClick={() => { setAddingModule(false); setNewModuleTitle(''); }} style={{ width: 'auto', padding: '10px 20px', background: 'transparent', border: 'none', color: 'var(--c-sub)', cursor: 'pointer' }}>
+                  <button
+                    onClick={() => { setAddingModule(false); setNewModuleTitle(''); }}
+                    style={{
+                      width: 'auto',
+                      padding: '10px 20px',
+                      background: 'var(--bg-main)',
+                      boxShadow: 'var(--inner-shadow)',
+                      borderRadius: '24px',
+                      border: 'none',
+                      color: 'var(--text-h)',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseOver={(e) => { e.currentTarget.style.filter = 'brightness(1.15)'; }}
+                    onMouseOut={(e) => { e.currentTarget.style.filter = 'none'; }}
+                  >
                     {t('instructor.create_course.cancel', 'Cancel')}
                   </button>
                 </div>
