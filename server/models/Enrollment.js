@@ -33,6 +33,44 @@ const enrollmentSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    programTransactionId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    providerTransactionId: {
+      type: String,
+      index: true,
+    },
+    payerNumber: {
+      type: String,
+    },
+    paymentMethod: {
+      type: String,
+      enum: ['vodafone_cash', 'instapay', 'mobile_wallet'],
+    },
+    screenshotUrl: {
+      type: String,
+    },
+    expectedFees: {
+      type: Number,
+      default: 0,
+    },
+    notifiedAdmin: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    reviewedByAdmin: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    rejectionReason: {
+      type: String,
+      default: '',
+    },
+    refundTransactionId: {
+      type: String,
+    },
     status: {
       type: String,
       enum: ['pending', 'under_review', 'approved', 'rejected', 'refunded'],

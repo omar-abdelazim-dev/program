@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { currentUser } from '../data';
 import api from '../api/axios';
+import PaymentModal from './PaymentModal';
 
 // isCartCheckout is always true now
 export default function CheckoutPage({ cart = [], setCart, setNotifications, isCartCheckout = false }) {
@@ -9,6 +10,7 @@ export default function CheckoutPage({ cart = [], setCart, setNotifications, isC
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [activePaymentItem, setActivePaymentItem] = useState(null);
 
   const checkoutItems = cart || [];
 
@@ -29,6 +31,14 @@ export default function CheckoutPage({ cart = [], setCart, setNotifications, isC
   // Enrollment handler
   const handleCheckout = async () => {
     setErrorMessage('');
+    
+    // Find first paid item in cart
+    const paidItem = (cart || []).find(item => getPriceNumber(item) > 0);
+    if (paidItem) {
+      setActivePaymentItem(paidItem);
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
@@ -37,10 +47,7 @@ export default function CheckoutPage({ cart = [], setCart, setNotifications, isC
 
       for (const item of cart || []) {
         const courseId = item._id || item.id;
-        if (!courseId) {
-          failures.push({ item, error: 'Invalid course id' });
-          continue;
-        }
+        if (!courseId) continue;
 
         try {
           await api.post(`/enrollments/${courseId}`);
@@ -54,30 +61,16 @@ export default function CheckoutPage({ cart = [], setCart, setNotifications, isC
         }
       }
 
-      // Remove successful items from cart
       if (setCart && successes.length > 0) {
-        const remaining = (cart || []).filter(i => {
-          const cid = i._id || i.id;
-          return !successes.includes(cid);
-        });
+        const remaining = (cart || []).filter(i => !successes.includes(i._id || i.id));
         setCart(remaining);
       }
 
-      // Notifications and navigation
-      if (setNotifications && successes.length > 0) {
-        const successfulTitles = (cart || []).filter(i => successes.includes(i._id || i.id)).map(i => i.title || i.name || 'Course');
-        const text = successfulTitles.length === 1 ? `Enrolled in: ${successfulTitles[0]}` : `Enrolled in: ${successfulTitles.join(', ')}`;
-        setNotifications(prev => [...prev, { id: Date.now(), text, timestamp: Date.now() }]);
-      }
-
       if (failures.length === 0) {
-        // All succeeded
         navigate('/student/dashboard');
       } else {
-        // Some failed
-        setErrorMessage(`Failed to enroll in ${failures.length} course(s). Please try again.`);
+        setErrorMessage(`Failed to enroll in ${failures.length} course(s).`);
       }
-
     } finally {
       setIsProcessing(false);
     }
@@ -133,18 +126,23 @@ export default function CheckoutPage({ cart = [], setCart, setNotifications, isC
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '100px' }}>
                     <button 
                       onClick={async () => {
-                        try {
-                          const cid = item._id || item.id;
-                          await api.post(`/enrollments/${cid}`);
-                          setCart(cart.filter(c => (c._id || c.id) !== cid));
-                          if (setNotifications) {
-                            setNotifications(prev => [...prev, { id: Date.now(), text: `Enrolled in: ${item.title}`, timestamp: Date.now() }]);
-                          }
-                        } catch (err) {
-                          if (err.response?.status === 409) {
-                            setCart(cart.filter(c => (c._id || c.id) !== (item._id || item.id)));
-                          } else {
-                            setErrorMessage(err.response?.data?.message || 'Enrollment failed');
+                        const cid = item._id || item.id;
+                        const pNum = getPriceNumber(item);
+                        if (pNum > 0) {
+                          setActivePaymentItem(item);
+                        } else {
+                          try {
+                            await api.post(`/enrollments/${cid}`);
+                            setCart(cart.filter(c => (c._id || c.id) !== cid));
+                            if (setNotifications) {
+                              setNotifications(prev => [...prev, { id: Date.now(), text: `Enrolled in free course: ${item.title}`, timestamp: Date.now() }]);
+                            }
+                          } catch (err) {
+                            if (err.response?.status === 409) {
+                              setCart(cart.filter(c => (c._id || c.id) !== cid));
+                            } else {
+                              setErrorMessage(err.response?.data?.message || 'Enrollment failed');
+                            }
                           }
                         }
                       }}
@@ -212,6 +210,18 @@ export default function CheckoutPage({ cart = [], setCart, setNotifications, isC
         </div>
 
       </div>
+
+      {activePaymentItem && (
+        <PaymentModal
+          course={activePaymentItem}
+          onClose={() => setActivePaymentItem(null)}
+          onSuccess={(enrollment) => {
+            const cid = activePaymentItem._id || activePaymentItem.id;
+            if (setCart) setCart(cart.filter(c => (c._id || c.id) !== cid));
+            setActivePaymentItem(null);
+          }}
+        />
+      )}
     </div>
   );
 }

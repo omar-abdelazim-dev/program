@@ -12,14 +12,31 @@ const transactionSchema = new mongoose.Schema(
       required: true,
       // Positive for sales, negative for payouts
     },
+    programTransactionId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    providerTransactionId: {
+      type: String,
+      index: true,
+    },
+    student: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    reviewedByAdmin: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
     type: {
       type: String,
-      enum: ['course_sale', 'payout_request'],
+      enum: ['course_sale', 'payout_request', 'enrollment_payment', 'refund'],
       required: true,
     },
     status: {
       type: String,
-      enum: ['pending', 'cleared', 'rejected'],
+      enum: ['pending', 'cleared', 'rejected', 'completed'],
       default: 'pending',
     },
     description: {

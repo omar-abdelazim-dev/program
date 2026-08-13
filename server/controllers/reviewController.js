@@ -87,14 +87,15 @@ export const createReview = async (req, res) => {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
-    // Verify student is enrolled
+    // Verify student is enrolled with an approved request
     const enrollment = await Enrollment.findOne({
       student: req.user.id,
       course: courseId,
+      status: 'approved',
     });
 
     if (!enrollment) {
-      return res.status(403).json({ message: 'You must be enrolled in this course to leave a review' });
+      return res.status(403).json({ message: 'An approved enrollment is required to leave a review' });
     }
 
     const review = await Review.create({

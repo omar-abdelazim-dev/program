@@ -24,6 +24,7 @@ import AdminLessonsTab from "./AdminLessonsTab";
 import WebsiteManagement from "./WebsiteManagement/WebsiteManagement";
 import SystemManagement from "./SystemManagement";
 import AdminLandingPageTab from "./AdminLandingPageTab";
+import AdminEnrollmentsTab from "./AdminEnrollmentsTab";
 import FullPageLoader from "./FullPageLoader";
 import { useTranslation } from 'react-i18next';
 
@@ -1351,125 +1352,7 @@ export default function AdminPortal({
             ) : null}
 
             <div style={{ display: activeTab === "enrollment" ? "block" : "none" }}>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "24px",
-                }}
-              >
-                <h2 style={{ fontSize: "1.8rem", margin: 0 }}>
-                  Enrollment Requests
-                </h2>
-                <div className="glass-card" style={{ overflow: "hidden", width: "100%", padding: "8px 16px" }}>
-                  <table className="admin-table" style={{ width: "100%", borderCollapse: "separate", borderSpacing: "0", textAlign: "left" }}>
-                    <thead>
-                      <tr>
-                        <th style={{ padding: "18px 24px 18px 32px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>
-                          DATE
-                        </th>
-                        <th style={{ padding: "18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>
-                          STUDENT
-                        </th>
-                        <th style={{ padding: "18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>
-                          COURSE
-                        </th>
-                        <th style={{ padding: "18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>
-                          INSTRUCTOR
-                        </th>
-                        <th style={{ padding: "18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", textAlign: "center", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>
-                          STATUS
-                        </th>
-                        <th style={{ padding: "18px 32px 18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", textAlign: "right", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>
-                          REVENUE
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {transactions.length === 0 ? (
-                        <tr>
-                          <td colSpan="6" style={{ padding: "32px", textAlign: "center", color: "var(--c-sub)" }}>
-                            No requests found
-                          </td>
-                        </tr>
-                      ) : (
-                        transactions.map((t) => {
-                          const norm = (t.status || 'pending').toLowerCase().replace(/\s+/g, '_');
-                          const statusConfig = {
-                            pending: { label: 'Pending', bg: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b' },
-                            under_review: { label: 'Under Review', bg: 'rgba(59, 130, 246, 0.12)', color: '#60a5fa' },
-                            approved: { label: 'Approved', bg: 'rgba(16, 185, 129, 0.12)', color: '#34d399' },
-                            rejected: { label: 'Rejected', bg: 'rgba(239, 68, 68, 0.12)', color: '#fca5a5' },
-                            refunded: { label: 'Refunded', bg: 'rgba(168, 85, 247, 0.12)', color: '#c084fc' },
-                          };
-                          const st = statusConfig[norm] || statusConfig.pending;
-
-                          return (
-                            <tr 
-                              key={t._id} 
-                              style={{ 
-                                cursor: "pointer", 
-                                transition: "background 0.2s",
-                                borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.05))"
-                              }}
-                              className="hover-row"
-                              onClick={() => notyf.success('Popup will be built later')}
-                            >
-                              <td style={{ padding: "18px 24px 18px 32px", verticalAlign: "middle" }}>
-                                {new Date(t.createdAt).toLocaleString()}
-                              </td>
-                              <td style={{ padding: "18px 24px", verticalAlign: "middle" }}>
-                                <div style={{ color: "var(--text-h)", fontWeight: "500" }}>
-                                  {t.student?.name || "Unknown Student"}
-                                </div>
-                              </td>
-                              <td style={{ padding: "18px 24px", verticalAlign: "middle" }}>
-                                <div style={{ color: "var(--text-h)", fontWeight: "500" }}>
-                                  {t.course?.title || "Unknown Course"}
-                                </div>
-                              </td>
-                              <td style={{ padding: "18px 24px", verticalAlign: "middle", color: "var(--c-sub)" }}>
-                                {t.course?.instructor?.name || "Unknown Instructor"}
-                              </td>
-                              <td style={{ padding: "18px 24px", textAlign: "center", verticalAlign: "middle" }}>
-                                <span
-                                  style={{
-                                    padding: "6px 14px",
-                                    borderRadius: "20px",
-                                    fontSize: "0.85rem",
-                                    fontWeight: "600",
-                                    background: st.bg,
-                                    color: st.color,
-                                    border: "none",
-                                    boxShadow: "var(--inner-shadow, inset 0 2px 4px 0 rgba(0,0,0,0.06))",
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: "6px",
-                                    textTransform: "capitalize",
-                                  }}
-                                >
-                                  <span
-                                    style={{
-                                      width: "6px",
-                                      height: "6px",
-                                      borderRadius: "50%",
-                                      backgroundColor: st.color,
-                                    }}
-                                  />
-                                  {st.label}
-                                </span>
-                              </td>
-                              <td style={{ padding: "18px 32px 18px 24px", textAlign: "right", verticalAlign: "middle", color: "#10B981", fontWeight: "600" }}>
-                                EGP {t.amountPaid}
-                              </td>
-                            </tr>
-                          );
-                        })
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+              <AdminEnrollmentsTab />
             </div>
 
             {visitedTabs.has("courses") && (

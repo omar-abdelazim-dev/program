@@ -21,7 +21,7 @@ const notificationSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['qa_reply', 'announcement', 'system', 'qa_new'],
+      enum: ['qa_reply', 'announcement', 'system', 'qa_new', 'enrollment_request', 'enrollment_approval', 'enrollment_rejection'],
       default: 'system',
     },
     link: {

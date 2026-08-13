@@ -55,14 +55,27 @@ export default function LearningPortal({ user }) {
         setCourse(courseRes.data.course);
         setLessons(courseRes.data.lessons);
 
+        let isEnrolledApproved = false;
         try {
           const enrollRes = await api.get(`/enrollments/${id}`, { signal: controller.signal });
           if (enrollRes.data && enrollRes.data.enrolled) {
+            isEnrolledApproved = true;
             setCompletedLessons(enrollRes.data.completedLessonIds || []);
             setProgressPercent(enrollRes.data.progressPercent || 0);
           }
-        } catch(e) {
-          // If not enrolled or error, just continue
+        } catch (e) {
+          isEnrolledApproved = false;
+        }
+
+        const userIdStr = (user?._id || user?.id || '').toString();
+        const instObj = courseRes.data.course?.instructor;
+        const instIdStr = (typeof instObj === 'object' ? (instObj?._id || instObj?.id) : (instObj || '')).toString();
+        const isStaff = user?.role === 'admin' || user?.role === 'superadmin' || (userIdStr && userIdStr === instIdStr);
+
+        if (!isEnrolledApproved && !isStaff) {
+          notyf.error('An approved enrollment is required to access the learning portal.');
+          navigate(`/course/${id}`, { replace: true });
+          return;
         }
 
         if (courseRes.data.lessons.length > 0 && !controller.signal.aborted) {

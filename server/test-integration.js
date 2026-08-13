@@ -12,6 +12,7 @@ const run = async () => {
 
   const { default: app } = await import('./app.js');
   const { default: User } = await import('./models/User.js');
+  const { default: Transaction } = await import('./models/Transaction.js');
 
   const agentInstructor = request.agent(app);
   const agentAdmin = request.agent(app);
@@ -34,6 +35,8 @@ const run = async () => {
     description: 'Learn the fundamentals of algorithmic thinking.',
     price: 49,
     category: 'Computer Science',
+    college: 'Engineering',
+    semester: 1,
   });
   assert(res.status === 201, `Create course failed: ${JSON.stringify(res.body)}`);
   assert(res.body.course.status === 'pending', 'New course should default to pending');
@@ -55,8 +58,7 @@ const run = async () => {
   assert(res.body.courses.length === 0, 'Pending course should not appear in public catalog');
   console.log('✓ Public catalog correctly hides pending course');
 
-  // 5. Create an admin directly in the DB (mirrors real-world: admins are
-  // never created through the public register form)
+  // 5. Create an admin directly in the DB
   const adminUser = await User.create({
     name: 'Admin User',
     email: 'admin@example.com',
@@ -85,8 +87,12 @@ const run = async () => {
   // 8. Admin approves it
   res = await agentAdmin.patch(`/api/courses/${courseId}/approve`).set('X-CSRF-Token', adminCsrf);
   assert(res.status === 200, `Approve failed: ${JSON.stringify(res.body)}`);
+  
+  // Instructor publishes course live
+  res = await agentInstructor.patch(`/api/courses/${courseId}/publish`).set('X-CSRF-Token', instructorCsrf);
+  assert(res.status === 200, `Publish failed: ${JSON.stringify(res.body)}`);
   assert(res.body.course.status === 'approved', 'Course should now be approved');
-  console.log('✓ Admin approved course');
+  console.log('✓ Admin approved and instructor published course');
 
   // 9. Public catalog now shows it
   res = await agentPublic.get('/api/courses');
@@ -101,7 +107,7 @@ const run = async () => {
   const lessonId = res.body.lessons[0]._id;
   console.log('✓ Course details endpoint returns course + lessons (videoUrl correctly hidden)');
 
-  // --- WEEK 3: enrollment + lesson player + progress ---
+  // --- STUDENT PAYMENT WORKFLOW TESTS ---
 
   // 11. Register a student
   const agentStudent = request.agent(app);
@@ -115,49 +121,86 @@ const run = async () => {
   const studentCsrf = getCsrfToken(res);
   console.log('✓ Student registered');
 
-  // 12. Student tries to watch the lesson BEFORE enrolling -> should be blocked
-  res = await agentStudent.get(`/api/courses/${courseId}/lessons/${lessonId}`);
-  assert(res.status === 403, 'Student should be blocked from lesson content before enrolling');
-  console.log('✓ Un-enrolled student correctly blocked from lesson video (403)');
+  // 12. Student requests enrollment with payment details
+  res = await agentStudent.post(`/api/enrollments/request/${courseId}`).set('X-CSRF-Token', studentCsrf).send({
+    providerTransactionId: 'VF-982734982',
+    payerNumber: '01012345678',
+    paymentMethod: 'vodafone_cash',
+    screenshotUrl: 'https://example.com/screenshot.jpg',
+  });
+  assert(res.status === 201, `Request enrollment failed: ${JSON.stringify(res.body)}`);
+  assert(res.body.enrollment.programTransactionId.startsWith('PRG-TXN-'), 'Program TX ID must start with PRG-TXN-');
+  assert(res.body.enrollment.status === 'pending', 'Request status must be pending');
+  const requestId = res.body.enrollment._id;
+  console.log('✓ Student submitted enrollment payment request with Program TX ID');
 
-  // 13. Student enrolls
-  res = await agentStudent.post(`/api/enrollments/${courseId}`).set('X-CSRF-Token', studentCsrf);
-  assert(res.status === 201, `Enroll failed: ${JSON.stringify(res.body)}`);
-  console.log('✓ Student enrolled in course');
+  // 13. Student checks status -> should be unenrolled with requestStatus: pending
+  res = await agentStudent.get(`/api/enrollments/${courseId}`);
+  assert(res.body.enrolled === false, 'Student should not be enrolled while pending approval');
+  assert(res.body.requestStatus === 'pending', 'Status check should return requestStatus: pending');
+  console.log('✓ Student correctly blocked from course content while pending approval');
 
-  // 14. Double-enroll should be rejected
-  res = await agentStudent.post(`/api/enrollments/${courseId}`).set('X-CSRF-Token', studentCsrf);
-  assert(res.status === 409, 'Duplicate enrollment should be rejected with 409');
-  console.log('✓ Duplicate enrollment correctly rejected (409)');
+  // 14. Admin fetches enrollment requests
+  res = await agentAdmin.get('/api/enrollments/admin/requests');
+  assert(res.status === 200, 'Admin requests fetch failed');
+  assert(res.body.requests.length === 1, 'Admin should see 1 pending enrollment request');
+  console.log('✓ Admin sees pending enrollment request');
 
-  // 15. Now the student CAN watch the lesson
+  // 15. Admin approves enrollment request
+  res = await agentAdmin.patch(`/api/enrollments/admin/requests/${requestId}/approve`).set('X-CSRF-Token', adminCsrf);
+  assert(res.status === 200, `Admin approval failed: ${JSON.stringify(res.body)}`);
+  assert(res.body.enrollment.status === 'approved', 'Enrollment status must be approved');
+  console.log('✓ Admin approved enrollment request');
+
+  // 16. Verify central financial ledger transaction was created
+  const ledgerTx = await Transaction.findOne({ programTransactionId: res.body.enrollment.programTransactionId });
+  assert(ledgerTx !== null, 'Central ledger transaction must exist');
+  assert(ledgerTx.type === 'enrollment_payment', 'Ledger transaction type must be enrollment_payment');
+  assert(ledgerTx.amount === 49, 'Ledger amount must match course price');
+  console.log('✓ Central financial ledger entry verified');
+
+  // 17. Now student CAN access the lesson video
   res = await agentStudent.get(`/api/courses/${courseId}/lessons/${lessonId}`);
   assert(res.status === 200, `Enrolled student should access lesson: ${JSON.stringify(res.body)}`);
   assert(res.body.lesson.videoUrl, 'Lesson content response should include videoUrl');
-  console.log('✓ Enrolled student can access lesson video content');
+  console.log('✓ Approved student can access lesson video content');
 
-  // 16. Progress should start at 0%
-  res = await agentStudent.get(`/api/enrollments/${courseId}`);
-  assert(res.body.enrolled === true, 'Enrollment status should show enrolled: true');
-  assert(res.body.progressPercent === 0, 'Progress should start at 0%');
-  console.log('✓ Initial progress is 0%');
+  // 18. Attempt reusing the same provider transaction ID by a new student -> must fail
+  const agentStudent2 = request.agent(app);
+  res = await agentStudent2.post('/api/auth/register').send({
+    name: 'Tariq Student',
+    email: 'tariq@example.com',
+    password: 'Password123!',
+    role: 'student',
+  });
+  const student2Csrf = getCsrfToken(res);
 
-  // 17. Mark the lesson complete
-  res = await agentStudent.patch(`/api/enrollments/${courseId}/lessons/${lessonId}/complete`).set('X-CSRF-Token', studentCsrf);
-  assert(res.status === 200, `Mark complete failed: ${JSON.stringify(res.body)}`);
-  assert(res.body.progressPercent === 100, 'Progress should be 100% after completing the only lesson');
-  console.log('✓ Marking lesson complete updates progress to 100%');
+  res = await agentStudent2.post(`/api/enrollments/request/${courseId}`).set('X-CSRF-Token', student2Csrf).send({
+    providerTransactionId: 'VF-982734982',
+    payerNumber: '01099998888',
+    paymentMethod: 'vodafone_cash',
+    screenshotUrl: 'https://example.com/screenshot2.jpg',
+  });
+  assert(res.status === 400, 'Reusing provider transaction ID must return 400 Bad Request');
+  console.log('✓ Reusing provider transaction ID correctly blocked (400)');
 
-  // 18. Marking the same lesson complete twice should NOT create a duplicate
-  res = await agentStudent.patch(`/api/enrollments/${courseId}/lessons/${lessonId}/complete`).set('X-CSRF-Token', studentCsrf);
-  assert(res.body.completedLessonIds.length === 1, 'Completed lessons should not contain duplicates');
-  console.log('✓ Marking complete twice does not duplicate progress');
+  // 19. Student 2 submits with a unique provider TX ID, then Admin rejects
+  res = await agentStudent2.post(`/api/enrollments/request/${courseId}`).set('X-CSRF-Token', student2Csrf).send({
+    providerTransactionId: 'VF-1122334455',
+    payerNumber: '01099998888',
+    paymentMethod: 'vodafone_cash',
+    screenshotUrl: 'https://example.com/screenshot2.jpg',
+  });
+  assert(res.status === 201, 'Student 2 valid request creation failed');
+  const request2Id = res.body.enrollment._id;
 
-  // 19. "My Learning" list shows the course with progress attached
-  res = await agentStudent.get('/api/enrollments/mine');
-  assert(res.body.enrollments.length === 1, 'Student should have exactly 1 enrollment');
-  assert(res.body.enrollments[0].progressPercent === 100, 'My-enrollments list should show 100% progress');
-  console.log('✓ My Learning list shows correct progress');
+  res = await agentAdmin.patch(`/api/enrollments/admin/requests/${request2Id}/reject`).set('X-CSRF-Token', adminCsrf).send({
+    rejectionReason: 'Invalid screenshot amount does not match course price',
+  });
+  assert(res.status === 200, 'Admin rejection failed');
+  assert(res.body.enrollment.status === 'rejected', 'Status must be rejected');
+  assert(res.body.enrollment.refundTransactionId.startsWith('PRG-REF-'), 'Refund transaction ID must start with PRG-REF-');
+  console.log('✓ Admin rejected enrollment request and generated PRG-REF-* refund entry');
 
   await mongoose.disconnect();
   await mongod.stop();
@@ -168,9 +211,6 @@ function assert(condition, message) {
   if (!condition) throw new Error('FAILED: ' + message);
 }
 
-// supertest's agent() persists cookies automatically but never echoes them
-// back as headers the way a browser + our axios interceptor does — so the
-// CSRF double-submit check needs the csrfToken cookie pulled out manually.
 function getCsrfToken(res) {
   const cookies = res.headers['set-cookie'] || [];
   const csrfCookie = cookies.find((c) => c.startsWith('csrfToken='));

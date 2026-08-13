@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import api from '../api/axios';
 import FullPageLoader from './FullPageLoader';
 import ThreeDotMenu from './common/ThreeDotMenu';
+import PaymentModal from './PaymentModal';
 import notyf from '../utils/notyf';
 
 export default function CoursePage({ cart = [], setCart, user }) {
@@ -21,6 +22,9 @@ export default function CoursePage({ cart = [], setCart, user }) {
   const [error, setError] = useState('');
 
   const [isEnrolled, setIsEnrolled] = useState(false);
+  const [requestStatus, setRequestStatus] = useState('none');
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [enrollError, setEnrollError] = useState('');
 
@@ -47,6 +51,12 @@ export default function CoursePage({ cart = [], setCart, user }) {
           const enrollRes = await api.get(`/enrollments/${id}`, { signal: controller.signal });
           if (enrollRes.data && enrollRes.data.enrolled) {
             setIsEnrolled(true);
+            setRequestStatus('approved');
+          } else if (enrollRes.data && enrollRes.data.requestStatus) {
+            setRequestStatus(enrollRes.data.requestStatus);
+            if (enrollRes.data.rejectionReason) {
+              setRejectionReason(enrollRes.data.rejectionReason);
+            }
           }
         } catch(e) {
           // Ignore — likely 404 (not enrolled) or the request was cancelled
@@ -75,14 +85,21 @@ export default function CoursePage({ cart = [], setCart, user }) {
   }, [id]);
 
   const handleEnroll = async () => {
+    if (course?.price > 0) {
+      setShowPaymentModal(true);
+      return;
+    }
+
     setIsEnrolling(true);
     setEnrollError('');
     try {
       await api.post(`/enrollments/${id}`);
       setIsEnrolled(true);
+      setRequestStatus('approved');
     } catch (err) {
       if (err.response?.status === 409) {
         setIsEnrolled(true);
+        setRequestStatus('approved');
       } else {
         setEnrollError(err.response?.data?.message || t('course_page.enroll_error'));
       }
@@ -897,7 +914,14 @@ export default function CoursePage({ cart = [], setCart, user }) {
               marginTop: "8px",
             }}
           >
-            {isEnrolled ? (
+            {requestStatus === 'pending' ? (
+              <div style={{ padding: "16px", background: "rgba(245, 158, 11, 0.12)", border: "1px solid rgba(245, 158, 11, 0.3)", borderRadius: "16px", color: "#f59e0b", textAlign: "center" }}>
+                <div style={{ fontWeight: "700", fontSize: "0.95rem", marginBottom: "4px" }}>⏳ Request Under Review</div>
+                <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
+                  Your request is being reviewed. Official SLA response is within 3 hours during working hours.
+                </div>
+              </div>
+            ) : isEnrolled ? (
               <button
                 onClick={() => navigate(`/learn/${course._id}`)}
                 className="solid-btn"
@@ -913,25 +937,33 @@ export default function CoursePage({ cart = [], setCart, user }) {
                 {t("course_page.go_to_course")}
               </button>
             ) : (
-              <button
-                onClick={handleEnroll}
-                disabled={isEnrolling}
-                className="solid-btn"
-                style={{
-                  width: "100%",
-                  height: "54px",
-                  fontSize: "1.05rem",
-                  opacity: isEnrolling ? 0.7 : 1,
-                  cursor: isEnrolling ? "not-allowed" : "pointer",
-                }}
-              >
-                {isEnrolling
-                  ? t("course_page.enrolling")
-                  : t("course_page.enroll_now")}
-              </button>
+              <div>
+                {requestStatus === 'rejected' && (
+                  <div style={{ padding: "12px", background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: "12px", color: "#ef4444", fontSize: "0.8rem", marginBottom: "12px" }}>
+                    ❌ Previous request rejected: {rejectionReason || 'Invalid proof'}. You can resubmit below.
+                  </div>
+                )}
+                <button
+                  onClick={() => {
+                    if (course?.price > 0) {
+                      setShowPaymentModal(true);
+                    } else {
+                      handleEnroll();
+                    }
+                  }}
+                  className="solid-btn"
+                  style={{
+                    width: "100%",
+                    height: "54px",
+                    fontSize: "1.05rem",
+                  }}
+                >
+                  {isEnrolling ? 'Enrolling...' : t("course_page.enroll_now")}
+                </button>
+              </div>
             )}
 
-            {!isEnrolled && (
+            {!isEnrolled && requestStatus !== 'pending' && (
               <button
                 onClick={() => {
                   if (setCart && !cart.find((c) => c._id === course._id)) {
@@ -974,6 +1006,16 @@ export default function CoursePage({ cart = [], setCart, user }) {
           </div>
         </div>
       </div>
+
+      {showPaymentModal && (
+        <PaymentModal
+          course={course}
+          onClose={() => setShowPaymentModal(false)}
+          onSuccess={(enrollment) => {
+            setRequestStatus(enrollment.status);
+          }}
+        />
+      )}
     </div>
   );
 }
