@@ -387,9 +387,6 @@ export default function InstructorFinancialsTab({ user }) {
                   disabled
                   readOnly
                 />
-                <small style={{ color: 'var(--c-sub)', marginTop: '4px', display: 'block', fontSize: '0.75rem' }}>
-                  {t('instructor.financials.all_or_nothing_help')}
-                </small>
               </div>
 
               {/* Financial Breakdown (2% Fee) */}
