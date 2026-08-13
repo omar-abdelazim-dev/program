@@ -397,7 +397,9 @@
       "verify": "Verify",
       "back": "Back",
       "sending": "Sending…",
-      "security_code_notice": "The 6-digit code will be emailed to the address above. Never share it with anyone."
+      "security_code_notice": "The 6-digit code will be emailed to the address above. Never share it with anyone.",
+      "payout_amount_label": "Payout:",
+      "email_mismatch_warning": "⚠️ You are sending the code to a different email than your account email ({{email}}). If this wasn't intentional, update the email below."
     },
     "notyf": {
       "lesson_updated": "Lesson updated successfully",

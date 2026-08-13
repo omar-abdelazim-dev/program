@@ -150,10 +150,10 @@ export default function PayoutOtpVerification({
           fontWeight: 600,
           letterSpacing: '0.05em',
         }}>
-          Security Verification Code
+          {t('instructor.financials.security_code', 'Security Verification Code')}
         </label>
         <span style={{ fontSize: '0.75rem', color: '#f59e0b', fontWeight: 600 }}>
-          Payout: EGP {formattedAmount}
+          {t('instructor.financials.payout_amount_label', 'Payout:')} EGP {formattedAmount}
         </span>
       </div>
 
@@ -170,8 +170,7 @@ export default function PayoutOtpVerification({
           width: 'fit-content',
           fontWeight: 600,
         }}>
-          ⚠️ You are sending the code to a different email than your account email ({accountEmail}).
-          If this wasn't intentional, update the email below.
+          {t('instructor.financials.email_mismatch_warning', { email: accountEmail, defaultValue: `⚠️ You are sending the code to a different email than your account email (${accountEmail}). If this wasn't intentional, update the email below.` })}
         </div>
       )}
 
