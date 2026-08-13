@@ -133,8 +133,8 @@ export const requestPayout = async (req, res) => {
     }
 
     const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,63}$/;
-    const emailRaw = typeof payoutEmail === 'string' ? payoutEmail.trim().toLowerCase() : (req.user.email || '');
-    if (!emailRaw || !EMAIL_REGEX.test(emailRaw)) {
+    const emailTrimmed = typeof payoutEmail === 'string' ? payoutEmail.trim().toLowerCase() : (req.user.email || '');
+    if (!emailTrimmed || !EMAIL_REGEX.test(emailTrimmed)) {
       return res.status(400).json({ message: 'Invalid email address format' });
     }
 

@@ -413,7 +413,8 @@
       "instapay_required": "InstaPay handle or mobile number is required",
       "payout_requested": "Payout request submitted for review",
       "load_reviews_failed": "Failed to load reviews",
-      "review_reported": "Review reported to admins"
+      "review_reported": "Review reported to admins",
+      "payout_failed": "Failed to request payout"
     },
     "reviews": {
       "overall_rating": "OVERALL RATING",

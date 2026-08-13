@@ -419,7 +419,8 @@
       "instapay_required": "حساب انستا باي أو رقم الموبايل مطلوب",
       "payout_requested": "تم تقديم طلب الدفع للمراجعة",
       "load_reviews_failed": "فشل تحميل المراجعات",
-      "review_reported": "تم الإبلاغ عن المراجعة للمسؤولين"
+      "review_reported": "تم الإبلاغ عن المراجعة للمسؤولين",
+      "payout_failed": "فشل تقديم طلب السحب"
     },
     "reviews": {
       "overall_rating": "التقييم العام",
