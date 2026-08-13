@@ -472,7 +472,7 @@ export default function InstructorFinancialsTab({ user }) {
                   style={{ width: '100%' }}
                   placeholder="e.g. email@example.com"
                   value={payoutEmail}
-                  onChange={(e) => setPayoutEmail(e.target.value)}
+                  onChange={(e) => setPayoutEmail(e.target.value.replace(/[^a-zA-Z0-9._%+-@]/g, ''))}
                   required
                 />
                 <small style={{ color: 'var(--c-sub)', marginTop: '4px', display: 'block', fontSize: '0.75rem' }}>
