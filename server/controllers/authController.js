@@ -545,9 +545,11 @@ export const requestPasswordResetOtp = async (req, res) => {
     const policyError = validatePasswordStrength(newPassword);
     if (policyError) return res.status(400).json({ message: policyError });
 
+    const genericSent = { message: 'If an account with that email exists, an OTP has been sent.' };
+
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
-      return res.status(200).json({ message: 'If an account with that email exists, an OTP has been sent.' });
+      return res.status(200).json(genericSent);
     }
 
     const salt = await bcrypt.genSalt(BCRYPT_ROUNDS);
@@ -562,7 +564,17 @@ export const requestPasswordResetOtp = async (req, res) => {
         displayName: user.name
       });
     } catch (otpErr) {
-      return res.status(400).json({ message: otpErr.message });
+      // requestOTP's resend-cooldown error only fires when a record
+      // already exists for this email+purpose — i.e. only for a real
+      // account that requested a reset recently. Letting that specific
+      // error (or its wording) reach the client here would be a two-call
+      // account-existence oracle: a non-existent email always 200s, so a
+      // 400 on the second rapid request reveals the account is real. Still
+      // returning 200/generic keeps this call indistinguishable from the
+      // non-existent-account path; the user's next email will simply be
+      // the same code as before rather than a new one.
+      logger.warn('Password reset OTP request hit an internal error, responding generically', { error: otpErr.message });
+      return res.status(200).json(genericSent);
     }
 
     await logAudit({
