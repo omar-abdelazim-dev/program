@@ -504,13 +504,23 @@ body.light-mode .solid-card {
 /* Restore sidebar specific tooltip position - starts outside the 80px sidebar */
 .sidebar-icon-btn[data-tooltip]::after {
   bottom: auto !important;
-  inset-inline-start: calc(100% + 28px) !important;
   top: 50% !important;
-  transform: translate(10px, -50%) !important;
+  left: auto !important;
+  right: auto !important;
+  inset-inline-start: calc(100% + 28px) !important;
+  transform: translateX(10px) translateY(-50%) !important;
 }
 
 .sidebar-icon-btn[data-tooltip]:hover::after {
-  transform: translate(0, -50%) !important;
+  transform: translateX(0) translateY(-50%) !important;
+}
+
+html[dir="rtl"] .sidebar-icon-btn[data-tooltip]::after {
+  transform: translateX(-10px) translateY(-50%) !important;
+}
+
+html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
+  transform: translateX(0) translateY(-50%) !important;
 }
 
 /* Header tooltips should appear below the element since they are at the top of the screen */
@@ -518,6 +528,8 @@ body.light-mode .solid-card {
 .avatar-btn[data-tooltip]::after {
   bottom: auto !important;
   top: calc(100% + 8px) !important;
+  left: 50% !important;
+  right: auto !important;
   transform: translate(-50%, -10px) !important;
 }
 

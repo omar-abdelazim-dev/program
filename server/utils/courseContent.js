@@ -32,3 +32,20 @@ export const getLessonIdsForCourse = async (courseId) => {
   const lessons = await Lesson.find({ module: { $in: moduleIds } }).select('_id');
   return lessons.map((l) => l._id);
 };
+
+// Builds the per-module completion breakdown returned alongside overall
+// progress by enrollmentController/quizController.
+export const computeModuleProgress = (grouped, completedIds) => {
+  const completedSet = new Set(completedIds.map((id) => id.toString()));
+  return grouped.map(({ module, lessons }) => {
+    const totalCount = lessons.length;
+    const completedCount = lessons.filter((l) => completedSet.has(l._id.toString())).length;
+    return {
+      moduleId: module._id,
+      title: module.title,
+      completedCount,
+      totalCount,
+      percent: totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100),
+    };
+  });
+};

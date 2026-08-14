@@ -4,6 +4,7 @@ import {
   getStats, getRecentActivity, getRevenueAnalytics, getUsers, toggleBlockUser, changeUserRole,
   softDeleteUser, restoreUser, getTransactions, getPendingPayouts, getAllLessons, approveLesson, rejectLesson,
   manualEnroll, createPromoCode, getPromoCodes, togglePromoCode,
+  approveEnrollment, rejectEnrollment,
 } from '../controllers/adminController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 import { validateObjectId } from '../middleware/validationMiddleware.js';
@@ -35,5 +36,7 @@ router.patch('/promo-codes/:id/toggle', validateObjectId('id'), togglePromoCode)
 router.get('/lessons', getAllLessons);
 router.patch('/lessons/:id/approve', validateObjectId('id'), approveLesson);
 router.patch('/lessons/:id/reject', validateObjectId('id'), rejectLesson);
+router.patch('/enrollments/:id/approve', validateObjectId('id'), approveEnrollment);
+router.patch('/enrollments/:id/reject', validateObjectId('id'), rejectEnrollment);
 
 export default router;

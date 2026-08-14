@@ -6,6 +6,7 @@ import Lesson from '../models/Lesson.js';
 import PromoCode from '../models/PromoCode.js';
 import { escapeRegex } from '../utils/escapeRegex.js';
 import { logAudit } from '../utils/auditLogger.js';
+import Notification from '../models/Notification.js';
 import logger from '../utils/logger.js';
 
 // @route   GET /api/admin/stats
@@ -718,5 +719,106 @@ export const toggleProgramInstructor = async (req, res) => {
   } catch (error) {
     logger.error('Error toggling program instructor:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+// @route   PATCH /api/admin/enrollments/:id/approve
+// @access  Private (Admin/SuperAdmin)
+export const approveEnrollment = async (req, res) => {
+  try {
+    // Atomic find-and-update on status: 'pending' closes the race window
+    // between two concurrent approve calls (e.g. a double-click) — only the
+    // first one can ever flip status away from 'pending', so at most one
+    // revenue-split Transaction is ever created per enrollment.
+    const enrollment = await Enrollment.findOneAndUpdate(
+      { _id: req.params.id, status: 'pending' },
+      { status: 'approved' },
+      { new: true }
+    );
+    if (!enrollment) {
+      const existing = await Enrollment.findById(req.params.id);
+      if (!existing) return res.status(404).json({ message: 'Enrollment request not found' });
+      return res.status(409).json({ message: `Enrollment request already ${existing.status}` });
+    }
+
+    // Generate revenue split transaction for the instructor (if course has price)
+    const course = await Course.findById(enrollment.course);
+    if (course && course.price > 0 && course.instructor) {
+      let platformCommission = enrollment.platformCommission;
+      let instructorShare = enrollment.instructorShare;
+      let commissionPercent = 15;
+      
+      const instructor = await User.findById(course.instructor);
+      if (instructor && instructor.isProgramInstructor) {
+        commissionPercent = 15;
+      } else {
+        commissionPercent = Math.round((platformCommission / course.price) * 100) || 15;
+      }
+
+      await Transaction.create({
+        instructor: course.instructor,
+        amount: instructorShare,
+        type: 'course_sale',
+        status: 'cleared',
+        description: `Course Sale - ${course.title}`,
+        course: course._id,
+        commissionRate: commissionPercent,
+      });
+    }
+
+    // Remove the admin-side enrollment request notifications
+    await Notification.deleteMany({ refId: enrollment._id, title: 'New Enrollment Request' });
+
+    // Notify the student
+    await Notification.create({
+      user: enrollment.student,
+      title: 'Enrollment Request Approved',
+      message: `Your enrollment request for "${course?.title || 'Course'}" has been approved! You can start learning now.`,
+      type: 'system',
+      link: `/learn/${enrollment.course}`
+    });
+
+    res.status(200).json({ message: 'Enrollment request approved', enrollment });
+  } catch (error) {
+    logger.error('Error approving enrollment', { error: error.message, stack: error.stack });
+    res.status(500).json({ message: 'Server error approving enrollment' });
+  }
+};
+
+// @route   PATCH /api/admin/enrollments/:id/reject
+// @access  Private (Admin/SuperAdmin)
+export const rejectEnrollment = async (req, res) => {
+  try {
+    const { reason } = req.body;
+    // Same atomic guard as approveEnrollment — see comment there.
+    const enrollment = await Enrollment.findOneAndUpdate(
+      { _id: req.params.id, status: 'pending' },
+      { status: 'rejected', rejectionReason: reason || '' },
+      { new: true }
+    );
+    if (!enrollment) {
+      const existing = await Enrollment.findById(req.params.id);
+      if (!existing) return res.status(404).json({ message: 'Enrollment request not found' });
+      return res.status(409).json({ message: `Enrollment request already ${existing.status}` });
+    }
+
+    await enrollment.populate('course');
+
+    // Remove the admin-side enrollment request notifications
+    await Notification.deleteMany({ refId: enrollment._id, title: 'New Enrollment Request' });
+
+    // Notify the student
+    await Notification.create({
+      user: enrollment.student,
+      title: 'Enrollment Request Rejected',
+      message: `Your enrollment request for "${enrollment.course?.title || 'Course'}" was rejected. Reason: ${reason || 'No reason provided.'}`,
+      type: 'system',
+      link: `/courses/${enrollment.course?._id || enrollment.course}`
+    });
+
+    res.status(200).json({ message: 'Enrollment request rejected', enrollment });
+  } catch (error) {
+    logger.error('Error rejecting enrollment', { error: error.message, stack: error.stack });
+    res.status(500).json({ message: 'Server error rejecting enrollment' });
   }
 };

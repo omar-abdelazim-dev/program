@@ -11,6 +11,8 @@ import { INSTRUCTORS_TAB, ALL_TAB } from "../data/exploreCategories";
 import { COLLEGES } from "../data/colleges";
 import CustomSelect from "./CustomSelect";
 import ThreeDotMenu from "./common/ThreeDotMenu";
+import { formatNotificationTitle, formatNotificationMessage } from "../utils/notificationFormatter";
+import api from "../api/axios";
 
 export default function StudentLayout({
   user,
@@ -31,6 +33,17 @@ export default function StudentLayout({
   const isSettingsPage = location.pathname.includes('/settings');
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
+
+  const handleClearAllNotifications = async () => {
+    try {
+      await api.delete('/notifications');
+      if (setNotifications) setNotifications([]);
+    } catch (err) {
+      console.error('Failed to clear notifications', err);
+      if (setNotifications) setNotifications([]);
+    }
+  };
 
   const toggleLanguage = () => {
     const newLang = i18n.language === "en" ? "ar" : "en";
@@ -275,74 +288,14 @@ export default function StudentLayout({
                   }}
                   placeholder={t('student.explore.select_college', 'Select College')}
                   triggerClassName="search-pill"
-                  triggerStyle={{ width: '220px', margin: 0, paddingInlineStart: '20px', paddingInlineEnd: '40px', textAlign: 'start' }}
+                  triggerStyle={{ width: 'auto', minWidth: '180px', margin: 0, paddingInlineStart: '24px', paddingInlineEnd: '44px', textAlign: 'start' }}
                 />
               </div>
             )}
           </div>
 
           <div className="header-right">
-            {/* Language Toggle */}
-            {!isSettingsPage && (
-              <button
-              className="utility-icon-btn desktop-only-icon"
-              onClick={toggleLanguage}
-              aria-label="Toggle language"
-              style={{
-                fontWeight: '600',
-                fontSize: '0.9rem',
-                fontFamily: 'Inter, sans-serif'
-              }}
-            >
-              {i18n.language === "ar" ? "EN" : "AR"}
-            </button>
-            )}
 
-            {!isSettingsPage && (
-              <button
-              className="utility-icon-btn theme-toggle-btn desktop-only-icon"
-              onClick={toggleTheme}
-              aria-label="Toggle theme"
-            >
-              {isLightMode ? (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
-                  ></path>
-                </svg>
-              ) : (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                >
-                  <circle cx="12" cy="12" r="4"></circle>
-                  <line x1="12" y1="2" x2="12" y2="4"></line>
-                  <line x1="12" y1="20" x2="12" y2="22"></line>
-                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                  <line x1="2" y1="12" x2="4" y2="12"></line>
-                  <line x1="20" y1="12" x2="22" y2="12"></line>
-                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                </svg>
-              )}
-            </button>
-            )}
 
             {!isSettingsPage && (
               <div className="mobile-only-menu">
@@ -377,124 +330,119 @@ export default function StudentLayout({
 
             <div className="profile-wrapper desktop-only-icon">
               <button className="utility-icon-btn">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"
-                  ></path>
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M13.73 21a2 2 0 0 1-3.46 0"
-                  ></path>
-                </svg>
+                {notifications && notifications.length > 0 ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 005 14h14a1 1 0 00.707-1.707L19 11.586V8a6 6 0 00-6-6zM10 18a2 2 0 044 0h-4z" />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"
+                    ></path>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M13.73 21a2 2 0 0 1-3.46 0"
+                    ></path>
+                  </svg>
+                )}
                 {notifications && notifications.length > 0 && (
                   <span className="notification-dot"></span>
                 )}
               </button>
 
-              <div className="profile-dropdown" style={{ width: "320px" }}>
-                <div style={{ padding: 0, paddingRight: "4px", display: "flex", flexDirection: "column" }}>
-                <div className="dropdown-name" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span>{t('student.nav.notifications', 'Notifications')}</span>
-                  {notifications && notifications.length > 0 && (
-                    <button 
-                      onClick={() => setNotifications([])}
-                      style={{ background: 'none', border: 'none', color: 'var(--color-accent)', cursor: 'pointer', fontSize: '0.8rem', padding: 0 }}
-                    >
-                      {t('student.nav.clear_all', 'Clear all')}
-                    </button>
-                  )}
-                </div>
-                <hr className="dropdown-divider" />
-                {!notifications || notifications.length === 0 ? (
-                  <div
-                    style={{
-                      padding: "16px",
-                      textAlign: "center",
-                      color: "var(--text-secondary)",
-                      fontSize: "0.9rem",
-                    }}
-                  >
-                    {t('student.nav.no_notifications', 'No new notifications')}
+              <div className="profile-dropdown" style={{ width: '360px', right: isRTL ? 'auto' : 0, left: isRTL ? 0 : 'auto', padding: 0, borderRadius: '16px', overflow: 'hidden' }}>
+                <div style={{ padding: 0, display: "flex", flexDirection: "column" }}>
+                  <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--c-border-subtle, rgba(255,255,255,0.08))', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-surface)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }}>
+                    <span style={{ color: 'var(--color-accent, #f97316)', fontSize: '1.05rem' }}>{t('nav.notifications', 'Notifications')}</span>
+                    {notifications && notifications.length > 0 && (
+                      <button 
+                        onClick={handleClearAllNotifications}
+                        style={{ background: 'none', border: 'none', color: 'var(--c-sub)', cursor: 'pointer', fontSize: '0.8rem', textDecoration: 'underline' }}
+                      >
+                        {t('nav.clear_all', 'Clear all')}
+                      </button>
+                    )}
                   </div>
-                ) : (
-                  <div style={{ maxHeight: "300px", overflowY: "auto" }}>
-                    {notifications
-                      .sort((a, b) => b.timestamp - a.timestamp)
-                      .map((notif, idx) => (
-                        <div
-                          key={notif.id || idx}
-                          style={{
-                            padding: "12px 8px",
-                            borderBottom:
-                              idx !== notifications.length - 1
-                                ? "1px solid var(--border-solid)"
-                                : "none",
-                          }}
-                        >
-                          {notif.link ? (
-                            <Link to={notif.link} style={{ textDecoration: 'none' }} onClick={() => setNotifications(prev => prev.filter(n => n.id !== notif.id))}>
-                              <div
-                                style={{
-                                  fontSize: "0.9rem",
-                                  color: "var(--color-accent)",
-                                  fontWeight: "600",
-                                  marginBottom: "4px",
-                                }}
-                              >
-                                {notif.text}
+                  {!notifications || notifications.length === 0 ? (
+                    <div
+                      style={{
+                        padding: "24px",
+                        textAlign: "center",
+                        color: "var(--c-sub)",
+                        fontSize: "0.9rem",
+                      }}
+                    >
+                      {t('nav.no_notifications', 'No new notifications')}
+                    </div>
+                  ) : (
+                    <div style={{ maxHeight: "320px", overflowY: "auto" }}>
+                      {notifications
+                        .sort((a, b) => b.timestamp - a.timestamp)
+                        .map((notif, idx) => {
+                          const content = (
+                            <>
+                              <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-h)', marginBottom: '4px', textAlign: isRTL ? 'right' : 'left' }}>
+                                {formatNotificationTitle(notif.text || notif.title, t)}
                               </div>
                               {notif.message && (
-                                <div style={{ fontSize: "0.85rem", color: "var(--text-primary)", marginBottom: "4px" }}>
-                                  {notif.message}
+                                <div style={{ fontSize: '0.8rem', color: 'var(--c-sub)', lineHeight: '1.4', marginBottom: '4px', textAlign: isRTL ? 'right' : 'left' }}>
+                                  {formatNotificationMessage(notif.message, t)}
                                 </div>
                               )}
-                              <div
-                                style={{
-                                  fontSize: "0.75rem",
-                                  color: "var(--text-secondary)",
-                                  textAlign: "right",
-                                }}
-                              >
-                                {new Date(notif.timestamp).toLocaleString()}
-                              </div>
-                            </Link>
-                          ) : (
-                            <>
-                              <div
-                                style={{
-                                  fontSize: "0.9rem",
-                                  color: "var(--text-primary)",
-                                  marginBottom: "4px",
-                                }}
-                              >
-                                {notif.text}
-                              </div>
-                              <div
-                                style={{
-                                  fontSize: "0.75rem",
-                                  color: "var(--text-secondary)",
-                                  textAlign: "right",
-                                }}
-                              >
-                                {new Date(notif.timestamp).toLocaleString()}
+                              <div style={{ fontSize: '0.72rem', color: 'var(--c-sub)', marginTop: '6px', textAlign: isRTL ? 'left' : 'right', opacity: 0.8 }}>
+                                {new Date(notif.timestamp).toLocaleString(undefined, { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                               </div>
                             </>
-                          )}
-                        </div>
-                      ))}
-                  </div>
-                )}
+                          );
+
+                          const itemStyle = {
+                            padding: '12px 16px',
+                            borderBottom: '1px solid var(--c-border-subtle, rgba(255,255,255,0.05))',
+                            backgroundColor: notif.read ? 'transparent' : 'rgba(249, 115, 22, 0.08)',
+                            cursor: 'pointer',
+                            position: 'relative',
+                            transition: 'background 0.2s',
+                            display: 'block',
+                            textDecoration: 'none',
+                            color: 'inherit'
+                          };
+
+                          if (notif.link) {
+                            return (
+                              <Link 
+                                key={notif.id || idx}
+                                to={notif.link} 
+                                style={itemStyle} 
+                                onClick={() => setNotifications(prev => prev.filter(n => n.id !== notif.id))}
+                              >
+                                {content}
+                              </Link>
+                            );
+                          }
+
+                          return (
+                            <div 
+                              key={notif.id || idx}
+                              style={itemStyle}
+                            >
+                              {content}
+                            </div>
+                          );
+                        })
+                      }
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

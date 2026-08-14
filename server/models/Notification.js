@@ -21,12 +21,16 @@ const notificationSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['qa_reply', 'announcement', 'system', 'qa_new'],
+      enum: ['qa_reply', 'announcement', 'system', 'qa_new', 'quiz_submitted', 'quiz_graded'],
       default: 'system',
     },
     link: {
       type: String,
       default: '',
+    },
+    refId: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
     },
   },
   { timestamps: true }

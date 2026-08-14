@@ -195,15 +195,35 @@ const run = async () => {
   assert(res.status === 403, 'Student should be blocked from lesson content before enrolling');
   console.log('✓ Un-enrolled student correctly blocked from lesson video (403)');
 
-  // 13. Student enrolls
+  // 13. Student enrolls in a paid course -> lands as 'pending', not immediate access
   res = await agentStudent.post(`/api/enrollments/${courseId}`).set('X-CSRF-Token', studentCsrf);
   assert(res.status === 201, `Enroll failed: ${JSON.stringify(res.body)}`);
-  console.log('✓ Student enrolled in course');
+  assert(res.body.enrollment.status === 'pending', `Paid enrollment should start pending: ${JSON.stringify(res.body)}`);
+  const enrollmentId = res.body.enrollment._id;
+  console.log('✓ Student enrolled in course (status: pending)');
 
   // 14. Double-enroll should be rejected
   res = await agentStudent.post(`/api/enrollments/${courseId}`).set('X-CSRF-Token', studentCsrf);
   assert(res.status === 409, 'Duplicate enrollment should be rejected with 409');
   console.log('✓ Duplicate enrollment correctly rejected (409)');
+
+  // 14b. While pending, the student is still blocked from lesson content
+  res = await agentStudent.get(`/api/courses/${courseId}/lessons/${lessonId}`);
+  assert(res.status === 403, `Pending enrollment should still be blocked from lesson video: ${JSON.stringify(res.body)}`);
+  console.log('✓ Pending enrollment correctly blocked from lesson video (403)');
+
+  // 14c. Admin approves the enrollment request
+  res = await agentAdmin.patch(`/api/admin/enrollments/${enrollmentId}/approve`).set('X-CSRF-Token', adminCsrf);
+  assert(res.status === 200, `Approve enrollment failed: ${JSON.stringify(res.body)}`);
+  assert(res.body.enrollment.status === 'approved', 'Enrollment should be approved');
+  console.log('✓ Admin approved the enrollment request');
+
+  // 14d. Approving an already-approved enrollment must be rejected, not
+  // silently re-processed (regression test: this used to create a second
+  // instructor revenue-split Transaction on every duplicate approve call).
+  res = await agentAdmin.patch(`/api/admin/enrollments/${enrollmentId}/approve`).set('X-CSRF-Token', adminCsrf);
+  assert(res.status === 409, `Double-approving an enrollment should be rejected: ${JSON.stringify(res.body)}`);
+  console.log('✓ Double-approving an enrollment correctly rejected (409)');
 
   // 15. Now the student CAN watch the lesson
   res = await agentStudent.get(`/api/courses/${courseId}/lessons/${lessonId}`);
@@ -235,6 +255,78 @@ const run = async () => {
   assert(res.body.enrollments.length === 1, 'Student should have exactly 1 enrollment');
   assert(res.body.enrollments[0].progressPercent === 100, 'My-enrollments list should show 100% progress');
   console.log('✓ My Learning list shows correct progress');
+
+  // --- QUIZ LESSON: mcq auto-grading + written-answer manual grading ---
+
+  // 20. Instructor creates a quiz lesson with 1 MCQ + 1 written question
+  res = await agentInstructor.post(`/api/courses/${courseId}/modules/${moduleId}/lessons`).set('X-CSRF-Token', instructorCsrf).send({
+    title: 'Quiz: Algorithm Basics',
+    lessonType: 'quiz',
+    quiz: {
+      questions: [
+        { type: 'mcq', prompt: 'What is O(1)?', options: ['Constant time', 'Linear time', 'Quadratic time', 'Exponential time'], correctOptionIndex: 0, points: 1 },
+        { type: 'written', prompt: 'Explain Big-O notation in your own words.', points: 2 },
+      ],
+    },
+  });
+  assert(res.status === 201, `Create quiz lesson failed: ${JSON.stringify(res.body)}`);
+  assert(res.body.lesson.lessonType === 'quiz', 'Lesson should be created as a quiz');
+  const quizLessonId = res.body.lesson._id;
+  console.log('✓ Instructor created a quiz lesson (1 MCQ + 1 written question)');
+
+  // 20b. Rejects an MCQ question with too few options
+  res = await agentInstructor.post(`/api/courses/${courseId}/modules/${moduleId}/lessons`).set('X-CSRF-Token', instructorCsrf).send({
+    title: 'Bad Quiz',
+    lessonType: 'quiz',
+    quiz: { questions: [{ type: 'mcq', prompt: 'Bad?', options: ['A', 'B'], correctOptionIndex: 0 }] },
+  });
+  assert(res.status === 400, 'Quiz with only 2 MCQ options should be rejected');
+  console.log('✓ Quiz validation rejects an MCQ question with too few options');
+
+  // 20c. A student fetching the quiz must NOT see the correct answer index
+  res = await agentStudent.get(`/api/courses/${courseId}/lessons/${quizLessonId}`);
+  assert(res.status === 200, `Student should be able to fetch quiz content: ${JSON.stringify(res.body)}`);
+  assert(
+    res.body.lesson.quiz.questions.every((q) => !('correctOptionIndex' in q)),
+    'Student-facing quiz content must not leak correctOptionIndex'
+  );
+  console.log('✓ Student-facing quiz content correctly hides the correct answer');
+
+  // 21. Student submits the quiz: correct MCQ answer + a written answer
+  res = await agentStudent.post(`/api/enrollments/${courseId}/lessons/${quizLessonId}/quiz-submit`).set('X-CSRF-Token', studentCsrf).send({
+    answers: [
+      { questionIndex: 0, selectedOptionIndex: 0 },
+      { questionIndex: 1, textAnswer: 'It describes how runtime scales with input size.' },
+    ],
+  });
+  assert(res.status === 200, `Quiz submit failed: ${JSON.stringify(res.body)}`);
+  assert(res.body.submission.status === 'pending_review', 'Submission with a written answer should be pending_review');
+  assert(res.body.submission.autoScore === 1, `MCQ auto-score should be 1: ${JSON.stringify(res.body.submission)}`);
+  assert(res.body.completedLessonIds.includes(quizLessonId), 'Submitting the quiz should mark the lesson complete');
+  console.log('✓ Student submitted the quiz — MCQ auto-graded, lesson marked complete');
+
+  // 22. Instructor sees it in the grading queue
+  res = await agentInstructor.get('/api/quiz-submissions?status=pending_review');
+  assert(res.status === 200 && res.body.submissions.length === 1, `Grading queue should show 1 pending submission: ${JSON.stringify(res.body)}`);
+  const submissionId = res.body.submissions[0]._id;
+  console.log('✓ Instructor sees the submission in the grading queue');
+
+  // 23. Instructor grades the written answer
+  res = await agentInstructor.patch(`/api/quiz-submissions/${submissionId}/grade`).set('X-CSRF-Token', instructorCsrf).send({
+    grades: [{ questionIndex: 1, pointsAwarded: 2, feedback: 'Clear and correct.' }],
+  });
+  assert(res.status === 200, `Grade submission failed: ${JSON.stringify(res.body)}`);
+  assert(res.body.submission.status === 'graded', 'Submission should be graded');
+  const writtenAnswer = res.body.submission.answers.find((a) => a.questionIndex === 1);
+  assert(writtenAnswer.pointsAwarded === 2, 'Written answer should have the awarded points recorded');
+  console.log('✓ Instructor graded the written answer');
+
+  // 24. Grading it again should be rejected (already graded)
+  res = await agentInstructor.patch(`/api/quiz-submissions/${submissionId}/grade`).set('X-CSRF-Token', instructorCsrf).send({
+    grades: [{ questionIndex: 1, pointsAwarded: 1 }],
+  });
+  assert(res.status === 409, 'Re-grading an already-graded submission should be rejected');
+  console.log('✓ Double-grading a submission correctly rejected (409)');
 
   await mongoose.disconnect();
   await mongod.stop();

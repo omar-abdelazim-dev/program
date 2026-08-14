@@ -297,8 +297,9 @@ export const getCourseById = async (req, res) => {
       return res.status(403).json({ message: 'This course is not yet available.' });
     }
 
-    // deliberately excludes videoUrl — see getLessonContent for the gated endpoint
-    const grouped = await getModulesWithLessons(course._id, '-videoUrl -attachmentUrl');
+    // deliberately excludes videoUrl and quiz content (question text/correct
+    // answers) — see getLessonContent for the gated endpoint that returns those
+    const grouped = await getModulesWithLessons(course._id, 'title order module status lessonType');
     const modules = grouped.map(({ module, lessons }) => ({
       _id: module._id,
       title: module.title,
