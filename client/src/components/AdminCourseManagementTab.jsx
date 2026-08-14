@@ -149,6 +149,44 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
 
   const [stats, setStats] = useState({ totalCourses: 0, pendingCourses: 0, pendingLessonsCount: 0 });
 
+  // Standalone related lessons (spec §11) for the course currently open in the side panel
+  const [standaloneLessonsForPanel, setStandaloneLessonsForPanel] = useState([]);
+  useEffect(() => {
+    if (!sidePanelCourseId) { setStandaloneLessonsForPanel([]); return; }
+    let cancelled = false;
+    // The public endpoint only returns approved lessons — pull pending ones
+    // in separately (admins need to see and act on those too) and merge.
+    Promise.all([
+      api.get(`/standalone-lessons?relatedCourseId=${sidePanelCourseId}`).then(r => r.data.lessons || []).catch(() => []),
+      api.get('/standalone-lessons/pending').then(r => (r.data.lessons || []).filter(l => (l.relatedCourse?._id || l.relatedCourse) === sidePanelCourseId)).catch(() => []),
+    ]).then(([approved, pending]) => {
+      if (cancelled) return;
+      const byId = new Map([...approved, ...pending].map(l => [l._id, l]));
+      setStandaloneLessonsForPanel([...byId.values()]);
+    });
+    return () => { cancelled = true; };
+  }, [sidePanelCourseId]);
+
+  const handleApproveStandaloneLesson = async (lessonId) => {
+    try {
+      await api.patch(`/standalone-lessons/${lessonId}/approve`);
+      notyf.success('Standalone lesson approved');
+      setStandaloneLessonsForPanel(prev => prev.map(l => l._id === lessonId ? { ...l, status: 'approved' } : l));
+    } catch (err) {
+      notyf.error(err.response?.data?.message || 'Failed to approve standalone lesson');
+    }
+  };
+
+  const handleRejectStandaloneLesson = async (lessonId) => {
+    try {
+      await api.patch(`/standalone-lessons/${lessonId}/reject`, { reason: 'Rejected by admin' });
+      notyf.success('Standalone lesson rejected');
+      setStandaloneLessonsForPanel(prev => prev.map(l => l._id === lessonId ? { ...l, status: 'rejected' } : l));
+    } catch (err) {
+      notyf.error(err.response?.data?.message || 'Failed to reject standalone lesson');
+    }
+  };
+
   useEffect(() => {
     const fetchCourses = async () => {
       try {
@@ -207,6 +245,7 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
       case "approved": return { text: "#10b981", bg: "rgba(16, 185, 129, 0.1)", border: "rgba(16, 185, 129, 0.25)" };
       case "pending": return { text: "#f5a623", bg: "rgba(245, 166, 35, 0.1)", border: "rgba(245, 166, 35, 0.25)" };
       case "rejected": return { text: "#ef4444", bg: "rgba(239, 68, 68, 0.1)", border: "rgba(239, 68, 68, 0.25)" };
+      case "archived": return { text: "#94a3b8", bg: "rgba(148, 163, 184, 0.1)", border: "rgba(148, 163, 184, 0.25)" };
       default: return { text: "var(--c-sub)", bg: "rgba(255,255,255,0.05)", border: "rgba(255,255,255,0.1)" };
     }
   };
@@ -237,6 +276,34 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
         notyf.error('Failed to reject course');
     } finally {
         setIsProcessing(false);
+    }
+  };
+
+  const handleApprovePriceChange = async (id) => {
+    try {
+      setIsProcessing(true);
+      const { data } = await api.patch(`/courses/${id}/price-change/approve`);
+      notyf.success('Price change approved');
+      setCourses(courses.map(c => c._id === id ? { ...c, price: data.course.price, pendingPriceChange: null } : c));
+      if (onDashboardUpdate) onDashboardUpdate();
+    } catch (err) {
+      notyf.error(err.response?.data?.message || 'Failed to approve price change');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleRejectPriceChange = async (id) => {
+    try {
+      setIsProcessing(true);
+      await api.patch(`/courses/${id}/price-change/reject`, { reason: 'Rejected by admin' });
+      notyf.success('Price change rejected');
+      setCourses(courses.map(c => c._id === id ? { ...c, pendingPriceChange: null } : c));
+      if (onDashboardUpdate) onDashboardUpdate();
+    } catch (err) {
+      notyf.error(err.response?.data?.message || 'Failed to reject price change');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -536,6 +603,7 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
                 <th style={{ padding: "16px", color: "var(--c-sub)", fontWeight: "600", borderBottom: "1px solid var(--c-border-subtle)", textAlign: "center", whiteSpace: "nowrap" }}>CATEGORY</th>
                 <th style={{ padding: "16px", color: "var(--c-sub)", fontWeight: "600", borderBottom: "1px solid var(--c-border-subtle)", textAlign: "center", whiteSpace: "nowrap" }}>PRICE</th>
                 <th style={{ padding: "16px", color: "var(--c-sub)", fontWeight: "600", borderBottom: "1px solid var(--c-border-subtle)", textAlign: "center", whiteSpace: "nowrap" }}>STATUS</th>
+                <th style={{ padding: "16px", color: "var(--c-sub)", fontWeight: "600", borderBottom: "1px solid var(--c-border-subtle)", textAlign: "center", whiteSpace: "nowrap" }}>TYPE</th>
                 <th style={{ padding: "16px", color: "var(--c-sub)", fontWeight: "600", borderBottom: "1px solid var(--c-border-subtle)", textAlign: "center", whiteSpace: "nowrap" }}>LAST UPDATED</th>
                 <th style={{ padding: "16px 24px", color: "var(--c-sub)", fontWeight: "600", borderBottom: "1px solid var(--c-border-subtle)", textAlign: "right", whiteSpace: "nowrap" }}>ACTION</th>
               </tr>
@@ -610,6 +678,14 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
                           </span>
                         );
                       })()}
+                    </td>
+                    <td style={{ padding: "16px", color: "var(--c-sub)", fontSize: "0.85rem", textAlign: "center", verticalAlign: "middle" }}>
+                      {c.courseType ? (c.courseType === "full" ? "Full" : "Ongoing") : "—"}
+                      {c.courseType === "ongoing" && c.status === "draft" && c.draftStartedAt && (
+                        <div style={{ fontSize: "0.75rem", color: "#f59e0b", marginTop: "2px" }}>
+                          {Math.max(0, 90 - Math.floor((Date.now() - new Date(c.draftStartedAt).getTime()) / (24 * 60 * 60 * 1000)))}d to archive
+                        </div>
+                      )}
                     </td>
                     <td style={{ padding: "16px", color: "var(--c-sub)", fontSize: "0.9rem", textAlign: "center", verticalAlign: "middle" }}>
                       {new Date(c.updatedAt || c.createdAt || Date.now()).toLocaleDateString()}
@@ -802,7 +878,57 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
                 </div>
               </div>
             </div>
-            
+
+            {/* Pending Price-Change Request (spec §5) */}
+            {sidePanelCourse.pendingPriceChange?.status === "pending" && (
+              <div style={{ background: "rgba(245, 158, 11, 0.1)", border: "none", boxShadow: "var(--inner-shadow)", borderRadius: "12px", padding: "16px" }}>
+                <div style={{ fontSize: "0.75rem", fontWeight: "700", color: "#f59e0b", letterSpacing: "1px", marginBottom: "12px" }}>PENDING PRICE CHANGE</div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.9rem", marginBottom: "12px" }}>
+                  <span style={{ color: "var(--c-sub)" }}>Current Price: {sidePanelCourse.price} EGP</span>
+                  <span style={{ color: "var(--c-light)", fontWeight: "600" }}>Requested: {sidePanelCourse.pendingPriceChange.requestedPrice} EGP</span>
+                </div>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <button
+                    disabled={isProcessing}
+                    onClick={() => handleApprovePriceChange(sidePanelCourse._id)}
+                    style={{ flex: 1, padding: "8px", borderRadius: "8px", border: "none", background: "#10b981", color: "white", fontWeight: "600", cursor: "pointer" }}
+                  >
+                    Approve
+                  </button>
+                  <button
+                    disabled={isProcessing}
+                    onClick={() => handleRejectPriceChange(sidePanelCourse._id)}
+                    style={{ flex: 1, padding: "8px", borderRadius: "8px", border: "none", background: "#ef4444", color: "white", fontWeight: "600", cursor: "pointer" }}
+                  >
+                    Reject
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Standalone Related Lessons (spec §11 / §20) */}
+            {standaloneLessonsForPanel.length > 0 && (
+              <div style={{ background: "var(--bg-main)", border: "none", boxShadow: "var(--inner-shadow)", borderRadius: "12px", padding: "16px" }}>
+                <div style={{ fontSize: "0.75rem", fontWeight: "700", color: "var(--c-sub)", letterSpacing: "1px", marginBottom: "12px" }}>STANDALONE LESSONS</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  {standaloneLessonsForPanel.map((lesson) => (
+                    <div key={lesson._id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.85rem" }}>
+                      <div>
+                        <div style={{ color: "var(--c-light)", fontWeight: 600 }}>{lesson.title}</div>
+                        <div style={{ color: "var(--c-sub)", fontSize: "0.75rem" }}>{lesson.price} EGP · {lesson.status}</div>
+                      </div>
+                      {lesson.status === "pending" && (
+                        <div style={{ display: "flex", gap: "6px" }}>
+                          <button onClick={() => handleApproveStandaloneLesson(lesson._id)} style={{ padding: "4px 10px", borderRadius: "8px", border: "none", background: "#10b981", color: "white", fontSize: "0.75rem", fontWeight: 600, cursor: "pointer" }}>Approve</button>
+                          <button onClick={() => handleRejectStandaloneLesson(lesson._id)} style={{ padding: "4px 10px", borderRadius: "8px", border: "none", background: "#ef4444", color: "white", fontSize: "0.75rem", fontWeight: 600, cursor: "pointer" }}>Reject</button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Analytics Preview Placeholder */}
             <div style={{ background: "var(--bg-main)", border: "none", boxShadow: "var(--inner-shadow)", borderRadius: "12px", padding: "16px" }}>
                 <div style={{ fontSize: "0.75rem", fontWeight: "700", color: "var(--c-sub)", letterSpacing: "1px", marginBottom: "12px" }}>ANALYTICS PREVIEW</div>

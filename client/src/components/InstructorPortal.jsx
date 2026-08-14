@@ -52,10 +52,26 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
   const [selectedCourseId, setSelectedCourseId] = useState(null);
   const [selectedModuleId, setSelectedModuleId] = useState(null);
   const [quizBuilderContext, setQuizBuilderContext] = useState(null); // { courseId, moduleId, lesson } | null
+  const [showCourseTypeModal, setShowCourseTypeModal] = useState(false);
+  const [priceChangeCourseId, setPriceChangeCourseId] = useState(null);
+  const [priceChangeValue, setPriceChangeValue] = useState('');
+  const [priceChangeSubmitting, setPriceChangeSubmitting] = useState(false);
+  const [convertCourseId, setConvertCourseId] = useState(null);
+  const [convertPriceValue, setConvertPriceValue] = useState('');
+  const [convertSubmitting, setConvertSubmitting] = useState(false);
+
+  // Standalone related lessons (spec §11)
+  const [standaloneManageCourse, setStandaloneManageCourse] = useState(null);
+  const [standaloneLessons, setStandaloneLessons] = useState([]);
+  const [showAddStandaloneForm, setShowAddStandaloneForm] = useState(false);
+  const [standaloneForm, setStandaloneForm] = useState({ title: '', description: '', price: '' });
+  const [standaloneVideoFile, setStandaloneVideoFile] = useState(null);
+  const [standaloneUploadProgress, setStandaloneUploadProgress] = useState(0);
+  const [standaloneSubmitting, setStandaloneSubmitting] = useState(false);
 
   // Form states
   // INS-03: Replaced category/major with college
-  const [formData, setFormData] = useState({ title: '', description: '', price: '', college: '', semester: '' });
+  const [formData, setFormData] = useState({ title: '', description: '', price: '', college: '', semester: '', courseType: '' });
   const [thumbnailFile, setThumbnailFile] = useState(null);
 
   const [editingLessonId, setEditingLessonId] = useState(null);
@@ -136,12 +152,10 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
       const myCourses = res.data.courses || [];
       setCourses(myCourses);
 
-      // The owner-gated GET /api/courses/:id already returns { course, modules },
-      // but only if the user is the instructor. Let's just do a series of fetches for now.
       const modulesMap = {};
       for (const c of myCourses) {
         try {
-          const modRes = await api.get(`/courses/${c._id}/modules`);
+          const modRes = await api.get(`/courses/${c._id}`);
           modulesMap[c._id] = modRes.data.modules || [];
         } catch (mErr) {
           console.error(`Failed to load modules for course ${c._id}`, mErr);
@@ -214,6 +228,10 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
       setError(t('instructor.create_course.form.thumbnail_required', 'Thumbnail image is required for new courses.'));
       return;
     }
+    if (!editingCourse && !formData.courseType) {
+      setError(t('instructor.create_course.form.course_type_required', 'Choose a course type before creating this course.'));
+      return;
+    }
 
     setSubmitting(true);
     setError('');
@@ -248,7 +266,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
       setShowCreateModal(false);
       setEditingCourse(null);
       // INS-03: Resetting formData correctly without category/major
-      setFormData({ title: '', description: '', price: '', college: '', semester: '' });
+      setFormData({ title: '', description: '', price: '', college: '', semester: '', courseType: '' });
       setThumbnailFile(null);
       fetchMyCourses();
     } catch (err) {
@@ -266,6 +284,97 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
     } catch (err) {
       console.error('Failed to republish course:', err);
       notyf.error(t('instructor.notyf.error', 'An error occurred.'));
+    }
+  };
+
+  const handleRequestPriceChange = async (e) => {
+    e.preventDefault();
+    if (!priceChangeCourseId || priceChangeValue === '') return;
+    setPriceChangeSubmitting(true);
+    try {
+      await api.post(`/courses/${priceChangeCourseId}/request-price-change`, { requestedPrice: Number(priceChangeValue) });
+      notyf.success(t('instructor.dashboard.price_change.submitted', 'Price change requested — awaiting admin approval.'));
+      setPriceChangeCourseId(null);
+      setPriceChangeValue('');
+      fetchMyCourses();
+    } catch (err) {
+      notyf.error(err.response?.data?.message || t('instructor.notyf.error', 'An error occurred.'));
+    } finally {
+      setPriceChangeSubmitting(false);
+    }
+  };
+
+  const handleConvertToFull = async (e) => {
+    e.preventDefault();
+    if (!convertCourseId || convertPriceValue === '') return;
+    setConvertSubmitting(true);
+    try {
+      await api.patch(`/courses/${convertCourseId}/convert-to-full`, { price: Number(convertPriceValue) });
+      notyf.success(t('instructor.dashboard.convert.submitted', 'Course converted to Full Course and submitted for admin review.'));
+      setConvertCourseId(null);
+      setConvertPriceValue('');
+      fetchMyCourses();
+    } catch (err) {
+      notyf.error(err.response?.data?.message || t('instructor.notyf.error', 'An error occurred.'));
+    } finally {
+      setConvertSubmitting(false);
+    }
+  };
+
+  const fetchStandaloneLessonsForCourse = async (courseId) => {
+    try {
+      const { data } = await api.get('/standalone-lessons/mine');
+      setStandaloneLessons((data.lessons || []).filter(l => l.relatedCourse?._id === courseId || l.relatedCourse === courseId));
+    } catch (err) {
+      console.error('Failed to load standalone lessons', err);
+    }
+  };
+
+  const handleAddStandaloneLesson = async (e) => {
+    e.preventDefault();
+    if (!standaloneForm.title.trim() || !standaloneVideoFile || standaloneForm.price === '') return;
+    setStandaloneSubmitting(true);
+    setStandaloneUploadProgress(0);
+    try {
+      const { data: sig } = await api.get('/uploads/video-signature');
+      const cloudinaryForm = new FormData();
+      cloudinaryForm.append('file', standaloneVideoFile);
+      cloudinaryForm.append('api_key', sig.apiKey);
+      cloudinaryForm.append('timestamp', sig.timestamp);
+      cloudinaryForm.append('signature', sig.signature);
+      cloudinaryForm.append('folder', sig.folder);
+      const uploadRes = await axios.post(
+        `https://api.cloudinary.com/v1_1/${sig.cloudName}/video/upload`,
+        cloudinaryForm,
+        { onUploadProgress: (evt) => { if (evt.total) setStandaloneUploadProgress(Math.round((evt.loaded / evt.total) * 100)); } }
+      );
+
+      await api.post('/standalone-lessons', {
+        title: standaloneForm.title,
+        description: standaloneForm.description,
+        relatedCourseId: standaloneManageCourse._id,
+        price: Number(standaloneForm.price),
+        videoUrl: uploadRes.data.secure_url,
+      });
+      notyf.success(t('instructor.curriculum.standalone.created', 'Standalone lesson submitted for admin review.'));
+      setShowAddStandaloneForm(false);
+      setStandaloneForm({ title: '', description: '', price: '' });
+      setStandaloneVideoFile(null);
+      fetchStandaloneLessonsForCourse(standaloneManageCourse._id);
+    } catch (err) {
+      notyf.error(err.response?.data?.message || t('instructor.notyf.error', 'An error occurred.'));
+    } finally {
+      setStandaloneSubmitting(false);
+    }
+  };
+
+  const handleDeleteStandaloneLesson = async (lessonId) => {
+    try {
+      await api.delete(`/standalone-lessons/${lessonId}`);
+      notyf.success(t('instructor.dashboard.actions.delete', 'Deleted'));
+      fetchStandaloneLessonsForCourse(standaloneManageCourse._id);
+    } catch (err) {
+      notyf.error(err.response?.data?.message || t('instructor.notyf.error', 'An error occurred.'));
     }
   };
 
@@ -776,10 +885,11 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
           
           {activeTab === 'curriculum' ? (
             <div className="animate-entrance">
-              <CurriculumBuilderTab 
-                courses={courses} 
-                modulesByCourse={modulesByCourse} 
+              <CurriculumBuilderTab
+                courses={courses}
+                modulesByCourse={modulesByCourse}
                 onAction={fetchMyCourses}
+                onOpenStandaloneLessons={(course) => { setStandaloneManageCourse(course); setStandaloneLessons([]); fetchStandaloneLessonsForCourse(course._id); }}
                 onOpenAddLesson={(courseId, moduleId) => {
                   setError('');
                   setSelectedCourseId(courseId);
@@ -965,9 +1075,9 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
               <div className="flex justify-between items-center mb-8" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
               {/* Translated My Courses header */}
               <h2 style={{ fontSize: '2rem', margin: 0, color: 'var(--text-h)' }}>{t('instructor.dashboard.my_courses')}</h2>
-              <button 
+              <button
                 // INS-03: Resetting formData correctly without category/major
-                onClick={() => { setError(''); setEditingCourse(null); setFormData({ title: '', description: '', price: '', college: '', semester: '' }); setShowCreateModal(true); }}
+                onClick={() => { setError(''); setEditingCourse(null); setFormData({ title: '', description: '', price: '', college: '', semester: '', courseType: '' }); setShowCourseTypeModal(true); }}
                 style={{ width: 'auto', borderRadius: '24px', padding: '10px 24px', fontWeight: 700, background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: 'none', boxShadow: 'var(--inner-shadow)', cursor: 'pointer', transition: 'all 0.2s' }}
                 onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)'; e.currentTarget.style.boxShadow = 'var(--inner-shadow)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
                 onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'; e.currentTarget.style.boxShadow = 'var(--inner-shadow)'; e.currentTarget.style.filter = 'none'; }}
@@ -1054,6 +1164,21 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                             {t("instructor.dashboard.category")}:{" "}
                             {t(`categories.${course.category.replace(/\s+/g, '_').toLowerCase()}`, course.category)}
                           </div>
+                          {course.courseType === "full" && (
+                            course.pendingPriceChange?.status === "pending" ? (
+                              <div style={{ fontSize: "0.8rem", color: "#f59e0b", marginTop: "4px" }}>
+                                {t('instructor.dashboard.price_change.pending', 'Price change pending: EGP {{price}} awaiting admin approval', { price: course.pendingPriceChange.requestedPrice })}
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); setPriceChangeCourseId(course._id); setPriceChangeValue(String(course.price)); }}
+                                style={{ background: "none", border: "none", color: "#3b82f6", textDecoration: "underline", cursor: "pointer", padding: 0, fontSize: "0.8rem", marginTop: "4px" }}
+                              >
+                                {t('instructor.dashboard.price_change.request', 'Request Price Change')}
+                              </button>
+                            )
+                          )}
                           <div
                             style={{
                               marginTop: "8px",
@@ -1076,7 +1201,9 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                                       ? "rgba(59, 130, 246, 0.2)"
                                       : course.status === "rejected"
                                         ? "rgba(239, 68, 68, 0.2)"
-                                        : "rgba(245, 158, 11, 0.2)",
+                                        : course.status === "archived"
+                                          ? "rgba(148, 163, 184, 0.2)"
+                                          : "rgba(245, 158, 11, 0.2)",
                                 color:
                                   course.status === "approved"
                                     ? "#10B981"
@@ -1084,11 +1211,42 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                                       ? "#3B82F6"
                                       : course.status === "rejected"
                                         ? "#ef4444"
-                                        : "#F59E0B",
+                                        : course.status === "archived"
+                                          ? "#94a3b8"
+                                          : "#F59E0B",
                               }}
                             >
                               {course.status === "approved" ? "LIVE" : course.status === "draft" ? "DRAFT" : (t(`instructor.dashboard.status.${course.status}`) || course.status.toUpperCase())}
                             </span>
+
+                            {course.courseType && (
+                              <span
+                                style={{
+                                  padding: "4px 10px",
+                                  borderRadius: "50px",
+                                  fontSize: "0.8rem",
+                                  fontWeight: "bold",
+                                  boxShadow: "var(--inner-shadow)",
+                                  background: "rgba(148, 163, 184, 0.15)",
+                                  color: "var(--text)",
+                                }}
+                              >
+                                {course.courseType === "full"
+                                  ? t('instructor.create_course.full_course_title', 'Full Course')
+                                  : t('instructor.create_course.ongoing_course_title', 'Ongoing Course')}
+                                {course.courseType === "full" && course.status === "approved" && ` · ${t('instructor.curriculum.content_locked', 'Content Locked')}`}
+                              </span>
+                            )}
+
+                            {course.courseType === "ongoing" && course.status !== "draft" && (
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); setConvertCourseId(course._id); setConvertPriceValue(String(course.price || '')); }}
+                                style={{ background: "none", border: "none", color: "#3b82f6", textDecoration: "underline", cursor: "pointer", padding: 0, fontSize: "0.8rem" }}
+                              >
+                                {t('instructor.dashboard.convert.button', 'Convert to Full Course')}
+                              </button>
+                            )}
 
                             {course.status === "draft" && (
                               <button
@@ -1164,6 +1322,52 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                                 {course.rejectionReason}
                               </div>
                             )}
+                          {course.courseType === "ongoing" && course.status === "approved" && course.lastPublishedContentAt && (() => {
+                            const daysSince = Math.floor((Date.now() - new Date(course.lastPublishedContentAt).getTime()) / (24 * 60 * 60 * 1000));
+                            const daysLeft = Math.max(0, 14 - daysSince);
+                            return (
+                              <div style={{ marginTop: "8px", fontSize: "0.85rem", color: "var(--text)" }}>
+                                {t('instructor.dashboard.ongoing.last_lecture', 'Last Lecture: {{days}} days ago', { days: daysSince })}
+                                {' · '}
+                                {t('instructor.dashboard.ongoing.next_deadline', 'Next Activity Deadline: {{days}} days', { days: daysLeft })}
+                              </div>
+                            );
+                          })()}
+                          {course.courseType === "ongoing" && course.status === "draft" && course.draftStartedAt && (() => {
+                            const daysSinceDraft = Math.floor((Date.now() - new Date(course.draftStartedAt).getTime()) / (24 * 60 * 60 * 1000));
+                            const daysUntilArchive = Math.max(0, 90 - daysSinceDraft);
+                            return (
+                              <div
+                                style={{
+                                  boxShadow: "var(--inner-shadow)",
+                                  marginTop: "8px",
+                                  padding: "6px 14px",
+                                  background: "rgba(59, 130, 246, 0.15)",
+                                  borderRadius: "12px",
+                                  fontSize: "0.85rem",
+                                  color: "var(--text)",
+                                  width: "fit-content",
+                                }}
+                              >
+                                <div>{t('instructor.dashboard.ongoing.draft_reason', 'No new lecture was published for 14 days.')}</div>
+                                <div style={{ marginTop: "4px", fontWeight: 600 }}>
+                                  {t('instructor.dashboard.ongoing.draft_deletion', 'Removed in {{days}} days unless you publish a new lesson or convert to a Full Course.', { days: daysUntilArchive })}
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); setConvertCourseId(course._id); setConvertPriceValue(String(course.price || '')); }}
+                                  style={{ marginTop: "8px", background: "none", border: "none", color: "#3b82f6", textDecoration: "underline", cursor: "pointer", padding: 0, fontSize: "0.8rem" }}
+                                >
+                                  {t('instructor.dashboard.convert.button', 'Convert to Full Course')}
+                                </button>
+                              </div>
+                            );
+                          })()}
+                          {course.status === "archived" && (
+                            <div style={{ marginTop: "8px", fontSize: "0.85rem", color: "var(--text)" }}>
+                              {t('instructor.dashboard.ongoing.archived_notice', 'This course was archived after 90 days of inactivity. Its content and history have been preserved.')}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1178,12 +1382,181 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
         </div>
       </div>
 
+      {/* Course Type Picker — shown before the create form for brand-new courses only; type is immutable after creation */}
+      {showCourseTypeModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+          <div className="solid-card animate-entrance" style={{ width: '100%', maxWidth: '600px', padding: '32px' }}>
+            <h2 style={{ margin: '0 0 8px 0' }}>{t('instructor.create_course.choose_type_title', 'Choose Course Type')}</h2>
+            <p style={{ margin: '0 0 24px 0', color: 'var(--text)' }}>{t('instructor.create_course.choose_type_subtitle', 'This cannot be changed once the course is created.')}</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <button
+                type="button"
+                className="solid-card"
+                onClick={() => { setFormData({ ...formData, courseType: 'full' }); setShowCourseTypeModal(false); setShowCreateModal(true); }}
+                style={{ textAlign: 'left', padding: '20px', cursor: 'pointer', border: 'none' }}
+              >
+                <div style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '4px' }}>{t('instructor.create_course.full_course_title', 'Full Course')}</div>
+                <div style={{ color: 'var(--text)' }}>{t('instructor.create_course.full_course_desc', 'Complete your course before submitting it for review. Once published, it\'s locked — no further modules or lessons can be added.')}</div>
+              </button>
+              <button
+                type="button"
+                className="solid-card"
+                onClick={() => { setFormData({ ...formData, courseType: 'ongoing' }); setShowCourseTypeModal(false); setShowCreateModal(true); }}
+                style={{ textAlign: 'left', padding: '20px', cursor: 'pointer', border: 'none' }}
+              >
+                <div style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '4px' }}>{t('instructor.create_course.ongoing_course_title', 'Ongoing Course')}</div>
+                <div style={{ color: 'var(--text)' }}>{t('instructor.create_course.ongoing_course_desc', 'Build your course progressively and publish new content over time. Requires at least one new lesson every 14 days to stay active.')}</div>
+              </button>
+            </div>
+            <div style={{ marginTop: '20px' }}>
+              <button type="button" onClick={() => setShowCourseTypeModal(false)} className="sys-btn-secondary">{t('instructor.create_course.cancel')}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Request Price Change Modal (Full Courses only — spec §5) */}
+      {priceChangeCourseId && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+          <div className="solid-card animate-entrance" style={{ width: '100%', maxWidth: '440px', padding: '32px' }}>
+            <h2 style={{ margin: '0 0 8px 0' }}>{t('instructor.dashboard.price_change.title', 'Request Price Change')}</h2>
+            <p style={{ margin: '0 0 20px 0', color: 'var(--text)', fontSize: '0.9rem' }}>
+              {t('instructor.dashboard.price_change.subtitle', 'The public price stays the same until an admin approves this request.')}
+            </p>
+            <form onSubmit={handleRequestPriceChange} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div className="input-group">
+                <label>{t('instructor.dashboard.price_change.requested_price', 'Requested Price (EGP)')}</label>
+                <input required type="number" min="0" value={priceChangeValue} onChange={e => setPriceChangeValue(e.target.value)} />
+              </div>
+              <div className="input-row" style={{ marginTop: '8px' }}>
+                <button type="button" onClick={() => { setPriceChangeCourseId(null); setPriceChangeValue(''); }} className="sys-btn-secondary">{t('instructor.create_course.cancel')}</button>
+                <button type="submit" disabled={priceChangeSubmitting} className="sys-btn-primary">
+                  {priceChangeSubmitting ? t('instructor.create_course.saving') : t('instructor.dashboard.price_change.submit', 'Submit Request')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Convert Ongoing -> Full Course Modal (spec §9 Option 4) */}
+      {convertCourseId && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+          <div className="solid-card animate-entrance" style={{ width: '100%', maxWidth: '440px', padding: '32px' }}>
+            <h2 style={{ margin: '0 0 8px 0' }}>{t('instructor.dashboard.convert.title', 'Convert to Full Course')}</h2>
+            <p style={{ margin: '0 0 20px 0', color: 'var(--text)', fontSize: '0.9rem' }}>
+              {t('instructor.dashboard.convert.subtitle', 'This course will be resubmitted for admin review as a Full Course, using the price you set here. Once approved and published, no further modules or lessons can be added.')}
+            </p>
+            <form onSubmit={handleConvertToFull} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div className="input-group">
+                <label>{t('instructor.dashboard.convert.full_price', 'Full Course Price (EGP)')}</label>
+                <input required type="number" min="0" value={convertPriceValue} onChange={e => setConvertPriceValue(e.target.value)} />
+              </div>
+              <div className="input-row" style={{ marginTop: '8px' }}>
+                <button type="button" onClick={() => { setConvertCourseId(null); setConvertPriceValue(''); }} className="sys-btn-secondary">{t('instructor.create_course.cancel')}</button>
+                <button type="submit" disabled={convertSubmitting} className="sys-btn-primary">
+                  {convertSubmitting ? t('instructor.create_course.saving') : t('instructor.dashboard.convert.submit', 'Convert & Submit for Review')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Standalone Related Lessons Manager (spec §11) */}
+      {standaloneManageCourse && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+          <div className="solid-card animate-entrance" style={{ width: '100%', maxWidth: '600px', padding: '32px', maxHeight: '85vh', overflowY: 'auto' }}>
+            <h2 style={{ margin: '0 0 4px 0' }}>{t('instructor.curriculum.standalone.title', 'Standalone Lessons')}</h2>
+            <p style={{ margin: '0 0 20px 0', color: 'var(--text)', fontSize: '0.9rem' }}>
+              {t('course_page.standalone.related_to', 'Related to: {{course}}', { course: standaloneManageCourse.title })}
+            </p>
+
+            {!showAddStandaloneForm ? (
+              <>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
+                  {standaloneLessons.length === 0 ? (
+                    <p style={{ color: 'var(--text)', fontSize: '0.9rem' }}>{t('instructor.curriculum.standalone.none_yet', 'No standalone lessons yet.')}</p>
+                  ) : (
+                    standaloneLessons.map((lesson) => (
+                      <div key={lesson._id} className="glass-card" style={{ padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <div style={{ fontWeight: 600 }}>{lesson.title}</div>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--c-sub)' }}>
+                            EGP {lesson.price} · {t(`instructor.dashboard.status.${lesson.status}`, lesson.status)}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteStandaloneLesson(lesson._id)}
+                          style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.85rem' }}
+                        >
+                          {t('instructor.dashboard.actions.delete', 'Delete')}
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <div className="input-row">
+                  <button type="button" onClick={() => { setStandaloneManageCourse(null); setStandaloneLessons([]); }} className="sys-btn-secondary">
+                    {t('instructor.create_course.cancel', 'Close')}
+                  </button>
+                  <button type="button" onClick={() => setShowAddStandaloneForm(true)} className="sys-btn-primary">
+                    {t('instructor.curriculum.standalone.add', '+ Add Standalone Lesson')}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <form onSubmit={handleAddStandaloneLesson} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div className="input-group">
+                  <label>{t('instructor.curriculum.lesson_title')}</label>
+                  <input required type="text" value={standaloneForm.title} onChange={e => setStandaloneForm({ ...standaloneForm, title: e.target.value })} />
+                </div>
+                <div className="input-group">
+                  <label>{t('instructor.create_course.form.description')}</label>
+                  <textarea required value={standaloneForm.description} onChange={e => setStandaloneForm({ ...standaloneForm, description: e.target.value })} style={{ minHeight: '80px' }} />
+                </div>
+                <div className="input-group">
+                  <label>{t('instructor.dashboard.price')} (EGP)</label>
+                  <input required type="number" min="0" value={standaloneForm.price} onChange={e => setStandaloneForm({ ...standaloneForm, price: e.target.value })} />
+                </div>
+                <div className="input-group">
+                  <label>{t('instructor.curriculum.video_file')}</label>
+                  <input required type="file" accept="video/*" onChange={e => setStandaloneVideoFile(e.target.files[0])} />
+                  {standaloneSubmitting && standaloneUploadProgress > 0 && (
+                    <div className="input-hint">{t('instructor.curriculum.uploading_video', 'Uploading video… {{percent}}%', { percent: standaloneUploadProgress })}</div>
+                  )}
+                </div>
+                <div className="input-row" style={{ marginTop: '8px' }}>
+                  <button type="button" onClick={() => setShowAddStandaloneForm(false)} className="sys-btn-secondary">{t('instructor.create_course.cancel')}</button>
+                  <button type="submit" disabled={standaloneSubmitting} className="sys-btn-primary">
+                    {standaloneSubmitting ? t('instructor.create_course.saving') : t('instructor.create_course.save', 'Save')}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Create / Edit Course Modal */}
       {showCreateModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
           <div className="solid-card animate-entrance" style={{ width: '100%', maxWidth: '600px', padding: '32px' }}>
-            <h2 style={{ margin: '0 0 24px 0' }}>{editingCourse ? t('instructor.create_course.edit_title') : t('instructor.create_course.title')}</h2>
-            
+            <h2 style={{ margin: '0 0 8px 0' }}>{editingCourse ? t('instructor.create_course.edit_title') : t('instructor.create_course.title')}</h2>
+
+            {!editingCourse && formData.courseType && (
+              <div style={{ margin: '0 0 16px 0', color: 'var(--text)', fontSize: '0.9rem' }}>
+                {formData.courseType === 'full'
+                  ? t('instructor.create_course.full_course_title', 'Full Course')
+                  : t('instructor.create_course.ongoing_course_title', 'Ongoing Course')}
+                {' · '}
+                <button type="button" onClick={() => { setShowCreateModal(false); setShowCourseTypeModal(true); }} style={{ background: 'none', border: 'none', color: 'inherit', textDecoration: 'underline', cursor: 'pointer', padding: 0, font: 'inherit' }}>
+                  {t('instructor.create_course.change_type', 'Change')}
+                </button>
+              </div>
+            )}
+
             {error && <div className="error-message" style={{ marginBottom: '16px' }}>{error}</div>}
             
             <form noValidate onSubmit={handleSaveCourse} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>

@@ -193,6 +193,20 @@ export default function AdminUserManagementTab({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
+  // Instructor discipline (spec §10) — a map of instructorId -> { count, latestStage }
+  // for the small violation badge next to an instructor's role pill.
+  const [violationSummary, setViolationSummary] = useState({});
+  useEffect(() => {
+    if (activeRole !== 'instructor') return;
+    api.get('/admin/instructor-violations/summary')
+      .then(({ data }) => {
+        const map = {};
+        (data.summary || []).forEach((s) => { map[s.instructorId] = s; });
+        setViolationSummary(map);
+      })
+      .catch(() => {}); // non-critical — badge just won't show
+  }, [activeRole]);
+
   // Derived state
   const visibleUsers = users.filter((u) => {
     // Role filter
@@ -839,6 +853,23 @@ export default function AdminUserManagementTab({
                     >
                       {u.role}
                     </span>
+                    {u.role === "instructor" && violationSummary[u._id] && (
+                      <span
+                        title="Abandoned Ongoing Course violations"
+                        style={{
+                          background: violationSummary[u._id].latestStage === "final_warning" ? "rgba(239, 68, 68, 0.15)" : violationSummary[u._id].latestStage === "admin_review" ? "rgba(245, 158, 11, 0.15)" : "rgba(148, 163, 184, 0.15)",
+                          color: violationSummary[u._id].latestStage === "final_warning" ? "#ef4444" : violationSummary[u._id].latestStage === "admin_review" ? "#f59e0b" : "var(--text-h)",
+                          border: "none",
+                          padding: "4px 10px",
+                          borderRadius: "99px",
+                          fontSize: "0.75rem",
+                          fontWeight: "600",
+                          marginRight: "8px",
+                        }}
+                      >
+                        ⚠ {violationSummary[u._id].count}
+                      </span>
+                    )}
                     {u.role === "instructor" && u.isProgramInstructor && (
                       <span
                         style={{

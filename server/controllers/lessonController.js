@@ -3,6 +3,7 @@ import Module from '../models/Module.js';
 import Course from '../models/Course.js';
 import Enrollment from '../models/Enrollment.js';
 import logger from '../utils/logger.js';
+import { isCourseContentLocked } from '../utils/courseContent.js';
 
 // Re-validates quiz content server-side rather than trusting the instructor
 // UI's own bounds (4-6 options, a real correct-answer index). Returns an
@@ -60,6 +61,14 @@ export const addLesson = async (req, res) => {
     const module = await Module.findOne({ _id: moduleId, course: courseId });
     if (!module) {
       return res.status(404).json({ message: 'Module not found in this course' });
+    }
+
+    const course = await Course.findById(courseId).select('courseType status');
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+    if (isCourseContentLocked(course)) {
+      return res.status(403).json({ message: 'This course is published and locked — Full Courses cannot be modified after publishing.' });
     }
 
     const existingCount = await Lesson.countDocuments({ module: module._id });
@@ -143,6 +152,8 @@ export const updateLesson = async (req, res) => {
       return res.status(404).json({ message: 'Lesson not found in this course' });
     }
 
+    const wasPublished = lesson.status === 'published';
+
     if (title) lesson.title = title;
     if (videoUrl) lesson.videoUrl = videoUrl;
     if (description !== undefined) lesson.description = description;
@@ -159,6 +170,27 @@ export const updateLesson = async (req, res) => {
     }
 
     await lesson.save();
+
+    // Ongoing courses: only a lesson actually going live (not a draft save,
+    // not an edit to an already-published lesson) counts as qualifying
+    // content — see the 14-day inactivity job in jobs/courseLifecycleJobs.js.
+    if (!wasPublished && lesson.status === 'published') {
+      const course = await Course.findById(courseId).select('courseType status');
+      if (course?.courseType === 'ongoing') {
+        const update = { lastPublishedContentAt: new Date() };
+        if (course.status === 'draft') {
+          // Publishing new content pulls the course back out of Draft,
+          // whether it landed there from inactivity or a manual toggle —
+          // spec §9 Option 1.
+          update.status = 'approved';
+          update.draftStartedAt = null;
+        }
+        update.inactivityWarningSentAt = null;
+        update.inactivityUrgentWarningSentAt = null;
+        update.draftExpirationWarningSentAt = null;
+        await Course.findByIdAndUpdate(courseId, update);
+      }
+    }
 
     res.status(200).json({ lesson });
   } catch (error) {

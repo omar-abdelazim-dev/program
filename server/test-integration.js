@@ -13,6 +13,7 @@ const run = async () => {
   const { default: app } = await import('./app.js');
   const { default: User } = await import('./models/User.js');
   const { default: Transaction } = await import('./models/Transaction.js');
+  const { default: Course } = await import('./models/Course.js');
 
   const agentInstructor = request.agent(app);
   const agentAdmin = request.agent(app);
@@ -37,11 +38,23 @@ const run = async () => {
     category: 'Computer Science',
     college: 'College of Computer Science and Information Technology',
     semester: 1,
+    courseType: 'full',
   });
   assert(res.status === 201, `Create course failed: ${JSON.stringify(res.body)}`);
   assert(res.body.course.status === 'pending', 'New course should default to pending');
   const courseId = res.body.course._id;
   console.log('✓ Instructor created course (status: pending)');
+
+  // 2b. courseType is required on creation
+  res = await agentInstructor.post('/api/courses').set('X-CSRF-Token', instructorCsrf).send({
+    title: 'Missing Course Type',
+    description: 'Should be rejected for lacking a courseType.',
+    price: 10,
+    college: 'College of Computer Science and Information Technology',
+    semester: 1,
+  });
+  assert(res.status === 400, `Course creation without courseType should be rejected: ${JSON.stringify(res.body)}`);
+  console.log('✓ Course creation without courseType correctly rejected (400)');
 
   // 3a. Instructor creates a module for their course
   res = await agentInstructor.post(`/api/courses/${courseId}/modules`).set('X-CSRF-Token', instructorCsrf).send({
@@ -152,6 +165,77 @@ const run = async () => {
   assert(res.body.courses.length === 1, 'Published course should now appear in public catalog');
   console.log('✓ Published course now visible in public catalog');
 
+  // 9a. Content lock: a published Full Course cannot take new modules/lessons
+  res = await agentInstructor.post(`/api/courses/${courseId}/modules`).set('X-CSRF-Token', instructorCsrf).send({
+    title: 'Module Attempted After Publish',
+  });
+  assert(res.status === 403, `Adding a module to a published Full Course should be blocked (403): ${JSON.stringify(res.body)}`);
+  console.log('✓ Adding a module to a published Full Course correctly blocked (403)');
+
+  res = await agentInstructor.post(`/api/courses/${courseId}/modules/${moduleId}/lessons`).set('X-CSRF-Token', instructorCsrf).send({
+    title: 'Lesson Attempted After Publish',
+    videoUrl: 'https://res.cloudinary.com/demo/video/upload/sample3.mp4',
+  });
+  assert(res.status === 403, `Adding a lesson to a published Full Course should be blocked (403): ${JSON.stringify(res.body)}`);
+  console.log('✓ Adding a lesson to a published Full Course correctly blocked (403)');
+
+  // 9a-legacy: a course with no courseType (simulating one created before
+  // this feature shipped) must NOT be content-locked, even if live —
+  // regression guard for CLAUDE.md's "don't break existing courses" rule.
+  const noraInstructor = await User.findOne({ email: 'nora@example.com' });
+  const legacyCourse = await Course.create({
+    title: 'Pre-Existing Legacy Course',
+    description: 'Created before courseType existed — should never be content-locked.',
+    price: 10,
+    college: 'College of Computer Science and Information Technology',
+    semester: 1,
+    instructor: noraInstructor._id,
+    status: 'approved', // live, but courseType intentionally left unset
+  });
+  res = await agentInstructor.post(`/api/courses/${legacyCourse._id}/modules`).set('X-CSRF-Token', instructorCsrf).send({
+    title: 'Module On Legacy Course',
+  });
+  assert(res.status === 201, `Legacy (no courseType) course should never be content-locked: ${JSON.stringify(res.body)}`);
+  console.log('✓ Legacy course with no courseType remains unrestricted even when live');
+
+  // --- FULL COURSE PRICE-CHANGE APPROVAL (spec §5) ---
+  const priceBeforeRequest = (await Course.findById(courseId)).price;
+
+  // Ongoing courses can't request a price change (only 'full' per spec)
+  res = await agentInstructor.post(`/api/courses/${legacyCourse._id}/request-price-change`).set('X-CSRF-Token', instructorCsrf).send({ requestedPrice: 999 });
+  assert(res.status === 400, `Price-change request on a non-full course should be rejected: ${JSON.stringify(res.body)}`);
+  console.log('✓ Price-change request correctly rejected for a course with no courseType');
+
+  res = await agentInstructor.post(`/api/courses/${courseId}/request-price-change`).set('X-CSRF-Token', instructorCsrf).send({ requestedPrice: 199 });
+  assert(res.status === 200, `Price-change request failed: ${JSON.stringify(res.body)}`);
+  assert(res.body.course.pendingPriceChange.status === 'pending', 'Price-change request should be pending');
+  assert(res.body.course.price === priceBeforeRequest, 'Public price must NOT change just from requesting');
+  console.log('✓ Instructor requested a price change; public price unchanged while pending');
+
+  // Duplicate request while one is already pending is rejected
+  res = await agentInstructor.post(`/api/courses/${courseId}/request-price-change`).set('X-CSRF-Token', instructorCsrf).send({ requestedPrice: 250 });
+  assert(res.status === 409, `A second price-change request while one is pending should be rejected: ${JSON.stringify(res.body)}`);
+  console.log('✓ Duplicate price-change request correctly rejected (409)');
+
+  // Public catalog/course-details still show the OLD price while pending
+  res = await agentPublic.get(`/api/courses/${courseId}`);
+  assert(res.body.course.price === priceBeforeRequest, 'Public course details must show the old price while a change is pending');
+  console.log('✓ Public course details show unchanged price while a price-change request is pending');
+
+  res = await agentAdmin.patch(`/api/courses/${courseId}/price-change/approve`).set('X-CSRF-Token', adminCsrf);
+  assert(res.status === 200, `Approving price change failed: ${JSON.stringify(res.body)}`);
+  assert(res.body.course.price === 199, `Approved price change should update the public price: ${JSON.stringify(res.body.course)}`);
+  assert(!res.body.course.pendingPriceChange, 'pendingPriceChange should be cleared after approval');
+  console.log('✓ Admin approved price change; public price updated to the requested value');
+
+  // A rejected request must NOT change the price
+  res = await agentInstructor.post(`/api/courses/${courseId}/request-price-change`).set('X-CSRF-Token', instructorCsrf).send({ requestedPrice: 500 });
+  assert(res.status === 200, `Second price-change request failed: ${JSON.stringify(res.body)}`);
+  res = await agentAdmin.patch(`/api/courses/${courseId}/price-change/reject`).set('X-CSRF-Token', adminCsrf).send({ reason: 'Too high for this catalog category' });
+  assert(res.status === 200, `Rejecting price change failed: ${JSON.stringify(res.body)}`);
+  assert(res.body.course.price === 199, `Rejected price change must leave the price unchanged: ${JSON.stringify(res.body.course)}`);
+  console.log('✓ Admin rejected a price change; price correctly left unchanged');
+
   // 9b. Publish gate: a course with zero lessons cannot be published live
   res = await agentInstructor.post('/api/courses').set('X-CSRF-Token', instructorCsrf).send({
     title: 'Empty Course',
@@ -159,6 +243,7 @@ const run = async () => {
     price: 0,
     college: 'College of Computer Science and Information Technology',
     semester: 1,
+    courseType: 'full',
   });
   assert(res.status === 201, `Create empty course failed: ${JSON.stringify(res.body)}`);
   const emptyCourseId = res.body.course._id;
@@ -259,6 +344,13 @@ const run = async () => {
 
   // --- QUIZ LESSON: mcq auto-grading + written-answer manual grading ---
 
+  // courseId is a published (locked) Full Course as of section 9a — adding
+  // more content requires the instructor to unpublish first, exactly as the
+  // content-lock rule intends.
+  res = await agentInstructor.patch(`/api/courses/${courseId}/publish`).set('X-CSRF-Token', instructorCsrf);
+  assert(res.status === 200 && res.body.course.status === 'draft', `Unpublishing course before adding quiz lesson failed: ${JSON.stringify(res.body)}`);
+  console.log('✓ Instructor unpublished course to add more content (content-lock working as intended)');
+
   // 20. Instructor creates a quiz lesson with 1 MCQ + 1 written question
   res = await agentInstructor.post(`/api/courses/${courseId}/modules/${moduleId}/lessons`).set('X-CSRF-Token', instructorCsrf).send({
     title: 'Quiz: Algorithm Basics',
@@ -283,6 +375,11 @@ const run = async () => {
   });
   assert(res.status === 400, 'Quiz with only 2 MCQ options should be rejected');
   console.log('✓ Quiz validation rejects an MCQ question with too few options');
+
+  // Republish now that content additions are done
+  res = await agentInstructor.patch(`/api/courses/${courseId}/publish`).set('X-CSRF-Token', instructorCsrf);
+  assert(res.status === 200 && res.body.course.status === 'approved', `Republishing course after adding quiz lesson failed: ${JSON.stringify(res.body)}`);
+  console.log('✓ Instructor republished course (status: approved)');
 
   // 20c. A student fetching the quiz must NOT see the correct answer index
   res = await agentStudent.get(`/api/courses/${courseId}/lessons/${quizLessonId}`);
@@ -341,6 +438,265 @@ const run = async () => {
   res = await agentInstructor.delete(`/api/courses/${emptyCourseId}`).set('X-CSRF-Token', instructorCsrf);
   assert(res.status === 200, `Instructor should be able to delete their own unenrolled course: ${JSON.stringify(res.body)}`);
   console.log('✓ Instructor successfully deleted their own course with no enrollments');
+
+  // --- ONGOING COURSE LIFECYCLE: activity timer, inactivity draft, archival ---
+  const { runOngoingInactivityCheck, runDraftExpirationCheck } = await import('./jobs/courseLifecycleJobs.js');
+  const { default: Module } = await import('./models/Module.js');
+  const { default: Lesson } = await import('./models/Lesson.js');
+  const { default: Notification } = await import('./models/Notification.js');
+
+  res = await agentInstructor.post('/api/courses').set('X-CSRF-Token', instructorCsrf).send({
+    title: 'Ongoing: Web Dev From Scratch',
+    description: 'A progressively-built ongoing course for lifecycle testing.',
+    price: 0,
+    college: 'College of Computer Science and Information Technology',
+    semester: 1,
+    courseType: 'ongoing',
+  });
+  assert(res.status === 201 && res.body.course.courseType === 'ongoing', `Create ongoing course failed: ${JSON.stringify(res.body)}`);
+  const ongoingCourseId = res.body.course._id;
+
+  res = await agentInstructor.post(`/api/courses/${ongoingCourseId}/modules`).set('X-CSRF-Token', instructorCsrf).send({ title: 'Week 1' });
+  const ongoingModuleId = res.body.module._id;
+  res = await agentInstructor.post(`/api/courses/${ongoingCourseId}/modules/${ongoingModuleId}/lessons`).set('X-CSRF-Token', instructorCsrf).send({
+    title: 'Lesson 1', videoUrl: 'https://res.cloudinary.com/demo/video/upload/ongoing1.mp4',
+  });
+  const ongoingLessonId = res.body.lesson._id;
+
+  await Course.findByIdAndUpdate(ongoingCourseId, { status: 'draft' }); // simulate admin approval
+  res = await agentInstructor.patch(`/api/courses/${ongoingCourseId}/publish`).set('X-CSRF-Token', instructorCsrf);
+  assert(res.status === 200 && res.body.course.status === 'approved', `Publishing ongoing course failed: ${JSON.stringify(res.body)}`);
+  assert(res.body.course.lastPublishedContentAt, 'Publishing an ongoing course should stamp lastPublishedContentAt even with no lesson explicitly published yet');
+  console.log('✓ Ongoing course created and published; activity clock started on publish');
+
+  // Publishing an actual lesson also stamps the timestamp (and would reactivate a dormant course)
+  res = await agentInstructor.put(`/api/courses/${ongoingCourseId}/lessons/${ongoingLessonId}`).set('X-CSRF-Token', instructorCsrf).send({ status: 'published' });
+  assert(res.status === 200, `Publishing lesson failed: ${JSON.stringify(res.body)}`);
+  let ongoingCourse = await Course.findById(ongoingCourseId);
+  assert(ongoingCourse.lastPublishedContentAt, 'lastPublishedContentAt should be set after publishing a lesson');
+  console.log('✓ Publishing a lesson stamps lastPublishedContentAt on an ongoing course');
+
+  // Day 10: backdate activity 11 days -> first warning fires, course stays active
+  await Course.findByIdAndUpdate(ongoingCourseId, { lastPublishedContentAt: new Date(Date.now() - 11 * 24 * 60 * 60 * 1000) });
+  let notifCountBefore = await Notification.countDocuments({ user: ongoingCourse.instructor });
+  await runOngoingInactivityCheck();
+  ongoingCourse = await Course.findById(ongoingCourseId);
+  assert(ongoingCourse.status === 'approved', 'Course should remain active at day 11');
+  assert(ongoingCourse.inactivityWarningSentAt, 'Day-10 warning should have been sent');
+  assert(!ongoingCourse.inactivityUrgentWarningSentAt, 'Urgent warning should not fire yet at day 11');
+  let notifCountAfter = await Notification.countDocuments({ user: ongoingCourse.instructor });
+  assert(notifCountAfter === notifCountBefore + 1, 'Exactly one notification should be sent for the day-10 warning');
+  console.log('✓ Day-10 inactivity warning fires once, course stays active');
+
+  // Idempotency: running the same check again must not re-notify
+  await runOngoingInactivityCheck();
+  notifCountAfter = await Notification.countDocuments({ user: ongoingCourse.instructor });
+  assert(notifCountAfter === notifCountBefore + 1, 'Re-running the inactivity check should not send a duplicate day-10 warning');
+  console.log('✓ Inactivity check is idempotent — no duplicate notification on rerun');
+
+  // Day 14: backdate past the draft threshold -> course moves to draft
+  await Course.findByIdAndUpdate(ongoingCourseId, { lastPublishedContentAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000) });
+  await runOngoingInactivityCheck();
+  ongoingCourse = await Course.findById(ongoingCourseId);
+  assert(ongoingCourse.status === 'draft', `15 days of inactivity should move the course to draft: ${ongoingCourse.status}`);
+  assert(ongoingCourse.draftStartedAt, 'draftStartedAt should be set when the course goes inactive');
+  console.log('✓ 14+ days of inactivity moves an ongoing course to draft');
+
+  // --- INSTRUCTOR DISCIPLINE: first abandonment logs a 'warning'-stage violation, never auto-suspends ---
+  const { default: InstructorViolation } = await import('./models/InstructorViolation.js');
+  let violations = await InstructorViolation.find({ instructor: ongoingCourse.instructor });
+  assert(violations.length === 1, `Exactly one violation should be logged for the first abandonment: got ${violations.length}`);
+  assert(violations[0].stage === 'warning', `First violation should be stage 'warning': got ${violations[0].stage}`);
+  let instructorAfterFirstViolation = await User.findById(ongoingCourse.instructor);
+  assert(instructorAfterFirstViolation.isBlocked === false, 'A single violation must never auto-suspend the instructor');
+  console.log('✓ First abandoned ongoing course logs a warning-stage violation, instructor not touched');
+
+  res = await agentAdmin.get('/api/admin/instructor-violations/summary').set('X-CSRF-Token', adminCsrf);
+  assert(res.status === 200, `Fetching violation summary failed: ${JSON.stringify(res.body)}`);
+  const summaryEntry = res.body.summary.find(s => s.instructorId === ongoingCourse.instructor.toString());
+  assert(summaryEntry && summaryEntry.count === 1 && summaryEntry.latestStage === 'warning', `Admin violation summary incorrect: ${JSON.stringify(res.body.summary)}`);
+  console.log('✓ Admin can see the violation summary for the instructor');
+
+  // Publishing new content reactivates it
+  res = await agentInstructor.put(`/api/courses/${ongoingCourseId}/lessons/${ongoingLessonId}`).set('X-CSRF-Token', instructorCsrf).send({ status: 'draft' });
+  assert(res.status === 200, `Un-publishing lesson failed: ${JSON.stringify(res.body)}`);
+  res = await agentInstructor.put(`/api/courses/${ongoingCourseId}/lessons/${ongoingLessonId}`).set('X-CSRF-Token', instructorCsrf).send({ status: 'published' });
+  assert(res.status === 200, `Re-publishing lesson failed: ${JSON.stringify(res.body)}`);
+  ongoingCourse = await Course.findById(ongoingCourseId);
+  assert(ongoingCourse.status === 'approved', 'Publishing new content should reactivate a dormant ongoing course');
+  assert(!ongoingCourse.draftStartedAt, 'draftStartedAt should be cleared on reactivation');
+  console.log('✓ Publishing new content on a dormant course reactivates it');
+
+  // --- ONGOING -> FULL COURSE CONVERSION (spec §9 Option 4) ---
+  // A 'full' course cannot be converted (only 'ongoing' can)
+  res = await agentInstructor.patch(`/api/courses/${courseId}/convert-to-full`).set('X-CSRF-Token', instructorCsrf).send({ price: 300 });
+  assert(res.status === 400, `Converting an already-Full course should be rejected: ${JSON.stringify(res.body)}`);
+  console.log('✓ Converting an already-Full course correctly rejected');
+
+  // Dedicated course for this test — must NOT reuse ongoingCourseId, which
+  // the later day-90/day-80 archival tests still need to stay courseType:'ongoing'.
+  res = await agentInstructor.post('/api/courses').set('X-CSRF-Token', instructorCsrf).send({
+    title: 'Ongoing: To Be Converted',
+    description: 'An ongoing course specifically for testing the convert-to-full flow.',
+    price: 0,
+    college: 'College of Computer Science and Information Technology',
+    semester: 1,
+    courseType: 'ongoing',
+  });
+  const convertCourseId = res.body.course._id;
+  res = await agentInstructor.post(`/api/courses/${convertCourseId}/modules`).set('X-CSRF-Token', instructorCsrf).send({ title: 'Week 1' });
+  const convertModuleId = res.body.module._id;
+  await agentInstructor.post(`/api/courses/${convertCourseId}/modules/${convertModuleId}/lessons`).set('X-CSRF-Token', instructorCsrf).send({
+    title: 'Lesson 1', videoUrl: 'https://res.cloudinary.com/demo/video/upload/convert1.mp4',
+  });
+
+  res = await agentInstructor.patch(`/api/courses/${convertCourseId}/convert-to-full`).set('X-CSRF-Token', instructorCsrf).send({ price: 350 });
+  assert(res.status === 200, `Convert to Full Course failed: ${JSON.stringify(res.body)}`);
+  assert(res.body.course.courseType === 'full', `Converted course should have courseType 'full': ${JSON.stringify(res.body.course)}`);
+  assert(res.body.course.price === 350, 'Converted course should have the new full-course price');
+  assert(res.body.course.status === 'pending', `Converted course should re-enter admin review as 'pending': ${JSON.stringify(res.body.course)}`);
+  assert(!res.body.course.lastPublishedContentAt, 'Ongoing-only fields should be cleared after conversion');
+  console.log('✓ Ongoing course converted to Full Course, price updated, resubmitted for admin review');
+
+  // The converted course now follows Full Course rules end-to-end: admin approves -> instructor publishes -> content-locked
+  res = await agentAdmin.patch(`/api/courses/${convertCourseId}/approve`).set('X-CSRF-Token', adminCsrf);
+  assert(res.status === 200 && res.body.course.status === 'draft', `Admin approving converted course failed: ${JSON.stringify(res.body)}`);
+  res = await agentInstructor.patch(`/api/courses/${convertCourseId}/publish`).set('X-CSRF-Token', instructorCsrf);
+  assert(res.status === 200 && res.body.course.status === 'approved', `Publishing converted course failed: ${JSON.stringify(res.body)}`);
+  res = await agentInstructor.post(`/api/courses/${convertCourseId}/modules`).set('X-CSRF-Token', instructorCsrf).send({ title: 'Should Be Blocked' });
+  assert(res.status === 403, `Converted-and-published course should now be content-locked like any Full Course: ${JSON.stringify(res.body)}`);
+  console.log('✓ Converted course follows the full Full Course lifecycle, including content lock once published');
+
+  // A second abandoned ongoing course from the SAME instructor escalates to 'admin_review'
+  res = await agentInstructor.post('/api/courses').set('X-CSRF-Token', instructorCsrf).send({
+    title: 'Ongoing: Second Course',
+    description: 'A second ongoing course to test violation escalation across courses.',
+    price: 0,
+    college: 'College of Computer Science and Information Technology',
+    semester: 1,
+    courseType: 'ongoing',
+  });
+  const secondOngoingCourseId = res.body.course._id;
+  await Course.findByIdAndUpdate(secondOngoingCourseId, {
+    status: 'approved',
+    lastPublishedContentAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
+  });
+  await runOngoingInactivityCheck();
+  violations = await InstructorViolation.find({ instructor: ongoingCourse.instructor }).sort({ createdAt: 1 });
+  assert(violations.length === 2, `Second abandonment should log a second violation: got ${violations.length}`);
+  assert(violations[1].stage === 'admin_review', `Second violation should escalate to 'admin_review': got ${violations[1].stage}`);
+  instructorAfterFirstViolation = await User.findById(ongoingCourse.instructor);
+  assert(instructorAfterFirstViolation.isBlocked === false, 'Escalation to admin_review still must not auto-suspend — only an admin can do that');
+  console.log('✓ A second abandoned ongoing course escalates to admin_review, still no auto-suspension');
+
+  // Day 90: a course left in draft gets archived, content preserved
+  await Course.findByIdAndUpdate(ongoingCourseId, { status: 'draft', draftStartedAt: new Date(Date.now() - 91 * 24 * 60 * 60 * 1000) });
+  await runDraftExpirationCheck();
+  ongoingCourse = await Course.findById(ongoingCourseId);
+  assert(ongoingCourse.status === 'archived', `91 days in draft should archive the course: ${ongoingCourse.status}`);
+  const survivingModule = await Module.findById(ongoingModuleId);
+  const survivingLesson = await Lesson.findById(ongoingLessonId);
+  assert(survivingModule && survivingLesson, 'Archiving must not delete the course\'s modules/lessons');
+  console.log('✓ 90 days in draft archives the course without deleting its content');
+
+  // Day 80: separately verify the pre-archival warning on a fresh draft course
+  await Course.findByIdAndUpdate(ongoingCourseId, { status: 'draft', draftStartedAt: new Date(Date.now() - 81 * 24 * 60 * 60 * 1000) });
+  await runDraftExpirationCheck();
+  ongoingCourse = await Course.findById(ongoingCourseId);
+  assert(ongoingCourse.status === 'draft', 'Course should not be archived yet at day 81');
+  assert(ongoingCourse.draftExpirationWarningSentAt, 'Day-80 draft-expiration warning should have been sent');
+  console.log('✓ Day-80 draft-expiration warning fires before the 90-day archive');
+
+  // --- STANDALONE RELATED LESSONS (spec §11) ---
+  // Can't relate a standalone lesson to a course you don't own
+  const { default: StandaloneLesson } = await import('./models/StandaloneLesson.js');
+  const otherInstructor = await User.create({ name: 'Other Instructor', email: 'other-instructor@example.com', password: 'Password123!', role: 'instructor' });
+  const otherCourse = await Course.create({
+    title: "Other Instructor's Course", description: 'Not owned by nora.', price: 10,
+    college: 'College of Computer Science and Information Technology', semester: 1,
+    instructor: otherInstructor._id, status: 'approved', courseType: 'full',
+  });
+  res = await agentInstructor.post('/api/standalone-lessons').set('X-CSRF-Token', instructorCsrf).send({
+    title: 'Should Be Blocked', description: 'Not the instructor\'s own course, should be rejected.',
+    relatedCourseId: otherCourse._id, price: 50, videoUrl: 'https://res.cloudinary.com/demo/video/upload/standalone1.mp4',
+  });
+  assert(res.status === 403, `Relating a standalone lesson to another instructor's course should be blocked: ${JSON.stringify(res.body)}`);
+  console.log('✓ Standalone lesson creation blocked for a course the instructor does not own');
+
+  // Can't relate to an Ongoing course (spec §11 requires a Full Course)
+  res = await agentInstructor.post('/api/standalone-lessons').set('X-CSRF-Token', instructorCsrf).send({
+    title: 'Should Also Be Blocked', description: 'Related course is Ongoing, not Full — should be rejected.',
+    relatedCourseId: ongoingCourseId, price: 50, videoUrl: 'https://res.cloudinary.com/demo/video/upload/standalone2.mp4',
+  });
+  assert(res.status === 400, `Relating a standalone lesson to an Ongoing course should be blocked: ${JSON.stringify(res.body)}`);
+  console.log('✓ Standalone lesson creation blocked when related course is not a Full Course');
+
+  // Happy path: create, approve, discover, purchase, access-gate, purchase-approve, access
+  res = await agentInstructor.post('/api/standalone-lessons').set('X-CSRF-Token', instructorCsrf).send({
+    title: 'Algorithms Revision: Big-O Deep Dive',
+    description: 'A standalone revision lesson related to the main Algorithms course.',
+    relatedCourseId: courseId, price: 25, videoUrl: 'https://res.cloudinary.com/demo/video/upload/standalone3.mp4',
+  });
+  assert(res.status === 201, `Create standalone lesson failed: ${JSON.stringify(res.body)}`);
+  const standaloneLessonId = res.body.lesson._id;
+  console.log('✓ Instructor created a standalone lesson related to their Full Course');
+
+  res = await agentPublic.get('/api/standalone-lessons');
+  assert(res.status === 200 && res.body.lessons.length === 0, `Unapproved standalone lesson should not be publicly discoverable yet: ${JSON.stringify(res.body)}`);
+
+  res = await agentAdmin.patch(`/api/standalone-lessons/${standaloneLessonId}/approve`).set('X-CSRF-Token', adminCsrf);
+  assert(res.status === 200 && res.body.lesson.status === 'approved', `Admin approving standalone lesson failed: ${JSON.stringify(res.body)}`);
+  console.log('✓ Admin approved the standalone lesson');
+
+  res = await agentPublic.get(`/api/standalone-lessons?relatedCourseId=${courseId}`);
+  assert(res.status === 200 && res.body.lessons.length === 1, `Approved standalone lesson should be discoverable via its related course: ${JSON.stringify(res.body)}`);
+  assert(res.body.lessons[0].videoUrl === undefined, 'Public discovery response must not include videoUrl');
+  assert(res.body.lessons[0].relatedCourse.title === 'Intro to Algorithms', 'Discovery response should show the related course title');
+  console.log('✓ Standalone lesson publicly discoverable, correctly shows "Related to" course, video hidden');
+
+  // Un-purchased student cannot access the video
+  res = await agentStudent.get(`/api/standalone-lessons/${standaloneLessonId}/access`);
+  assert(res.status === 403, `Un-purchased student should be blocked from standalone lesson content: ${JSON.stringify(res.body)}`);
+  console.log('✓ Un-purchased student correctly blocked from standalone lesson video (403)');
+
+  res = await agentStudent.post(`/api/standalone-lessons/${standaloneLessonId}/purchase`).set('X-CSRF-Token', studentCsrf).send({
+    transactionId: 'TXN-STANDALONE-1', paymentAccount: '01000000000', paymentMethod: 'vodafone_cash', invoiceId: 'INV-STANDALONE-1',
+  });
+  assert(res.status === 201 && res.body.purchase.status === 'pending', `Standalone lesson purchase failed: ${JSON.stringify(res.body)}`);
+  const standalonePurchaseId = res.body.purchase._id;
+  console.log('✓ Student purchased the standalone lesson (pending admin approval)');
+
+  res = await agentStudent.post(`/api/standalone-lessons/${standaloneLessonId}/purchase`).set('X-CSRF-Token', studentCsrf).send({ transactionId: 'TXN-DUP' });
+  assert(res.status === 409, `Duplicate standalone lesson purchase should be rejected: ${JSON.stringify(res.body)}`);
+  console.log('✓ Duplicate standalone lesson purchase correctly rejected (409)');
+
+  res = await agentStudent.get(`/api/standalone-lessons/${standaloneLessonId}/access`);
+  assert(res.status === 403, `Pending purchase should not yet grant access: ${JSON.stringify(res.body)}`);
+  console.log('✓ Pending purchase correctly still blocked from video content');
+
+  // Deletion is blocked once a purchase (even pending) exists is NOT required by spec — only approved must block; verify pending does NOT block
+  res = await agentAdmin.patch(`/api/standalone-lessons/purchases/${standalonePurchaseId}/approve`).set('X-CSRF-Token', adminCsrf);
+  assert(res.status === 200 && res.body.purchase.status === 'approved', `Admin approving standalone purchase failed: ${JSON.stringify(res.body)}`);
+  console.log('✓ Admin approved the standalone lesson purchase');
+
+  res = await agentStudent.get(`/api/standalone-lessons/${standaloneLessonId}/access`);
+  assert(res.status === 200 && res.body.lesson.videoUrl, `Approved purchase should grant video access: ${JSON.stringify(res.body)}`);
+  console.log('✓ Student with an approved purchase can access the standalone lesson video');
+
+  res = await agentStudent.get('/api/standalone-lessons/mine-purchased');
+  assert(res.status === 200 && res.body.purchases.length === 1, `Student's purchased-lessons list incorrect: ${JSON.stringify(res.body)}`);
+  console.log('✓ Student sees the standalone lesson in their purchased-lessons list');
+
+  // Deletion blocked once there's an approved purchase
+  res = await agentInstructor.delete(`/api/standalone-lessons/${standaloneLessonId}`).set('X-CSRF-Token', instructorCsrf);
+  assert(res.status === 409, `Deleting a standalone lesson with an approved purchase should be blocked: ${JSON.stringify(res.body)}`);
+  console.log('✓ Instructor blocked from deleting a standalone lesson with an approved purchase (409)');
+
+  // Confirm the standalone lesson was never inserted into the related course's modules
+  res = await agentPublic.get(`/api/courses/${courseId}`);
+  const relatedTitles = res.body.modules.flatMap(m => m.lessons.map(l => l.title));
+  assert(!relatedTitles.includes('Algorithms Revision: Big-O Deep Dive'), 'Standalone lesson must never appear inside the related course\'s own module/lesson list');
+  console.log('✓ Standalone lesson confirmed separate from the related course\'s own curriculum');
 
   // --- PAYOUTS: completing/processing must require OTP verification first ---
   // (Regression test for a bug where completePayout had no status guard at

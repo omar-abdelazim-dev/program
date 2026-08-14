@@ -9,6 +9,7 @@ import { getModulesWithLessons, getLessonIdsForCourse } from '../utils/courseCon
 import mongoose from 'mongoose';
 import fs from 'fs';
 import logger from '../utils/logger.js';
+import { logAudit } from '../utils/auditLogger.js';
 
 // Helper: attach averageRating and reviewsCount to an array of course docs
 export const attachReviewStats = async (courses) => {
@@ -34,9 +35,7 @@ export const attachReviewStats = async (courses) => {
 // runs; category is optional (INS-03 de-required it in favor of college).
 export const createCourse = async (req, res) => {
   try {
-    const { title, description, price, category, major, semester, college, thumbnailUrl } = req.body;
-
-
+    const { title, description, price, category, major, semester, college, thumbnailUrl, courseType } = req.body;
 
     const course = await Course.create({
       title,
@@ -49,6 +48,7 @@ export const createCourse = async (req, res) => {
       thumbnailUrl: thumbnailUrl || '',
       instructor: req.user.id, // taken from the verified JWT, never trust a client-sent instructor ID
       status: 'pending', // every new course starts pending — never trust the client to set this either
+      courseType, // validated to 'full' | 'ongoing' by validateCreateCourse; immutable after creation (see §9 Option 4 conversion flow, not yet implemented)
     });
 
     res.status(201).json({ course });
@@ -402,8 +402,25 @@ export const publishCourse = async (req, res) => {
         return res.status(400).json({ message: 'Add at least one lesson before publishing this course live' });
       }
       course.status = 'approved';
+      if (course.courseType === 'ongoing') {
+        // Going live starts the 14-day inactivity clock even if the
+        // instructor hasn't explicitly toggled an individual lesson to
+        // 'published' yet (see lessonController.updateLesson for the other
+        // place this timestamp is stamped).
+        if (!course.lastPublishedContentAt) course.lastPublishedContentAt = new Date();
+        course.draftStartedAt = null;
+        course.inactivityWarningSentAt = null;
+        course.inactivityUrgentWarningSentAt = null;
+        course.draftExpirationWarningSentAt = null;
+      }
     } else if (course.status === 'approved') {
       course.status = 'draft';
+      if (course.courseType === 'ongoing') {
+        // Manually taking the course down also starts the 90-day draft
+        // clock — the expiration job doesn't distinguish "went to Draft via
+        // inactivity" from "instructor chose to pause it" (spec §9).
+        course.draftStartedAt = new Date();
+      }
     } else {
       return res.status(400).json({ message: 'Course must be approved before you can publish it live' });
     }
@@ -413,6 +430,200 @@ export const publishCourse = async (req, res) => {
   } catch (error) {
     logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error toggling course live status' });
+  }
+};
+
+// @route   PATCH /api/courses/:id/convert-to-full
+// @access  Private (instructor only, must own the course)
+// spec §9 Option 4 / §14: Ongoing -> complete content + set a full-course
+// price -> submit for a fresh admin review, exactly like a new Full Course.
+// Once approved and published, the normal Full Course content-lock applies.
+export const convertOngoingToFull = async (req, res) => {
+  try {
+    const { price } = req.body;
+
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+    if (course.instructor.toString() !== req.user.id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to control this course' });
+    }
+    if (course.courseType !== 'ongoing') {
+      return res.status(400).json({ message: 'Only Ongoing Courses can be converted to a Full Course' });
+    }
+
+    const lessonIds = await getLessonIdsForCourse(course._id);
+    if (lessonIds.length === 0) {
+      return res.status(400).json({ message: 'Add at least one lesson before converting to a Full Course' });
+    }
+    if (price === undefined || price === '' || Number.isNaN(Number(price)) || Number(price) < 0) {
+      return res.status(400).json({ message: 'A valid full-course price is required to convert' });
+    }
+
+    course.courseType = 'full';
+    course.price = Number(price);
+    course.status = 'pending'; // fresh admin review, same as a brand-new course
+    course.rejectionReason = '';
+    // Ongoing-only fields no longer apply once this is a Full Course.
+    course.lastPublishedContentAt = undefined;
+    course.draftStartedAt = undefined;
+    course.inactivityWarningSentAt = undefined;
+    course.inactivityUrgentWarningSentAt = undefined;
+    course.draftExpirationWarningSentAt = undefined;
+
+    await course.save();
+
+    await logAudit({
+      action: 'COURSE_CONVERTED_ONGOING_TO_FULL',
+      module: 'courses',
+      userId: req.user.id,
+      targetId: course._id,
+      targetModel: 'Course',
+      newValue: { price: course.price },
+    });
+
+    res.status(200).json({ course });
+  } catch (error) {
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
+    res.status(500).json({ message: 'Server error converting course to Full Course' });
+  }
+};
+
+// @route   POST /api/courses/:id/request-price-change
+// @access  Private (instructor only, must own the course)
+// courseType:'full' only (spec §5). Never touches course.price itself —
+// that only happens in approvePriceChange, once an admin signs off.
+export const requestPriceChange = async (req, res) => {
+  try {
+    const { requestedPrice } = req.body;
+
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+    if (course.instructor.toString() !== req.user.id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to control this course' });
+    }
+    if (course.courseType !== 'full') {
+      return res.status(400).json({ message: 'Price-change requests are only available for Full Courses' });
+    }
+    if (course.pendingPriceChange?.status === 'pending') {
+      return res.status(409).json({ message: 'A price-change request is already pending admin approval' });
+    }
+    if (Number(requestedPrice) === course.price) {
+      return res.status(400).json({ message: 'Requested price must be different from the current price' });
+    }
+
+    course.pendingPriceChange = {
+      requestedPrice: Number(requestedPrice),
+      status: 'pending',
+      requestedAt: new Date(),
+    };
+    await course.save();
+
+    res.status(200).json({ course });
+  } catch (error) {
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
+    res.status(500).json({ message: 'Server error requesting price change' });
+  }
+};
+
+// @route   GET /api/courses/price-change-requests
+// @access  Private (admin/superadmin)
+export const getPriceChangeRequests = async (req, res) => {
+  try {
+    const courses = await Course.find({ 'pendingPriceChange.status': 'pending' })
+      .populate('instructor', 'name email')
+      .sort({ 'pendingPriceChange.requestedAt': 1 });
+    res.status(200).json({ courses });
+  } catch (error) {
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
+    res.status(500).json({ message: 'Server error fetching price-change requests' });
+  }
+};
+
+// @route   PATCH /api/courses/:id/price-change/approve
+// @access  Private (admin/superadmin)
+export const approvePriceChange = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+    if (course.pendingPriceChange?.status !== 'pending') {
+      return res.status(409).json({ message: 'This course has no pending price-change request' });
+    }
+
+    const oldPrice = course.price;
+    const newPrice = course.pendingPriceChange.requestedPrice;
+    course.price = newPrice;
+    course.pendingPriceChange = undefined;
+    await course.save();
+
+    await logAudit({
+      action: 'COURSE_PRICE_CHANGE_APPROVED',
+      module: 'courses',
+      userId: req.user.id,
+      targetId: course._id,
+      targetModel: 'Course',
+      oldValue: { price: oldPrice },
+      newValue: { price: newPrice },
+    });
+
+    await Notification.create({
+      user: course.instructor,
+      title: 'Price Change Approved',
+      message: `Your requested price change for "${course.title}" has been approved. The new price is EGP ${newPrice}.`,
+      type: 'system',
+    });
+
+    res.status(200).json({ course });
+  } catch (error) {
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
+    res.status(500).json({ message: 'Server error approving price change' });
+  }
+};
+
+// @route   PATCH /api/courses/:id/price-change/reject
+// @access  Private (admin/superadmin)
+export const rejectPriceChange = async (req, res) => {
+  try {
+    const { reason } = req.body;
+
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+    if (course.pendingPriceChange?.status !== 'pending') {
+      return res.status(409).json({ message: 'This course has no pending price-change request' });
+    }
+
+    const requestedPrice = course.pendingPriceChange.requestedPrice;
+    course.pendingPriceChange = undefined;
+    await course.save();
+
+    await logAudit({
+      action: 'COURSE_PRICE_CHANGE_REJECTED',
+      module: 'courses',
+      userId: req.user.id,
+      targetId: course._id,
+      targetModel: 'Course',
+      oldValue: { requestedPrice },
+      newValue: { reason: reason || '' },
+    });
+
+    await Notification.create({
+      user: course.instructor,
+      title: 'Price Change Rejected',
+      message: `Your requested price change for "${course.title}" (to EGP ${requestedPrice}) was rejected.${reason ? ` Reason: ${reason}` : ''}`,
+      type: 'system',
+    });
+
+    res.status(200).json({ course });
+  } catch (error) {
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
+    res.status(500).json({ message: 'Server error rejecting price change' });
   }
 };
 

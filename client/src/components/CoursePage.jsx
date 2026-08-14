@@ -28,6 +28,13 @@ export default function CoursePage({ cart = [], setCart, user }) {
   const [enrollError, setEnrollError] = useState('');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
+  // Standalone related lessons (spec §11) — discoverable independently,
+  // purchased separately, never inserted into this course's own modules.
+  const [standaloneLessons, setStandaloneLessons] = useState([]);
+  const [purchasedStandaloneIds, setPurchasedStandaloneIds] = useState(new Set());
+  const [purchasingStandaloneLesson, setPurchasingStandaloneLesson] = useState(null);
+  const [isPurchasingStandalone, setIsPurchasingStandalone] = useState(false);
+
   const [reviews, setReviews] = useState([]);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewText, setReviewText] = useState('');
@@ -67,6 +74,25 @@ export default function CoursePage({ cart = [], setCart, user }) {
           }
         } catch (e) {
           // Ignore review fetch error
+        }
+
+        try {
+          const standaloneRes = await api.get(`/standalone-lessons?relatedCourseId=${id}`, { signal: controller.signal });
+          setStandaloneLessons(standaloneRes.data.lessons || []);
+        } catch (e) {
+          // Ignore — standalone lessons are supplementary, not core to the page
+        }
+
+        if (user?.role === 'student') {
+          try {
+            const purchasedRes = await api.get('/standalone-lessons/mine-purchased', { signal: controller.signal });
+            const approvedIds = (purchasedRes.data.purchases || [])
+              .filter(p => p.status === 'approved')
+              .map(p => p.lesson?._id);
+            setPurchasedStandaloneIds(new Set(approvedIds));
+          } catch (e) {
+            // Ignore
+          }
         }
       } catch (err) {
         if (err.code === 'ERR_CANCELED') return;
@@ -120,6 +146,31 @@ export default function CoursePage({ cart = [], setCart, user }) {
       }
     } finally {
       setIsEnrolling(false);
+    }
+  };
+
+  const handleStandaloneLessonClick = (lesson) => {
+    if (lesson.price > 0) {
+      setPurchasingStandaloneLesson(lesson);
+    } else {
+      handlePurchaseStandaloneLesson(lesson, {});
+    }
+  };
+
+  const handlePurchaseStandaloneLesson = async (lesson, paymentDetails = {}) => {
+    setIsPurchasingStandalone(true);
+    setPurchasingStandaloneLesson(null);
+    try {
+      await api.post(`/standalone-lessons/${lesson._id}/purchase`, paymentDetails);
+      notyf.success(t('course_page.standalone.purchased', 'Purchase submitted — awaiting admin approval.'));
+    } catch (err) {
+      if (err.response?.status === 409) {
+        notyf.error(t('course_page.standalone.already_purchased', 'You already purchased this lesson.'));
+      } else {
+        notyf.error(err.response?.data?.message || t('course_page.enroll_error'));
+      }
+    } finally {
+      setIsPurchasingStandalone(false);
     }
   };
 
@@ -1082,12 +1133,55 @@ export default function CoursePage({ cart = [], setCart, user }) {
         </div>
       </div>
 
+      {standaloneLessons.length > 0 && (
+        <div style={{ maxWidth: '1200px', margin: '32px auto 0', padding: '0 24px' }}>
+          <h3 style={{ fontSize: '1.3rem', fontWeight: '700', marginBottom: '16px' }}>
+            {t('course_page.standalone.section_title', 'Related Standalone Lessons')}
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '16px' }}>
+            {standaloneLessons.map((lesson) => {
+              const alreadyPurchased = purchasedStandaloneIds.has(lesson._id);
+              return (
+                <div key={lesson._id} className="solid-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--c-sub)', fontWeight: 600 }}>
+                    {t('course_page.standalone.related_to', 'Related to: {{course}}', { course: course.title })}
+                  </div>
+                  <div style={{ fontWeight: 700, fontSize: '1.05rem' }}>{lesson.title}</div>
+                  <div style={{ color: 'var(--text)', fontSize: '0.9rem', flex: 1 }}>{lesson.description}</div>
+                  <div style={{ fontWeight: 700 }}>{lesson.price > 0 ? `EGP ${lesson.price}` : t('course_page.free', 'Free')}</div>
+                  <button
+                    type="button"
+                    disabled={alreadyPurchased || isPurchasingStandalone}
+                    onClick={() => handleStandaloneLessonClick(lesson)}
+                    className="solid-btn"
+                    style={{ marginTop: '8px' }}
+                  >
+                    {alreadyPurchased
+                      ? t('course_page.standalone.owned', 'Purchased')
+                      : t('course_page.standalone.buy', 'Purchase')}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {showPaymentModal && (
         <PaymentModal
           course={course}
           isEnrolling={isEnrolling}
           onConfirm={handleEnroll}
           onCancel={() => setShowPaymentModal(false)}
+        />
+      )}
+
+      {purchasingStandaloneLesson && (
+        <PaymentModal
+          course={purchasingStandaloneLesson}
+          isEnrolling={isPurchasingStandalone}
+          onConfirm={(paymentDetails) => handlePurchaseStandaloneLesson(purchasingStandaloneLesson, paymentDetails)}
+          onCancel={() => setPurchasingStandaloneLesson(null)}
         />
       )}
     </div>

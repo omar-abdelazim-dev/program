@@ -5,7 +5,7 @@ import ThreeDotMenu from './common/ThreeDotMenu';
 import { useTranslation } from 'react-i18next';
 import api from '../api/axios';
 
-export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {}, onOpenAddLesson, onOpenEditLesson, onOpenAddQuiz, onOpenEditQuiz, onEditCourse, onDeleteCourse, onAction }) {
+export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {}, onOpenAddLesson, onOpenEditLesson, onOpenAddQuiz, onOpenEditQuiz, onEditCourse, onDeleteCourse, onAction, onOpenStandaloneLessons }) {
   const { t } = useTranslation();
   const [selectedCourseId, setSelectedCourseId] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -24,6 +24,10 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
   const [hoveredModuleId, setHoveredModuleId] = useState(null);
 
   const selectedCourse = courses.find(c => c._id === selectedCourseId);
+  // Mirrors the backend's isCourseContentLocked (server/utils/courseContent.js) —
+  // a published Full Course can't take new modules/lessons. This is UI
+  // convenience only; the backend is the actual enforcement point.
+  const isLocked = selectedCourse?.courseType === 'full' && selectedCourse?.status === 'approved';
 
   // Sync local modules when props change
   React.useEffect(() => {
@@ -252,6 +256,13 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                   <h2 style={{ fontSize: '1.8rem', margin: 0, color: 'var(--text-h)' }}>{selectedCourse?.title}</h2>
                   <p style={{ color: 'var(--c-sub)', margin: '4px 0 0 0' }}>
                     {t('instructor.curriculum.manage_lessons')} · {totalLessonCount} {totalLessonCount === 1 ? t('instructor.dashboard.status.lesson') : t('instructor.dashboard.status.lessons')}
+                    {selectedCourse?.courseType && (
+                      <>
+                        {' · '}
+                        {selectedCourse.courseType === 'full' ? t('instructor.create_course.full_course_title', 'Full Course') : t('instructor.create_course.ongoing_course_title', 'Ongoing Course')}
+                        {isLocked && <> · {t('instructor.curriculum.content_locked', 'Content Locked')}</>}
+                      </>
+                    )}
                   </p>
                 </div>
                 <div style={{ display: 'flex', gap: '12px' }}>
@@ -271,18 +282,20 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                   >
                     {t('instructor.dashboard.actions.delete')}
                   </button>
-                  <button
-                    onClick={() => setAddingModule(true)}
-                    style={{ width: 'auto', borderRadius: '24px', padding: '10px 24px', fontWeight: 700, background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: 'none', boxShadow: 'var(--inner-shadow)', cursor: 'pointer', transition: 'all 0.2s' }}
-                    onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)'; e.currentTarget.style.boxShadow = 'var(--inner-shadow)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
-                    onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'; e.currentTarget.style.boxShadow = 'var(--inner-shadow)'; e.currentTarget.style.filter = 'none'; }}
-                  >
-                    {t('instructor.curriculum.add_module', '+ Add Module')}
-                  </button>
+                  {!isLocked && (
+                    <button
+                      onClick={() => setAddingModule(true)}
+                      style={{ width: 'auto', borderRadius: '24px', padding: '10px 24px', fontWeight: 700, background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: 'none', boxShadow: 'var(--inner-shadow)', cursor: 'pointer', transition: 'all 0.2s' }}
+                      onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)'; e.currentTarget.style.boxShadow = 'var(--inner-shadow)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
+                      onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'; e.currentTarget.style.boxShadow = 'var(--inner-shadow)'; e.currentTarget.style.filter = 'none'; }}
+                    >
+                      {t('instructor.curriculum.add_module', '+ Add Module')}
+                    </button>
+                  )}
                 </div>
               </div>
 
-              {addingModule && (
+              {!isLocked && addingModule && (
                 <div className="glass-card" style={{ padding: '16px', display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px' }}>
                   <input
                     autoFocus
@@ -425,32 +438,36 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                           </div>
 
                           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <button
-                              onClick={() => onOpenAddLesson(selectedCourseId, module._id)}
-                              style={{
-                                width: 'auto',
-                                borderRadius: '20px',
-                                padding: '8px 16px',
-                                fontWeight: 600,
-                                fontSize: '0.85rem',
-                                background: 'rgba(16, 185, 129, 0.1)',
-                                color: '#10b981',
-                                border: 'none',
-                                boxShadow: 'var(--inner-shadow)',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s'
-                              }}
-                              onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
-                              onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'; e.currentTarget.style.filter = 'none'; }}
-                            >
-                              {t('instructor.curriculum.add_lesson')}
-                            </button>
-                            <button
-                              onClick={() => onOpenAddQuiz(selectedCourseId, module._id)}
-                              style={{ width: 'auto', borderRadius: '20px', padding: '8px 16px', fontWeight: 600, fontSize: '0.85rem', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: 'none', cursor: 'pointer' }}
-                            >
-                              {t('instructor.curriculum.add_quiz', '+ Add Quiz')}
-                            </button>
+                            {!isLocked && (
+                              <>
+                                <button
+                                  onClick={() => onOpenAddLesson(selectedCourseId, module._id)}
+                                  style={{
+                                    width: 'auto',
+                                    borderRadius: '20px',
+                                    padding: '8px 16px',
+                                    fontWeight: 600,
+                                    fontSize: '0.85rem',
+                                    background: 'rgba(16, 185, 129, 0.1)',
+                                    color: '#10b981',
+                                    border: 'none',
+                                    boxShadow: 'var(--inner-shadow)',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s'
+                                  }}
+                                  onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
+                                  onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'; e.currentTarget.style.filter = 'none'; }}
+                                >
+                                  {t('instructor.curriculum.add_lesson')}
+                                </button>
+                                <button
+                                  onClick={() => onOpenAddQuiz(selectedCourseId, module._id)}
+                                  style={{ width: 'auto', borderRadius: '20px', padding: '8px 16px', fontWeight: 600, fontSize: '0.85rem', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: 'none', cursor: 'pointer' }}
+                                >
+                                  {t('instructor.curriculum.add_quiz', '+ Add Quiz')}
+                                </button>
+                              </>
+                            )}
                             <ThreeDotMenu
                               options={[
                                 {
@@ -570,6 +587,28 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                   })
                 )}
               </div>
+
+              {selectedCourse?.courseType === 'full' && (
+                <div style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid var(--c-border-subtle, rgba(255,255,255,0.08))' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-h)' }}>
+                        {t('instructor.curriculum.standalone.title', 'Standalone Lessons')}
+                      </h3>
+                      <p style={{ margin: '4px 0 0 0', color: 'var(--c-sub)', fontSize: '0.85rem' }}>
+                        {t('instructor.curriculum.standalone.subtitle', 'Purchased separately from this course — never added to its modules.')}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => onOpenStandaloneLessons(selectedCourse)}
+                      style={{ width: 'auto', borderRadius: '24px', padding: '8px 18px', fontWeight: 600, background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: 'none', boxShadow: 'var(--inner-shadow)', cursor: 'pointer' }}
+                    >
+                      {t('instructor.curriculum.standalone.manage', 'Manage Standalone Lessons')}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
