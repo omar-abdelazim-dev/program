@@ -40,7 +40,7 @@ export const sendRegistrationOtp = async (req, res) => {
     }
     
     // Check if email already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
       return res.status(409).json({ message: 'This email is already in use.' });
     }
@@ -169,7 +169,13 @@ export const login = async (req, res) => {
     // .select('+password') is needed because the User model excludes password
     const user = await User.findOne({ email }).select('+password');
     
-    // Check if account is locked for reset
+    // Deliberately checked before the password: a locked-out user by
+    // definition may not have their correct password to offer, so gating
+    // this disclosure behind a correct password would make the account
+    // unrecoverable through the UI. This does mean a locked account's
+    // existence is disclosed pre-auth — an accepted, common tradeoff (see
+    // the isVerified check below, which is NOT given the same pass, since
+    // there's no equivalent recovery reason to reveal it pre-auth).
     if (user && user.lockedForReset) {
       await logAudit({
         action: 'LOGIN_BLOCKED_PENDING_RESET',
@@ -214,10 +220,16 @@ export const login = async (req, res) => {
         severity: 'warn',
         metadata: { email: email.toLowerCase() },
       });
-      const remainingAttempts = user ? Math.max(0, 5 - user.failedLoginAttempts) : undefined;
-      return res.status(401).json({ 
+      // Always a real number, including for an email that isn't registered
+      // at all (reported as if it were a fresh account's first failed
+      // attempt) — an `undefined` here would be dropped by res.json
+      // entirely, and the key's mere presence/absence would enumerate
+      // which emails are registered just as effectively as the message
+      // text would.
+      const remainingAttempts = user ? Math.max(0, 5 - user.failedLoginAttempts) : 4;
+      return res.status(401).json({
         message: 'Invalid email or password',
-        remainingAttempts 
+        remainingAttempts
       });
     }
 
@@ -485,7 +497,12 @@ export const verifyChangePasswordOtp = async (req, res) => {
     const Session = (await import('../models/Session.js')).default;
     await Session.updateMany({ userId: user._id }, { revoked: true });
     res.clearCookie('token');
-    res.clearCookie('refreshToken');
+    // Cookie identity includes path — refreshToken was set with a
+    // restricted path (utils/generateToken.js), so clearing it without the
+    // matching path option (the default '/') sets an unrelated deletion
+    // cookie and leaves the real one intact in the browser. See refresh()'s
+    // token-reuse handler below for the correct pattern this now matches.
+    res.clearCookie('refreshToken', { path: '/api/auth/refresh' });
     res.clearCookie('csrfToken');
 
     await logAudit({
@@ -510,13 +527,19 @@ export const requestPasswordResetOtp = async (req, res) => {
     const { email, newPassword } = req.body;
     if (!email || !newPassword) return res.status(400).json({ message: 'Email and new password are required' });
 
+    // Checked before the account lookup, and deliberately still returned as
+    // a real 400 either way: this only depends on the submitted password
+    // string, never on whether the account exists, so it can't be used to
+    // enumerate emails the way returning it *after* a conditional existence
+    // check would (existing account -> specific policy error; non-existent
+    // account -> generic 200 — the difference itself is the leak).
+    const policyError = validatePasswordStrength(newPassword);
+    if (policyError) return res.status(400).json({ message: policyError });
+
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
       return res.status(200).json({ message: 'If an account with that email exists, an OTP has been sent.' });
     }
-
-    const policyError = validatePasswordStrength(newPassword);
-    if (policyError) return res.status(400).json({ message: policyError });
 
     const salt = await bcrypt.genSalt(BCRYPT_ROUNDS);
     const hashedPassword = await bcrypt.hash(newPassword, salt);

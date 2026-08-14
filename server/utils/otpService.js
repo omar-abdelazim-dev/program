@@ -70,11 +70,23 @@ export async function requestOTP({ userId, email, purpose, metadata = {}, displa
       const waitTime = Math.ceil(RESEND_COOLDOWN_SEC - elapsed);
       throw new Error(`Please wait ${waitTime} seconds before requesting a new code.`);
     }
-    record = await EmailOTP.findOneAndUpdate(
-      query,
-      { email, otpHash: hashedOtp, attempts: 0, expiresAt, usedAt: null, metadata },
-      { upsert: true, new: true }
-    );
+    try {
+      record = await EmailOTP.findOneAndUpdate(
+        query,
+        { email, otpHash: hashedOtp, attempts: 0, expiresAt, usedAt: null, metadata },
+        { upsert: true, new: true }
+      );
+    } catch (err) {
+      // Two truly-first-ever requests racing this upsert simultaneously —
+      // the unique (userId|email, purpose) index lets exactly one create
+      // the document, and the loser hits a duplicate-key error rather than
+      // updating it. A generic retry message here (never the raw Mongo
+      // error) is correct either way: the winner's code is now live.
+      if (err.code === 11000) {
+        throw new Error('A code was just requested — please check your email or try again in a moment.');
+      }
+      throw err;
+    }
   }
 
   let subject = 'Your Verification Code';
@@ -162,8 +174,12 @@ export async function verifyOTP({ userId, email, purpose, otp }) {
   const isValid = verifyOtpHash(otp, record.otpHash);
 
   if (!isValid) {
-    record.attempts += 1;
-    await record.save();
+    // Atomic increment rather than record.attempts += 1; record.save() —
+    // concurrent guesses (e.g. someone scripting requests against the same
+    // code) would otherwise all read the same stale count before any save
+    // lands, letting more than maxAttempts guesses through before the
+    // counter catches up.
+    await EmailOTP.updateOne({ _id: record._id }, { $inc: { attempts: 1 } });
     throw new Error('Invalid code.');
   }
 
