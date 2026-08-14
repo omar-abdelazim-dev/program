@@ -25,6 +25,14 @@ export const getModulesWithLessons = async (courseId, lessonSelect = null) => {
   }));
 };
 
+// A published Full Course is considered complete: the instructor can no
+// longer add modules/lessons to it (spec §4). Ongoing courses and courses
+// with no courseType set (everything created before this feature shipped)
+// are never locked. 'approved' is this codebase's "live" status — see the
+// status enum comment on the Course model.
+export const isCourseContentLocked = (course) =>
+  course.courseType === 'full' && course.status === 'approved';
+
 // Flat list of every lesson id belonging to a course (across all its modules).
 export const getLessonIdsForCourse = async (courseId) => {
   const modules = await Module.find({ course: courseId }).select('_id');

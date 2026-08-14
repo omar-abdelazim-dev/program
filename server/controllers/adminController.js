@@ -4,6 +4,7 @@ import Course from '../models/Course.js';
 import Enrollment from '../models/Enrollment.js';
 import Lesson from '../models/Lesson.js';
 import PromoCode from '../models/PromoCode.js';
+import InstructorViolation from '../models/InstructorViolation.js';
 import { escapeRegex } from '../utils/escapeRegex.js';
 import { logAudit } from '../utils/auditLogger.js';
 import Notification from '../models/Notification.js';
@@ -871,5 +872,47 @@ export const rejectEnrollment = async (req, res) => {
   } catch (error) {
     logger.error('Error rejecting enrollment', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error rejecting enrollment' });
+  }
+};
+
+// @route   GET /api/admin/instructor-violations?instructorId=
+// @access  Private (admin/superadmin)
+// System-generated abandoned-Ongoing-Course events (spec §10). Read-only
+// visibility for admins deciding whether to act (e.g. block the instructor
+// via the existing PATCH /users/:id/block) — this endpoint never suspends
+// anyone itself.
+export const getInstructorViolations = async (req, res) => {
+  try {
+    const { instructorId } = req.query;
+    const filter = instructorId ? { instructor: instructorId } : {};
+
+    const violations = await InstructorViolation.find(filter)
+      .populate('instructor', 'name email')
+      .populate('course', 'title')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({ violations });
+  } catch (error) {
+    logger.error('Error fetching instructor violations', { error: error.message, stack: error.stack });
+    res.status(500).json({ message: 'Server error fetching instructor violations' });
+  }
+};
+
+// @route   GET /api/admin/instructor-violations/summary
+// @access  Private (admin/superadmin)
+// Per-instructor violation counts, for a compact badge in the user list —
+// avoids the admin UI fetching the full violation list just to show a count.
+export const getInstructorViolationSummary = async (req, res) => {
+  try {
+    const summary = await InstructorViolation.aggregate([
+      { $sort: { createdAt: 1 } }, // ascending so $last below is truly the most recent
+      { $group: { _id: '$instructor', count: { $sum: 1 }, latestStage: { $last: '$stage' } } },
+    ]);
+    res.status(200).json({
+      summary: summary.map((s) => ({ instructorId: s._id, count: s.count, latestStage: s.latestStage })),
+    });
+  } catch (error) {
+    logger.error('Error fetching instructor violation summary', { error: error.message, stack: error.stack });
+    res.status(500).json({ message: 'Server error fetching instructor violation summary' });
   }
 };

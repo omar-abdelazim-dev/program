@@ -18,6 +18,7 @@ import userRoutes from './routes/userRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import payoutRoutes from './routes/payoutRoutes.js';
 import quizRoutes from './routes/quizRoutes.js';
+import standaloneLessonRoutes from './routes/standaloneLessonRoutes.js';
 import { maintenanceMiddleware } from './middleware/maintenanceMiddleware.js';
 import { mongoSanitizeMiddleware, xssSanitizeMiddleware } from './middleware/sanitize.js';
 import { errorHandler } from './middleware/errorHandler.js';
@@ -146,6 +147,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/payouts', payoutRoutes);
 app.use('/api/quiz-submissions', quizRoutes);
+app.use('/api/standalone-lessons', standaloneLessonRoutes);
 
 // ── 10. Centralized error handler ─────────────────────────────────────────────
 // Must be the LAST middleware. Replaces the previous inline error handler.

@@ -19,13 +19,18 @@ import {
   suspendCourse,
   republishCourse,
   publishCourse,
+  requestPriceChange,
+  getPriceChangeRequests,
+  approvePriceChange,
+  rejectPriceChange,
+  convertOngoingToFull,
 } from '../controllers/courseController.js';
 import { addLesson, getLessonContent, updateLesson, deleteLesson, reorderLessons } from '../controllers/lessonController.js';
 import { createModule, updateModule, deleteModule, reorderModules } from '../controllers/moduleController.js';
 import { protect, authorize, verifyOwnership } from '../middleware/authMiddleware.js';
 import { optionalAuth } from '../middleware/optionalAuth.js';
 import { validateObjectId } from '../middleware/validationMiddleware.js';
-import { validateCreateCourse, validateUpdateCourse } from '../validators/courseValidators.js';
+import { validateCreateCourse, validateUpdateCourse, validateRequestPriceChange, validateConvertToFull } from '../validators/courseValidators.js';
 import Course from '../models/Course.js';
 
 const router = express.Router();
@@ -36,6 +41,7 @@ router.get('/', getApprovedCourses);
 // --- Admin (must come before /:id so 'pending'/'deletion-requests' aren't parsed as an id) ---
 router.get('/pending', protect, authorize('admin', 'superadmin'), getPendingCourses);
 router.get('/deletion-requests', protect, authorize('admin', 'superadmin'), getDeletionRequests);
+router.get('/price-change-requests', protect, authorize('admin', 'superadmin'), getPriceChangeRequests);
 
 // --- Instructor ---
 router.post('/', protect, authorize('instructor'), validateCreateCourse, createCourse);
@@ -43,6 +49,8 @@ router.get('/mine', protect, authorize('instructor'), getMyCourses);
 router.get('/stats', protect, authorize('instructor'), getInstructorStats);
 router.patch('/:id/request-delete', protect, authorize('instructor'), validateObjectId('id'), verifyOwnership(Course, 'id', 'instructor'), requestDeleteCourse);
 router.patch('/:id/publish', protect, authorize('instructor'), validateObjectId('id'), verifyOwnership(Course, 'id', 'instructor'), publishCourse);
+router.post('/:id/request-price-change', protect, authorize('instructor'), validateObjectId('id'), verifyOwnership(Course, 'id', 'instructor'), validateRequestPriceChange, requestPriceChange);
+router.patch('/:id/convert-to-full', protect, authorize('instructor'), validateObjectId('id'), verifyOwnership(Course, 'id', 'instructor'), validateConvertToFull, convertOngoingToFull);
 
 // --- Modules ---
 router.post('/:courseId/modules', protect, authorize('instructor'), validateObjectId('courseId'), verifyOwnership(Course, 'courseId', 'instructor'), createModule);
@@ -68,6 +76,8 @@ router.patch('/:id/approve', protect, authorize('admin', 'superadmin'), validate
 router.patch('/:id/reject', protect, authorize('admin', 'superadmin'), validateObjectId('id'), rejectCourse);
 router.patch('/:id/reject-deletion', protect, authorize('admin', 'superadmin'), validateObjectId('id'), rejectDeletionRequest);
 router.patch('/:id/suspend', protect, authorize('admin', 'superadmin'), validateObjectId('id'), suspendCourse);
+router.patch('/:id/price-change/approve', protect, authorize('admin', 'superadmin'), validateObjectId('id'), approvePriceChange);
+router.patch('/:id/price-change/reject', protect, authorize('admin', 'superadmin'), validateObjectId('id'), rejectPriceChange);
 
 // --- Course details (public + owner/admin see extra) ---
 router.get('/:id', optionalAuth, validateObjectId('id'), getCourseById);

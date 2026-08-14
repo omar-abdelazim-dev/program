@@ -34,6 +34,26 @@ export const validateCreateCourse = [
     .notEmpty().withMessage('Semester is required')
     .isInt({ min: 1, max: 12 }).withMessage('Semester must be a valid number between 1 and 12'),
 
+  body('courseType')
+    .notEmpty().withMessage('Course type is required')
+    .isIn(['full', 'ongoing']).withMessage("Course type must be 'full' or 'ongoing'"),
+
+  handleValidationErrors,
+];
+
+export const validateRequestPriceChange = [
+  body('requestedPrice')
+    .notEmpty().withMessage('Requested price is required')
+    .isFloat({ min: 0 }).withMessage('Requested price must be a number greater than or equal to 0'),
+
+  handleValidationErrors,
+];
+
+export const validateConvertToFull = [
+  body('price')
+    .notEmpty().withMessage('A full-course price is required')
+    .isFloat({ min: 0 }).withMessage('Price must be a number greater than or equal to 0'),
+
   handleValidationErrors,
 ];
 

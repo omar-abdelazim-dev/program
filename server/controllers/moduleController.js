@@ -1,5 +1,7 @@
 import Module from '../models/Module.js';
 import Lesson from '../models/Lesson.js';
+import Course from '../models/Course.js';
+import { isCourseContentLocked } from '../utils/courseContent.js';
 
 // @route   POST /api/courses/:courseId/modules
 // @access  Private (instructor only, must own the course)
@@ -10,6 +12,14 @@ export const createModule = async (req, res) => {
 
     if (!title) {
       return res.status(400).json({ message: 'Module title is required' });
+    }
+
+    const course = await Course.findById(courseId).select('courseType status');
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+    if (isCourseContentLocked(course)) {
+      return res.status(403).json({ message: 'This course is published and locked — Full Courses cannot be modified after publishing.' });
     }
 
     const existingCount = await Module.countDocuments({ course: courseId });

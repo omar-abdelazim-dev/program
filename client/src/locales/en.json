@@ -214,6 +214,7 @@
         "rejected": "Rejected",
         "suspended": "Suspended",
         "unpublished": "Unpublished",
+        "archived": "Archived",
         "reason": "Reason",
         "no_lessons_yet": "No lessons yet",
         "lesson": "lesson",
@@ -224,12 +225,43 @@
         "delete": "Delete",
         "manage_lessons": "Manage Lessons"
       },
+      "ongoing": {
+        "last_lecture": "Last Lecture: {{days}} days ago",
+        "next_deadline": "Next Activity Deadline: {{days}} days",
+        "draft_reason": "No new lecture was published for 14 days.",
+        "draft_deletion": "Removed in {{days}} days unless you publish a new lesson or convert to a Full Course.",
+        "archived_notice": "This course was archived after 90 days of inactivity. Its content and history have been preserved."
+      },
+      "price_change": {
+        "request": "Request Price Change",
+        "pending": "Price change pending: EGP {{price}} awaiting admin approval",
+        "title": "Request Price Change",
+        "subtitle": "The public price stays the same until an admin approves this request.",
+        "requested_price": "Requested Price (EGP)",
+        "submit": "Submit Request",
+        "submitted": "Price change requested — awaiting admin approval."
+      },
+      "convert": {
+        "button": "Convert to Full Course",
+        "title": "Convert to Full Course",
+        "subtitle": "This course will be resubmitted for admin review as a Full Course, using the price you set here. Once approved and published, no further modules or lessons can be added.",
+        "full_price": "Full Course Price (EGP)",
+        "submit": "Convert & Submit for Review",
+        "submitted": "Course converted to Full Course and submitted for admin review."
+      },
       "price": "Price",
       "category": "Category"
     },
     "create_course": {
       "title": "Create New Course",
       "edit_title": "Edit Course",
+      "choose_type_title": "Choose Course Type",
+      "choose_type_subtitle": "This cannot be changed once the course is created.",
+      "full_course_title": "Full Course",
+      "full_course_desc": "Complete your course before submitting it for review. Once published, it's locked — no further modules or lessons can be added.",
+      "ongoing_course_title": "Ongoing Course",
+      "ongoing_course_desc": "Build your course progressively and publish new content over time. Requires at least one new lesson every 14 days to stay active.",
+      "change_type": "Change",
       "form": {
         "title": "Title",
         "description": "Description",
@@ -243,7 +275,8 @@
         "semester": "Semester",
         "semester_placeholder": "Select a semester",
         "semester_placeholder_no_major": "Select a major first",
-        "semester_n": "Semester {{n}}"
+        "semester_n": "Semester {{n}}",
+        "course_type_required": "Choose a course type before creating this course."
       },
       "cancel": "Cancel",
       "save": "Save Course",
@@ -257,6 +290,8 @@
       "no_course_selected": "Please select a course from the dropdown above to manage its curriculum.",
       "lessons_for": "Lessons for",
       "add_lesson": "+ Add Lesson",
+      "add_quiz": "+ Add Quiz",
+      "content_locked": "Content Locked",
       "no_lessons": "No lessons added yet. Click 'Add Lesson' to get started.",
       "upload_video": "Upload Video",
       "upload_attachment": "Upload Attachment",
@@ -277,7 +312,15 @@
       "ph_attachment_title": "e.g. Cheat Sheet PDF",
       "delete_course_confirm": "Are you sure you want to delete this course? This action cannot be undone.",
       "edit_lesson": "Edit Lesson",
-      "save_module": "Save Module"
+      "save_module": "Save Module",
+      "standalone": {
+        "title": "Standalone Lessons",
+        "subtitle": "Purchased separately from this course — never added to its modules.",
+        "manage": "Manage Standalone Lessons",
+        "none_yet": "No standalone lessons yet.",
+        "add": "+ Add Standalone Lesson",
+        "created": "Standalone lesson submitted for admin review."
+      }
     },
     "analytics": {
       "title": "Analytics Dashboard",
@@ -709,6 +752,14 @@
     "no_lessons": "No lessons have been added to this course yet.",
     "free": "Free",
     "currency": "EGP",
+    "standalone": {
+      "section_title": "Related Standalone Lessons",
+      "related_to": "Related to: {{course}}",
+      "buy": "Purchase",
+      "owned": "Purchased",
+      "purchased": "Purchase submitted — awaiting admin approval.",
+      "already_purchased": "You already purchased this lesson."
+    },
     "payment": {
       "complete_enrollment": "Complete Enrollment",
       "course": "Course",
