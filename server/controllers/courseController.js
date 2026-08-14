@@ -574,6 +574,18 @@ export const deleteCourse = async (req, res) => {
       return res.status(404).json({ message: 'Course not found' });
     }
 
+    const isAdmin = req.user.role === 'admin' || req.user.role === 'superadmin';
+    if (!isAdmin) {
+      // Instructors can delete their own courses (see courseRoutes.js), but
+      // never one a paying, approved student is already enrolled in — that's
+      // still admin-only territory, same as it always was, now enforced here
+      // instead of by blanket route authorization.
+      const hasApprovedEnrollment = await Enrollment.exists({ course: course._id, status: 'approved' });
+      if (hasApprovedEnrollment) {
+        return res.status(409).json({ message: 'This course has enrolled students and cannot be deleted directly — contact an admin.' });
+      }
+    }
+
     // Cleanup associated lessons and modules. Lessons are keyed off
     // Module, not Course directly, so modules must be resolved first.
     const modules = await Module.find({ course: course._id });
