@@ -158,21 +158,129 @@ export const previewFinancials = async (req, res) => {
   }
 };
 
+import nodemailer from 'nodemailer';
+
 // @route   POST /api/system/config/email/test
 // @access  Private (Admin / Super Admin)
 export const sendTestEmail = async (req, res) => {
   try {
-    const { recipient, subject, format, content, rejectionReason } = req.body;
+    const { recipient, format, content, rejectionReason } = req.body;
     if (!recipient) {
       return res.status(400).json({ message: 'Recipient email is required' });
     }
 
-    logger.info(`Sending test email (${format || 'admin'}) to ${recipient} with content: ${content || 'otp_request'}${rejectionReason ? `, reason: ${rejectionReason}` : ''}`);
+    if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+      return res.status(400).json({ message: 'SMTP credentials (GMAIL_USER, GMAIL_APP_PASSWORD) are not configured on the server.' });
+    }
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD,
+      },
+    });
+
+    let subject = 'Test Email from Program';
+    let title = 'Test Email';
+    let bodyText = `This is a test email for the <strong>${content}</strong> template.`;
+    let bgColor = '#3b82f6'; // default blue
+
+    switch (content) {
+      case 'otp_request':
+        subject = 'Your Verification Code';
+        title = 'Verification Code';
+        bodyText = 'Use the code below to verify your request:<br><br><span style="font-size:2rem;font-weight:bold;letter-spacing:5px;">123456</span>';
+        bgColor = '#3b82f6'; // blue
+        break;
+      case 'payout_request':
+        subject = 'New Payout Request Received';
+        title = 'Payout Request';
+        bodyText = 'A new payout request has been submitted by an instructor and is pending admin approval.';
+        bgColor = '#f59e0b'; // amber
+        break;
+      case 'enroll_request':
+        subject = 'New Enrollment Request Received';
+        title = 'Enrollment Request';
+        bodyText = 'A student has requested to enroll in a course. Please review the request.';
+        bgColor = '#f59e0b'; // amber
+        break;
+      case 'course_approved':
+        subject = 'Your Course has been Approved!';
+        title = 'Course Approved';
+        bodyText = 'Congratulations! Your recently submitted course has been reviewed and approved by an admin.';
+        bgColor = '#10b981'; // green
+        break;
+      case 'course_rejected':
+        subject = 'Your Course has been Rejected';
+        title = 'Course Rejected';
+        bodyText = `Your recently submitted course has been rejected.<br><br><strong>Reason:</strong> ${rejectionReason || 'No reason provided.'}`;
+        bgColor = '#ef4444'; // red
+        break;
+      case 'payout_approved':
+        subject = 'Your Payout Request has been Approved!';
+        title = 'Payout Approved';
+        bodyText = 'Your payout request has been approved. The funds will be transferred to your account shortly.';
+        bgColor = '#10b981'; // green
+        break;
+      case 'payout_rejected':
+        subject = 'Your Payout Request has been Rejected';
+        title = 'Payout Rejected';
+        bodyText = `Your payout request has been rejected.<br><br><strong>Reason:</strong> ${rejectionReason || 'No reason provided.'}`;
+        bgColor = '#ef4444'; // red
+        break;
+      case 'enroll_approved':
+        subject = 'Your Enrollment Request has been Approved!';
+        title = 'Enrollment Approved';
+        bodyText = 'Your request to enroll in the course has been approved. You can now access the course materials.';
+        bgColor = '#10b981'; // green
+        break;
+      case 'enroll_rejected':
+        subject = 'Your Enrollment Request has been Rejected';
+        title = 'Enrollment Rejected';
+        bodyText = `Your request to enroll in the course has been rejected.<br><br><strong>Reason:</strong> ${rejectionReason || 'No reason provided.'}`;
+        bgColor = '#ef4444'; // red
+        break;
+      default:
+        subject = 'Test Email from Program';
+        title = 'Test Email';
+        bodyText = `This is a test email for the <strong>${content}</strong> template.`;
+        break;
+    }
+
+    const html = `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"/></head>
+    <body style="font-family:sans-serif;background:#0f172a;color:#e2e8f0;margin:0;padding:0;">
+      <div style="max-width:480px;margin:40px auto;background:#1e293b;border-radius:16px;overflow:hidden;">
+        <div style="background:${bgColor};padding:24px 32px;">
+          <h1 style="margin:0;font-size:1.4rem;color:#fff;">${title}</h1>
+        </div>
+        <div style="padding:32px;">
+          <p>Hi there,</p>
+          <p style="font-size: 16px; line-height: 1.5;">${bodyText}</p>
+          <div style="background:#0f172a;border-radius:8px;padding:14px;margin-top:30px;font-size:13px;color:#94a3b8;">
+            This is a test email dispatched from the Program System Config utility.
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>`;
+
+    logger.info(`Sending test email to ${recipient} with content: ${content}`);
     
+    await transporter.sendMail({
+      from: `"Program Platform" <${process.env.GMAIL_USER}>`,
+      to: recipient,
+      subject,
+      html,
+    });
+
     res.json({ message: 'Test email dispatched successfully', recipient, format, content, rejectionReason });
   } catch (err) {
     logger.error('Error sending test email', { error: err.message });
-    res.status(500).json({ message: 'Failed to send test email' });
+    res.status(500).json({ message: 'Failed to send test email. Please check server logs and SMTP configuration.' });
   }
 };
 
