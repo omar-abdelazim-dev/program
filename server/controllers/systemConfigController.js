@@ -162,14 +162,14 @@ export const previewFinancials = async (req, res) => {
 // @access  Private (Admin / Super Admin)
 export const sendTestEmail = async (req, res) => {
   try {
-    const { recipient, subject, format, content } = req.body;
+    const { recipient, subject, format, content, rejectionReason } = req.body;
     if (!recipient) {
       return res.status(400).json({ message: 'Recipient email is required' });
     }
 
-    logger.info(`Sending test email (${format || 'admin'}) to ${recipient} with content: ${content || 'otp_request'}`);
+    logger.info(`Sending test email (${format || 'admin'}) to ${recipient} with content: ${content || 'otp_request'}${rejectionReason ? `, reason: ${rejectionReason}` : ''}`);
     
-    res.json({ message: 'Test email dispatched successfully', recipient, format, content });
+    res.json({ message: 'Test email dispatched successfully', recipient, format, content, rejectionReason });
   } catch (err) {
     logger.error('Error sending test email', { error: err.message });
     res.status(500).json({ message: 'Failed to send test email' });

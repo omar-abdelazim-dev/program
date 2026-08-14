@@ -415,6 +415,7 @@ export default function SystemManagement({ user }) {
     subject: 'Test Email from Program', 
     format: 'admin', 
     content: 'payout_request', 
+    rejectionReason: '',
     status: 'idle' 
   });
 
@@ -474,7 +475,8 @@ export default function SystemManagement({ user }) {
         recipient: emailTest.recipient,
         subject: emailTest.subject,
         format: emailTest.format,
-        content: emailTest.content
+        content: emailTest.content,
+        rejectionReason: emailTest.rejectionReason
       });
       setEmailTest(prev => ({ ...prev, status: 'success' }));
       notyf.success("Test email dispatched successfully");
@@ -641,6 +643,16 @@ export default function SystemManagement({ user }) {
             <InputField label="Email Subject" value={emailTest.subject} onChange={e => setEmailTest({ ...emailTest, subject: e.target.value })} disabled={isFieldRestricted('email', 'test_utility', isSuperAdmin)} />
             <SelectField label="Email Format" value={emailTest.format} onChange={e => handleFormatChange(e.target.value)} disabled={isFieldRestricted('email', 'test_utility', isSuperAdmin)} options={[{ value: 'admin', label: 'Admin' }, { value: 'instructor', label: 'Instructor' }, { value: 'student', label: 'Student' }]} />
             <SelectField label="Email Content" value={emailTest.content} onChange={e => setEmailTest({ ...emailTest, content: e.target.value })} disabled={isFieldRestricted('email', 'test_utility', isSuperAdmin)} options={getContentOptions(emailTest.format)} />
+            
+            {['course_rejected', 'payout_rejected', 'enroll_rejected'].includes(emailTest.content) && (
+              <TextareaField 
+                label="Rejection Reason" 
+                value={emailTest.rejectionReason || ''} 
+                onChange={e => setEmailTest({ ...emailTest, rejectionReason: e.target.value })} 
+                disabled={isFieldRestricted('email', 'test_utility', isSuperAdmin)} 
+                placeholder="Enter rejection reason to include in the email..." 
+              />
+            )}
             
             <div style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
               <button 
