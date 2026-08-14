@@ -141,7 +141,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
       const modulesMap = {};
       for (const c of myCourses) {
         try {
-          const modRes = await api.get(`/courses/${c._id}/modules`);
+          const modRes = await api.get(`/courses/${c._id}`);
           modulesMap[c._id] = modRes.data.modules || [];
         } catch (mErr) {
           console.error(`Failed to load modules for course ${c._id}`, mErr);

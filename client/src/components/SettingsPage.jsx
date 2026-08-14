@@ -421,6 +421,49 @@ function AccountSection({ user, setUser, onLogout }) {
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState("");
 
+  const [passwordOtpStep, setPasswordOtpStep] = useState(false);
+  const [passwordOtpCode, setPasswordOtpCode] = useState("");
+  const [passwordResendCooldown, setPasswordResendCooldown] = useState(60);
+
+  useEffect(() => {
+    let timer;
+    if (passwordOtpStep && passwordResendCooldown > 0) {
+      timer = setInterval(() => {
+        setPasswordResendCooldown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [passwordOtpStep, passwordResendCooldown]);
+
+  const formatSettingsMessage = (msg) => {
+    if (!msg) return '';
+    if (msg === 'An OTP has been sent to your email.') return t('settings.account.otp_sent_success', 'An OTP has been sent to your email.');
+    if (msg === 'A new OTP has been sent to your email.') return t('settings.account.otp_sent_new_success', 'A new OTP has been sent to your email.');
+    return t(msg, msg);
+  };
+
+  const handleResendPasswordOtp = async () => {
+    if (passwordResendCooldown > 0 || savingPassword) return;
+    setPasswordError("");
+    setPasswordSuccess("");
+    setSavingPassword(true);
+    try {
+      await api.post("/auth/change-password/request-otp", {
+        currentPassword,
+        newPassword,
+      });
+      setPasswordResendCooldown(60);
+      setPasswordSuccess(t("settings.account.otp_sent_new_success", "A new OTP has been sent to your email."));
+    } catch (err) {
+      setPasswordError(
+        err.response?.data?.message ||
+          t("settings.account.password_error", "Failed to resend OTP"),
+      );
+    } finally {
+      setSavingPassword(false);
+    }
+  };
+
   const handleSaveDetails = async (e) => {
     e.preventDefault();
     setSavingDetails(true);
@@ -451,6 +494,28 @@ function AccountSection({ user, setUser, onLogout }) {
 
   const handleSavePassword = async (e) => {
     e.preventDefault();
+    if (passwordOtpStep) {
+      setPasswordError("");
+      setPasswordSuccess("");
+      setSavingPassword(true);
+      try {
+        await api.post("/auth/change-password/verify-otp", {
+          otp: passwordOtpCode,
+        });
+        setPasswordSuccess(t("settings.account.password_success", "Password updated successfully."));
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+        setPasswordOtpStep(false);
+        setPasswordOtpCode("");
+      } catch (err) {
+        setPasswordError(err.response?.data?.message || t("settings.account.password_error", "Failed to verify OTP"));
+      } finally {
+        setSavingPassword(false);
+      }
+      return;
+    }
+
     setPasswordError("");
     setPasswordSuccess("");
 
@@ -472,23 +537,17 @@ function AccountSection({ user, setUser, onLogout }) {
 
     setSavingPassword(true);
     try {
-      await api.patch("/auth/change-password", {
+      await api.post("/auth/change-password/request-otp", {
         currentPassword,
         newPassword,
       });
-      setPasswordSuccess(
-        t(
-          "settings.account.password_success",
-          "Password updated successfully.",
-        ),
-      );
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
+      setPasswordOtpStep(true);
+      setPasswordResendCooldown(60);
+      setPasswordSuccess(t("settings.account.otp_sent_success", "An OTP has been sent to your email."));
     } catch (err) {
       setPasswordError(
         err.response?.data?.message ||
-          t("settings.account.password_error", "Failed to change password"),
+          t("settings.account.password_error", "Failed to request OTP"),
       );
     } finally {
       setSavingPassword(false);
@@ -786,9 +845,10 @@ function AccountSection({ user, setUser, onLogout }) {
                 padding: "12px",
                 background: "rgba(239,68,68,0.1)",
                 borderRadius: "8px",
+                boxShadow: "var(--inner-shadow, inset 0 2px 4px rgba(0, 0, 0, 0.4))",
               }}
             >
-              {passwordError}
+              {formatSettingsMessage(passwordError)}
             </div>
           )}
           {passwordSuccess && (
@@ -799,111 +859,181 @@ function AccountSection({ user, setUser, onLogout }) {
                 padding: "12px",
                 background: "rgba(16,185,129,0.1)",
                 borderRadius: "8px",
+                boxShadow: "var(--inner-shadow, inset 0 2px 4px rgba(0, 0, 0, 0.4))",
               }}
             >
-              {passwordSuccess}
+              {formatSettingsMessage(passwordSuccess)}
             </div>
           )}
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label
+          {passwordOtpStep ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label
+                  style={{
+                    fontSize: "0.85rem",
+                    fontWeight: "600",
+                    color: "var(--text-secondary)",
+                    textTransform: "uppercase",
+                    letterSpacing: "1px",
+                  }}
+                >
+                  {t("settings.account.otp_code", "OTP Code")}
+                </label>
+                <button
+                  type="button"
+                  onClick={handleResendPasswordOtp}
+                  disabled={passwordResendCooldown > 0 || savingPassword}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: passwordResendCooldown > 0 ? 'var(--text-secondary)' : '#3b82f6',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    cursor: passwordResendCooldown > 0 ? 'not-allowed' : 'pointer',
+                    padding: 0,
+                    textDecoration: passwordResendCooldown > 0 ? 'none' : 'underline'
+                  }}
+                >
+                  {passwordResendCooldown > 0 ? t("auth.resend_in", "Resend in {{seconds}}s", { seconds: passwordResendCooldown }) : t("auth.resend_code", "Resend Code")}
+                </button>
+              </div>
+              <input
+                type="text"
+                className="solid-input"
+                value={passwordOtpCode}
+                onChange={(e) => setPasswordOtpCode(e.target.value)}
+                placeholder={t("settings.account.otp_placeholder", "Enter 6-digit OTP")}
+                required
+                maxLength={6}
+                style={{ letterSpacing: '0.2rem', textAlign: 'center', fontSize: '1.2rem' }}
+              />
+            </div>
+          ) : (
+            <>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <label
+                  style={{
+                    fontSize: "0.85rem",
+                    fontWeight: "600",
+                    color: "var(--text-secondary)",
+                    textTransform: "uppercase",
+                    letterSpacing: "1px",
+                  }}
+                >
+                  {t("settings.account.current_password", "Current Password")}
+                </label>
+                <input
+                  type="password"
+                  className="solid-input"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder={t(
+                    "settings.account.current_password_placeholder",
+                    "Enter your current password",
+                  )}
+                  required
+                />
+              </div>
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: "16px" }}
+              >
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+                >
+                  <label
+                    style={{
+                      fontSize: "0.85rem",
+                      fontWeight: "600",
+                      color: "var(--text-secondary)",
+                      textTransform: "uppercase",
+                      letterSpacing: "1px",
+                    }}
+                  >
+                    {t("settings.account.new_password", "New Password")}
+                  </label>
+                  <input
+                    type="password"
+                    className="solid-input"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder={t(
+                      "settings.account.new_password_placeholder",
+                      "Enter a new password",
+                    )}
+                    autoComplete="new-password"
+                    required
+                    minLength={6}
+                  />
+                </div>
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+                >
+                  <label
+                    style={{
+                      fontSize: "0.85rem",
+                      fontWeight: "600",
+                      color: "var(--text-secondary)",
+                      textTransform: "uppercase",
+                      letterSpacing: "1px",
+                    }}
+                  >
+                    {t("settings.account.confirm_password", "Confirm New Password")}
+                  </label>
+                  <input
+                    type="password"
+                    className="solid-input"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder={t(
+                      "settings.account.confirm_password_placeholder",
+                      "Confirm your new password",
+                    )}
+                    autoComplete="new-password"
+                    required
+                    minLength={6}
+                  />
+                </div>
+              </div>
+            </>
+          )}
+          <div style={{ display: 'flex', gap: '10px' }}>
+            {passwordOtpStep && (
+              <button
+                type="button"
+                className="solid-btn"
+                onClick={() => setPasswordOtpStep(false)}
+                style={{
+                  marginTop: "8px",
+                  alignSelf: "flex-start",
+                  width: "auto",
+                  padding: "12px 32px",
+                  borderRadius: "50px",
+                  background: "var(--bg-secondary)",
+                  color: "var(--text-primary)"
+                }}
+              >
+                {t("settings.account.cancel", "Cancel")}
+              </button>
+            )}
+            <button
+              type="submit"
+              className="solid-btn"
+              disabled={savingPassword}
               style={{
-                fontSize: "0.85rem",
-                fontWeight: "600",
-                color: "var(--text-secondary)",
-                textTransform: "uppercase",
-                letterSpacing: "1px",
+                marginTop: "8px",
+                alignSelf: "flex-start",
+                width: "auto",
+                padding: "12px 32px",
+                borderRadius: "50px",
+                background: "linear-gradient(135deg, #fbbf24 0%, #f97316 100%)",
               }}
             >
-              {t("settings.account.current_password", "Current Password")}
-            </label>
-            <input
-              type="password"
-              className="solid-input"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              placeholder={t(
-                "settings.account.current_password_placeholder",
-                "Enter your current password",
-              )}
-              required
-            />
+              {savingPassword
+                ? t("settings.account.updating_password", "Updating...")
+                : passwordOtpStep ? t("auth.verify_otp", "Verify OTP") : t("settings.account.update_password", "Update password")}
+            </button>
           </div>
-          <div
-            style={{ display: "flex", flexDirection: "column", gap: "16px" }}
-          >
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "8px" }}
-            >
-              <label
-                style={{
-                  fontSize: "0.85rem",
-                  fontWeight: "600",
-                  color: "var(--text-secondary)",
-                  textTransform: "uppercase",
-                  letterSpacing: "1px",
-                }}
-              >
-                {t("settings.account.new_password", "New Password")}
-              </label>
-              <input
-                type="password"
-                className="solid-input"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder={t(
-                  "settings.account.new_password_placeholder",
-                  "Enter a new password",
-                )}
-                required
-                minLength={6}
-              />
-            </div>
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "8px" }}
-            >
-              <label
-                style={{
-                  fontSize: "0.85rem",
-                  fontWeight: "600",
-                  color: "var(--text-secondary)",
-                  textTransform: "uppercase",
-                  letterSpacing: "1px",
-                }}
-              >
-                {t("settings.account.confirm_password", "Confirm New Password")}
-              </label>
-              <input
-                type="password"
-                className="solid-input"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder={t(
-                  "settings.account.confirm_password_placeholder",
-                  "Confirm your new password",
-                )}
-                required
-                minLength={6}
-              />
-            </div>
-          </div>
-          <button
-            type="submit"
-            className="solid-btn"
-            disabled={savingPassword}
-            style={{
-              marginTop: "8px",
-              alignSelf: "flex-start",
-              width: "auto",
-              padding: "12px 32px",
-              borderRadius: "50px",
-              background: "linear-gradient(135deg, #fbbf24 0%, #f97316 100%)",
-            }}
-          >
-            {savingPassword
-              ? t("settings.account.updating_password", "Updating...")
-              : t("settings.account.update_password", "Update password")}
-          </button>
         </form>
 
         <div

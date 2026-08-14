@@ -45,6 +45,10 @@ export const protect = async (req, res, next) => {
       return res.status(403).json({ message: 'Your account has been blocked' });
     }
 
+    if (!user.isVerified) {
+      return res.status(403).json({ message: 'Your email address is not verified.', code: 'EMAIL_NOT_VERIFIED' });
+    }
+
     req.user = {
       id: user._id,
       name: user.name,

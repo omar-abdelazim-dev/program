@@ -25,6 +25,8 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [role, setRole] = useState(initialParams.get('role') === 'instructor' ? 'instructor' : 'student');
   
@@ -43,6 +45,74 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
   const [authError, setAuthError] = useState('');
 
+  // OTP & Reset State
+  const [authView, setAuthView] = useState('default'); // 'default', 'forgot_request', 'otp_verify'
+  const [otpPurpose, setOtpPurpose] = useState('');
+  const [otpEmail, setOtpEmail] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [registerOtpSent, setRegisterOtpSent] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(60);
+  const [forgotResendCooldown, setForgotResendCooldown] = useState(60);
+
+  useEffect(() => {
+    let timer;
+    if (authView === 'otp_verify' && forgotResendCooldown > 0) {
+      timer = setInterval(() => {
+        setForgotResendCooldown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [authView, forgotResendCooldown]);
+
+  const handleResendForgotOtp = async () => {
+    if (forgotResendCooldown > 0 || isCreatingAccount) return;
+    setIsCreatingAccount(true);
+    setAuthError('');
+    try {
+      if (otpPurpose === 'password_reset') {
+        await api.post('/auth/reset-password/request-otp', {
+          email: otpEmail,
+          newPassword
+        });
+      }
+      setForgotResendCooldown(60);
+    } catch (err) {
+      setAuthError(err.response?.data?.message || 'Error resending verification code');
+    } finally {
+      setIsCreatingAccount(false);
+    }
+  };
+
+  useEffect(() => {
+    let timer;
+    if (registerOtpSent && resendCooldown > 0) {
+      timer = setInterval(() => {
+        setResendCooldown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [registerOtpSent, resendCooldown]);
+
+  const handleResendOtp = async () => {
+    if (resendCooldown > 0 || isCreatingAccount) return;
+    setIsCreatingAccount(true);
+    setAuthError('');
+    try {
+      await api.post('/auth/send-registration-otp', {
+        name: `${firstName} ${lastName}`.trim(),
+        email,
+        password
+      });
+      setResendCooldown(60);
+    } catch (err) {
+      setAuthError(err.response?.data?.message || 'Error resending verification code');
+    } finally {
+      setIsCreatingAccount(false);
+    }
+  };
+
   const calculateStrength = (pass) => {
     if (!pass) return 0;
     let strength = 0;
@@ -52,6 +122,31 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
     return strength;
   };
   const passStrength = calculateStrength(password);
+
+  const getTranslatedError = (msg) => {
+    if (!msg) return '';
+    let rawMsg = msg;
+    let attempts = null;
+    if (typeof msg === 'string' && msg.includes('|')) {
+      const parts = msg.split('|');
+      rawMsg = parts[0];
+      attempts = parts[1];
+    }
+    if (rawMsg === 'Invalid email or password') {
+      if (attempts !== null && attempts !== undefined) {
+        return t('auth.err_invalid_credentials_attempts', 'Invalid email or password ({{attempts}} attempts remaining)', { attempts });
+      }
+      return t('auth.err_invalid_credentials', 'Invalid email or password');
+    }
+    if (rawMsg === 'An account with this email already exists' || rawMsg === 'This email is already in use.' || rawMsg === 'This email is already exists') return t('auth.err_email_exists', 'An account with this email already exists');
+    if (rawMsg === 'Invalid code.' || rawMsg === 'Invalid verification code') return t('auth.err_invalid_code', 'Invalid verification code');
+    if (rawMsg === 'This code has expired.' || rawMsg === 'Verification expired. Please restart registration.') return t('auth.err_code_expired', 'Code expired. Please request a new one.');
+    if (rawMsg === 'This code has already been used.') return t('auth.err_code_used', 'This code has already been used.');
+    if (rawMsg === 'Your email address is not verified.') return t('auth.err_email_not_verified', 'Your email address is not verified.');
+    if (typeof rawMsg === 'string' && rawMsg.includes('Account is locked')) return t('auth.err_account_locked', 'Account is locked. Please reset your password.');
+    if (typeof rawMsg === 'string' && rawMsg.includes('Your account has been blocked')) return t('auth.err_account_blocked', 'Your account has been blocked. Please contact support');
+    return t(`auth.errors.${rawMsg}`, rawMsg);
+  };
 
 
 
@@ -83,6 +178,49 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setAuthError('');
+
+    if (authView === 'forgot_request') {
+      if (newPassword !== confirmNewPassword) {
+        setAuthError(t('auth.password_mismatch') || 'Passwords do not match');
+        return;
+      }
+
+      setIsCreatingAccount(true);
+      try {
+        await api.post('/auth/reset-password/request-otp', { email: otpEmail, newPassword });
+        setOtpPurpose('password_reset');
+        setForgotResendCooldown(60);
+        setAuthView('otp_verify');
+      } catch (err) {
+        setAuthError(err.response?.data?.message || 'Failed to request OTP');
+      } finally {
+        setIsCreatingAccount(false);
+      }
+      return;
+    }
+
+    if (authView === 'otp_verify') {
+      setIsCreatingAccount(true);
+      try {
+        if (otpPurpose === 'password_reset') {
+          await api.post('/auth/reset-password/verify-otp', { email: otpEmail, otp: otpCode });
+          setAuthError('');
+          setAuthView('default');
+          setIsLogin(true);
+        } else if (otpPurpose === 'register_verification') {
+          await api.post('/auth/verify-email', { email: otpEmail, otp: otpCode });
+          const response = await api.post('/auth/login', { email: otpEmail, password, rememberMe });
+          localStorage.setItem(`${response.data.user.role}_lang`, i18n.language);
+          onLoginSuccess(response.data.user);
+        }
+      } catch (err) {
+        setAuthError(err.response?.data?.message || 'Verification failed');
+      } finally {
+        setIsCreatingAccount(false);
+      }
+      return;
+    }
+
     if (isLogin) {
       setIsCreatingAccount(true);
       try {
@@ -90,23 +228,52 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
         localStorage.setItem(`${response.data.user.role}_lang`, i18n.language);
         onLoginSuccess(response.data.user);
       } catch (err) {
-        setAuthError(err.response?.data?.message || 'Failed to login');
+        if (err.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
+          setOtpEmail(email);
+          setOtpPurpose('register_verification');
+          setAuthView('otp_verify');
+        } else if (err.response?.data?.code === 'LOCKED_PENDING_RESET') {
+          setOtpEmail(email);
+          setAuthView('forgot_request');
+        } else {
+          const errMsg = err.response?.data?.message || 'Failed to login';
+          const remAttempts = err.response?.data?.remainingAttempts;
+          setAuthError(remAttempts !== undefined ? `${errMsg}|${remAttempts}` : errMsg);
+        }
         setIsCreatingAccount(false);
       }
     } else {
       const maxSteps = role === 'instructor' ? 2 : 3;
       if (registerStep < maxSteps) {
         if (registerStep === 1) {
-
-          setIsCreatingAccount(true);
-          try {
-            await api.post('/auth/check-email', { email });
-            setIsCreatingAccount(false);
-            setStepDirection('forward');
-            setRegisterStep(registerStep + 1);
-          } catch (err) {
-            setAuthError(err.response?.data?.message || 'Email already exists');
-            setIsCreatingAccount(false);
+          if (!registerOtpSent) {
+            setIsCreatingAccount(true);
+            try {
+              await api.post('/auth/send-registration-otp', {
+                name: `${firstName} ${lastName}`.trim(),
+                email,
+                password
+              });
+              setRegisterOtpSent(true);
+              setResendCooldown(60);
+              setAuthError('');
+            } catch (err) {
+              setAuthError(err.response?.data?.message || 'Error sending verification code');
+            } finally {
+              setIsCreatingAccount(false);
+            }
+          } else {
+            setIsCreatingAccount(true);
+            try {
+              await api.post('/auth/verify-registration-otp', { email, otp: otpCode });
+              setStepDirection('forward');
+              setRegisterStep(registerStep + 1);
+              setAuthError('');
+            } catch (err) {
+              setAuthError(err.response?.data?.message || 'Invalid verification code');
+            } finally {
+              setIsCreatingAccount(false);
+            }
           }
         } else {
           setStepDirection('forward');
@@ -226,9 +393,10 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
               </button>
             </div>
 
-            <form className="auth-form" onSubmit={handleSubmit}>
-
-              <div className={`expandable-section ${!isLogin ? 'expanded' : ''}`}>
+            <form className="auth-form" onSubmit={handleSubmit} autoComplete="off">
+              {authView === 'default' ? (
+                <>
+                  <div className={`expandable-section ${!isLogin ? 'expanded' : ''}`}>
                 <div className="expandable-content">
                   {/* Visual Step Indicator for Registration */}
                   <div className={`step-indicator ${stepDirection}`}>
@@ -413,49 +581,91 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
                         border: 'none'
                       }}
                     >
-                      {authError}
+                      {getTranslatedError(authError)}
                     </div>
                   )}
-                  <div className="input-group">
-                    <label>{t('auth.email')}</label>
-                    <input type="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
-                  </div>
-                  
-                  <div className="input-group">
-                    <label>{t('auth.password')}</label>
-                    <div className="password-input-wrapper">
-                      <input 
-                        type={showPassword ? "text" : "password"} 
-                        placeholder={isLogin ? '••••••••' : 'Min 8 characters'} 
-                        required 
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                      />
-                      <button 
-                        type="button" 
-                        className="password-toggle"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? (
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
-                        ) : (
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                        )}
-                      </button>
-                    </div>
-                    {!isLogin && (
-                      <div className="password-strength-container">
-                        <div className="strength-bars">
-                          <div className={`strength-bar ${passStrength >= 1 ? 'weak' : ''}`}></div>
-                          <div className={`strength-bar ${passStrength >= 2 ? 'medium' : ''}`}></div>
-                          <div className={`strength-bar ${passStrength >= 3 ? 'strong' : ''}`}></div>
-                        </div>
-                        <span className="strength-text">
-                          {passStrength === 0 ? t('auth.password_strength') : passStrength === 1 ? t('auth.strength_weak') : passStrength === 2 ? t('auth.strength_medium') : t('auth.strength_strong')}
-                        </span>
+                  <div className="input-row">
+                    <div className="input-group">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '22px' }}>
+                        <label>{t('auth.email')}</label>
                       </div>
-                    )}
+                      <input type="email" placeholder="you@example.com" required value={email} onChange={(e) => { setEmail(e.target.value); setRegisterOtpSent(false); }} />
+                    </div>
+                    
+                    <div className="input-group">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '22px' }}>
+                        <label>{t('auth.password')}</label>
+                        {!isLogin && (
+                          <div className="password-strength-container" style={{ margin: 0, gap: '8px' }}>
+                            <div className="strength-bars" style={{ width: '60px', flex: 'none' }}>
+                              <div className={`strength-bar ${passStrength >= 1 ? 'weak' : ''}`}></div>
+                              <div className={`strength-bar ${passStrength >= 2 ? 'medium' : ''}`}></div>
+                              <div className={`strength-bar ${passStrength >= 3 ? 'strong' : ''}`}></div>
+                            </div>
+                            <span className="strength-text" style={{ fontSize: '0.75rem' }}>
+                              {passStrength === 0 ? t('auth.password_strength') : passStrength === 1 ? t('auth.strength_weak') : passStrength === 2 ? t('auth.strength_medium') : t('auth.strength_strong')}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="password-input-wrapper">
+                        <input 
+                          type={showPassword ? "text" : "password"} 
+                          placeholder={isLogin ? '••••••••' : 'Min 8 characters'} 
+                          required 
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                        />
+                        <button 
+                          type="button" 
+                          className="password-toggle"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                          ) : (
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                          )}
+                        </button>
+                      </div>
+                    </div>
                   </div>
+                  {!isLogin && registerOtpSent && (
+                    <div className="input-group" style={{ marginTop: '1rem' }}>
+                      <label>{t('auth.verification_code', 'Verification Code')}</label>
+                      <input 
+                        type="text" 
+                        required 
+                        placeholder="6-digit code" 
+                        maxLength={6} 
+                        value={otpCode}
+                        onChange={(e) => setOtpCode(e.target.value)}
+                        style={{ letterSpacing: '0.2rem', textAlign: 'center', fontSize: '1.2rem' }}
+                      />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--c-sub)', margin: 0 }}>
+                          {t('auth.code_sent_to', 'Code sent to {{email}}', { email })}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={handleResendOtp}
+                          disabled={resendCooldown > 0 || isCreatingAccount}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: resendCooldown > 0 ? 'var(--c-sub)' : 'var(--c-primary, #3b82f6)',
+                            fontSize: '0.8rem',
+                            fontWeight: 600,
+                            cursor: resendCooldown > 0 ? 'not-allowed' : 'pointer',
+                            padding: 0,
+                            textDecoration: resendCooldown > 0 ? 'none' : 'underline'
+                          }}
+                        >
+                          {resendCooldown > 0 ? t('auth.resend_in', 'Resend in {{seconds}}s', { seconds: resendCooldown }) : t('auth.resend_code', 'Resend Code')}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -469,7 +679,7 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
                     />
                     {t('auth.remember_me')}
                   </label>
-                  <a className="forgot-password">{t('auth.forgot_password')}</a>
+                  <a className="forgot-password" onClick={() => { setOtpEmail(email); setAuthError(''); setAuthView('forgot_request'); }} style={{ cursor: 'pointer' }}>{t('auth.forgot_password')}</a>
                 </div>
               )}
 
@@ -505,6 +715,115 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
                   )}
                 </button>
               </div>
+                </>
+              ) : authView === 'forgot_request' ? (
+                <div className="step-content animate-entrance">
+                  {authError && (
+                    <div className="auth-error-message" style={{ color: '#ef4444', marginBottom: '1rem', padding: '8px 16px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 500 }}>
+                      {getTranslatedError(authError)}
+                    </div>
+                  )}
+                  <div className="input-group">
+                    <label>{t('auth.email')}</label>
+                    <input type="email" required value={otpEmail} onChange={(e) => setOtpEmail(e.target.value)} />
+                  </div>
+                  <div className="input-group">
+                    <label>{t('auth.new_password', 'New Password')}</label>
+                    <div className="password-input-wrapper">
+                      <input 
+                        type={showNewPassword ? "text" : "password"} 
+                        required 
+                        autoComplete="new-password" 
+                        value={newPassword} 
+                        onChange={(e) => setNewPassword(e.target.value)} 
+                      />
+                      <button 
+                        type="button" 
+                        className="password-toggle"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                      >
+                        {showNewPassword ? (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                        ) : (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="input-group">
+                    <label>{t('auth.confirm_new_password', 'Confirm New Password')}</label>
+                    <div className="password-input-wrapper">
+                      <input 
+                        type={showConfirmNewPassword ? "text" : "password"} 
+                        required 
+                        autoComplete="new-password" 
+                        value={confirmNewPassword} 
+                        onChange={(e) => setConfirmNewPassword(e.target.value)} 
+                      />
+                      <button 
+                        type="button" 
+                        className="password-toggle"
+                        onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
+                      >
+                        {showConfirmNewPassword ? (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                        ) : (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="auth-actions" style={{ marginTop: '1.5rem' }}>
+                    <button type="button" className="solid-btn auth-back-btn" onClick={() => { setAuthError(''); setAuthView('default'); }}>{t('auth.back')}</button>
+                    <button type="submit" className="solid-btn auth-submit-btn" disabled={isCreatingAccount}>
+                      {isCreatingAccount ? <span className="spinner-wrapper">{t('auth.checking')}</span> : t('auth.request_otp', 'Request OTP')}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="step-content animate-entrance">
+                  <div style={{ marginBottom: '1rem', color: 'var(--c-text)', fontSize: '0.95rem' }}>
+                    {t('auth.otp_verify_desc', 'An OTP has been sent to {{email}}. Please enter it below to {{action}}.', {
+                      email: otpEmail,
+                      action: otpPurpose === 'password_reset' ? t('auth.action_reset_password', 'reset your password') : t('auth.action_verify_account', 'verify your account')
+                    })}
+                  </div>
+                  {authError && (
+                    <div className="auth-error-message" style={{ color: '#ef4444', marginBottom: '1rem', padding: '8px 16px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 500 }}>
+                      {getTranslatedError(authError)}
+                    </div>
+                  )}
+                  <div className="input-group">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <label>{t('auth.otp_code', 'OTP Code')}</label>
+                      <button
+                        type="button"
+                        onClick={handleResendForgotOtp}
+                        disabled={forgotResendCooldown > 0 || isCreatingAccount}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: forgotResendCooldown > 0 ? 'var(--c-sub)' : 'var(--c-primary, #3b82f6)',
+                          fontSize: '0.8rem',
+                          fontWeight: 600,
+                          cursor: forgotResendCooldown > 0 ? 'not-allowed' : 'pointer',
+                          padding: 0,
+                          textDecoration: forgotResendCooldown > 0 ? 'none' : 'underline'
+                        }}
+                      >
+                        {forgotResendCooldown > 0 ? t('auth.resend_in', 'Resend in {{seconds}}s', { seconds: forgotResendCooldown }) : t('auth.resend_code', 'Resend Code')}
+                      </button>
+                    </div>
+                    <input type="text" required value={otpCode} onChange={(e) => setOtpCode(e.target.value)} placeholder="Enter 6-digit OTP" maxLength={6} style={{ letterSpacing: '0.2rem', textAlign: 'center', fontSize: '1.2rem' }} />
+                  </div>
+                  <div className="auth-actions" style={{ marginTop: '1.5rem' }}>
+                    <button type="button" className="solid-btn auth-back-btn" onClick={() => { setAuthError(''); setAuthView('default'); }}>{t('auth.back')}</button>
+                    <button type="submit" className="solid-btn auth-submit-btn" disabled={isCreatingAccount}>
+                      {isCreatingAccount ? <span className="spinner-wrapper">{t('auth.checking')}</span> : t('auth.verify_otp', 'Verify OTP')}
+                    </button>
+                  </div>
+                </div>
+              )}
             </form>
 
           </div>

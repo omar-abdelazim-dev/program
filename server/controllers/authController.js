@@ -1,11 +1,15 @@
 import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
+import EmailOTP from '../models/EmailOTP.js';
 import generateTokenAndSetCookie from '../utils/generateToken.js';
 import { getInternalConfig } from '../utils/configFetcher.js';
 import { logAudit } from '../utils/auditLogger.js';
 import { checkPasswordPolicy } from '../validators/authValidators.js';
 import logger from '../utils/logger.js';
-
+import { requestOTP, verifyOTP } from '../utils/otpService.js';
+import { validatePasswordStrength } from '../utils/passwordRules.js';
+import { BCRYPT_ROUNDS } from '../config/security.js';
 const RESET_TOKEN_EXPIRY_MINUTES = 30;
 
 // @route   POST /api/auth/check-email
@@ -28,6 +32,61 @@ export const checkEmail = async (req, res) => {
   }
 };
 
+// @route   POST /api/auth/send-registration-otp
+// @access  Public
+export const sendRegistrationOtp = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: 'Name, email, and password are required' });
+    }
+    
+    // Check if email already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({ message: 'This email is already in use.' });
+    }
+
+    // Validate password strength
+    const pwdError = validatePasswordStrength(password);
+    if (pwdError) {
+      return res.status(400).json({ message: pwdError });
+    }
+
+    await requestOTP({
+      email,
+      purpose: 'pre_register_verification',
+      displayName: name
+    });
+
+    res.status(200).json({ message: 'OTP sent successfully to email.' });
+  } catch (error) {
+    logger.error('Error in sendRegistrationOtp', { error: error.message });
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// @route   POST /api/auth/verify-registration-otp
+// @access  Public
+export const verifyRegistrationOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ message: 'Email and OTP are required' });
+    }
+
+    await verifyOTP({
+      email,
+      purpose: 'pre_register_verification',
+      otp
+    });
+
+    res.status(200).json({ message: 'Email verified successfully.' });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
 // @route   POST /api/auth/register
 // @access  Public
 export const register = async (req, res) => {
@@ -41,6 +100,16 @@ export const register = async (req, res) => {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(409).json({ message: 'An account with this email already exists' });
+    }
+
+    // Enforce pre-registration verification
+    const otpRecord = await EmailOTP.findOne({ email, purpose: 'pre_register_verification' });
+    if (!otpRecord || !otpRecord.usedAt) {
+      return res.status(403).json({ message: 'Email address not verified. Please verify your email first.' });
+    }
+    const timeSinceVerification = (Date.now() - otpRecord.usedAt.getTime()) / 1000 / 60;
+    if (timeSinceVerification > 30) {
+      return res.status(403).json({ message: 'Verification expired. Please restart registration.' });
     }
 
     // Only allow 'student' or 'instructor' at signup — nobody should be able
@@ -66,24 +135,11 @@ export const register = async (req, res) => {
     const user = await User.create({
       name, email, password, role: safeRole, phone: phone || '',
       major, university, college, year, track, providedCourses, linkedinUrl, socialUrl, goalsText, selectedPills,
-      isEmailVerified: false,
+      isVerified: true,
     });
 
-    // Generate Verification Token
-    const crypto = await import('crypto');
-    const rawToken = crypto.randomBytes(32).toString('hex');
-    user.emailVerificationTokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
-    
-    const { AUTH_CONFIG } = await import('../config/security.js');
-    user.emailVerificationExpires = Date.now() + AUTH_CONFIG.EMAIL_TOKEN_EXPIRATION;
-    await user.save();
-
-    // Log Verification Link (Simulated SMTP)
-    const clientOrigin = (process.env.CLIENT_URL || 'http://localhost:5173').split(',')[0].trim();
-    const verificationLink = `${clientOrigin}/verify-email/${rawToken}`;
-    
-    const logger = (await import('../utils/logger.js')).default;
-    logger.info(`Email verification requested for ${user.email}`, { verificationLink });
+    // Cleanup OTP record
+    await EmailOTP.deleteOne({ _id: otpRecord._id });
 
     await generateTokenAndSetCookie(res, user._id, req);
 
@@ -115,58 +171,44 @@ export const login = async (req, res) => {
     // .select('+password') is needed because the User model excludes password
     const user = await User.findOne({ email }).select('+password');
     
-    // Check if account is locked
-    if (user && user.lockUntil && user.lockUntil > Date.now()) {
+    // Check if account is locked for reset
+    if (user && user.lockedForReset) {
       await logAudit({
-        action: 'LOGIN_BLOCKED',
+        action: 'LOGIN_BLOCKED_PENDING_RESET',
         module: 'auth',
         userId: user._id,
         ipAddress: req.ip,
         userAgent: req.get('user-agent'),
         severity: 'warn',
-        metadata: { reason: 'Account locked due to too many failed attempts' },
       });
-      return res.status(403).json({ message: 'Account is temporarily locked due to multiple failed login attempts. Please try again later.' });
+      return res.status(423).json({ message: 'Account is locked due to multiple failed login attempts. Please reset your password.', code: 'LOCKED_PENDING_RESET' });
+    }
+
+    if (user && !user.isVerified) {
+      return res.status(403).json({ message: 'Your email address is not verified.', code: 'EMAIL_NOT_VERIFIED' });
     }
 
     if (!user || !(await user.comparePassword(password))) {
-      // Handle progressive lockout
+      // Handle lockout
       if (user) {
         user.failedLoginAttempts += 1;
         
-        let shouldLock = false;
-        let lockDurationMs = 0;
-        
-        const { AUTH_CONFIG } = await import('../config/security.js');
-
-        if (user.lockoutStage === 0 && user.failedLoginAttempts >= AUTH_CONFIG.MAX_LOGIN_ATTEMPTS_STAGE_1) {
-          shouldLock = true;
-          lockDurationMs = AUTH_CONFIG.LOCK_DURATION_STAGE_1;
-          user.lockoutStage = 1;
-          user.failedLoginAttempts = 0; // Reset for next stage
-        } else if (user.lockoutStage === 1 && user.failedLoginAttempts >= AUTH_CONFIG.MAX_LOGIN_ATTEMPTS_STAGE_2) {
-          shouldLock = true;
-          lockDurationMs = AUTH_CONFIG.LOCK_DURATION_STAGE_2;
-          user.lockoutStage = 2;
-          user.failedLoginAttempts = 0;
-        } else if (user.lockoutStage >= 2 && user.failedLoginAttempts >= 1) {
-          shouldLock = true;
-          lockDurationMs = AUTH_CONFIG.LOCK_DURATION_ESCALATED;
-          user.failedLoginAttempts = 0;
-        }
-
-        if (shouldLock) {
-          user.lockUntil = new Date(Date.now() + lockDurationMs);
+        if (user.failedLoginAttempts >= 5) {
+          user.lockedForReset = true;
+          user.lockedAt = new Date();
           await logAudit({
-            action: 'ACCOUNT_LOCKED',
+            action: 'ACCOUNT_LOCKED_FOR_RESET',
             module: 'auth',
             userId: user._id,
             ipAddress: req.ip,
-            severity: 'warn',
-            metadata: { stage: user.lockoutStage, durationMs: lockDurationMs }
+            severity: 'warn'
           });
         }
         await user.save();
+
+        if (user.lockedForReset) {
+          return res.status(423).json({ message: 'Account is locked due to multiple failed login attempts. Please reset your password.', code: 'LOCKED_PENDING_RESET' });
+        }
       }
 
       await logAudit({
@@ -178,14 +220,18 @@ export const login = async (req, res) => {
         severity: 'warn',
         metadata: { email: email.toLowerCase() },
       });
-      return res.status(401).json({ message: 'Invalid email or password' });
+      const remainingAttempts = user ? Math.max(0, 5 - user.failedLoginAttempts) : undefined;
+      return res.status(401).json({ 
+        message: 'Invalid email or password',
+        remainingAttempts 
+      });
     }
 
     // Successful login: reset lockout counters
-    if (user.failedLoginAttempts > 0 || user.lockoutStage > 0 || user.lockUntil) {
+    if (user.failedLoginAttempts > 0 || user.lockedForReset) {
       user.failedLoginAttempts = 0;
-      user.lockoutStage = 0;
-      user.lockUntil = undefined;
+      user.lockedForReset = false;
+      user.lockedAt = undefined;
       await user.save();
     }
 
@@ -365,143 +411,175 @@ export const updateProfile = async (req, res) => {
   }
 };
 
-// @route   PATCH /api/auth/change-password
+// @route   POST /api/auth/change-password/request-otp
 // @access  Private
-export const changePassword = async (req, res) => {
+export const requestChangePasswordOtp = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) return res.status(400).json({ message: 'Current and new password are required' });
+    if (currentPassword === newPassword) return res.status(400).json({ message: 'New password cannot be the same as the current password' });
 
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({ message: 'Current and new password are required' });
-    }
-
-    // Server-side policy check (validators catch this first, but this is the
-    // authoritative backstop — defence-in-depth).
-    const policyError = checkPasswordPolicy(newPassword);
-    if (policyError) {
-      return res.status(400).json({ message: policyError });
-    }
-
-    // .select('+password') needed here too — see login() above for why.
     const user = await User.findById(req.user.id).select('+password');
-    if (!user || !(await user.comparePassword(currentPassword))) {
-      await logAudit({
-        action: 'PASSWORD_CHANGE_FAILURE',
-        module: 'auth',
-        userId: req.user.id,
-        targetId: req.user.id,
-        targetModel: 'User',
-        ipAddress: req.ip,
-        userAgent: req.get('user-agent'),
-        severity: 'warn',
-      });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (user.lockedForReset) return res.status(403).json({ message: 'Account is locked. Please use the reset password flow instead.' });
+
+    if (!(await user.comparePassword(currentPassword))) {
       return res.status(401).json({ message: 'Current password is incorrect' });
     }
 
-    // Just assign the plaintext new password and save — the model's own
-    // pre('save') hook hashes it the same way it does on register, so the
-    // hashing logic only ever lives in one place.
-    user.password = newPassword;
-    await user.save();
+    const policyError = validatePasswordStrength(newPassword);
+    if (policyError) return res.status(400).json({ message: policyError });
 
-    // Audit successful password change
+    const salt = await bcrypt.genSalt(BCRYPT_ROUNDS);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    try {
+      await requestOTP({
+        userId: user._id,
+        email: user.email,
+        purpose: 'password_change',
+        metadata: { newPasswordHash: hashedPassword },
+        displayName: user.name
+      });
+    } catch (otpErr) {
+      return res.status(400).json({ message: otpErr.message });
+    }
+
+    res.status(200).json({ message: 'An OTP has been sent to your email to confirm the change.' });
+  } catch (error) {
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
+    res.status(500).json({ message: 'Server error requesting password change' });
+  }
+};
+
+// @route   POST /api/auth/change-password/verify-otp
+// @access  Private
+export const verifyChangePasswordOtp = async (req, res) => {
+  try {
+    const { otp } = req.body;
+    if (!otp) return res.status(400).json({ message: 'OTP is required' });
+
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    let metadata;
+    try {
+      metadata = await verifyOTP({ userId: user._id, purpose: 'password_change', otp });
+    } catch (otpErr) {
+      return res.status(400).json({ message: otpErr.message });
+    }
+
+    if (!metadata || !metadata.newPasswordHash) {
+      return res.status(400).json({ message: 'Invalid OTP metadata' });
+    }
+
+    await User.updateOne({ _id: user._id }, { $set: { password: metadata.newPasswordHash } });
+
+    const Session = (await import('../models/Session.js')).default;
+    await Session.updateMany({ userId: user._id }, { revoked: true });
+    res.clearCookie('token');
+    res.clearCookie('refreshToken');
+    res.clearCookie('csrfToken');
+
     await logAudit({
       action: 'PASSWORD_CHANGE_SUCCESS',
       module: 'auth',
-      userId: req.user.id,
-      targetId: user._id,
-      targetModel: 'User',
+      userId: user._id,
       ipAddress: req.ip,
-      userAgent: req.get('user-agent'),
       severity: 'info',
     });
 
-    res.status(200).json({ message: 'Password updated successfully' });
+    res.status(200).json({ message: 'Password changed successfully. Please log in again.' });
   } catch (error) {
     logger.error('An error occurred', { error: error.message, stack: error.stack });
-    res.status(500).json({ message: 'Server error changing password' });
+    res.status(500).json({ message: 'Server error verifying password change' });
   }
 };
 
-// @route   POST /api/auth/forgot-password
+// @route   POST /api/auth/reset-password/request-otp
 // @access  Public
-export const forgotPassword = async (req, res) => {
+export const requestPasswordResetOtp = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, newPassword } = req.body;
+    if (!email || !newPassword) return res.status(400).json({ message: 'Email and new password are required' });
 
-    const user = await User.findOne({ email: email?.toLowerCase() });
-
-    // Always respond identically whether or not the account exists —
-    // otherwise this endpoint becomes an email-enumeration oracle.
-    if (user) {
-      // Storing only a hash (not the raw token) means a database leak alone
-      // can't be used to reset the account — the raw token only ever exists
-      // in the emailed link. Overwriting the single stored token/expiry pair
-      // is also what invalidates any previous unexpired reset link.
-      const rawToken = crypto.randomBytes(32).toString('hex');
-      user.resetPasswordToken = crypto.createHash('sha256').update(rawToken).digest('hex');
-      user.resetPasswordExpires = Date.now() + RESET_TOKEN_EXPIRY_MINUTES * 60 * 1000;
-      await user.save();
-
-      // No email provider is configured for this MVP — log the reset link
-      // the way a real provider's delivery would surface it, instead of
-      // emailing it.
-      const clientOrigin = (process.env.CLIENT_URL || 'http://localhost:5173').split(',')[0].trim();
-      const resetLink = `${clientOrigin}/reset-password/${rawToken}`;
-      logger.info(`Password reset requested for ${user.email}`, { resetLink, expiresInMinutes: RESET_TOKEN_EXPIRY_MINUTES });
-
-      await logAudit({
-        action: 'PASSWORD_RESET_REQUESTED',
-        module: 'auth',
-        userId: user._id,
-        targetId: user._id,
-        targetModel: 'User',
-        ipAddress: req.ip,
-        userAgent: req.get('user-agent'),
-        severity: 'info',
-      });
-    }
-
-    res.status(200).json({ message: 'If an account with that email exists, a password reset link has been sent.' });
-  } catch (error) {
-    logger.error('An error occurred', { error: error.message, stack: error.stack });
-    res.status(500).json({ message: 'Server error processing password reset request' });
-  }
-};
-
-// @route   PATCH /api/auth/reset-password/:token
-// @access  Public
-export const resetPassword = async (req, res) => {
-  try {
-    const { token } = req.params;
-    const { newPassword } = req.body;
-
-    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-    const user = await User.findOne({
-      resetPasswordToken: hashedToken,
-      resetPasswordExpires: { $gt: Date.now() },
-    }).select('+resetPasswordToken +resetPasswordExpires');
-
+    const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
-      return res.status(400).json({ message: 'Invalid or expired reset token' });
+      return res.status(200).json({ message: 'If an account with that email exists, an OTP has been sent.' });
     }
 
-    // Just assign the plaintext new password — the model's pre('save') hook
-    // hashes it, same as register()/changePassword() above.
-    user.password = newPassword;
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpires = undefined;
-    await user.save();
+    const policyError = validatePasswordStrength(newPassword);
+    if (policyError) return res.status(400).json({ message: policyError });
+
+    const salt = await bcrypt.genSalt(BCRYPT_ROUNDS);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    try {
+      await requestOTP({
+        userId: user._id,
+        email: user.email,
+        purpose: 'password_reset',
+        metadata: { newPasswordHash: hashedPassword },
+        displayName: user.name
+      });
+    } catch (otpErr) {
+      return res.status(400).json({ message: otpErr.message });
+    }
+
+    await logAudit({
+      action: 'PASSWORD_RESET_REQUESTED',
+      module: 'auth',
+      userId: user._id,
+      ipAddress: req.ip,
+      severity: 'info',
+    });
+
+    res.status(200).json({ message: 'If an account with that email exists, an OTP has been sent.' });
+  } catch (error) {
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// @route   POST /api/auth/reset-password/verify-otp
+// @access  Public
+export const verifyPasswordResetOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) return res.status(400).json({ message: 'Email and OTP are required' });
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) return res.status(400).json({ message: 'Invalid request' });
+
+    let metadata;
+    try {
+      metadata = await verifyOTP({ userId: user._id, purpose: 'password_reset', otp });
+    } catch (otpErr) {
+      return res.status(400).json({ message: otpErr.message });
+    }
+
+    if (!metadata || !metadata.newPasswordHash) {
+      return res.status(400).json({ message: 'Invalid OTP metadata' });
+    }
+
+    await User.updateOne({ _id: user._id }, { 
+      $set: { 
+        password: metadata.newPasswordHash,
+        failedLoginAttempts: 0,
+        lockedForReset: false,
+        lockedAt: null
+      } 
+    });
+
+    const Session = (await import('../models/Session.js')).default;
+    await Session.updateMany({ userId: user._id }, { revoked: true });
 
     await logAudit({
       action: 'PASSWORD_RESET_SUCCESS',
       module: 'auth',
       userId: user._id,
-      targetId: user._id,
-      targetModel: 'User',
       ipAddress: req.ip,
-      userAgent: req.get('user-agent'),
-      severity: 'warn',
+      severity: 'info',
     });
 
     res.status(200).json({ message: 'Password has been reset successfully. You can now log in.' });
@@ -642,24 +720,21 @@ export const revokeAllSessions = async (req, res) => {
 // @access  Public
 export const verifyEmail = async (req, res) => {
   try {
-    const { token } = req.body;
-    if (!token) return res.status(400).json({ message: 'Token is required' });
+    const { email, otp } = req.body;
+    if (!email || !otp) return res.status(400).json({ message: 'Email and OTP are required' });
 
-    const crypto = await import('crypto');
-    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) return res.status(400).json({ message: 'User not found' });
     
-    const user = await User.findOne({
-      emailVerificationTokenHash: hashedToken,
-      emailVerificationExpires: { $gt: Date.now() },
-    }).select('+emailVerificationTokenHash +emailVerificationExpires');
+    if (user.isVerified) return res.status(400).json({ message: 'Email is already verified' });
 
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid or expired verification token' });
+    try {
+      await verifyOTP({ userId: user._id, purpose: 'register_verification', otp });
+    } catch (otpErr) {
+      return res.status(400).json({ message: otpErr.message });
     }
 
-    user.isEmailVerified = true;
-    user.emailVerificationTokenHash = undefined;
-    user.emailVerificationExpires = undefined;
+    user.isVerified = true;
     await user.save();
 
     await logAudit({
@@ -678,26 +753,26 @@ export const verifyEmail = async (req, res) => {
 };
 
 // @route   POST /api/auth/resend-verification
-// @access  Private
+// @access  Public
 export const resendVerification = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('+emailVerificationTokenHash');
-    if (!user) return res.status(401).json({ message: 'User not found' });
-    if (user.isEmailVerified) return res.status(400).json({ message: 'Email is already verified' });
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: 'Email is required' });
 
-    const crypto = await import('crypto');
-    const rawToken = crypto.randomBytes(32).toString('hex');
-    user.emailVerificationTokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
-    
-    const { AUTH_CONFIG } = await import('../config/security.js');
-    user.emailVerificationExpires = Date.now() + AUTH_CONFIG.EMAIL_TOKEN_EXPIRATION;
-    await user.save();
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (user.isVerified) return res.status(400).json({ message: 'Email is already verified' });
 
-    const clientOrigin = (process.env.CLIENT_URL || 'http://localhost:5173').split(',')[0].trim();
-    const verificationLink = `${clientOrigin}/verify-email/${rawToken}`;
-    
-    const logger = (await import('../utils/logger.js')).default;
-    logger.info(`Email verification resent for ${user.email}`, { verificationLink });
+    try {
+      await requestOTP({
+        userId: user._id,
+        email: user.email,
+        purpose: 'register_verification',
+        displayName: user.name
+      });
+    } catch (otpErr) {
+      return res.status(400).json({ message: otpErr.message });
+    }
 
     res.status(200).json({ message: 'Verification email sent' });
   } catch (error) {
