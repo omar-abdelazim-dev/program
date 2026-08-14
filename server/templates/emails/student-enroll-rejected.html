@@ -77,6 +77,18 @@
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
             <tr><td style="padding:4px 0;color:#6B7280;width:130px;">Course</td><td style="padding:4px 0;font-weight:600;color:#1F2937;">{{course_title}}</td></tr>
             <tr><td style="padding:4px 0;color:#6B7280;">Reviewed on</td><td style="padding:4px 0;">{{review_date}}</td></tr>
+            {{#if invoice_code}}
+            <tr><td style="padding:4px 0;color:#6B7280;">Invoice Code</td><td style="padding:4px 0;font-family:'Courier New',monospace;">{{invoice_code}}</td></tr>
+            {{/if}}
+            {{#if payment_time}}
+            <tr><td style="padding:4px 0;color:#6B7280;">Time</td><td style="padding:4px 0;">{{payment_time}}</td></tr>
+            {{/if}}
+            {{#if payment_method}}
+            <tr><td style="padding:4px 0;color:#6B7280;">Payment Method</td><td style="padding:4px 0;">{{payment_method}}</td></tr>
+            {{/if}}
+            {{#if contact_number}}
+            <tr><td style="padding:4px 0;color:#6B7280;">Number</td><td style="padding:4px 0;">{{contact_number}}</td></tr>
+            {{/if}}
           </table>
         </td></tr>
       </table>

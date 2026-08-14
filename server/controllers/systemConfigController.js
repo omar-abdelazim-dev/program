@@ -250,6 +250,9 @@ export const sendTestEmail = async (req, res) => {
           payout_reference: 'PAY-10029',
           approval_date: new Date().toLocaleDateString(),
           arrival_estimate: '3-5 business days',
+          invoice_code: 'INV-2026-0814',
+          payment_time: new Date().toLocaleTimeString(),
+          contact_number: '+1 (555) 123-4567',
           earnings_url: `${clientUrl}/instructor/earnings`,
           help_url: `${clientUrl}/help`,
           settings_url: `${clientUrl}/instructor/settings`
@@ -263,6 +266,10 @@ export const sendTestEmail = async (req, res) => {
           rejection_reason: rejectionReason || 'Invalid IBAN provided.',
           payout_reference: 'PAY-10029',
           review_date: new Date().toLocaleDateString(),
+          invoice_code: 'INV-2026-0814',
+          payment_time: new Date().toLocaleTimeString(),
+          payment_method: 'Bank Transfer',
+          contact_number: '+1 (555) 123-4567',
           payout_settings_url: `${clientUrl}/instructor/settings`,
           help_url: `${clientUrl}/help`,
           settings_url: `${clientUrl}/instructor/settings`
@@ -275,6 +282,10 @@ export const sendTestEmail = async (req, res) => {
           course_title: 'Advanced Masterclass',
           instructor_name: 'Instructor Jane',
           enrollment_date: new Date().toLocaleDateString(),
+          invoice_code: 'INV-2026-0815',
+          payment_time: new Date().toLocaleTimeString(),
+          payment_method: 'Credit Card',
+          contact_number: '**** **** **** 4242',
           course_url: `${clientUrl}/learn/123`,
           help_url: `${clientUrl}/help`,
           settings_url: `${clientUrl}/student/settings`
@@ -287,6 +298,10 @@ export const sendTestEmail = async (req, res) => {
           course_title: 'Advanced Masterclass',
           rejection_reason: rejectionReason || 'Payment verification failed.',
           review_date: new Date().toLocaleDateString(),
+          invoice_code: 'INV-2026-0815',
+          payment_time: new Date().toLocaleTimeString(),
+          payment_method: 'Credit Card',
+          contact_number: '**** **** **** 4242',
           browse_courses_url: `${clientUrl}/courses`,
           help_url: `${clientUrl}/help`,
           settings_url: `${clientUrl}/student/settings`
