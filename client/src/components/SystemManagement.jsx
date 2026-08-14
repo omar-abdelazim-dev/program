@@ -204,10 +204,10 @@ const SelectField = ({ label, value, onChange, options, disabled }) => {
             left: 0,
             right: 0,
             background: 'var(--bg-surface)',
-            border: '1px solid var(--c-border-subtle)',
-            borderRadius: '12px',
+            border: 'none',
+            borderRadius: '16px',
             padding: '8px',
-            boxShadow: 'var(--outer-shadow)',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.1), var(--outer-shadow)',
             zIndex: 9999,
             overflow: 'hidden',
             animation: 'smoothDropdownEnter 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards',
@@ -224,7 +224,7 @@ const SelectField = ({ label, value, onChange, options, disabled }) => {
               {options.map(opt => {
                 const optValue = opt.value !== undefined ? opt.value : opt;
                 const optLabel = opt.label !== undefined ? opt.label : opt;
-                const isSelected = optValue === value;
+                const isSelected = String(optValue).toLowerCase() === String(value).toLowerCase();
                 return (
                   <button
                     key={optValue}
@@ -241,27 +241,20 @@ const SelectField = ({ label, value, onChange, options, disabled }) => {
                     }}
                     style={{
                       width: '100%',
-                      padding: '10px 14px',
+                      padding: '10px 16px',
                       cursor: 'pointer',
-                      color: isSelected ? '#f97316' : 'var(--text-primary)',
-                      background: isSelected ? 'rgba(249, 115, 22, 0.15)' : 'transparent',
+                      color: isSelected ? '#f97316' : 'var(--c-light)',
+                      background: isSelected ? 'var(--bg-main)' : 'transparent',
+                      boxShadow: isSelected ? 'var(--inner-shadow)' : 'none',
                       border: 'none',
-                      borderRadius: '8px',
-                      fontWeight: isSelected ? 600 : 400,
-                      fontSize: '0.9rem',
+                      borderRadius: '50px',
+                      fontWeight: isSelected ? 700 : 400,
+                      fontSize: '0.95rem',
                       textAlign: 'left',
-                      transition: 'all 0.15s ease',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between'
+                      transition: 'all 0.2s ease'
                     }}
                   >
                     <span>{optLabel}</span>
-                    {isSelected && (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                      </svg>
-                    )}
                   </button>
                 );
               })}
