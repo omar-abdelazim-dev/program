@@ -44,7 +44,7 @@ const passwordValidator = body('password')
 
 // Letters (Latin or Arabic) and spaces only — rejects digits/symbols so a
 // name field can't be used to store arbitrary data.
-const NAME_PATTERN = /^[a-zA-Z؀-ۿ\s]*$/;
+export const NAME_PATTERN = /^[a-zA-Z؀-ۿ\s]*$/;
 
 // ─── Validate Register ───────────────────────────────────────────────────────
 export const validateRegister = [

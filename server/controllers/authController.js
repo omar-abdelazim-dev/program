@@ -8,6 +8,7 @@ import { logAudit } from '../utils/auditLogger.js';
 import logger from '../utils/logger.js';
 import { requestOTP, verifyOTP, POST_VERIFY_GRACE_MINUTES } from '../utils/otpService.js';
 import { validatePasswordStrength } from '../utils/passwordRules.js';
+import { NAME_PATTERN } from '../validators/authValidators.js';
 import { BCRYPT_ROUNDS } from '../config/security.js';
 
 // @route   POST /api/auth/check-email
@@ -38,7 +39,15 @@ export const sendRegistrationOtp = async (req, res) => {
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Name, email, and password are required' });
     }
-    
+    // This name gets emailed back as-is (see otpService's OTP email
+    // template) before validateRegister ever runs on the real /register
+    // call — an unauthenticated caller could otherwise put arbitrary
+    // content in an email the app's trusted sender delivers. Same pattern
+    // validateRegister already enforces at actual account creation.
+    if (!NAME_PATTERN.test(name)) {
+      return res.status(400).json({ message: 'Name can only contain letters and spaces' });
+    }
+
     // Check if email already exists
     const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
@@ -578,13 +587,27 @@ export const verifyPasswordResetOtp = async (req, res) => {
     const { email, otp } = req.body;
     if (!email || !otp) return res.status(400).json({ message: 'Email and OTP are required' });
 
+    // 'No active code found' from verifyOTP below means "this account
+    // exists but never called request-otp" — distinct from a non-existent
+    // account only if we let the two produce different messages. A user
+    // who legitimately got this far already passed request-otp (which
+    // returns the same response regardless of account existence), so
+    // *this* specific pairing is the one enumeration risk on this
+    // endpoint; other verifyOTP errors (wrong/expired/reused code, too
+    // many attempts) are safe to report accurately since reaching them at
+    // all already implies request-otp succeeded.
+    const genericInvalid = { message: 'Invalid or expired code.' };
+
     const user = await User.findOne({ email: email.toLowerCase() });
-    if (!user) return res.status(400).json({ message: 'Invalid request' });
+    if (!user) return res.status(400).json(genericInvalid);
 
     let metadata;
     try {
       metadata = await verifyOTP({ userId: user._id, purpose: 'password_reset', otp });
     } catch (otpErr) {
+      if (otpErr.message === 'No active code found. Please request a new one.') {
+        return res.status(400).json(genericInvalid);
+      }
       return res.status(400).json({ message: otpErr.message });
     }
 

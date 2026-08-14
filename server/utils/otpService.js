@@ -22,6 +22,18 @@ function getTransporter() {
   });
 }
 
+// displayName on the pre-registration path comes straight from an
+// unauthenticated request body (sendRegistrationOtp) with no format
+// validation applied before it reaches here — every other call site's
+// displayName is a User.name that already passed validateRegister's
+// letters-only pattern, but this template shouldn't rely on that holding
+// for every future caller. Escaping here, once, covers all of them.
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, (ch) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[ch]);
+}
+
 function generateOtp() {
   const code = crypto.randomInt(0, 1_000_000);
   return String(code).padStart(6, '0');
@@ -117,7 +129,7 @@ export async function requestOTP({ userId, email, purpose, metadata = {}, displa
       <h1 style="margin:0;font-size:1.4rem;color:#fff;">🛡️ ${title}</h1>
     </div>
     <div style="padding:32px;">
-      <p>Hi <strong>${displayName}</strong>,</p>
+      <p>Hi <strong>${escapeHtml(displayName)}</strong>,</p>
       <p>${textContext}</p>
       <div style="text-align:center;margin:28px 0;">
         <span style="font-size:2.6rem;font-weight:800;letter-spacing:10px;color:#3b82f6;background:#0f172a;padding:16px 28px;border-radius:12px;display:inline-block;">
