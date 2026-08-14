@@ -10,7 +10,9 @@ import FullPageLoader from './FullPageLoader';
 import studentLogo from '../assets/logo.png';
 import InstructorAnalyticsTab from './InstructorAnalyticsTab';
 import CurriculumBuilderTab from './CurriculumBuilderTab';
+import QuizBuilder from './QuizBuilder';
 import InstructorEngagementTab from './InstructorEngagementTab';
+import InstructorGradingTab from './InstructorGradingTab';
 import SettingsPage from './SettingsPage';
 import InstructorFinancialsTab from './InstructorFinancialsTab';
 import InstructorReviewsTab from './InstructorReviewsTab';
@@ -49,6 +51,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
   const [showLessonModal, setShowLessonModal] = useState(false);
   const [selectedCourseId, setSelectedCourseId] = useState(null);
   const [selectedModuleId, setSelectedModuleId] = useState(null);
+  const [quizBuilderContext, setQuizBuilderContext] = useState(null); // { courseId, moduleId, lesson } | null
 
   // Form states
   // INS-03: Replaced category/major with college
@@ -64,6 +67,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [unreadEngagementCount, setUnreadEngagementCount] = useState(0);
+  const [pendingGradingCount, setPendingGradingCount] = useState(0);
 
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -116,6 +120,15 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
     }
   };
 
+  const fetchPendingGradingCount = async () => {
+    try {
+      const res = await api.get('/quiz-submissions?status=pending_review');
+      setPendingGradingCount((res.data.submissions || []).length);
+    } catch (err) {
+      console.error('Failed to load pending grading count', err);
+    }
+  };
+
   const fetchMyCourses = async () => {
     try {
       const res = await api.get('/courses/mine');
@@ -144,6 +157,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
       }
       
       fetchUnreadCount();
+      fetchPendingGradingCount();
       fetchNotifications();
     } catch (err) {
       console.error(err);
@@ -425,6 +439,33 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                 }}
               >
                 {unreadEngagementCount > 99 ? '99+' : unreadEngagementCount}
+              </span>
+            )}
+          </button>
+          <button className={`sidebar-icon-btn ${activeTab === 'grading' ? 'active' : ''}`} style={{ position: 'relative' }} onClick={() => setActiveTab('grading')} data-tooltip={t('instructor.nav.grading', 'Grading')}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+            {pendingGradingCount > 0 && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '4px',
+                  right: '4px',
+                  backgroundColor: 'var(--color-accent)',
+                  color: 'white',
+                  fontSize: '0.7rem',
+                  fontWeight: 'bold',
+                  width: '18px',
+                  height: '18px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  pointerEvents: 'none',
+                }}
+              >
+                {pendingGradingCount > 99 ? '99+' : pendingGradingCount}
               </span>
             )}
           </button>
@@ -729,6 +770,8 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                   setAttachmentFile(null);
                   setShowLessonModal(true);
                 }}
+                onOpenAddQuiz={(courseId, moduleId) => setQuizBuilderContext({ courseId, moduleId, lesson: null })}
+                onOpenEditQuiz={(courseId, lesson) => setQuizBuilderContext({ courseId, moduleId: null, lesson })}
                 onEditCourse={(course) => {
                   setEditingCourse(course);
                   setFormData({
@@ -747,6 +790,10 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
           ) : activeTab === 'engagement' ? (
             <div className="animate-entrance">
               <InstructorEngagementTab courses={courses} onAction={fetchUnreadCount} />
+            </div>
+          ) : activeTab === 'grading' ? (
+            <div className="animate-entrance">
+              <InstructorGradingTab onAction={fetchPendingGradingCount} />
             </div>
           ) : activeTab === 'analytics' ? (
             <div className="animate-entrance">
@@ -1134,6 +1181,19 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
             </form>
           </div>
         </div>
+      )}
+
+      {quizBuilderContext && (
+        <QuizBuilder
+          courseId={quizBuilderContext.courseId}
+          moduleId={quizBuilderContext.moduleId}
+          lesson={quizBuilderContext.lesson}
+          onClose={() => setQuizBuilderContext(null)}
+          onSaved={() => {
+            setQuizBuilderContext(null);
+            fetchMyCourses();
+          }}
+        />
       )}
       </main>
     </div>

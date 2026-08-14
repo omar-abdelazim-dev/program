@@ -7,23 +7,7 @@ import PromoCode from '../models/PromoCode.js';
 import { getInternalConfig } from '../utils/configFetcher.js';
 import Notification from '../models/Notification.js';
 import logger from '../utils/logger.js';
-import { getModulesWithLessons } from '../utils/courseContent.js';
-
-// Builds the per-module completion breakdown returned alongside overall progress.
-const computeModuleProgress = (grouped, completedIds) => {
-  const completedSet = new Set(completedIds.map((id) => id.toString()));
-  return grouped.map(({ module, lessons }) => {
-    const totalCount = lessons.length;
-    const completedCount = lessons.filter((l) => completedSet.has(l._id.toString())).length;
-    return {
-      moduleId: module._id,
-      title: module.title,
-      completedCount,
-      totalCount,
-      percent: totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100),
-    };
-  });
-};
+import { getModulesWithLessons, computeModuleProgress } from '../utils/courseContent.js';
 
 // @route   POST /api/enrollments/:courseId
 // @access  Private (student)

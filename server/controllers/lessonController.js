@@ -4,15 +4,57 @@ import Course from '../models/Course.js';
 import Enrollment from '../models/Enrollment.js';
 import logger from '../utils/logger.js';
 
+// Re-validates quiz content server-side rather than trusting the instructor
+// UI's own bounds (4-6 options, a real correct-answer index). Returns an
+// error message string, or null if the payload is valid.
+const validateQuizQuestions = (questions) => {
+  if (!Array.isArray(questions) || questions.length === 0) {
+    return 'A quiz needs at least one question';
+  }
+  for (const q of questions) {
+    if (!q.prompt || !q.prompt.trim()) {
+      return 'Every question needs a prompt';
+    }
+    if (q.type === 'mcq') {
+      if (!Array.isArray(q.options) || q.options.length < 4 || q.options.length > 6) {
+        return 'Multiple-choice questions need between 4 and 6 options';
+      }
+      if (q.options.some((o) => !o || !o.trim())) {
+        return 'Multiple-choice options cannot be empty';
+      }
+      if (
+        !Number.isInteger(q.correctOptionIndex) ||
+        q.correctOptionIndex < 0 ||
+        q.correctOptionIndex >= q.options.length
+      ) {
+        return 'Every multiple-choice question needs a valid correct answer';
+      }
+    } else if (q.type !== 'written') {
+      return `Unknown question type: ${q.type}`;
+    }
+  }
+  return null;
+};
+
 // @route   POST /api/courses/:courseId/modules/:moduleId/lessons
 // @access  Private (instructor only, must own the course)
 export const addLesson = async (req, res) => {
   try {
-    const { title, videoUrl, attachmentUrl, attachmentTitle, description } = req.body;
+    const { title, videoUrl, attachmentUrl, attachmentTitle, description, lessonType, quiz } = req.body;
     const { courseId, moduleId } = req.params;
+    const isQuiz = lessonType === 'quiz';
 
-    if (!title || !videoUrl) {
-      return res.status(400).json({ message: 'Title and video URL are required' });
+    if (!title) {
+      return res.status(400).json({ message: 'Title is required' });
+    }
+    if (!isQuiz && !videoUrl) {
+      return res.status(400).json({ message: 'Video URL is required' });
+    }
+    if (isQuiz) {
+      const quizError = validateQuizQuestions(quiz?.questions);
+      if (quizError) {
+        return res.status(400).json({ message: quizError });
+      }
     }
 
     const module = await Module.findOne({ _id: moduleId, course: courseId });
@@ -25,12 +67,14 @@ export const addLesson = async (req, res) => {
     const lesson = await Lesson.create({
       title,
       description: description || '',
-      videoUrl,
+      videoUrl: isQuiz ? undefined : videoUrl,
       attachmentUrl: attachmentUrl || '',
       attachmentTitle: attachmentTitle || '',
       module: module._id,
       order: existingCount + 1,
-      status: 'pending'
+      status: 'pending',
+      lessonType: lessonType || 'video',
+      quiz: isQuiz ? quiz : undefined,
     });
 
     res.status(201).json({ lesson });
@@ -72,6 +116,14 @@ export const getLessonContent = async (req, res) => {
       return res.status(404).json({ message: 'Lesson not found in this course' });
     }
 
+    // A student taking the quiz must not learn the correct answer from the
+    // network response before submitting — only the instructor/admin sees it.
+    if (lesson.lessonType === 'quiz' && !isOwner && !isAdmin) {
+      const sanitized = lesson.toObject();
+      sanitized.quiz.questions = sanitized.quiz.questions.map(({ correctOptionIndex, ...rest }) => rest);
+      return res.status(200).json({ lesson: sanitized });
+    }
+
     res.status(200).json({ lesson });
   } catch (error) {
     logger.error('An error occurred', { error: error.message, stack: error.stack });
@@ -83,7 +135,7 @@ export const getLessonContent = async (req, res) => {
 // @access  Private (instructor only, must own the course)
 export const updateLesson = async (req, res) => {
   try {
-    const { title, videoUrl, attachmentUrl, attachmentTitle, description, status } = req.body;
+    const { title, videoUrl, attachmentUrl, attachmentTitle, description, status, quiz } = req.body;
     const { courseId, lessonId } = req.params;
 
     const lesson = await Lesson.findById(lessonId).populate('module');
@@ -97,6 +149,14 @@ export const updateLesson = async (req, res) => {
     if (attachmentUrl !== undefined) lesson.attachmentUrl = attachmentUrl;
     if (attachmentTitle !== undefined) lesson.attachmentTitle = attachmentTitle;
     if (status) lesson.status = status;
+
+    if (lesson.lessonType === 'quiz' && quiz) {
+      const quizError = validateQuizQuestions(quiz.questions);
+      if (quizError) {
+        return res.status(400).json({ message: quizError });
+      }
+      lesson.quiz = quiz;
+    }
 
     await lesson.save();
 

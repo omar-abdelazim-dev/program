@@ -5,7 +5,7 @@ import ThreeDotMenu from './common/ThreeDotMenu';
 import { useTranslation } from 'react-i18next';
 import api from '../api/axios';
 
-export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {}, onOpenAddLesson, onOpenEditLesson, onEditCourse, onDeleteCourse, onAction }) {
+export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {}, onOpenAddLesson, onOpenEditLesson, onOpenAddQuiz, onOpenEditQuiz, onEditCourse, onDeleteCourse, onAction }) {
   const { t } = useTranslation();
   const [selectedCourseId, setSelectedCourseId] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -368,6 +368,12 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                             >
                               {t('instructor.curriculum.add_lesson')}
                             </button>
+                            <button
+                              onClick={() => onOpenAddQuiz(selectedCourseId, module._id)}
+                              style={{ width: 'auto', borderRadius: '20px', padding: '8px 16px', fontWeight: 600, fontSize: '0.85rem', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: 'none', cursor: 'pointer' }}
+                            >
+                              {t('instructor.curriculum.add_quiz', '+ Add Quiz')}
+                            </button>
                             <ThreeDotMenu
                               options={[
                                 {
@@ -421,7 +427,11 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                                       </div>
                                       <div>
                                         <h4 style={{ margin: 0, fontSize: '1.0rem', color: 'var(--text-h)' }}>{lesson.title}</h4>
-                                        <span style={{ fontSize: '0.8rem', color: 'var(--c-sub)' }}>{t('instructor.curriculum.video_content', 'Video content')}</span>
+                                        <span style={{ fontSize: '0.8rem', color: 'var(--c-sub)' }}>
+                                          {lesson.lessonType === 'quiz'
+                                            ? t('instructor.curriculum.quiz_content', 'Quiz')
+                                            : t('instructor.curriculum.video_content', 'Video content')}
+                                        </span>
                                       </div>
                                     </div>
 
@@ -462,7 +472,7 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                                         options={[
                                           {
                                             label: t('instructor.dashboard.actions.edit', 'Edit'),
-                                            action: () => onOpenEditLesson(lesson),
+                                            action: () => (lesson.lessonType === 'quiz' ? onOpenEditQuiz(selectedCourseId, lesson) : onOpenEditLesson(lesson)),
                                           },
                                           {
                                             label: t('instructor.dashboard.actions.delete', 'Delete'),

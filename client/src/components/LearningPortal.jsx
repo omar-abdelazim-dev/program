@@ -6,6 +6,7 @@ import '../styles/content.css';
 import { useTranslation } from 'react-i18next';
 import notyf from '../utils/notyf';
 import ConfirmModal from './ConfirmModal';
+import QuizPlayer from './QuizPlayer';
 
 export default function LearningPortal({ user }) {
   const { t, i18n } = useTranslation();
@@ -353,6 +354,17 @@ export default function LearningPortal({ user }) {
             overflowY: "auto",
           }}
         >
+          {activeLesson?.lessonType === 'quiz' ? (
+            <QuizPlayer
+              courseId={id}
+              lesson={activeLesson}
+              onSubmitted={(data) => {
+                setCompletedLessons(data.completedLessonIds || []);
+                setProgressPercent(data.progressPercent || 0);
+                setModuleProgress(data.moduleProgress || []);
+              }}
+            />
+          ) : (
           <div
             style={{
               width: "100%",
@@ -408,6 +420,7 @@ export default function LearningPortal({ user }) {
               </div>
             )}
           </div>
+          )}
 
           <div
             style={{
@@ -1016,8 +1029,13 @@ export default function LearningPortal({ user }) {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  toggleComplete(lesson._id);
+                                  // Quiz completion is only ever set by actually
+                                  // submitting the quiz (see QuizPlayer) — this
+                                  // checkmark is a status indicator for quizzes,
+                                  // not a manual override, so grading can't be skipped.
+                                  if (lesson.lessonType !== 'quiz') toggleComplete(lesson._id);
                                 }}
+                                title={lesson.lessonType === 'quiz' && !isCompleted ? t('student.learning.complete_via_quiz', 'Submit the quiz to complete this lesson') : undefined}
                                 style={{
                                   width: "24px",
                                   height: "24px",
@@ -1029,7 +1047,7 @@ export default function LearningPortal({ user }) {
                                   display: "flex",
                                   alignItems: "center",
                                   justifyContent: "center",
-                                  cursor: "pointer",
+                                  cursor: lesson.lessonType === 'quiz' ? "default" : "pointer",
                                   flexShrink: 0,
                                 }}
                               >
@@ -1080,7 +1098,7 @@ export default function LearningPortal({ user }) {
                                     <circle cx="12" cy="12" r="10"></circle>
                                     <polyline points="12 6 12 12 16 14"></polyline>
                                   </svg>
-                                  {t('student.learning.video', 'Video')}
+                                  {lesson.lessonType === 'quiz' ? t('student.learning.quiz', 'Quiz') : t('student.learning.video', 'Video')}
                                 </div>
                               </div>
                             </div>
