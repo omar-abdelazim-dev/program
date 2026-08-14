@@ -127,15 +127,25 @@ export async function requestOTP({ userId, email, purpose, metadata = {}, displa
   // logged to console in development) regardless of whether the send
   // actually succeeds. A dead mail provider should never be able to block
   // registration or password reset outright.
-  try {
-    await getTransporter().sendMail({
-      from: `"Program Support" <${process.env.GMAIL_USER}>`,
-      to: email,
-      subject,
-      html,
-    });
-  } catch (err) {
-    logger.error('Failed to send OTP email', { error: err.message, email });
+  //
+  // Skip the network call entirely when mail isn't configured, rather than
+  // attempting it and catching the failure — an unreachable SMTP host (e.g.
+  // restricted egress in a CI runner) can hang for nodemailer's full
+  // connection timeout, not just fail fast, and that cost lands on every
+  // OTP request in every test that exercises this path.
+  if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+    try {
+      await getTransporter().sendMail({
+        from: `"Program Support" <${process.env.GMAIL_USER}>`,
+        to: email,
+        subject,
+        html,
+      });
+    } catch (err) {
+      logger.error('Failed to send OTP email', { error: err.message, email });
+    }
+  } else {
+    logger.warn('OTP email not sent — GMAIL_USER/GMAIL_APP_PASSWORD not configured', { email, purpose });
   }
 
   return { expiresAt };

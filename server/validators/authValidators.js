@@ -12,7 +12,7 @@
  */
 
 import { body, validationResult } from 'express-validator';
-import { PASSWORD_POLICY } from '../config/security.js';
+import { validatePasswordStrength } from '../utils/passwordRules.js';
 
 // ─── Shared helper ───────────────────────────────────────────────────────────
 
@@ -30,39 +30,14 @@ export const handleValidationErrors = (req, res, next) => {
 };
 
 // ─── Password policy validator ───────────────────────────────────────────────
-
-/**
- * Validates a password string against the PASSWORD_POLICY constants.
- * Returns an error message string, or null if the password is valid.
- * Used by both express-validator chains and controller-level checks.
- */
-export const checkPasswordPolicy = (password) => {
-  if (!password || typeof password !== 'string') {
-    return 'Password is required';
-  }
-  if (password.length < PASSWORD_POLICY.minLength) {
-    return `Password must be at least ${PASSWORD_POLICY.minLength} characters`;
-  }
-  if (PASSWORD_POLICY.requireUppercase && !/[A-Z]/.test(password)) {
-    return 'Password must contain at least one uppercase letter';
-  }
-  if (PASSWORD_POLICY.requireLowercase && !/[a-z]/.test(password)) {
-    return 'Password must contain at least one lowercase letter';
-  }
-  if (PASSWORD_POLICY.requireDigit && !/\d/.test(password)) {
-    return 'Password must contain at least one number';
-  }
-  if (PASSWORD_POLICY.requireSpecial && !/[^A-Za-z0-9]/.test(password)) {
-    return 'Password must contain at least one special character';
-  }
-  return null; // valid
-};
-
-// express-validator custom validator that delegates to checkPasswordPolicy
+// The actual rule set lives in utils/passwordRules.js (validatePasswordStrength)
+// — that's what every OTP-gated controller path (registration, password
+// change/reset) calls directly. This is just the express-validator wiring
+// for the one remaining route-level chain that still needs it.
 const passwordValidator = body('password')
   .notEmpty().withMessage('Password is required')
   .custom((value) => {
-    const err = checkPasswordPolicy(value);
+    const err = validatePasswordStrength(value);
     if (err) throw new Error(err);
     return true;
   });

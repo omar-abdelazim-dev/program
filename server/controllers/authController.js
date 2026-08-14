@@ -182,10 +182,6 @@ export const login = async (req, res) => {
       return res.status(423).json({ message: 'Account is locked due to multiple failed login attempts. Please reset your password.', code: 'LOCKED_PENDING_RESET' });
     }
 
-    if (user && !user.isVerified) {
-      return res.status(403).json({ message: 'Your email address is not verified.', code: 'EMAIL_NOT_VERIFIED' });
-    }
-
     if (!user || !(await user.comparePassword(password))) {
       // Handle lockout
       if (user) {
@@ -231,6 +227,14 @@ export const login = async (req, res) => {
       user.lockedForReset = false;
       user.lockedAt = undefined;
       await user.save();
+    }
+
+    // Only reveal verification status once the password has already been
+    // proven correct — checking this earlier turns login into an oracle an
+    // attacker can use to enumerate registered emails and their
+    // verification state without ever knowing a valid password.
+    if (!user.isVerified) {
+      return res.status(403).json({ message: 'Your email address is not verified.', code: 'EMAIL_NOT_VERIFIED' });
     }
 
     if (user.isBlocked) {
@@ -471,7 +475,12 @@ export const verifyChangePasswordOtp = async (req, res) => {
       return res.status(400).json({ message: 'Invalid OTP metadata' });
     }
 
-    await User.updateOne({ _id: user._id }, { $set: { password: metadata.newPasswordHash } });
+    // updateOne bypasses the pre('save') hook that normally stamps
+    // passwordChangedAt on every password write — set it explicitly here,
+    // since protect (authMiddleware.js) uses that field to invalidate JWTs
+    // issued before the change. Without it, a token stolen before this
+    // change keeps working right through it.
+    await User.updateOne({ _id: user._id }, { $set: { password: metadata.newPasswordHash, passwordChangedAt: new Date() } });
 
     const Session = (await import('../models/Session.js')).default;
     await Session.updateMany({ userId: user._id }, { revoked: true });
@@ -560,13 +569,19 @@ export const verifyPasswordResetOtp = async (req, res) => {
       return res.status(400).json({ message: 'Invalid OTP metadata' });
     }
 
-    await User.updateOne({ _id: user._id }, { 
-      $set: { 
+    // See the same fix in verifyChangePasswordOtp above — updateOne skips
+    // the pre('save') hook that stamps passwordChangedAt, so it has to be
+    // set explicitly or a token issued before this reset keeps working.
+    // Doubly important here: this is the account-recovery path for a
+    // locked-out or compromised account.
+    await User.updateOne({ _id: user._id }, {
+      $set: {
         password: metadata.newPasswordHash,
+        passwordChangedAt: new Date(),
         failedLoginAttempts: 0,
         lockedForReset: false,
         lockedAt: null
-      } 
+      }
     });
 
     const Session = (await import('../models/Session.js')).default;
@@ -752,14 +767,23 @@ export const verifyEmail = async (req, res) => {
 
 // @route   POST /api/auth/resend-verification
 // @access  Public
+// Public (no session) so a user bounced from /login with EMAIL_NOT_VERIFIED
+// can request a code without being logged in. The response is deliberately
+// identical whether the account exists, is already verified, or the OTP was
+// actually sent — same enumeration-resistance pattern as
+// requestPasswordResetOtp above; a differentiated 404/400/200 here would let
+// anyone probe arbitrary emails for their registration/verification status.
 export const resendVerification = async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: 'Email is required' });
 
+    const genericResponse = { message: 'If that account needs verification, a code has been sent.' };
+
     const user = await User.findOne({ email: email.toLowerCase() });
-    if (!user) return res.status(404).json({ message: 'User not found' });
-    if (user.isVerified) return res.status(400).json({ message: 'Email is already verified' });
+    if (!user || user.isVerified) {
+      return res.status(200).json(genericResponse);
+    }
 
     try {
       await requestOTP({
@@ -772,7 +796,7 @@ export const resendVerification = async (req, res) => {
       return res.status(400).json({ message: otpErr.message });
     }
 
-    res.status(200).json({ message: 'Verification email sent' });
+    res.status(200).json(genericResponse);
   } catch (error) {
     logger.error('An error occurred', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Server error resending verification' });

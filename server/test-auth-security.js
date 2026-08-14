@@ -159,7 +159,7 @@ const runTests = async () => {
     refreshToken = newRefreshToken;
   });
 
-  await test('Password Change Invalidates Session', async () => {
+  await test('Password Change Invalidates Session (DB-level passwordChangedAt check)', async () => {
     // Change password manually in DB to 1 min ago to test invalidation
     await User.updateOne({ email: 'auth@test.com' }, { passwordChangedAt: new Date(Date.now() + 60000) });
 
@@ -169,6 +169,76 @@ const runTests = async () => {
       .set('X-CSRF-Token', csrfToken);
 
     if (res.status !== 401) throw new Error(`Expected 401 after password change, got ${res.status}`);
+
+    // The forged timestamp above is in the future — clear it before
+    // continuing, or every JWT issued for the next minute (including the
+    // one from the re-login right below) keeps failing this same check.
+    await User.updateOne({ email: 'auth@test.com' }, { passwordChangedAt: new Date() });
+
+    // Log back in so the next test has a fresh, valid cookie to invalidate
+    // for real (this test only proved the DB-level check works, not that
+    // the actual change-password OTP flow writes passwordChangedAt at all).
+    const loginRes = await request(app).post('/api/auth/login').send({ email: 'auth@test.com', password: 'Password1!' });
+    if (loginRes.status !== 200) throw new Error(`Expected re-login to succeed, got ${loginRes.status}`);
+    const cookies = loginRes.headers['set-cookie'];
+    userCookie = cookies.find(c => c.startsWith('token=')).split(';')[0];
+    csrfToken = cookies.find(c => c.startsWith('csrfToken=')).split(';')[0].split('=')[1];
+  });
+
+  await test('The actual change-password OTP flow sets passwordChangedAt', async () => {
+    // Regression test: verifyChangePasswordOtp writes the new password via
+    // User.updateOne(), which bypasses the pre('save') hook that normally
+    // stamps passwordChangedAt — without setting it explicitly, a token
+    // captured before this call would keep working indefinitely after it.
+    // Asserted against the DB field directly rather than by racing a live
+    // cookie's rejection: JWT `iat` has 1-second granularity and protect()
+    // deliberately grants a 1-second grace for tokens issued the same
+    // second as the change, so a fast-running test can land the login and
+    // the change in the same wall-clock second and make cookie-rejection
+    // flaky through no fault of the fix itself.
+    const beforeChange = await User.findOne({ email: 'auth@test.com' }).select('+passwordChangedAt');
+
+    const otp = await captureOtp(() =>
+      request(app)
+        .post('/api/auth/change-password/request-otp')
+        .set('Cookie', `${userCookie}; csrfToken=${csrfToken}`)
+        .set('X-CSRF-Token', csrfToken)
+        .send({ currentPassword: 'Password1!', newPassword: 'Password2!' })
+    );
+
+    const verifyRes = await request(app)
+      .post('/api/auth/change-password/verify-otp')
+      .set('Cookie', `${userCookie}; csrfToken=${csrfToken}`)
+      .set('X-CSRF-Token', csrfToken)
+      .send({ otp });
+    if (verifyRes.status !== 200) throw new Error(`change-password/verify-otp failed: ${JSON.stringify(verifyRes.body)}`);
+
+    const afterChange = await User.findOne({ email: 'auth@test.com' }).select('+passwordChangedAt');
+    if (!afterChange.passwordChangedAt) {
+      throw new Error('passwordChangedAt was not set by the change-password OTP flow — sessions issued before this change would never be invalidated');
+    }
+    if (beforeChange.passwordChangedAt && afterChange.passwordChangedAt.getTime() <= beforeChange.passwordChangedAt.getTime()) {
+      throw new Error('passwordChangedAt did not advance after the password change');
+    }
+
+    const loginRes = await request(app).post('/api/auth/login').send({ email: 'auth@test.com', password: 'Password2!' });
+    if (loginRes.status !== 200) throw new Error(`Expected login with the new password to succeed, got ${loginRes.status}`);
+    const cookies = loginRes.headers['set-cookie'];
+    userCookie = cookies.find(c => c.startsWith('token=')).split(';')[0];
+    csrfToken = cookies.find(c => c.startsWith('csrfToken=')).split(';')[0].split('=')[1];
+  });
+
+  await test('Login does not reveal verification status before checking the password', async () => {
+    // Regression test: login() must not branch on isVerified until AFTER
+    // comparePassword succeeds, or response codes become an oracle for
+    // enumerating which emails are registered and their verification state.
+    const wrongPassRes = await request(app).post('/api/auth/login').send({ email: 'auth@test.com', password: 'definitely-wrong' });
+    if (wrongPassRes.status !== 401) throw new Error(`Expected 401 for a wrong password on a verified account, got ${wrongPassRes.status}`);
+
+    const unverified = await User.create({ name: 'Unverified', email: 'unverified@test.com', password: 'Password1!', role: 'student', isVerified: false });
+    const res = await request(app).post('/api/auth/login').send({ email: 'unverified@test.com', password: 'wrong-password' });
+    if (res.status !== 401) throw new Error(`An unverified account should get the same generic 401 as a wrong password, got ${res.status} (code: ${res.body.code})`);
+    if (res.body.code === 'EMAIL_NOT_VERIFIED') throw new Error('Verification status leaked before the password was checked');
   });
 
   console.log('\nALL TARGETED SECURITY TESTS PASSED');
