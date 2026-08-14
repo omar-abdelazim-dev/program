@@ -121,7 +121,6 @@ body.light-mode .continue-card {
 
 .hover-glow:hover {
     border-color: var(--role-color, var(--c-orange));
-    transform: translateY(-2px);
 }
 
 /* --- Role Accent System ---
@@ -1256,7 +1255,6 @@ body.light-mode .cc-star--empty {
 }
 
 /* 3. Bouncy Click Feedback for Buttons */
-.glass-btn:active,
 .nav-icon-btn-auth:active {
     box-shadow: var(--shadow);
     box-shadow: var(--outer-shadow);
@@ -2434,12 +2432,17 @@ body.light-mode .custom-select-value.placeholder {
     border-radius: 12px;
     min-height: 100px;
     min-width: 100%;
+    color: var(--text-h) !important;
+    font-family: inherit;
+    font-size: 0.95rem;
+    padding: 12px 16px;
 }
 
 .qa-reply-textarea:focus {
     border-color: var(--c-orange) !important;
     box-shadow: var(--outer-shadow) !important;
     outline: none;
+    color: var(--text-h) !important;
 }
 
 /* File Input Button Styling */
@@ -3578,4 +3581,44 @@ body.light-mode .light-inner-shadow {
     opacity: 1;
     visibility: visible;
     transform: translate(-50%, 0);
+}
+
+/* --- Disable hover & active translate/scale animations on buttons --- */
+.glass-btn:hover,
+.glass-btn:active,
+.auth-submit-btn:hover,
+.auth-submit-btn:active,
+.hover-glow:hover,
+.hover-glow:active,
+.sys-btn-primary:hover,
+.sys-btn-primary:active,
+.sys-btn-secondary:hover,
+.sys-btn-secondary:active,
+.sys-btn-danger:hover,
+.sys-btn-danger:active,
+.sys-btn-success:hover,
+.sys-btn-success:active,
+.quick-action-btn:hover,
+.quick-action-btn:active {
+    transform: none !important;
+}
+
+.glass-btn:active,
+.auth-submit-btn:active,
+.hover-glow:active,
+.sys-btn-primary:active,
+.sys-btn-secondary:active,
+.sys-btn-danger:active,
+.sys-btn-success:active,
+.quick-action-btn:active {
+    box-shadow: var(--inner-shadow) !important;
+}
+
+/* --- Prevent visited links inside notification dropdowns from turning purple --- */
+.profile-dropdown a,
+.profile-dropdown a:visited,
+.profile-dropdown a:hover,
+.profile-dropdown a:active {
+    color: inherit !important;
+    text-decoration: none !important;
 }

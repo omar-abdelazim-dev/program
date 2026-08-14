@@ -10,7 +10,9 @@ import FullPageLoader from './FullPageLoader';
 import studentLogo from '../assets/logo.png';
 import InstructorAnalyticsTab from './InstructorAnalyticsTab';
 import CurriculumBuilderTab from './CurriculumBuilderTab';
+import QuizBuilder from './QuizBuilder';
 import InstructorEngagementTab from './InstructorEngagementTab';
+import InstructorGradingTab from './InstructorGradingTab';
 import SettingsPage from './SettingsPage';
 import InstructorFinancialsTab from './InstructorFinancialsTab';
 import InstructorReviewsTab from './InstructorReviewsTab';
@@ -49,6 +51,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
   const [showLessonModal, setShowLessonModal] = useState(false);
   const [selectedCourseId, setSelectedCourseId] = useState(null);
   const [selectedModuleId, setSelectedModuleId] = useState(null);
+  const [quizBuilderContext, setQuizBuilderContext] = useState(null); // { courseId, moduleId, lesson } | null
 
   // Form states
   // INS-03: Replaced category/major with college
@@ -65,6 +68,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
   const [error, setError] = useState('');
   const [unreadEngagementCount, setUnreadEngagementCount] = useState(0);
   const [financialSummary, setFinancialSummary] = useState({ availableBalance: 0, transactions: [] });
+  const [pendingGradingCount, setPendingGradingCount] = useState(0);
 
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -117,6 +121,15 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
     }
   };
 
+  const fetchPendingGradingCount = async () => {
+    try {
+      const res = await api.get('/quiz-submissions?status=pending_review');
+      setPendingGradingCount((res.data.submissions || []).length);
+    } catch (err) {
+      console.error('Failed to load pending grading count', err);
+    }
+  };
+
   const fetchMyCourses = async () => {
     try {
       const res = await api.get('/courses/mine');
@@ -156,6 +169,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
         console.error('Failed to load financial summary in portal', finErr);
       }
       fetchUnreadCount();
+      fetchPendingGradingCount();
       fetchNotifications();
     } catch (err) {
       console.error(err);
@@ -277,9 +291,11 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
       if (selectedCourseId === courseId) {
         setSelectedCourseId(null);
       }
+      notyf.success('Course deleted successfully');
       fetchMyCourses();
     } catch (err) {
       console.error('Failed to delete course:', err);
+      notyf.error(err.response?.data?.message || 'Failed to delete course');
     }
   };
 
@@ -440,6 +456,33 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
               </span>
             )}
           </button>
+          <button className={`sidebar-icon-btn ${activeTab === 'grading' ? 'active' : ''}`} style={{ position: 'relative' }} onClick={() => setActiveTab('grading')} data-tooltip={t('instructor.nav.grading', 'Grading')}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+            {pendingGradingCount > 0 && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '4px',
+                  right: '4px',
+                  backgroundColor: 'var(--color-accent)',
+                  color: 'white',
+                  fontSize: '0.7rem',
+                  fontWeight: 'bold',
+                  width: '18px',
+                  height: '18px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  pointerEvents: 'none',
+                }}
+              >
+                {pendingGradingCount > 99 ? '99+' : pendingGradingCount}
+              </span>
+            )}
+          </button>
           <button className={`sidebar-icon-btn ${activeTab === 'reviews' ? 'active' : ''}`} onClick={() => setActiveTab('reviews')} data-tooltip={t('instructor.nav.reviews')}>
             {/* Added i18n to Reviews tooltip title */}
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -486,47 +529,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
           </div>
 
           <div className="header-right">
-            {/* Language Toggle */}
-            {activeTab !== 'settings' && (
-              <button
-              className="utility-icon-btn"
-              onClick={toggleLanguage}
-              aria-label="Toggle language"
-              style={{
-                fontWeight: '600',
-                fontSize: '0.9rem',
-                fontFamily: 'Inter, sans-serif'
-              }}
-            >
-              {i18n.language === "ar" ? "EN" : "AR"}
-            </button>
-            )}
 
-            {activeTab !== 'settings' && (
-              <button
-              className="utility-icon-btn theme-toggle-btn"
-              onClick={toggleTheme}
-              aria-label="Toggle theme"
-            >
-              {isLightMode ? (
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-                  <circle cx="12" cy="12" r="4"></circle>
-                  <line x1="12" y1="2" x2="12" y2="4"></line>
-                  <line x1="12" y1="20" x2="12" y2="22"></line>
-                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                  <line x1="2" y1="12" x2="4" y2="12"></line>
-                  <line x1="20" y1="12" x2="22" y2="12"></line>
-                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                </svg>
-              )}
-            </button>
-            )}
 
             {/* Notifications */}
             {activeTab !== 'settings' && (
@@ -795,6 +798,8 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                   setAttachmentFile(null);
                   setShowLessonModal(true);
                 }}
+                onOpenAddQuiz={(courseId, moduleId) => setQuizBuilderContext({ courseId, moduleId, lesson: null })}
+                onOpenEditQuiz={(courseId, lesson) => setQuizBuilderContext({ courseId, moduleId: null, lesson })}
                 onEditCourse={(course) => {
                   setEditingCourse(course);
                   setFormData({
@@ -813,6 +818,10 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
           ) : activeTab === 'engagement' ? (
             <div className="animate-entrance">
               <InstructorEngagementTab courses={courses} onAction={fetchUnreadCount} />
+            </div>
+          ) : activeTab === 'grading' ? (
+            <div className="animate-entrance">
+              <InstructorGradingTab onAction={fetchPendingGradingCount} />
             </div>
           ) : activeTab === 'analytics' ? (
             <div className="animate-entrance">
@@ -1289,6 +1298,19 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
             </form>
           </div>
         </div>
+      )}
+
+      {quizBuilderContext && (
+        <QuizBuilder
+          courseId={quizBuilderContext.courseId}
+          moduleId={quizBuilderContext.moduleId}
+          lesson={quizBuilderContext.lesson}
+          onClose={() => setQuizBuilderContext(null)}
+          onSaved={() => {
+            setQuizBuilderContext(null);
+            fetchMyCourses();
+          }}
+        />
       )}
       </main>
     </div>

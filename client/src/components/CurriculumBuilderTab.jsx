@@ -5,7 +5,7 @@ import ThreeDotMenu from './common/ThreeDotMenu';
 import { useTranslation } from 'react-i18next';
 import api from '../api/axios';
 
-export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {}, onOpenAddLesson, onOpenEditLesson, onEditCourse, onDeleteCourse, onAction }) {
+export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {}, onOpenAddLesson, onOpenEditLesson, onOpenAddQuiz, onOpenEditQuiz, onEditCourse, onDeleteCourse, onAction }) {
   const { t } = useTranslation();
   const [selectedCourseId, setSelectedCourseId] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -21,6 +21,7 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
   const [newModuleTitle, setNewModuleTitle] = useState('');
   const [isAddModuleFocused, setIsAddModuleFocused] = useState(false);
   const [isEditModuleFocused, setIsEditModuleFocused] = useState(false);
+  const [hoveredModuleId, setHoveredModuleId] = useState(null);
 
   const selectedCourse = courses.find(c => c._id === selectedCourseId);
 
@@ -34,10 +35,7 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
   }, [selectedCourseId, modulesByCourse]);
 
   const toggleModuleCollapsed = (moduleId) => {
-    setCollapsedModules(prev => {
-      const currentlyCollapsed = prev[moduleId] !== false;
-      return { ...prev, [moduleId]: !currentlyCollapsed };
-    });
+    setCollapsedModules(prev => ({ ...prev, [moduleId]: prev[moduleId] === false ? true : false }));
   };
 
   const handleAddModule = async () => {
@@ -371,7 +369,22 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
 
                             <button
                               onClick={() => toggleModuleCollapsed(module._id)}
-                              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--c-sub)', display: 'flex', transition: 'transform 0.25s', transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}
+                              onMouseEnter={() => setHoveredModuleId(module._id)}
+                              onMouseLeave={() => setHoveredModuleId(null)}
+                              style={{ 
+                                background: hoveredModuleId === module._id ? 'var(--bg-main)' : 'transparent',
+                                border: 'none', 
+                                cursor: 'pointer', 
+                                color: 'var(--c-sub)', 
+                                display: 'flex', 
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'all 0.25s', 
+                                transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
+                                padding: '6px',
+                                borderRadius: '50px',
+                                boxShadow: hoveredModuleId === module._id ? 'var(--inner-shadow, inset 0 2px 4px 0 rgba(0,0,0,0.06))' : 'none'
+                              }}
                               title={isCollapsed ? 'Expand' : 'Collapse'}
                             >
                               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
@@ -432,6 +445,12 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                             >
                               {t('instructor.curriculum.add_lesson')}
                             </button>
+                            <button
+                              onClick={() => onOpenAddQuiz(selectedCourseId, module._id)}
+                              style={{ width: 'auto', borderRadius: '20px', padding: '8px 16px', fontWeight: 600, fontSize: '0.85rem', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: 'none', cursor: 'pointer' }}
+                            >
+                              {t('instructor.curriculum.add_quiz', '+ Add Quiz')}
+                            </button>
                             <ThreeDotMenu
                               options={[
                                 {
@@ -485,7 +504,11 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                                       </div>
                                       <div>
                                         <h4 style={{ margin: 0, fontSize: '1.0rem', color: 'var(--text-h)' }}>{lesson.title}</h4>
-                                        <span style={{ fontSize: '0.8rem', color: 'var(--c-sub)' }}>{t('instructor.curriculum.video_content', 'Video content')}</span>
+                                        <span style={{ fontSize: '0.8rem', color: 'var(--c-sub)' }}>
+                                          {lesson.lessonType === 'quiz'
+                                            ? t('instructor.curriculum.quiz_content', 'Quiz')
+                                            : t('instructor.curriculum.video_content', 'Video content')}
+                                        </span>
                                       </div>
                                     </div>
 
@@ -526,7 +549,7 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                                         options={[
                                           {
                                             label: t('instructor.dashboard.actions.edit', 'Edit'),
-                                            action: () => onOpenEditLesson(lesson),
+                                            action: () => (lesson.lessonType === 'quiz' ? onOpenEditQuiz(selectedCourseId, lesson) : onOpenEditLesson(lesson)),
                                           },
                                           {
                                             label: t('instructor.dashboard.actions.delete', 'Delete'),

@@ -67,7 +67,7 @@ const InProgressCard = ({
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            Pending
+            {t('admin.pending_approval', 'Pending Approval')}
           </button>
         ) : (
           <button
