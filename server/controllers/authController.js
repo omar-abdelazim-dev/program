@@ -587,15 +587,15 @@ export const verifyPasswordResetOtp = async (req, res) => {
     const { email, otp } = req.body;
     if (!email || !otp) return res.status(400).json({ message: 'Email and OTP are required' });
 
-    // 'No active code found' from verifyOTP below means "this account
-    // exists but never called request-otp" — distinct from a non-existent
-    // account only if we let the two produce different messages. A user
-    // who legitimately got this far already passed request-otp (which
-    // returns the same response regardless of account existence), so
-    // *this* specific pairing is the one enumeration risk on this
-    // endpoint; other verifyOTP errors (wrong/expired/reused code, too
-    // many attempts) are safe to report accurately since reaching them at
-    // all already implies request-otp succeeded.
+    // request-otp always returns the same 200 whether the account exists or
+    // not, so an attacker can't learn anything from that call alone — but
+    // this endpoint can be called directly afterward with a guessed email
+    // and a throwaway code, and every one of verifyOTP's distinct error
+    // strings ('No active code found' vs 'Invalid code' vs 'expired' vs
+    // 'already used' vs 'too many attempts') would tell them whether a
+    // record exists for that email at all, i.e. whether request-otp
+    // actually created one. Every failure path here has to collapse to the
+    // same response, not just the account-not-found case.
     const genericInvalid = { message: 'Invalid or expired code.' };
 
     const user = await User.findOne({ email: email.toLowerCase() });
@@ -605,10 +605,7 @@ export const verifyPasswordResetOtp = async (req, res) => {
     try {
       metadata = await verifyOTP({ userId: user._id, purpose: 'password_reset', otp });
     } catch (otpErr) {
-      if (otpErr.message === 'No active code found. Please request a new one.') {
-        return res.status(400).json(genericInvalid);
-      }
-      return res.status(400).json({ message: otpErr.message });
+      return res.status(400).json(genericInvalid);
     }
 
     if (!metadata || !metadata.newPasswordHash) {
@@ -782,15 +779,20 @@ export const verifyEmail = async (req, res) => {
     const { email, otp } = req.body;
     if (!email || !otp) return res.status(400).json({ message: 'Email and OTP are required' });
 
+    // Same enumeration-resistance requirement as resendVerification right
+    // below: this is public and unauthenticated, so a differentiated
+    // "user not found" vs "already verified" vs a wrong-code message would
+    // let anyone probe arbitrary emails for registration/verification
+    // state. Every failure path here returns the identical message.
+    const genericInvalid = { message: 'Invalid or expired code.' };
+
     const user = await User.findOne({ email: email.toLowerCase() });
-    if (!user) return res.status(400).json({ message: 'User not found' });
-    
-    if (user.isVerified) return res.status(400).json({ message: 'Email is already verified' });
+    if (!user || user.isVerified) return res.status(400).json(genericInvalid);
 
     try {
       await verifyOTP({ userId: user._id, purpose: 'register_verification', otp });
     } catch (otpErr) {
-      return res.status(400).json({ message: otpErr.message });
+      return res.status(400).json(genericInvalid);
     }
 
     user.isVerified = true;
