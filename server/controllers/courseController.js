@@ -565,14 +565,25 @@ export const republishCourse = async (req, res) => {
 };
 
 // @route   DELETE /api/courses/:id
-// @access  Private (admin/superadmin only) — instructors can no longer delete
-// a course directly; they request deletion (see requestDeleteCourse) and an
-// admin performs the actual delete after review.
+// @access  Private (instructor, admin, superadmin)
+// Instructors can delete their own courses. Admins can delete any course.
 export const deleteCourse = async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
     if (!course) {
       return res.status(404).json({ message: 'Course not found' });
+    }
+
+    const isAdmin = req.user.role === 'admin' || req.user.role === 'superadmin';
+    if (!isAdmin) {
+      // Instructors can delete their own courses (see courseRoutes.js), but
+      // never one a paying, approved student is already enrolled in — that's
+      // still admin-only territory, same as it always was, now enforced here
+      // instead of by blanket route authorization.
+      const hasApprovedEnrollment = await Enrollment.exists({ course: course._id, status: 'approved' });
+      if (hasApprovedEnrollment) {
+        return res.status(409).json({ message: 'This course has enrolled students and cannot be deleted directly — contact an admin.' });
+      }
     }
 
     // Cleanup associated lessons and modules. Lessons are keyed off

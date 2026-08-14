@@ -83,4 +83,3 @@ export const globalApiLimiter = rateLimit({
   // Skip rate limiting for health checks and dev environment
   skip: (req) => process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' || req.path === '/api/health',
 });
-

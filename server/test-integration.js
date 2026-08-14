@@ -328,6 +328,19 @@ const run = async () => {
   assert(res.status === 409, 'Re-grading an already-graded submission should be rejected');
   console.log('✓ Double-grading a submission correctly rejected (409)');
 
+  // --- COURSE DELETION: instructors own their course, but not over an enrolled student's head ---
+
+  // 25. Instructor can delete their own course... but not this one, since a
+  // student has an approved enrollment in it.
+  res = await agentInstructor.delete(`/api/courses/${courseId}`).set('X-CSRF-Token', instructorCsrf);
+  assert(res.status === 409, `Deleting a course with an approved enrollment should be blocked: ${JSON.stringify(res.body)}`);
+  console.log('✓ Instructor correctly blocked from deleting a course with an enrolled student (409)');
+
+  // 26. ...but CAN delete a course of their own with no enrollments
+  res = await agentInstructor.delete(`/api/courses/${emptyCourseId}`).set('X-CSRF-Token', instructorCsrf);
+  assert(res.status === 200, `Instructor should be able to delete their own unenrolled course: ${JSON.stringify(res.body)}`);
+  console.log('✓ Instructor successfully deleted their own course with no enrollments');
+
   await mongoose.disconnect();
   await mongod.stop();
   console.log('\nALL INTEGRATION TESTS PASSED');

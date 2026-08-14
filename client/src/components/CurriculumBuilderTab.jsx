@@ -19,6 +19,7 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
   const [moduleTitleDraft, setModuleTitleDraft] = useState('');
   const [addingModule, setAddingModule] = useState(false);
   const [newModuleTitle, setNewModuleTitle] = useState('');
+  const [hoveredModuleId, setHoveredModuleId] = useState(null);
 
   const selectedCourse = courses.find(c => c._id === selectedCourseId);
 
@@ -32,7 +33,7 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
   }, [selectedCourseId, modulesByCourse]);
 
   const toggleModuleCollapsed = (moduleId) => {
-    setCollapsedModules(prev => ({ ...prev, [moduleId]: !prev[moduleId] }));
+    setCollapsedModules(prev => ({ ...prev, [moduleId]: prev[moduleId] === false ? true : false }));
   };
 
   const handleAddModule = async () => {
@@ -305,7 +306,7 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                   </div>
                 ) : (
                   localModules.map((module, mIndex) => {
-                    const isCollapsed = !!collapsedModules[module._id];
+                    const isCollapsed = collapsedModules[module._id] !== false;
                     const lessons = module.lessons || [];
                     return (
                       <div key={module._id} className="glass-card" style={{ padding: 0, overflow: 'hidden' }}>
@@ -335,7 +336,22 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
 
                             <button
                               onClick={() => toggleModuleCollapsed(module._id)}
-                              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--c-sub)', display: 'flex', transition: 'transform 0.25s', transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}
+                              onMouseEnter={() => setHoveredModuleId(module._id)}
+                              onMouseLeave={() => setHoveredModuleId(null)}
+                              style={{ 
+                                background: hoveredModuleId === module._id ? 'var(--bg-main)' : 'transparent',
+                                border: 'none', 
+                                cursor: 'pointer', 
+                                color: 'var(--c-sub)', 
+                                display: 'flex', 
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'all 0.25s', 
+                                transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
+                                padding: '6px',
+                                borderRadius: '50px',
+                                boxShadow: hoveredModuleId === module._id ? 'var(--inner-shadow, inset 0 2px 4px 0 rgba(0,0,0,0.06))' : 'none'
+                              }}
                               title={isCollapsed ? 'Expand' : 'Collapse'}
                             >
                               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
@@ -364,7 +380,7 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                             <button
                               onClick={() => onOpenAddLesson(selectedCourseId, module._id)}
-                              style={{ width: 'auto', borderRadius: '20px', padding: '8px 16px', fontWeight: 600, fontSize: '0.85rem', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: 'none', cursor: 'pointer' }}
+                              style={{ width: 'auto', borderRadius: '20px', padding: '8px 16px', fontWeight: 600, fontSize: '0.85rem', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: 'none', boxShadow: 'var(--inner-shadow, inset 0 2px 4px 0 rgba(0,0,0,0.06))', cursor: 'pointer' }}
                             >
                               {t('instructor.curriculum.add_lesson')}
                             </button>
@@ -439,7 +455,7 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                                       {(() => {
                                         const isPublished = (pendingStatuses[lesson._id] || lesson.status) === 'published';
                                         return (
-                                          <div style={{ position: 'relative', display: 'flex', background: 'var(--bg-surface)', padding: '4px', borderRadius: '50px', boxShadow: 'var(--inner-shadow)', width: '180px', height: '34px' }}>
+                                          <div style={{ position: 'relative', display: 'flex', background: 'var(--bg-surface)', padding: '4px', borderRadius: '50px', boxShadow: 'var(--outer-shadow)', width: '180px', height: '34px' }}>
                                             <div style={{
                                               position: 'absolute',
                                               top: '4px',
@@ -448,7 +464,7 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                                               height: 'calc(100% - 8px)',
                                               borderRadius: '50px',
                                               background: 'var(--bg-main)',
-                                              boxShadow: 'var(--outer-shadow)',
+                                              boxShadow: 'var(--inner-shadow)',
                                               transition: 'inset-inline-start 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                                               zIndex: 0,
                                             }} />
