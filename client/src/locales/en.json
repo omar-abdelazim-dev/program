@@ -568,6 +568,7 @@
     "err_email_not_verified": "Your email address is not verified",
     "err_account_locked": "Account is locked. Please reset your password",
     "err_account_blocked": "Your account has been blocked. Please contact support",
+    "password_mismatch": "Passwords do not match",
     "hero_h1_1": "Learn from ",
     "hero_h1_highlight_1": "real courses.",
     "hero_h1_highlight_2": "track real progress.",

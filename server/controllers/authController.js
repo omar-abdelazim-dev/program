@@ -5,12 +5,10 @@ import EmailOTP from '../models/EmailOTP.js';
 import generateTokenAndSetCookie from '../utils/generateToken.js';
 import { getInternalConfig } from '../utils/configFetcher.js';
 import { logAudit } from '../utils/auditLogger.js';
-import { checkPasswordPolicy } from '../validators/authValidators.js';
 import logger from '../utils/logger.js';
-import { requestOTP, verifyOTP } from '../utils/otpService.js';
+import { requestOTP, verifyOTP, POST_VERIFY_GRACE_MINUTES } from '../utils/otpService.js';
 import { validatePasswordStrength } from '../utils/passwordRules.js';
 import { BCRYPT_ROUNDS } from '../config/security.js';
-const RESET_TOKEN_EXPIRY_MINUTES = 30;
 
 // @route   POST /api/auth/check-email
 // @access  Public
@@ -108,7 +106,7 @@ export const register = async (req, res) => {
       return res.status(403).json({ message: 'Email address not verified. Please verify your email first.' });
     }
     const timeSinceVerification = (Date.now() - otpRecord.usedAt.getTime()) / 1000 / 60;
-    if (timeSinceVerification > 30) {
+    if (timeSinceVerification > POST_VERIFY_GRACE_MINUTES) {
       return res.status(403).json({ message: 'Verification expired. Please restart registration.' });
     }
 

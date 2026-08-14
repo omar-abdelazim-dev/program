@@ -16,7 +16,7 @@ async function runTests() {
   await mongoose.connect(mongoServer.getUri());
 
   const instructor = await User.create({
-    name: 'Instructor', email: 'inst@test.com', password: 'Password123!', role: 'instructor'
+    name: 'Instructor', email: 'inst@test.com', password: 'Password123!', role: 'instructor', isVerified: true
   });
   token = jwt.sign({ userId: instructor._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 

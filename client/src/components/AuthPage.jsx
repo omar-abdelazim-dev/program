@@ -76,6 +76,8 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
           email: otpEmail,
           newPassword
         });
+      } else if (otpPurpose === 'register_verification') {
+        await api.post('/auth/resend-verification', { email: otpEmail });
       }
       setForgotResendCooldown(60);
     } catch (err) {
@@ -232,6 +234,15 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
           setOtpEmail(email);
           setOtpPurpose('register_verification');
           setAuthView('otp_verify');
+          setForgotResendCooldown(60);
+          // Login only tells us verification is missing — it doesn't send a
+          // code itself, so the account arrives at the OTP screen with
+          // nothing to enter unless we request one here.
+          try {
+            await api.post('/auth/resend-verification', { email });
+          } catch (resendErr) {
+            setAuthError(resendErr.response?.data?.message || 'Failed to send verification code');
+          }
         } else if (err.response?.data?.code === 'LOCKED_PENDING_RESET') {
           setOtpEmail(email);
           setAuthView('forgot_request');

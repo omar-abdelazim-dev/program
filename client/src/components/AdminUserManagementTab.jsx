@@ -206,8 +206,8 @@ export default function AdminUserManagementTab({
     if (accountStatus === "Deleted" && !u.isDeleted) return false;
 
     // Verification filter
-    if (verification === "Verified" && !u.isEmailVerified) return false;
-    if (verification === "Unverified" && u.isEmailVerified) return false;
+    if (verification === "Verified" && !u.isVerified) return false;
+    if (verification === "Unverified" && u.isVerified) return false;
 
     return true;
   });
@@ -1442,14 +1442,14 @@ export default function AdminUserManagementTab({
                     </div>
                     <div
                       style={{
-                        color: sidePanelUser.isEmailVerified
+                        color: sidePanelUser.isVerified
                           ? "#10b981"
                           : "#ef4444",
                         fontSize: "0.95rem",
                         fontWeight: "600",
                       }}
                     >
-                      {sidePanelUser.isEmailVerified ? "Yes" : "No"}
+                      {sidePanelUser.isVerified ? "Yes" : "No"}
                     </div>
                   </div>
                 </div>

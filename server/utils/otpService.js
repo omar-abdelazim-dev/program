@@ -6,6 +6,11 @@ import logger from './logger.js';
 const OTP_SECRET = process.env.OTP_SECRET || 'change_me_in_production';
 const OTP_EXPIRY_MINUTES = parseInt(process.env.OTP_EXPIRY_MINUTES || '10', 10);
 const RESEND_COOLDOWN_SEC = parseInt(process.env.OTP_RESEND_COOLDOWN_SECONDS || '60', 10);
+// How long a *verified* record survives before the TTL index reaps it —
+// separate from OTP_EXPIRY_MINUTES, which governs how long the code itself
+// is enterable. This is the window the caller (e.g. authController.register)
+// has to finish whatever the OTP was unlocking after verification succeeds.
+export const POST_VERIFY_GRACE_MINUTES = 30;
 
 function getTransporter() {
   return nodemailer.createTransport({
@@ -37,35 +42,40 @@ export function verifyOtpHash(candidateCode, storedHash) {
 export async function requestOTP({ userId, email, purpose, metadata = {}, displayName = 'User' }) {
   const query = userId ? { userId, purpose } : { email, purpose };
 
-  // Check cooldown
-  const existingOtp = await EmailOTP.findOne(query);
-  if (existingOtp) {
-    const elapsed = (Date.now() - existingOtp.updatedAt.getTime()) / 1000;
-    if (elapsed < RESEND_COOLDOWN_SEC) {
-      const waitTime = Math.ceil(RESEND_COOLDOWN_SEC - elapsed);
-      throw new Error(`Please wait ${waitTime} seconds before requesting a new code.`);
-    }
-  }
-
   const rawOtp = generateOtp();
   if (process.env.NODE_ENV === 'development') {
     console.log(`\n[DEV OTP DEBUG] 🔑 Purpose: ${purpose} | Email: ${email} | Code: ${rawOtp}\n`);
   }
   const hashedOtp = hashOtp(rawOtp);
   const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
+  const cooldownCutoff = new Date(Date.now() - RESEND_COOLDOWN_SEC * 1000);
 
-  await EmailOTP.findOneAndUpdate(
-    query,
-    {
-      email,
-      otpHash: hashedOtp,
-      attempts: 0,
-      expiresAt,
-      usedAt: null,
-      metadata,
-    },
-    { upsert: true, new: true }
+  // Atomic cooldown check + write: only overwrite a record that's either
+  // missing or older than the cooldown window. A plain findOne-then-write
+  // has a gap two concurrent requests (e.g. a double-clicked "Resend") can
+  // both slip through; this collapses the check and the write into one
+  // conditional query so at most one of them wins.
+  let record = await EmailOTP.findOneAndUpdate(
+    { ...query, updatedAt: { $lt: cooldownCutoff } },
+    { email, otpHash: hashedOtp, attempts: 0, expiresAt, usedAt: null, metadata },
+    { new: true }
   );
+
+  if (!record) {
+    // Either no record exists yet (first-ever request for this query — safe
+    // to create), or one exists and is still within the cooldown window.
+    const existing = await EmailOTP.findOne(query);
+    if (existing) {
+      const elapsed = (Date.now() - existing.updatedAt.getTime()) / 1000;
+      const waitTime = Math.ceil(RESEND_COOLDOWN_SEC - elapsed);
+      throw new Error(`Please wait ${waitTime} seconds before requesting a new code.`);
+    }
+    record = await EmailOTP.findOneAndUpdate(
+      query,
+      { email, otpHash: hashedOtp, attempts: 0, expiresAt, usedAt: null, metadata },
+      { upsert: true, new: true }
+    );
+  }
 
   let subject = 'Your Verification Code';
   let title = 'Verification Code';
@@ -110,6 +120,13 @@ export async function requestOTP({ userId, email, purpose, metadata = {}, displa
 </body>
 </html>`;
 
+  // Best-effort delivery, matching the graceful-degradation pattern used for
+  // payout notification emails elsewhere (financialController.js) — email
+  // delivery isn't reliably configured in every environment this app runs
+  // in, and the OTP is already persisted and independently verifiable (plus
+  // logged to console in development) regardless of whether the send
+  // actually succeeds. A dead mail provider should never be able to block
+  // registration or password reset outright.
   try {
     await getTransporter().sendMail({
       from: `"Program Support" <${process.env.GMAIL_USER}>`,
@@ -119,7 +136,6 @@ export async function requestOTP({ userId, email, purpose, metadata = {}, displa
     });
   } catch (err) {
     logger.error('Failed to send OTP email', { error: err.message, email });
-    throw new Error('Could not send verification email. Please try again later.');
   }
 
   return { expiresAt };
@@ -134,7 +150,7 @@ export async function verifyOTP({ userId, email, purpose, otp }) {
   if (record.attempts >= record.maxAttempts) throw new Error('Too many failed attempts. Please request a new code.');
 
   const isValid = verifyOtpHash(otp, record.otpHash);
-  
+
   if (!isValid) {
     record.attempts += 1;
     await record.save();
@@ -142,6 +158,11 @@ export async function verifyOTP({ userId, email, purpose, otp }) {
   }
 
   record.usedAt = new Date();
+  // Extend the TTL past verification so the caller has POST_VERIFY_GRACE_MINUTES
+  // to act on it (e.g. finish registration) — the code itself is already
+  // consumed (usedAt set) and can't be verified again, this only keeps the
+  // record (and its metadata) alive long enough to be read back.
+  record.expiresAt = new Date(Date.now() + POST_VERIFY_GRACE_MINUTES * 60 * 1000);
   await record.save();
 
   return record.metadata;

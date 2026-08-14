@@ -67,14 +67,6 @@ const passwordValidator = body('password')
     return true;
   });
 
-const newPasswordValidator = body('newPassword')
-  .notEmpty().withMessage('New password is required')
-  .custom((value) => {
-    const err = checkPasswordPolicy(value);
-    if (err) throw new Error(err);
-    return true;
-  });
-
 // Letters (Latin or Arabic) and spaces only — rejects digits/symbols so a
 // name field can't be used to store arbitrary data.
 const NAME_PATTERN = /^[a-zA-Z؀-ۿ\s]*$/;
@@ -112,24 +104,6 @@ export const validateLogin = [
   handleValidationErrors,
 ];
 
-// ─── Validate Change Password ────────────────────────────────────────────────
-export const validateChangePassword = [
-  body('currentPassword')
-    .notEmpty().withMessage('Current password is required'),
-
-  newPasswordValidator,
-
-  body('newPassword')
-    .custom((value, { req }) => {
-      if (value === req.body.currentPassword) {
-        throw new Error('New password must be different from the current password');
-      }
-      return true;
-    }),
-
-  handleValidationErrors,
-];
-
 // ─── Validate Check Email ────────────────────────────────────────────────────
 export const validateCheckEmail = [
   body('email')
@@ -137,24 +111,6 @@ export const validateCheckEmail = [
     .notEmpty().withMessage('Email is required')
     .isEmail().withMessage('Please provide a valid email address')
     .normalizeEmail({ gmail_remove_dots: false }),
-
-  handleValidationErrors,
-];
-
-// ─── Validate Forgot Password ─────────────────────────────────────────────────
-export const validateForgotPassword = [
-  body('email')
-    .trim()
-    .notEmpty().withMessage('Email is required')
-    .isEmail().withMessage('Please provide a valid email address')
-    .normalizeEmail({ gmail_remove_dots: false }),
-
-  handleValidationErrors,
-];
-
-// ─── Validate Reset Password ─────────────────────────────────────────────────
-export const validateResetPassword = [
-  newPasswordValidator,
 
   handleValidationErrors,
 ];

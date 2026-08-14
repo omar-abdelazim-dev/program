@@ -502,12 +502,16 @@ function AccountSection({ user, setUser, onLogout }) {
         await api.post("/auth/change-password/verify-otp", {
           otp: passwordOtpCode,
         });
-        setPasswordSuccess(t("settings.account.password_success", "Password updated successfully."));
+        setPasswordSuccess(t("settings.account.password_success", "Password updated successfully. Logging you out — please log in again with your new password."));
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
         setPasswordOtpStep(false);
         setPasswordOtpCode("");
+        // The server already revoked every session and cleared cookies as
+        // part of this change — without this, the user keeps browsing on
+        // dead cookies until their next request 401s with no explanation.
+        setTimeout(() => onLogout(), 2000);
       } catch (err) {
         setPasswordError(err.response?.data?.message || t("settings.account.password_error", "Failed to verify OTP"));
       } finally {
