@@ -5,14 +5,14 @@ import PayoutAuditLog from '../models/PayoutAuditLog.js';
 import User from '../models/User.js';
 import Notification from '../models/Notification.js';
 import logger from '../utils/logger.js';
+import { getInternalConfig } from '../utils/configFetcher.js';
+import * as emailService from '../utils/emailService.js';
 import {
   generateOtp,
   hashOtp,
   verifyOtp,
   otpExpiresAt,
   resendCooldownEnd,
-  sendPayoutOtpEmail,
-  sendAdminPayoutAlertEmail,
   MAX_ATTEMPTS,
 } from '../utils/payoutOtp.js';
 
@@ -90,12 +90,11 @@ export const requestOtp = async (req, res) => {
     }
 
     // Send email FIRST so if email transport fails, DB cooldown is not set prematurely
-    await sendPayoutOtpEmail({
+    await emailService.sendOtpVerificationEmail({
       toEmail: payoutEmail,
-      code,
-      amount: Math.abs(tx.amount),
-      instructorName: req.user.name || 'Instructor',
-      emailMismatch,
+      account_email: req.user.email,
+      otp_code: code,
+      expiry_minutes: 10,
     });
 
     // Upsert: replace any existing OTP for this payout AFTER email successfully sent
@@ -244,18 +243,20 @@ export const verifyPayoutOtp = async (req, res) => {
 
     // Send email notification to all admins asynchronously
     try {
-      const admins = await User.find({ role: { $in: ['admin', 'superadmin'] } }).select('email');
-      const adminEmails = admins.map(a => a.email).filter(Boolean);
-      if (adminEmails.length > 0) {
-        await sendAdminPayoutAlertEmail({
-          adminEmails,
-          instructorName: req.user.name || 'Instructor',
-          instructorEmail: req.user.email,
-          amount: Math.abs(result.tx.amount),
-          expectedPayout: result.tx.expectedPayout,
-          method: result.tx.payoutMethod,
-          details: result.tx.payoutDetails,
-          referenceId: result.tx.referenceId,
+      const admins = await User.find({ role: { $in: ['admin', 'superadmin'] } }).select('email name');
+      if (admins.length > 0) {
+        await emailService.sendAdminNewRequestEmail({
+          adminEmails: admins.map(a => ({ email: a.email, name: a.name })),
+          request_id: result.tx._id,
+          request_type_label: 'New Payout Request',
+          request_type_tag: 'PAYOUT',
+          submitted_date: new Date().toLocaleDateString(),
+          item_title: `Payout for ${req.user.name}`,
+          requester_name: req.user.name || 'Instructor',
+          requester_role: 'Instructor',
+          review_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/admin/financials/payouts`,
+          queue_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/admin/requests`,
+          settings_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/admin/settings`
         });
       }
     } catch (adminEmailErr) {

@@ -9,6 +9,7 @@ import { escapeRegex } from '../utils/escapeRegex.js';
 import { logAudit } from '../utils/auditLogger.js';
 import Notification from '../models/Notification.js';
 import logger from '../utils/logger.js';
+import * as emailService from '../utils/emailService.js';
 
 // @route   GET /api/admin/stats
 // @access  Private (Admin)
@@ -830,6 +831,25 @@ export const approveEnrollment = async (req, res) => {
       link: `/learn/${enrollment.course}`
     });
 
+    try {
+      const student = await User.findById(enrollment.student).select('name email');
+      const instructor = course.instructor ? await User.findById(course.instructor).select('name') : null;
+      if (student && student.email) {
+        await emailService.sendStudentEnrollApprovedEmail({
+          toEmail: student.email,
+          student_name: student.name || 'Student',
+          course_title: course?.title || 'Course',
+          instructor_name: instructor?.name || 'Instructor',
+          enrollment_date: new Date().toLocaleDateString(),
+          course_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/learn/${enrollment.course}`,
+          help_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/help`,
+          settings_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/student/settings`
+        });
+      }
+    } catch (err) {
+      logger.error('Failed to send enrollment approval email', { err: err.message });
+    }
+
     res.status(200).json({ message: 'Enrollment request approved', enrollment });
   } catch (error) {
     logger.error('Error approving enrollment', { error: error.message, stack: error.stack });
@@ -867,6 +887,24 @@ export const rejectEnrollment = async (req, res) => {
       type: 'system',
       link: `/courses/${enrollment.course?._id || enrollment.course}`
     });
+
+    try {
+      const student = await User.findById(enrollment.student).select('name email');
+      if (student && student.email) {
+        await emailService.sendStudentEnrollRejectedEmail({
+          toEmail: student.email,
+          student_name: student.name || 'Student',
+          course_title: enrollment.course?.title || 'Course',
+          rejection_reason: reason || 'Does not meet criteria.',
+          review_date: new Date().toLocaleDateString(),
+          browse_courses_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/courses`,
+          help_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/help`,
+          settings_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/student/settings`
+        });
+      }
+    } catch (err) {
+      logger.error('Failed to send enrollment rejection email', { err: err.message });
+    }
 
     res.status(200).json({ message: 'Enrollment request rejected', enrollment });
   } catch (error) {

@@ -12,15 +12,7 @@ const RESEND_COOLDOWN_SEC = parseInt(process.env.OTP_RESEND_COOLDOWN_SECONDS || 
 // has to finish whatever the OTP was unlocking after verification succeeds.
 export const POST_VERIFY_GRACE_MINUTES = 30;
 
-function getTransporter() {
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.GMAIL_USER,
-      pass: process.env.GMAIL_APP_PASSWORD,
-    },
-  });
-}
+import * as emailService from './emailService.js';
 
 // displayName on the pre-registration path comes straight from an
 // unauthenticated request body (sendRegistrationOtp) with no format
@@ -101,75 +93,15 @@ export async function requestOTP({ userId, email, purpose, metadata = {}, displa
     }
   }
 
-  let subject = 'Your Verification Code';
-  let title = 'Verification Code';
-  let textContext = 'Use the code below to verify your request:';
-
-  if (purpose === 'password_reset') {
-    subject = 'Password Reset Code';
-    title = 'Reset Your Password';
-    textContext = 'You requested a password reset. Use the code below to set your new password:';
-  } else if (purpose === 'register_verification') {
-    subject = 'Verify Your Email Address';
-    title = 'Welcome!';
-    textContext = 'Thank you for registering. Please verify your email address using the code below:';
-  } else if (purpose === 'password_change') {
-    subject = 'Password Change Request';
-    title = 'Change Your Password';
-    textContext = 'You requested to change your password. Use the code below to confirm this change:';
-  }
-
-  const html = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"/></head>
-<body style="font-family:sans-serif;background:#0f172a;color:#e2e8f0;margin:0;padding:0;">
-  <div style="max-width:480px;margin:40px auto;background:#1e293b;border-radius:16px;overflow:hidden;">
-    <div style="background:linear-gradient(135deg,#3b82f6,#2563eb);padding:24px 32px;">
-      <h1 style="margin:0;font-size:1.4rem;color:#fff;">🛡️ ${title}</h1>
-    </div>
-    <div style="padding:32px;">
-      <p>Hi <strong>${escapeHtml(displayName)}</strong>,</p>
-      <p>${textContext}</p>
-      <div style="text-align:center;margin:28px 0;">
-        <span style="font-size:2.6rem;font-weight:800;letter-spacing:10px;color:#3b82f6;background:#0f172a;padding:16px 28px;border-radius:12px;display:inline-block;">
-          ${rawOtp}
-        </span>
-      </div>
-      <p style="color:#94a3b8;font-size:13px;line-height:1.5;">
-        This code expires in ${OTP_EXPIRY_MINUTES} minutes. If you did not request this, please ignore this email.
-      </p>
-    </div>
-  </div>
-</body>
-</html>`;
-
-  // Best-effort delivery, matching the graceful-degradation pattern used for
-  // payout notification emails elsewhere (financialController.js) — email
-  // delivery isn't reliably configured in every environment this app runs
-  // in, and the OTP is already persisted and independently verifiable (plus
-  // logged to console in development) regardless of whether the send
-  // actually succeeds. A dead mail provider should never be able to block
-  // registration or password reset outright.
-  //
-  // Skip the network call entirely when mail isn't configured, rather than
-  // attempting it and catching the failure — an unreachable SMTP host (e.g.
-  // restricted egress in a CI runner) can hang for nodemailer's full
-  // connection timeout, not just fail fast, and that cost lands on every
-  // OTP request in every test that exercises this path.
-  if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
-    try {
-      await getTransporter().sendMail({
-        from: `"Program Support" <${process.env.GMAIL_USER}>`,
-        to: email,
-        subject,
-        html,
-      });
-    } catch (err) {
-      logger.error('Failed to send OTP email', { error: err.message, email });
-    }
-  } else {
-    logger.warn('OTP email not sent — GMAIL_USER/GMAIL_APP_PASSWORD not configured', { email, purpose });
+  try {
+    await emailService.sendOtpVerificationEmail({
+      toEmail: email,
+      account_email: email,
+      otp_code: rawOtp,
+      expiry_minutes: OTP_EXPIRY_MINUTES
+    });
+  } catch (err) {
+    logger.error('Failed to send OTP email via emailService', { error: err.message, email });
   }
 
   return { expiresAt };
