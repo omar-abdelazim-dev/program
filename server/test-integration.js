@@ -4,6 +4,40 @@ import request from 'supertest';
 
 process.env.JWT_SECRET = 'test_secret';
 process.env.CLIENT_URL = 'http://localhost:5173';
+// 'development' (not just any truthy value) specifically enables otpService's
+// "[DEV OTP DEBUG]" console log, which is how registerViaOtpFlow below reads
+// back a real OTP without a live mail provider. Also matches this repo's
+// existing convention (test-auth-security.js sets NODE_ENV too) and, as a
+// side effect, exempts this run from rate limiting (middleware/rateLimiter.js
+// skips 'development'/'test'), same as that file relies on.
+process.env.NODE_ENV = 'development';
+
+// Registration now requires proving email ownership via OTP before the
+// account can be created (send-registration-otp -> verify-registration-otp
+// -> register) — see authController.js. There's no API to read a raw OTP
+// back, only the DB-stored hash, so this captures it the same way a human
+// tester would in dev: from the console debug line otpService prints.
+const registerViaOtpFlow = async (agent, { name, email, password, role }) => {
+  let capturedOtp = null;
+  const originalLog = console.log;
+  console.log = (...args) => {
+    const match = args.join(' ').match(/Code: (\d{6})/);
+    if (match) capturedOtp = match[1];
+    originalLog(...args);
+  };
+  try {
+    const sendRes = await agent.post('/api/auth/send-registration-otp').send({ name, email, password });
+    if (sendRes.status !== 200) throw new Error(`send-registration-otp failed: ${JSON.stringify(sendRes.body)}`);
+  } finally {
+    console.log = originalLog;
+  }
+  if (!capturedOtp) throw new Error('Did not capture a dev-debug OTP for ' + email);
+
+  const verifyRes = await agent.post('/api/auth/verify-registration-otp').send({ email, otp: capturedOtp });
+  if (verifyRes.status !== 200) throw new Error(`verify-registration-otp failed: ${JSON.stringify(verifyRes.body)}`);
+
+  return agent.post('/api/auth/register').send({ name, email, password, role });
+};
 
 const run = async () => {
   const mongod = await MongoMemoryServer.create();
@@ -19,8 +53,8 @@ const run = async () => {
   const agentAdmin = request.agent(app);
   const agentPublic = request.agent(app);
 
-  // 1. Register an instructor
-  let res = await agentInstructor.post('/api/auth/register').send({
+  // 1. Register an instructor (via the required pre-registration OTP flow)
+  let res = await registerViaOtpFlow(agentInstructor, {
     name: 'Nora Instructor',
     email: 'nora@example.com',
     password: 'Password123!',
@@ -122,6 +156,7 @@ const run = async () => {
     email: 'admin@example.com',
     password: 'adminpass123',
     role: 'admin',
+    isVerified: true, // created directly, bypassing the OTP-gated register() flow
   });
   res = await agentAdmin.post('/api/auth/login').send({
     email: 'admin@example.com',
@@ -266,7 +301,7 @@ const run = async () => {
 
   // 11. Register a student
   const agentStudent = request.agent(app);
-  res = await agentStudent.post('/api/auth/register').send({
+  res = await registerViaOtpFlow(agentStudent, {
     name: 'Sara Student',
     email: 'sara@example.com',
     password: 'Password123!',

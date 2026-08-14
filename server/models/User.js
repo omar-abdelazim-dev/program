@@ -49,12 +49,19 @@ const userSchema = new mongoose.Schema(
     },
     isBlocked: { type: Boolean, default: false },
     isProgramInstructor: { type: Boolean, default: false },
-    // Forgot-password flow (ADM-08): a single hashed token + expiry per user —
-    // requesting a new one overwrites the old one, which is what "invalidate
-    // any previous unexpired token" means in practice (only the newest ever
-    // matches what resetPassword hashes and compares against).
-    resetPasswordToken: { type: String, select: false },
-    resetPasswordExpires: { type: Date, select: false },
+    // Registration requires OTP-verified email ownership before the account
+    // exists at all (see authController.register), so new users always get
+    // isVerified: true at creation. Defaults to false here purely as a safe
+    // fallback; accounts that predate this field are backfilled to true by
+    // backfill_isVerified.js — see that script for why this can't just be a
+    // schema-level default of true.
+    isVerified: { type: Boolean, default: false },
+    failedLoginAttempts: { type: Number, default: 0 },
+    // Set after 5 consecutive failed login attempts — login is blocked
+    // entirely until the account goes through the password-reset OTP flow,
+    // which also clears this flag. Not a timed lockout.
+    lockedForReset: { type: Boolean, default: false },
+    lockedAt: { type: Date },
     // Payout 2FA (INS-09): short-lived OTP hash, verified at payout-request time.
     payoutOtpHash: { type: String, select: false },
     payoutOtpExpires: { type: Date, select: false },
@@ -76,25 +83,9 @@ const userSchema = new mongoose.Schema(
     socialUrl: { type: String, default: '' },
     goalsText: { type: String, default: '' },
     selectedPills: { type: [String], default: [] },
-    
-    // --- Account Lockout Fields ---
-    failedLoginAttempts: { type: Number, default: 0 },
-    lockoutStage: { type: Number, default: 0 },
-    lockUntil: { type: Date },
-
-    // --- Email Verification Fields ---
-    isEmailVerified: { type: Boolean, default: false },
-    emailVerificationTokenHash: { type: String, select: false },
-    emailVerificationExpires: { type: Date, select: false },
   },
   { timestamps: true }
 );
-
-// Virtual for checking if the account is currently locked
-userSchema.virtual('isLocked').get(function() {
-  return !!(this.lockUntil && this.lockUntil > Date.now());
-});
-
 
 // Runs automatically before a user document is saved.
 // We hash the password here (not in the controller) so it's IMPOSSIBLE to

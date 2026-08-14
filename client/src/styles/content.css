@@ -3622,3 +3622,9 @@ body.light-mode .light-inner-shadow {
     color: inherit !important;
     text-decoration: none !important;
 }
+
+.settings-message {
+    box-shadow: var(--inner-shadow, inset 0 2px 4px rgba(0, 0, 0, 0.4)) !important;
+    width: fit-content !important;
+    max-width: 100% !important;
+}
