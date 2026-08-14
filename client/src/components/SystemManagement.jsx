@@ -633,7 +633,6 @@ export default function SystemManagement({ user }) {
           <div className="glass-card" style={{ padding: '24px' }}>
             <h3 style={{ marginTop: 0, marginBottom: '24px', color: 'var(--text-h)' }}>Email Testing Utility</h3>
             <InputField label="Recipient Email" value={emailTest.recipient} onChange={e => setEmailTest({ ...emailTest, recipient: e.target.value })} disabled={isFieldRestricted('email', 'test_utility', isSuperAdmin)} placeholder="test@example.com" />
-            <InputField label="Email Subject" value={emailTest.subject} onChange={e => setEmailTest({ ...emailTest, subject: e.target.value })} disabled={isFieldRestricted('email', 'test_utility', isSuperAdmin)} />
             <SelectField label="Email Format" value={emailTest.format} onChange={e => handleFormatChange(e.target.value)} disabled={isFieldRestricted('email', 'test_utility', isSuperAdmin)} options={[{ value: 'admin', label: 'Admin' }, { value: 'instructor', label: 'Instructor' }, { value: 'student', label: 'Student' }]} />
             <SelectField label="Email Content" value={emailTest.content} onChange={e => setEmailTest({ ...emailTest, content: e.target.value })} disabled={isFieldRestricted('email', 'test_utility', isSuperAdmin)} options={getContentOptions(emailTest.format)} />
             
