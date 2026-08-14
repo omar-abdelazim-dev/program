@@ -281,6 +281,8 @@ body[data-role="superadmin"] .notyf {
   transform-origin: top right;
 }
 
+.auth-input:focus { border-color: var(--c-orange) !important; outline: none; transition: border-color 0.2s ease; }
+
 .module-collapse-btn {
   background: transparent;
   border: none;

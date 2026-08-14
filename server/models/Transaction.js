@@ -19,7 +19,7 @@ const transactionSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['pending', 'cleared', 'rejected'],
+      enum: ['pending', 'otp_verified', 'approved', 'processing', 'paid', 'cleared', 'failed', 'rejected'],
       default: 'pending',
     },
     description: {
@@ -41,13 +41,68 @@ const transactionSchema = new mongoose.Schema(
     },
     payoutMethod: {
       type: String,
-      // Only applicable if type === 'payout_request'. bank_transfer was
-      // removed (INS-09) — only mobile-wallet-style methods are supported.
-      enum: ['vodafone_cash', 'instapay'],
+      enum: ['vodafone_cash', 'orange_cash', 'etisalat_cash', 'we_cash', 'instapay'],
     },
     payoutDetails: {
       type: String,
       // Used for things like Vodafone Cash phone numbers
+    },
+    payoutEmail: {
+      type: String,
+      lowercase: true,
+      trim: true,
+    },
+    requiresSecondApproval: {
+      type: Boolean,
+      default: false,
+    },
+    otpVerifiedAt: {
+      type: Date,
+    },
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    approvedAt: {
+      type: Date,
+    },
+    idempotencyKey: {
+      type: String,
+      unique: true,
+      sparse: true, // Only enforce uniqueness when field is present (so course sales aren't affected)
+    },
+    executionAttemptedAt: {
+      type: Date,
+    },
+    failureReason: {
+      type: String,
+      default: '',
+    },
+    expectedFees: {
+      type: Number,
+    },
+    expectedPayout: {
+      type: Number,
+    },
+    actualFee: {
+      type: Number,
+    },
+    actualPayout: {
+      type: Number,
+    },
+    providerTransactionId: {
+      type: String,
+    },
+    referenceId: {
+      type: String,
+    },
+    rejectionReason: {
+      type: String,
+      default: '',
+    },
+    availableAt: {
+      type: Date,
+      // Only applicable for 'course_sale' to enforce the 14-day settlement
     },
   },
   { timestamps: true }

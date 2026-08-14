@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 
-const SegmentedControl = ({ tabs, activeTab, onChange, style }) => {
+const SegmentedControl = ({ tabs, activeTab, onChange, style, trackStyle, indicatorStyle: customIndicatorStyle }) => {
   const [indicatorStyle, setIndicatorStyle] = useState({ offset: 4, width: 0, opacity: 0 });
   const containerRef = useRef(null);
 
@@ -37,7 +37,8 @@ const SegmentedControl = ({ tabs, activeTab, onChange, style }) => {
         boxShadow: 'var(--outer-shadow)',
         marginBottom: '20px',
         width: 'fit-content',
-        ...style
+        ...style,
+        ...trackStyle
       }}
     >
       <div
@@ -53,6 +54,7 @@ const SegmentedControl = ({ tabs, activeTab, onChange, style }) => {
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           zIndex: 0,
           opacity: indicatorStyle.opacity,
+          ...customIndicatorStyle
         }}
       />
       {tabs.map((tab) => {

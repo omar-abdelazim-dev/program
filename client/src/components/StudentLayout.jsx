@@ -366,7 +366,7 @@ export default function StudentLayout({
                   <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--c-border-subtle, rgba(255,255,255,0.08))', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-surface)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }}>
                     <span style={{ color: 'var(--color-accent, #f97316)', fontSize: '1.05rem' }}>{t('nav.notifications', 'Notifications')}</span>
                     {notifications && notifications.length > 0 && (
-                      <button 
+                      <button
                         onClick={handleClearAllNotifications}
                         style={{ background: 'none', border: 'none', color: 'var(--c-sub)', cursor: 'pointer', fontSize: '0.8rem', textDecoration: 'underline' }}
                       >

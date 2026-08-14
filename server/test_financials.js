@@ -25,7 +25,12 @@ const test = async () => {
               $cond: [
                 {
                   $or: [
-                    { $and: [{ $eq: ['$type', 'course_sale'] }, { $eq: ['$status', 'cleared'] }] },
+                    { 
+                      $and: [
+                        { $eq: ['$type', 'course_sale'] }, 
+                        { $lte: ['$availableAt', new Date()] } 
+                      ] 
+                    },
                     { $and: [{ $eq: ['$type', 'payout_request'] }, { $ne: ['$status', 'rejected'] }] }
                   ]
                 },

@@ -93,7 +93,26 @@ export default function AdminAuthPage({ onLoginSuccess, isLightMode, toggleTheme
             <form className="auth-form" onSubmit={handleSubmit}>
               
               <div className="step-content animate-entrance" style={{ display: 'block' }}>
-                {authError && <div className="auth-error-message" style={{ color: '#ef4444', marginBottom: '1rem', padding: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '6px', fontSize: '0.9rem' }}>{authError}</div>}
+                {authError && (
+                  <div 
+                    className="auth-error-message" 
+                    style={{ 
+                      color: '#ef4444', 
+                      marginBottom: '1rem', 
+                      padding: '8px 16px', 
+                      background: 'rgba(239, 68, 68, 0.1)', 
+                      borderRadius: '8px', 
+                      fontSize: '0.9rem',
+                      fontWeight: 500,
+                      width: 'fit-content',
+                      maxWidth: '100%',
+                      boxShadow: 'var(--inner-shadow, inset 0 2px 4px rgba(0, 0, 0, 0.4))',
+                      border: 'none'
+                    }}
+                  >
+                    {authError}
+                  </div>
+                )}
                 
                 <div className="input-group">
                   <label>Admin Email *</label>

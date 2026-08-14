@@ -1,12 +1,13 @@
 import crypto from 'crypto';
 import Transaction from '../models/Transaction.js';
 import User from '../models/User.js';
+import Notification from '../models/Notification.js';
 import mongoose from 'mongoose';
 import logger from '../utils/logger.js';
 
-const PAYOUT_COOLDOWN_DAYS = 15;
+const PAYOUT_COOLDOWN_DAYS = 7;
 const PAYOUT_OTP_EXPIRY_MINUTES = 10;
-const PAYOUT_METHODS = ['vodafone_cash', 'instapay'];
+const PAYOUT_METHODS = ['vodafone_cash', 'orange_cash', 'etisalat_cash', 'we_cash', 'instapay'];
 
 // Helper to compute available balance for an instructor
 const getAvailableBalance = async (instructorId) => {
@@ -19,11 +20,19 @@ const getAvailableBalance = async (instructorId) => {
           $sum: {
             $cond: [
               {
-                // Only count cleared course sales, OR any payout request (pending or cleared)
-                // A rejected payout request doesn't deduct from balance
                 $or: [
-                  { $and: [{ $eq: ['$type', 'course_sale'] }, { $eq: ['$status', 'cleared'] }] },
-                  { $and: [{ $eq: ['$type', 'payout_request'] }, { $ne: ['$status', 'rejected'] }] }
+                  { 
+                    $and: [
+                      { $eq: ['$type', 'course_sale'] }, 
+                      {
+                        $or: [
+                          { $lte: ['$availableAt', new Date()] },
+                          { $eq: [{ $ifNull: ['$availableAt', null] }, null] }
+                        ]
+                      }
+                    ] 
+                  },
+                  { $and: [{ $eq: ['$type', 'payout_request'] }, { $in: ['$status', ['otp_verified', 'approved', 'processing', 'paid', 'cleared']] }] }
                 ]
               },
               '$amount',
@@ -38,6 +47,27 @@ const getAvailableBalance = async (instructorId) => {
   return result.length > 0 ? result[0].total : 0;
 };
 
+// Helper to compute pending balance (sales within 7-day settlement period)
+const getPendingBalance = async (instructorId) => {
+  const result = await Transaction.aggregate([
+    { 
+      $match: { 
+        instructor: instructorId, 
+        type: 'course_sale', 
+        availableAt: { $gt: new Date() } 
+      } 
+    },
+    {
+      $group: {
+        _id: null,
+        total: { $sum: '$amount' }
+      }
+    }
+  ]);
+
+  return result.length > 0 ? result[0].total : 0;
+};
+
 // @desc    Get instructor financials (balance and ledger)
 // @route   GET /api/financials
 // @access  Private/Instructor
@@ -45,13 +75,21 @@ export const getFinancials = async (req, res) => {
   try {
     const instructorId = new mongoose.Types.ObjectId(req.user.id);
     const availableBalance = await getAvailableBalance(instructorId);
+    const pendingBalance = await getPendingBalance(instructorId);
     
-    const transactions = await Transaction.find({ instructor: instructorId })
+    const transactions = await Transaction.find({ 
+      instructor: instructorId,
+      $or: [
+        { type: 'course_sale' },
+        { type: 'payout_request', status: { $in: ['otp_verified', 'approved', 'processing', 'cleared', 'paid', 'rejected', 'failed'] } }
+      ]
+    })
       .sort({ createdAt: -1 })
       .lean();
 
     res.json({
       availableBalance,
+      pendingBalance,
       transactions,
     });
   } catch (error) {
@@ -65,6 +103,9 @@ export const getFinancials = async (req, res) => {
 // @access  Private/Instructor
 export const requestPayoutOtp = async (req, res) => {
   try {
+    const user = await User.findById(req.user.id);
+    const registeredPhone = user?.phone || 'registered phone number';
+
     const otp = crypto.randomInt(100000, 999999).toString();
     const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
 
@@ -73,12 +114,10 @@ export const requestPayoutOtp = async (req, res) => {
       payoutOtpExpires: Date.now() + PAYOUT_OTP_EXPIRY_MINUTES * 60 * 1000,
     });
 
-    // No SMS/email provider is wired up for this MVP — log the code the way
-    // a real provider's delivery would surface it, instead of returning it
-    // in the response.
-    logger.info(`Payout OTP generated for instructor ${req.user.id}`, { otp, expiresInMinutes: PAYOUT_OTP_EXPIRY_MINUTES });
+    // Send code to registered account phone by default
+    logger.info(`Payout OTP generated for instructor ${req.user.id} (${registeredPhone})`, { otp, phone: registeredPhone, expiresInMinutes: PAYOUT_OTP_EXPIRY_MINUTES });
 
-    res.status(200).json({ message: 'A verification code has been sent to your registered phone/email' });
+    res.status(200).json({ message: `Verification code sent to your registered phone number (${registeredPhone})`, phone: registeredPhone });
   } catch (error) {
     logger.error('Error requesting payout OTP:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to send verification code' });
@@ -90,65 +129,83 @@ export const requestPayoutOtp = async (req, res) => {
 // @access  Private/Instructor
 export const requestPayout = async (req, res) => {
   try {
-    const { amount, method, payoutDetails, otpCode } = req.body;
-
-    if (!amount || amount < 100) {
-      return res.status(400).json({ message: 'Minimum payout amount is EGP 100' });
-    }
+    const { method, payoutDetails, payoutEmail } = req.body;
 
     if (!PAYOUT_METHODS.includes(method)) {
       return res.status(400).json({ message: 'Invalid payout method' });
     }
 
-    if (!otpCode) {
-      return res.status(400).json({ message: 'Verification code is required' });
-    }
-
-    const instructor = await User.findById(req.user.id).select('+payoutOtpHash +payoutOtpExpires');
-    const otpHash = crypto.createHash('sha256').update(String(otpCode)).digest('hex');
-    if (
-      !instructor.payoutOtpHash ||
-      instructor.payoutOtpHash !== otpHash ||
-      !instructor.payoutOtpExpires ||
-      instructor.payoutOtpExpires.getTime() < Date.now()
-    ) {
-      return res.status(400).json({ message: 'Invalid or expired verification code' });
+    const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,63}$/;
+    const emailTrimmed = typeof payoutEmail === 'string' ? payoutEmail.trim().toLowerCase() : (req.user.email || '');
+    if (!emailTrimmed || !EMAIL_REGEX.test(emailTrimmed)) {
+      return res.status(400).json({ message: 'Invalid email address format' });
     }
 
     const instructorId = new mongoose.Types.ObjectId(req.user.id);
 
-    // Cooldown: at least 15 days must pass between payout requests, measured
-    // from the instructor's most recent payout_request transaction.
-    const lastPayout = await Transaction.findOne({ instructor: instructorId, type: 'payout_request' }).sort({ createdAt: -1 });
+    // Cancel any abandoned 'pending' (unverified) requests so they don't lock the balance
+    await Transaction.updateMany(
+      { instructor: instructorId, type: 'payout_request', status: 'pending' },
+      { $set: { status: 'failed', failureReason: 'Abandoned (New request initiated before OTP verification)' } }
+    );
+
+    // Cooldown check: get the most recent payout request
+    const lastPayout = await Transaction.findOne({ 
+      instructor: instructorId, 
+      type: 'payout_request',
+    }).sort({ createdAt: -1 });
+    
     if (lastPayout) {
-      const cooldownEnds = new Date(lastPayout.createdAt.getTime() + PAYOUT_COOLDOWN_DAYS * 24 * 60 * 60 * 1000);
-      if (cooldownEnds > new Date()) {
-        return res.status(429).json({ message: `You can request another payout starting ${cooldownEnds.toDateString()}` });
+      // If it's still being processed, block a new request regardless of date
+      if (['otp_verified', 'approved', 'processing', 'pending'].includes(lastPayout.status)) {
+         return res.status(429).json({ message: 'You already have a payout request being processed.' });
       }
+      
+      if (['cleared', 'paid'].includes(lastPayout.status)) {
+        const approvalDate = lastPayout.updatedAt || lastPayout.approvedAt || lastPayout.createdAt;
+        const cooldownEnds = new Date(new Date(approvalDate).getTime() + PAYOUT_COOLDOWN_DAYS * 24 * 60 * 60 * 1000);
+        if (cooldownEnds > new Date()) {
+          return res.status(429).json({ message: `You can request another payout starting ${cooldownEnds.toDateString()}` });
+        }
+      }
+      // If lastPayout is 'rejected' or 'failed', allow immediate re-request
     }
 
     const availableBalance = await getAvailableBalance(instructorId);
 
-    if (amount > availableBalance) {
-      return res.status(400).json({ message: 'Insufficient funds for this payout request' });
+    if (availableBalance < 100) {
+      return res.status(400).json({ message: 'Available balance must be at least EGP 100 to request a payout' });
     }
+    
+    const amount = availableBalance;
+    const expectedFees = amount * 0.02;
+    const expectedPayout = amount - expectedFees;
+    
+    // Auto-calculate requiresSecondApproval
+    const APPROVAL_THRESHOLD = parseFloat(process.env.PAYOUT_APPROVAL_THRESHOLD || '5000');
+    const requiresSecondApproval = amount >= APPROVAL_THRESHOLD;
+
+    // Auto-generate UUID or unique token for idempotencyKey and referenceId
+    const refId = req.body.referenceId || `INV-${Date.now().toString(36).toUpperCase()}-${Math.floor(100000 + Math.random() * 900000)}`;
+    const idempotencyKey = crypto.randomUUID();
 
     const payoutTx = await Transaction.create({
       instructor: instructorId,
       amount: -Math.abs(amount), // Payouts are always deductions
       type: 'payout_request',
       status: 'pending',
-      description: `Payout Request - ${method.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}${payoutDetails ? ` (${payoutDetails})` : ''}`,
+      description: `Payout Request - ${method.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}`,
       payoutMethod: method,
       payoutDetails: payoutDetails,
+      payoutEmail: emailTrimmed,
+      requiresSecondApproval,
+      idempotencyKey,
+      expectedFees,
+      expectedPayout,
+      referenceId: refId
     });
 
-    // Consume the OTP so it can't be replayed for a second request
-    instructor.payoutOtpHash = undefined;
-    instructor.payoutOtpExpires = undefined;
-    await instructor.save();
-
-    res.status(201).json({ message: 'Payout request submitted successfully', transaction: payoutTx });
+    res.status(201).json({ message: 'Payout request initiated successfully. Please complete email OTP verification.', transaction: payoutTx });
   } catch (error) {
     logger.error('Error requesting payout:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to request payout' });
@@ -160,19 +217,59 @@ export const requestPayout = async (req, res) => {
 // @access  Private/Admin
 export const completePayout = async (req, res) => {
   try {
-    const tx = await Transaction.findById(req.params.id);
+    const { actualFee, actualPayout, providerTransactionId } = req.body;
+    const tx = await Transaction.findById(req.params.id).populate('instructor', 'name email');
     if (!tx || tx.type !== 'payout_request') {
       return res.status(404).json({ message: 'Payout request not found' });
     }
 
-    if (tx.status === 'cleared') {
-      return res.status(400).json({ message: 'Payout is already cleared' });
+    if (tx.status === 'paid') {
+      return res.status(400).json({ message: 'Payout is already paid' });
+    }
+    // The instructor must have completed OTP verification before funds can
+    // be released — otherwise this endpoint bypasses the entire OTP flow
+    // (fraud/account-takeover protection) by completing a payout the instant
+    // it's created, before they ever confirmed it via their registered email.
+    if (!['otp_verified', 'approved', 'processing'].includes(tx.status)) {
+      return res.status(400).json({ message: `Cannot complete a payout in status '${tx.status}' — the instructor must verify via OTP first` });
     }
 
-    tx.status = 'cleared';
+    tx.status = 'paid';
     tx.payoutDetails = ''; // Erase sensitive bank account / phone number data for security
 
+    if (actualFee !== undefined) tx.actualFee = actualFee;
+    if (actualPayout !== undefined) tx.actualPayout = actualPayout;
+    if (providerTransactionId !== undefined) tx.providerTransactionId = providerTransactionId;
+
     await tx.save();
+
+    if (tx.instructor) {
+      try {
+        const instructorId = tx.instructor._id || tx.instructor;
+        await Notification.create({
+          user: instructorId,
+          title: 'Payout Request Approved',
+          message: `Your payout request of EGP ${Math.abs(tx.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })} has been approved and processed.`,
+          type: 'system',
+          refId: tx._id,
+        });
+
+        if (tx.instructor.email) {
+          const { default: PayoutOTP } = await import('../models/PayoutOTP.js');
+          const otpRecord = await PayoutOTP.findOne({ payoutRequestId: tx._id }).sort({ createdAt: -1 });
+          const targetEmail = otpRecord?.email || tx.instructor.email;
+
+          const { sendPayoutStatusEmail } = await import('../utils/payoutOtp.js');
+          await sendPayoutStatusEmail({
+            toEmail: targetEmail,
+            instructorName: tx.instructor.name || 'Instructor',
+            status: 'approved'
+          });
+        }
+      } catch (err) {
+        logger.error('Failed to send payout approval notification/email', { error: err.message, stack: err.stack });
+      }
+    }
 
     res.json({ message: 'Payout marked as completed and sensitive data wiped', transaction: tx });
   } catch (error) {
@@ -182,25 +279,81 @@ export const completePayout = async (req, res) => {
 };
 
 
-// @desc    Admin: Mark payout as rejected
-// @route   PUT /api/financials/:id/reject
+// @desc    Admin: Mark payout as processing
+// @route   PUT /api/financials/:id/process
 // @access  Private/Admin
-export const rejectPayout = async (req, res) => {
+export const processPayout = async (req, res) => {
   try {
     const tx = await Transaction.findById(req.params.id);
     if (!tx || tx.type !== 'payout_request') {
       return res.status(404).json({ message: 'Payout request not found' });
     }
 
-    if (tx.status === 'cleared' || tx.status === 'rejected') {
+    // Same OTP-verification requirement as completePayout — 'pending' means
+    // the instructor hasn't confirmed via OTP yet, so it must NOT be eligible
+    // for processing (this previously checked the opposite: status === 'pending').
+    if (!['otp_verified', 'approved'].includes(tx.status)) {
+      return res.status(400).json({ message: `Cannot process a payout in status '${tx.status}' — the instructor must verify via OTP first` });
+    }
+
+    tx.status = 'processing';
+    await tx.save();
+
+    res.json({ message: 'Payout marked as processing', transaction: tx });
+  } catch (error) {
+    logger.error('Error processing payout', { error: error.message, stack: error.stack });
+    res.status(500).json({ message: 'Failed to mark payout as processing' });
+  }
+};
+
+// @desc    Admin: Mark payout as rejected
+// @route   PUT /api/financials/:id/reject
+// @access  Private/Admin
+export const rejectPayout = async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const tx = await Transaction.findById(req.params.id).populate('instructor', 'name email');
+    if (!tx || tx.type !== 'payout_request') {
+      return res.status(404).json({ message: 'Payout request not found' });
+    }
+
+    if (tx.status === 'paid' || tx.status === 'rejected') {
       return res.status(400).json({ message: 'Payout is already processed' });
     }
 
     tx.status = 'rejected';
-    tx.payoutDetails = ''; // Optionally erase it here too
-    tx.description = tx.description + ' (Rejected)';
+    tx.rejectionReason = reason || 'Payout request was rejected by administration.';
 
     await tx.save();
+
+    if (tx.instructor) {
+      try {
+        const instructorId = tx.instructor._id || tx.instructor;
+        await Notification.create({
+          user: instructorId,
+          title: 'Payout Request Rejected',
+          message: `Your payout request of EGP ${Math.abs(tx.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })} was rejected. Reason: ${tx.rejectionReason}`,
+          type: 'system',
+          refId: tx._id,
+        });
+
+        if (tx.instructor.email) {
+          const { default: PayoutOTP } = await import('../models/PayoutOTP.js');
+          const otpRecord = await PayoutOTP.findOne({ payoutRequestId: tx._id }).sort({ createdAt: -1 });
+          const targetEmail = otpRecord?.email || tx.instructor.email;
+
+          const { sendPayoutStatusEmail } = await import('../utils/payoutOtp.js');
+          await sendPayoutStatusEmail({
+            toEmail: targetEmail,
+            instructorName: tx.instructor.name || 'Instructor',
+            status: 'rejected',
+            reason: tx.rejectionReason
+          });
+        }
+      } catch (err) {
+        logger.error('Failed to send payout rejection notification/email', { error: err.message, stack: err.stack });
+      }
+    }
 
     res.json({ message: 'Payout rejected', transaction: tx });
   } catch (error) {

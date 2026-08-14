@@ -396,7 +396,26 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
               {/* Core Auth Fields (Always visible for Login, visible in Step 1 for Register) */}
               {(isLogin || registerStep === 1) && (
                 <div className="step-content animate-entrance">
-                  {authError && <div className="auth-error-message" style={{ color: '#ef4444', marginBottom: '1rem', padding: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '6px', fontSize: '0.9rem' }}>{authError}</div>}
+                  {authError && (
+                    <div 
+                      className="auth-error-message" 
+                      style={{ 
+                        color: '#ef4444', 
+                        marginBottom: '1rem', 
+                        padding: '8px 16px', 
+                        background: 'rgba(239, 68, 68, 0.1)', 
+                        borderRadius: '8px', 
+                        fontSize: '0.9rem',
+                        fontWeight: 500,
+                        width: 'fit-content',
+                        maxWidth: '100%',
+                        boxShadow: 'var(--inner-shadow, inset 0 2px 4px rgba(0, 0, 0, 0.4))',
+                        border: 'none'
+                      }}
+                    >
+                      {authError}
+                    </div>
+                  )}
                   <div className="input-group">
                     <label>{t('auth.email')}</label>
                     <input type="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />

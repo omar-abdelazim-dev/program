@@ -962,7 +962,7 @@ export default function LearningPortal({ user }) {
               </div>
 
               {modules.map((module) => {
-                const isModuleCollapsed = !!collapsedModules[module._id];
+                const isModuleCollapsed = collapsedModules[module._id] !== false;
                 const moduleLessons = module.lessons || [];
                 const progress = moduleProgress.find((mp) => String(mp.moduleId) === String(module._id));
 

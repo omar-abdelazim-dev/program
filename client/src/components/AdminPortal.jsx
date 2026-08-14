@@ -242,6 +242,7 @@ export default function AdminPortal({
     setActiveTabRaw(tab);
   };
   const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
 
   const toggleLanguage = () => {
     const newLang = i18n.language === "en" ? "ar" : "en";
@@ -857,7 +858,7 @@ export default function AdminPortal({
           );
 
           const pendingEnrollmentsCount = transactions.filter((t) => (t.status || 'pending').toLowerCase() === 'pending').length;
-          const pendingPayoutsCount = payouts.filter((p) => (p.status || 'pending').toLowerCase() === 'pending').length;
+          const pendingPayoutsCount = payouts.filter((p) => ['pending', 'otp_verified', 'approved', 'processing'].includes(p.status)).length;
           const totalFinancialPending = pendingEnrollmentsCount + pendingPayoutsCount;
           const totalCoursePending = pendingCourses.length + pendingLessonsCount;
 

@@ -2,7 +2,7 @@ import express from 'express';
 import {
   toggleProgramInstructor,
   getStats, getRecentActivity, getRevenueAnalytics, getUsers, toggleBlockUser, changeUserRole,
-  softDeleteUser, restoreUser, getTransactions, getPendingPayouts, getAllLessons, approveLesson, rejectLesson,
+  softDeleteUser, restoreUser, getTransactions, getPendingPayouts, getPayoutRevenueTrace, getAllLessons, approveLesson, rejectLesson,
   manualEnroll, createPromoCode, getPromoCodes, togglePromoCode,
   approveEnrollment, rejectEnrollment,
 } from '../controllers/adminController.js';
@@ -29,6 +29,7 @@ router.delete('/users/:id/soft-delete', validateUserIdParam, softDeleteUser);
 router.patch('/users/:id/restore', validateUserIdParam, restoreUser);
 router.get('/transactions', getTransactions);
 router.get('/payouts', getPendingPayouts);
+router.get('/payouts/:id/revenue-trace', validateObjectId('id'), getPayoutRevenueTrace);
 router.post('/enroll', manualEnroll);
 router.post('/promo-codes', createPromoCode);
 router.get('/promo-codes', getPromoCodes);

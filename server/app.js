@@ -16,6 +16,7 @@ import instructorRoutes from './routes/instructorRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import payoutRoutes from './routes/payoutRoutes.js';
 import quizRoutes from './routes/quizRoutes.js';
 import { maintenanceMiddleware } from './middleware/maintenanceMiddleware.js';
 import { mongoSanitizeMiddleware, xssSanitizeMiddleware } from './middleware/sanitize.js';
@@ -143,6 +144,7 @@ app.use('/api/instructors', instructorRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/payouts', payoutRoutes);
 app.use('/api/quiz-submissions', quizRoutes);
 
 // ── 10. Centralized error handler ─────────────────────────────────────────────

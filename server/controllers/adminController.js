@@ -528,6 +528,55 @@ export const getPendingPayouts = async (req, res) => {
   }
 };
 
+// @route   GET /api/admin/payouts/:id/revenue-trace
+// @access  Private (Admin)
+export const getPayoutRevenueTrace = async (req, res) => {
+  try {
+    const payout = await Transaction.findById(req.params.id);
+    if (!payout || payout.type !== 'payout_request') {
+      return res.status(404).json({ message: 'Payout request not found' });
+    }
+
+    const instructorId = payout.instructor;
+
+    // Find the previous successful/cleared payout for this instructor
+    const lastPayout = await Transaction.findOne({
+      instructor: instructorId,
+      type: 'payout_request',
+      status: { $in: ['cleared', 'paid'] },
+      createdAt: { $lt: payout.createdAt }
+    }).sort({ createdAt: -1 });
+
+    const sinceDate = lastPayout ? lastPayout.createdAt : new Date(0);
+
+    // Find all courses owned by this instructor
+    const courses = await Course.find({ instructor: instructorId }).select('_id');
+    const courseIds = courses.map(c => c._id);
+
+    // Find all approved enrollments for these courses created since sinceDate up to payout.createdAt
+    const enrollments = await Enrollment.find({
+      course: { $in: courseIds },
+      status: 'approved',
+      createdAt: { $gte: sinceDate, $lte: payout.createdAt }
+    })
+      .populate('student', 'name email')
+      .populate('course', 'title price')
+      .sort({ createdAt: -1 });
+
+    const totalSum = enrollments.reduce((sum, e) => sum + (e.amountPaid || (e.course && e.course.price) || 0), 0);
+
+    res.status(200).json({ 
+      enrollments, 
+      totalSum, 
+      sinceDate, 
+      payoutDate: payout.createdAt 
+    });
+  } catch (error) {
+    logger.error('An error occurred in getPayoutRevenueTrace', { error: error.message, stack: error.stack });
+    res.status(500).json({ message: 'Server error fetching revenue trace' });
+  }
+};
+
 // @route   GET /api/admin/lessons
 // @access  Private (Admin/SuperAdmin)
 export const getAllLessons = async (req, res) => {
@@ -759,10 +808,12 @@ export const approveEnrollment = async (req, res) => {
         instructor: course.instructor,
         amount: instructorShare,
         type: 'course_sale',
-        status: 'cleared',
+        status: 'pending',
+        availableAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7-day settlement
         description: `Course Sale - ${course.title}`,
         course: course._id,
         commissionRate: commissionPercent,
+        referenceId: enrollment.invoiceId || enrollment.transactionId || ('INV-' + enrollment._id.toString().slice(-8).toUpperCase()),
       });
     }
 

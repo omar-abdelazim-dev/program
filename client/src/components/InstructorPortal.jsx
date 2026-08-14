@@ -67,6 +67,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [unreadEngagementCount, setUnreadEngagementCount] = useState(0);
+  const [financialSummary, setFinancialSummary] = useState({ availableBalance: 0, transactions: [] });
   const [pendingGradingCount, setPendingGradingCount] = useState(0);
 
   const [notifications, setNotifications] = useState([]);
@@ -140,10 +141,11 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
       const modulesMap = {};
       for (const c of myCourses) {
         try {
-          const detail = await api.get(`/courses/${c._id}`);
-          modulesMap[c._id] = detail.data.modules || [];
-        } catch (err) {
-          console.error(`Failed to load modules for course ${c._id}`, err);
+          const modRes = await api.get(`/courses/${c._id}/modules`);
+          modulesMap[c._id] = modRes.data.modules || [];
+        } catch (mErr) {
+          console.error(`Failed to load modules for course ${c._id}`, mErr);
+          modulesMap[c._id] = [];
         }
       }
       setModulesByCourse(modulesMap);
@@ -151,11 +153,21 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
       try {
         const statsRes = await api.get('/courses/stats');
         setStats(statsRes.data.courseStats || []);
-        setTimeSeries(statsRes.data.timeSeries || []);
+        setTimeSeries(statsRes.data.timeSeriesData || statsRes.data.timeSeries || []);
       } catch (err) {
         console.error('Failed to load instructor stats', err);
       }
       
+      try {
+        const finRes = await api.get('/financials');
+        setFinancialSummary({
+          availableBalance: finRes.data.availableBalance || 0,
+          pendingBalance: finRes.data.pendingBalance || 0,
+          transactions: finRes.data.transactions || []
+        });
+      } catch (finErr) {
+        console.error('Failed to load financial summary in portal', finErr);
+      }
       fetchUnreadCount();
       fetchPendingGradingCount();
       fetchNotifications();
@@ -628,6 +640,10 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                               if (title === 'Course Approved') return t('notifications.course_approved', 'Course Approved');
                               if (title === 'Course Submitted') return t('notifications.course_submitted', 'Course Submitted');
                               if (title === 'Course Rejected') return t('notifications.course_rejected', 'Course Rejected');
+                              if (title === 'Payout Request Received') return t('notifications.payout_received', 'Payout Request Received');
+                              if (title === 'Payout Request Approved') return t('notifications.payout_approved', 'Payout Request Approved');
+                              if (title === 'Payout Request Rejected') return t('notifications.payout_rejected', 'Payout Request Rejected');
+                              if (title === 'New Payout Request') return t('notifications.new_payout_request', 'New Payout Request');
                               if (title === 'New Reply') return t('notifications.new_reply', 'New Reply');
                               if (title === 'New Student Enrollment') return t('notifications.new_student_enrollment', 'New Student Enrollment');
                               if (title.startsWith('New Admin Added')) return t('notifications.new_admin_added', 'New Admin Added');
@@ -681,6 +697,16 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                                 if (match) {
                                   formattedMain = t('notifications.course_approved_msg', { title: match[1], defaultValue: `Your course "${match[1]}" has been approved!` });
                                 }
+                              } else if (formattedMain.includes('We have received your payout request')) {
+                                formattedMain = t('notifications.payout_received_msg', 'We have received your payout request and it is now under review.');
+                              } else if (formattedMain.includes('was rejected.')) {
+                                const amtMatch = formattedMain.match(/payout request of EGP ([0-9,.]+)/);
+                                const amt = amtMatch ? amtMatch[1] : '';
+                                formattedMain = t('notifications.payout_rejected_msg', { amount: amt, defaultValue: `Your payout request of EGP ${amt} was rejected.` });
+                              } else if (formattedMain.includes('has been approved and processed.')) {
+                                const amtMatch = formattedMain.match(/payout request of EGP ([0-9,.]+)/);
+                                const amt = amtMatch ? amtMatch[1] : '';
+                                formattedMain = t('notifications.payout_approved_msg', { amount: amt, defaultValue: `Your payout request of EGP ${amt} has been approved and processed.` });
                               }
 
                               return (
@@ -750,9 +776,9 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
           
           {activeTab === 'curriculum' ? (
             <div className="animate-entrance">
-              <CurriculumBuilderTab
-                courses={courses}
-                modulesByCourse={modulesByCourse}
+              <CurriculumBuilderTab 
+                courses={courses} 
+                modulesByCourse={modulesByCourse} 
                 onAction={fetchMyCourses}
                 onOpenAddLesson={(courseId, moduleId) => {
                   setError('');
@@ -823,30 +849,118 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
             </div>
           ) : (
             <div className="animate-entrance">
-            {/* STATS OVERVIEW */}
-            <div className="stats-grid animate-entrance" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))', gap: '24px', marginBottom: '48px' }}>
-              <div className="stat-card solid-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
-                {/* Translated Total Revenue */}
-                <div style={{ color: 'var(--text)', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>{t('instructor.analytics.total_revenue')}</div>
-                <div style={{ fontSize: '2.5rem', fontWeight: 800, marginTop: 'auto', background: 'linear-gradient(135deg, #f97316 0%, #fbbf24 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                  EGP {stats.reduce((sum, s) => sum + s.revenue, 0).toLocaleString()}
-                </div>
-              </div>
-              
-              <div className="stat-card solid-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
-                {/* Translated Total Enrollments */}
-                <div style={{ color: 'var(--text)', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>{t('instructor.analytics.total_enrollments')}</div>
-                <div style={{ fontSize: '2.5rem', fontWeight: 800, marginTop: 'auto', background: 'linear-gradient(135deg, #FBBF24, #FFD54A)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                  {stats.reduce((sum, s) => sum + s.enrolled, 0).toLocaleString()}
-                </div>
-              </div>
+              {/* STATS OVERVIEW */}
+            {(() => {
+              const totalRevenue = financialSummary.transactions
+                .filter(t => t.type === 'course_sale')
+                .reduce((sum, t) => sum + t.amount, 0);
 
-              <div className="stat-card solid-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
-                {/* Translated Active Courses (mapped to total courses) */}
-                <div style={{ color: 'var(--text)', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>{t('instructor.dashboard.total_courses')}</div>
-                <div style={{ fontSize: '2.5rem', fontWeight: 800, marginTop: 'auto', background: 'linear-gradient(135deg, #9CA3AF, #D1D5DB)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{courses.length}</div>
-              </div>
-            </div>
+              const lastWithdrawTx = financialSummary.transactions.find(t => t.type === 'payout_request');
+              const lastWithdrawDate = lastWithdrawTx
+                ? new Date(lastWithdrawTx.createdAt).toLocaleString(i18n.language === 'ar' ? 'ar-EG' : 'en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })
+                : 'N/A';
+              let nextWithdrawText = t('instructor.financials.available_now');
+              if (lastWithdrawTx) {
+                if (['otp_verified', 'approved', 'processing', 'pending'].includes(lastWithdrawTx.status)) {
+                  nextWithdrawText = t('instructor.financials.under_review', 'Under Review');
+                } else if (['cleared', 'paid'].includes(lastWithdrawTx.status)) {
+                  const approvalDate = lastWithdrawTx.updatedAt || lastWithdrawTx.approvedAt || lastWithdrawTx.createdAt;
+                  const nextTime = new Date(new Date(approvalDate).getTime() + 7 * 24 * 60 * 60 * 1000);
+                  const diff = nextTime - new Date();
+                  if (diff > 0) {
+                    const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                    const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    nextWithdrawText = i18n.language === 'ar' ? `${d}ي ${h}س ${m}د` : `${d}d ${h}h ${m}m`;
+                  }
+                }
+              }
+
+              // Calculate On-Site Cash (Pending Settlement)
+              const onSiteCash = financialSummary.pendingBalance !== undefined
+                ? financialSummary.pendingBalance
+                : (financialSummary.transactions || [])
+                    .filter(t => t.type === 'course_sale' && t.availableAt && new Date(t.availableAt) > new Date())
+                    .reduce((sum, t) => sum + t.amount, 0);              return (
+                <div className="animate-entrance" style={{ marginBottom: '40px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {/* Row 1: Total Revenue & On-Site Cash (2 Columns) */}
+                  <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: 0 }}>
+                    {/* Total Revenue Card */}
+                    <div className="stat-card solid-card" style={{ padding: '20px 24px', minHeight: '120px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <div style={{ color: 'var(--text)', fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px' }}>{t('instructor.analytics.total_revenue')}</div>
+                      <div style={{ fontSize: '2rem', fontWeight: 800, color: '#f97316' }}>
+                        EGP {totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </div>
+                    </div>
+
+                    {/* On-Site Cash (Pending) Card */}
+                    <div className="stat-card solid-card" style={{ padding: '20px 24px', minHeight: '120px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <div>
+                        <div style={{ color: 'var(--text)', fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>
+                          {t('instructor.financials.onsite_cash')}
+                        </div>
+                        <div style={{ fontSize: '2rem', fontWeight: 800, color: '#f59e0b' }}>
+                          EGP {onSiteCash.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
+                      </div>
+                      <div style={{ color: 'var(--c-sub)', fontSize: '0.75rem' }}>
+                        {t('instructor.financials.onsite_cash_help')}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Row 2: Standalone Full-Width Ready to Withdraw Card */}
+                  <div className="stat-card solid-card" style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                      <div>
+                        <div style={{ color: 'var(--text)', fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>
+                          {t('instructor.financials.ready_to_withdraw')}
+                        </div>
+                        <div style={{ fontSize: '2.2rem', fontWeight: 800, color: '#10b981' }}>
+                          EGP {financialSummary.availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: i18n.language === 'ar' ? 'left' : 'right' }}>
+                        <div style={{ color: 'var(--c-sub)', fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>
+                          {t('instructor.financials.next_withdrawal_in')}
+                        </div>
+                        <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f59e0b' }}>
+                          {nextWithdrawText}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ borderTop: '1px dashed var(--border)', paddingTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
+                      <span style={{ color: 'var(--c-sub)' }}>{t('instructor.financials.last_withdrawal')}</span>
+                      <strong style={{ color: 'var(--text-h)', fontWeight: 600 }}>{lastWithdrawDate}</strong>
+                    </div>
+                  </div>
+
+                  {/* Row 3: Total Enrollments & Total Courses (2 Columns) */}
+                  <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: 0 }}>
+                    {/* Total Enrollments Card */}
+                    <div className="stat-card solid-card" style={{ padding: '20px 24px', minHeight: '110px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <div style={{ color: 'var(--text)', fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px' }}>{t('instructor.analytics.total_enrollments')}</div>
+                      <div style={{ fontSize: '2rem', fontWeight: 800, color: '#fbbf24' }}>
+                        {stats.reduce((sum, s) => sum + s.enrolled, 0).toLocaleString()}
+                      </div>
+                    </div>
+
+                    {/* Total Courses Card */}
+                    <div className="stat-card solid-card" style={{ padding: '20px 24px', minHeight: '110px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <div style={{ color: 'var(--text)', fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px' }}>{t('instructor.dashboard.total_courses')}</div>
+                      <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-h)' }}>{courses.length}</div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
               
               <div className="flex justify-between items-center mb-8" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
               {/* Translated My Courses header */}
@@ -872,7 +986,8 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
               </div>
             ) : (
               courses.map(course => {
-                const lessons = (modulesByCourse[course._id] || []).flatMap(m => m.lessons || []);
+                const modules = modulesByCourse[course._id] || [];
+                const lessonCount = modules.reduce((sum, m) => sum + (m.lessons?.length || 0), 0);
                 return (
                   <div
                     key={course._id}
@@ -1018,11 +1133,11 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                                 color: "var(--text)",
                               }}
                             >
-                              {lessons.length === 0
+                              {lessonCount === 0
                                 ? t(
                                     "instructor.dashboard.status.no_lessons_yet",
                                   )
-                                : `${lessons.length} ${lessons.length === 1 ? t("instructor.dashboard.status.lesson") : t("instructor.dashboard.status.lessons")}`}
+                                : `${lessonCount} ${lessonCount === 1 ? t("instructor.dashboard.status.lesson") : t("instructor.dashboard.status.lessons")}`}
                             </span>
                           </div>
                           {(course.status === "rejected" || course.status === "suspended") &&
