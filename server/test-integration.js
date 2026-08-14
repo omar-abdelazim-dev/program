@@ -12,6 +12,7 @@ const run = async () => {
 
   const { default: app } = await import('./app.js');
   const { default: User } = await import('./models/User.js');
+  const { default: Transaction } = await import('./models/Transaction.js');
 
   const agentInstructor = request.agent(app);
   const agentAdmin = request.agent(app);
@@ -340,6 +341,39 @@ const run = async () => {
   res = await agentInstructor.delete(`/api/courses/${emptyCourseId}`).set('X-CSRF-Token', instructorCsrf);
   assert(res.status === 200, `Instructor should be able to delete their own unenrolled course: ${JSON.stringify(res.body)}`);
   console.log('✓ Instructor successfully deleted their own course with no enrollments');
+
+  // --- PAYOUTS: completing/processing must require OTP verification first ---
+  // (Regression test for a bug where completePayout had no status guard at
+  // all, and processPayout's guard was inverted — both let an admin release
+  // funds on a payout the instructor never confirmed via OTP. We create the
+  // Transaction directly rather than going through requestPayout/verify-otp,
+  // since no email provider is configured in this environment — see
+  // CLAUDE.md's "known gaps" — this isolates the fix under test from that
+  // unrelated, already-documented limitation.)
+
+  const instructorUser = await User.findOne({ email: 'nora@example.com' });
+  const pendingPayout = await Transaction.create({
+    instructor: instructorUser._id,
+    amount: -500,
+    type: 'payout_request',
+    status: 'pending',
+    description: 'Payout Request - Instapay',
+    payoutMethod: 'instapay',
+  });
+
+  res = await agentAdmin.put(`/api/financials/${pendingPayout._id}/complete`).set('X-CSRF-Token', adminCsrf);
+  assert(res.status === 400, `Completing a payout still pending OTP verification should be blocked: ${JSON.stringify(res.body)}`);
+  console.log('✓ Admin correctly blocked from completing a payout pending OTP verification (400)');
+
+  res = await agentAdmin.put(`/api/financials/${pendingPayout._id}/process`).set('X-CSRF-Token', adminCsrf);
+  assert(res.status === 400, `Processing a payout still pending OTP verification should be blocked: ${JSON.stringify(res.body)}`);
+  console.log('✓ Admin correctly blocked from processing a payout pending OTP verification (400)');
+
+  await Transaction.findByIdAndUpdate(pendingPayout._id, { status: 'approved' });
+  res = await agentAdmin.put(`/api/financials/${pendingPayout._id}/complete`).set('X-CSRF-Token', adminCsrf);
+  assert(res.status === 200, `Completing an OTP-verified payout should succeed: ${JSON.stringify(res.body)}`);
+  assert(res.body.transaction.status === 'paid', 'Payout should be marked paid');
+  console.log('✓ Admin successfully completed a payout once it was OTP-verified');
 
   await mongoose.disconnect();
   await mongod.stop();

@@ -226,6 +226,13 @@ export const completePayout = async (req, res) => {
     if (tx.status === 'paid') {
       return res.status(400).json({ message: 'Payout is already paid' });
     }
+    // The instructor must have completed OTP verification before funds can
+    // be released — otherwise this endpoint bypasses the entire OTP flow
+    // (fraud/account-takeover protection) by completing a payout the instant
+    // it's created, before they ever confirmed it via their registered email.
+    if (!['otp_verified', 'approved', 'processing'].includes(tx.status)) {
+      return res.status(400).json({ message: `Cannot complete a payout in status '${tx.status}' — the instructor must verify via OTP first` });
+    }
 
     tx.status = 'paid';
     tx.payoutDetails = ''; // Erase sensitive bank account / phone number data for security
@@ -260,7 +267,7 @@ export const completePayout = async (req, res) => {
           });
         }
       } catch (err) {
-        console.error('Failed to send payout approval notification/email:', err);
+        logger.error('Failed to send payout approval notification/email', { error: err.message, stack: err.stack });
       }
     }
 
@@ -282,8 +289,11 @@ export const processPayout = async (req, res) => {
       return res.status(404).json({ message: 'Payout request not found' });
     }
 
-    if (tx.status !== 'pending') {
-      return res.status(400).json({ message: 'Only pending payouts can be processed' });
+    // Same OTP-verification requirement as completePayout — 'pending' means
+    // the instructor hasn't confirmed via OTP yet, so it must NOT be eligible
+    // for processing (this previously checked the opposite: status === 'pending').
+    if (!['otp_verified', 'approved'].includes(tx.status)) {
+      return res.status(400).json({ message: `Cannot process a payout in status '${tx.status}' — the instructor must verify via OTP first` });
     }
 
     tx.status = 'processing';
@@ -291,7 +301,7 @@ export const processPayout = async (req, res) => {
 
     res.json({ message: 'Payout marked as processing', transaction: tx });
   } catch (error) {
-    console.error('Error processing payout:', error);
+    logger.error('Error processing payout', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Failed to mark payout as processing' });
   }
 };
@@ -341,7 +351,7 @@ export const rejectPayout = async (req, res) => {
           });
         }
       } catch (err) {
-        console.error('Failed to send payout rejection notification/email:', err);
+        logger.error('Failed to send payout rejection notification/email', { error: err.message, stack: err.stack });
       }
     }
 
