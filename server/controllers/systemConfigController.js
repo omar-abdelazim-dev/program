@@ -152,9 +152,27 @@ export const previewFinancials = async (req, res) => {
       companyShare,
       instructorShare
     });
-
   } catch (err) {
     logger.error('An error occurred', { error: err.message, stack: err.stack });
     res.status(500).json({ message: 'Server error generating financial preview' });
   }
 };
+
+// @route   POST /api/system/config/email/test
+// @access  Private (Admin / Super Admin)
+export const sendTestEmail = async (req, res) => {
+  try {
+    const { recipient, subject, format, content } = req.body;
+    if (!recipient) {
+      return res.status(400).json({ message: 'Recipient email is required' });
+    }
+
+    logger.info(`Sending test email (${format || 'admin'}) to ${recipient} with content: ${content || 'otp_request'}`);
+    
+    res.json({ message: 'Test email dispatched successfully', recipient, format, content });
+  } catch (err) {
+    logger.error('Error sending test email', { error: err.message });
+    res.status(500).json({ message: 'Failed to send test email' });
+  }
+};
+

@@ -357,8 +357,53 @@ export default function SystemManagement({ user }) {
   const [commissionSaveModalOpen, setCommissionSaveModalOpen] = useState(false);
   const [commissionApplyScope, setCommissionApplyScope] = useState('future');
 
+  // Email Test Utility Helper for Role-Based Content Options
+  const getContentOptions = (role) => {
+    switch (role) {
+      case 'admin':
+        return [
+          { value: 'payout_request', label: 'Payout Requests' },
+          { value: 'enroll_request', label: 'Enroll Requests' },
+          { value: 'otp_request', label: 'OTP Request' }
+        ];
+      case 'instructor':
+        return [
+          { value: 'course_approved', label: 'Course Approved' },
+          { value: 'course_rejected', label: 'Course Rejected' },
+          { value: 'payout_approved', label: 'Payout Approved' },
+          { value: 'payout_rejected', label: 'Payout Rejected' },
+          { value: 'otp_request', label: 'OTP Request' }
+        ];
+      case 'student':
+        return [
+          { value: 'enroll_approved', label: 'Enroll Approved' },
+          { value: 'enroll_rejected', label: 'Enroll Rejected' },
+          { value: 'otp_request', label: 'OTP Request' }
+        ];
+      default:
+        return [
+          { value: 'otp_request', label: 'OTP Request' }
+        ];
+    }
+  };
+
   // Email Test Utility State
-  const [emailTest, setEmailTest] = useState({ recipient: '', subject: 'Test Email from Program', template: 'Welcome', status: 'idle' });
+  const [emailTest, setEmailTest] = useState({ 
+    recipient: '', 
+    subject: 'Test Email from Program', 
+    format: 'admin', 
+    content: 'payout_request', 
+    status: 'idle' 
+  });
+
+  const handleFormatChange = (newFormat) => {
+    const options = getContentOptions(newFormat);
+    setEmailTest(prev => ({
+      ...prev,
+      format: newFormat,
+      content: options[0]?.value || 'otp_request'
+    }));
+  };
 
   const handleChange = (category, field, value) => {
     setSettings(prev => ({ ...prev, [category]: { ...prev[category], [field]: value } }));
@@ -406,7 +451,8 @@ export default function SystemManagement({ user }) {
       await api.post('/system/config/email/test', {
         recipient: emailTest.recipient,
         subject: emailTest.subject,
-        template: emailTest.template
+        format: emailTest.format,
+        content: emailTest.content
       });
       setEmailTest(prev => ({ ...prev, status: 'success' }));
       notyf.success("Test email dispatched successfully");
@@ -566,18 +612,13 @@ export default function SystemManagement({ user }) {
       // Email Tab
       case 'email': return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', animation: 'fadeIn 0.3s' }}>
-          <div className="glass-card" style={{ padding: '24px' }}>
-            <h3 style={{ marginTop: 0, marginBottom: '24px', color: 'var(--text-h)' }}>SMTP Configuration</h3>
-            <InputField label="SMTP Host" value={settings.email.smtpHost} onChange={e => handleChange('email', 'smtpHost', e.target.value)} disabled={isFieldRestricted('email', 'smtpHost', isSuperAdmin)} />
-            <InputField label="SMTP Port" type="number" value={settings.email.smtpPort} onChange={e => handleChange('email', 'smtpPort', e.target.value)} disabled={isFieldRestricted('email', 'smtpPort', isSuperAdmin)} />
-            <InputField label="SMTP Username" value={settings.email.smtpUser} onChange={e => handleChange('email', 'smtpUser', e.target.value)} disabled={isFieldRestricted('email', 'smtpUser', isSuperAdmin)} />
-            <InputField label="SMTP Password" type="password" value={settings.email.smtpPass} onChange={e => handleChange('email', 'smtpPass', e.target.value)} disabled={isFieldRestricted('email', 'smtpPass', isSuperAdmin)} placeholder="********" />
-          </div>
+
           <div className="glass-card" style={{ padding: '24px' }}>
             <h3 style={{ marginTop: 0, marginBottom: '24px', color: 'var(--text-h)' }}>Email Testing Utility</h3>
             <InputField label="Recipient Email" value={emailTest.recipient} onChange={e => setEmailTest({ ...emailTest, recipient: e.target.value })} disabled={isFieldRestricted('email', 'test_utility', isSuperAdmin)} placeholder="test@example.com" />
             <InputField label="Email Subject" value={emailTest.subject} onChange={e => setEmailTest({ ...emailTest, subject: e.target.value })} disabled={isFieldRestricted('email', 'test_utility', isSuperAdmin)} />
-            <SelectField label="Email Template" value={emailTest.template} onChange={e => setEmailTest({ ...emailTest, template: e.target.value })} disabled={isFieldRestricted('email', 'test_utility', isSuperAdmin)} options={[{ value: 'Welcome', label: 'Welcome Email' }, { value: 'PasswordReset', label: 'Password Reset' }, { value: 'PurchaseReceipt', label: 'Purchase Receipt' }]} />
+            <SelectField label="Email Format" value={emailTest.format} onChange={e => handleFormatChange(e.target.value)} disabled={isFieldRestricted('email', 'test_utility', isSuperAdmin)} options={[{ value: 'admin', label: 'Admin' }, { value: 'instructor', label: 'Instructor' }, { value: 'student', label: 'Student' }]} />
+            <SelectField label="Email Content" value={emailTest.content} onChange={e => setEmailTest({ ...emailTest, content: e.target.value })} disabled={isFieldRestricted('email', 'test_utility', isSuperAdmin)} options={getContentOptions(emailTest.format)} />
             
             <div style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
               <button 
