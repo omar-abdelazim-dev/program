@@ -159,9 +159,11 @@ const SelectField = ({ label, value, onChange, options, disabled }) => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }} data-tooltip={disabled ? "Super Admin permission required" : ""}>
       <label style={{ fontSize: '0.85rem', color: 'var(--c-sub)', fontWeight: 600, textTransform: 'uppercase' }}>{label}</label>
       <div ref={dropdownRef} style={{ position: 'relative' }}>
-        <div 
-          className="solid-input"
+        <button
+          type="button"
+          disabled={disabled}
           onClick={() => !disabled && setIsOpen(!isOpen)}
+          className="solid-input"
           style={{ 
             width: '100%', 
             opacity: disabled ? 0.6 : 1, 
@@ -169,81 +171,101 @@ const SelectField = ({ label, value, onChange, options, disabled }) => {
             paddingRight: '40px',
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'space-between',
             userSelect: 'none',
             minHeight: '44px',
-            borderColor: isOpen ? '#f97316' : undefined,
-            boxShadow: isOpen ? '0 0 0 1px #f97316' : undefined,
+            background: 'var(--bg-main)',
+            border: isOpen ? '1px solid #f97316' : '1px solid transparent',
+            borderRadius: '10px',
+            boxShadow: isOpen ? 'var(--outer-shadow), 0 0 0 3px rgba(249, 115, 22, 0.2)' : 'var(--inner-shadow)',
+            color: 'var(--text-primary)',
+            fontSize: '0.95rem',
+            textAlign: 'left',
             transition: 'all 0.2s ease'
           }}
         >
-          {selectedLabel}
-        </div>
-        <i style={{ 
-          position: 'absolute', right: '14px', top: '50%', 
-          transform: `translateY(-50%) ${isOpen ? 'rotate(180deg)' : ''}`, 
-          transition: 'transform 0.2s ease', 
-          color: isOpen ? '#f97316' : 'var(--text-secondary)', 
-          pointerEvents: 'none',
-          fontSize: '0.8rem'
-        }}>
-          ▼
-        </i>
+          <span>{selectedLabel}</span>
+          <span style={{ 
+            position: 'absolute', right: '14px', top: '50%', 
+            transform: `translateY(-50%) ${isOpen ? 'rotate(180deg)' : 'rotate(0deg)'}`, 
+            transition: 'transform 0.2s ease', 
+            color: isOpen ? '#f97316' : 'var(--c-sub)', 
+            pointerEvents: 'none',
+            fontSize: '0.8rem'
+          }}>
+            ▼
+          </span>
+        </button>
         
-        {isOpen && (
+        {isOpen && !disabled && (
           <div style={{
             position: 'absolute',
             top: 'calc(100% + 8px)',
             left: 0,
             right: 0,
-            backgroundColor: 'rgba(26, 29, 39, 0.95)',
-            backdropFilter: 'blur(16px)',
+            background: 'var(--bg-surface)',
             border: '1px solid var(--c-border-subtle)',
             borderRadius: '12px',
+            padding: '8px',
             boxShadow: 'var(--outer-shadow)',
-            zIndex: 100,
+            zIndex: 9999,
             overflow: 'hidden',
-            maxHeight: '250px',
-            overflowY: 'auto',
-            animation: 'fadeInUp 0.2s ease-out'
+            animation: 'smoothDropdownEnter 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+            transformOrigin: 'top'
           }}>
-            {options.map(opt => {
-              const optValue = opt.value !== undefined ? opt.value : opt;
-              const optLabel = opt.label !== undefined ? opt.label : opt;
-              const isSelected = optValue === value;
-              return (
-                <div
-                  key={optValue}
-                  onClick={() => {
-                    onChange({ target: { value: optValue } });
-                    setIsOpen(false);
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = isSelected ? 'rgba(249, 115, 22, 0.15)' : 'var(--c-bg-hover)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = isSelected ? 'rgba(249, 115, 22, 0.1)' : 'transparent';
-                  }}
-                  style={{
-                    padding: '12px 16px',
-                    cursor: 'pointer',
-                    color: isSelected ? '#f97316' : 'var(--text-primary)',
-                    backgroundColor: isSelected ? 'rgba(249, 115, 22, 0.1)' : 'transparent',
-                    fontWeight: isSelected ? 600 : 400,
-                    transition: 'all 0.2s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
-                  }}
-                >
-                  {optLabel}
-                  {isSelected && (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                  )}
-                </div>
-              );
-            })}
+            <div style={{
+              padding: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px',
+              maxHeight: '250px',
+              overflowY: 'auto'
+            }}>
+              {options.map(opt => {
+                const optValue = opt.value !== undefined ? opt.value : opt;
+                const optLabel = opt.label !== undefined ? opt.label : opt;
+                const isSelected = optValue === value;
+                return (
+                  <button
+                    key={optValue}
+                    type="button"
+                    onClick={() => {
+                      onChange({ target: { value: optValue } });
+                      setIsOpen(false);
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSelected) e.currentTarget.style.background = 'var(--c-bg-hover)';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSelected) e.currentTarget.style.background = 'transparent';
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      cursor: 'pointer',
+                      color: isSelected ? '#f97316' : 'var(--text-primary)',
+                      background: isSelected ? 'rgba(249, 115, 22, 0.15)' : 'transparent',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontWeight: isSelected ? 600 : 400,
+                      fontSize: '0.9rem',
+                      textAlign: 'left',
+                      transition: 'all 0.15s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between'
+                    }}
+                  >
+                    <span>{optLabel}</span>
+                    {isSelected && (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
