@@ -1398,8 +1398,9 @@ export default function AdminPortal({
                 <h2 style={{ fontSize: "1.8rem", margin: 0 }}>
                   Enrollment Requests
                 </h2>
-                <div className="glass-card" style={{ overflow: "hidden", width: "100%", padding: "8px 16px" }}>
-                  <table className="admin-table" style={{ width: "100%", borderCollapse: "separate", borderSpacing: "0", textAlign: "left" }}>
+                <div className="glass-card" style={{ width: "100%", padding: "16px", borderRadius: "20px", overflow: "hidden" }}>
+                  <div style={{ overflowX: "auto" }}>
+                    <table className="admin-table" style={{ width: "100%", minWidth: "750px", borderCollapse: "separate", borderSpacing: "0", textAlign: "left" }}>
                     <thead>
                       <tr>
                         <th style={{ padding: "18px 24px 18px 32px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>
@@ -1505,6 +1506,7 @@ export default function AdminPortal({
                       )}
                     </tbody>
                   </table>
+                  </div>
                   
                   {transactions.length > 10 && (
                     <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', margin: '20px 0 12px 0', alignItems: 'center' }}>
