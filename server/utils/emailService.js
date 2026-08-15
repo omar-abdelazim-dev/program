@@ -23,12 +23,19 @@ const cache = {};
  * Helper to compile and cache handlebars templates
  */
 const getTemplate = (templateName) => {
-  if (cache[templateName]) return cache[templateName];
-  
   const templatePath = path.join(TEMPLATES_DIR, `${templateName}.html`);
+  const stats = fs.statSync(templatePath);
+  
+  if (cache[templateName] && cache[templateName].mtime === stats.mtimeMs) {
+    return cache[templateName].compiled;
+  }
+  
   const source = fs.readFileSync(templatePath, 'utf-8');
   const compiled = handlebars.compile(source);
-  cache[templateName] = compiled;
+  cache[templateName] = {
+    compiled,
+    mtime: stats.mtimeMs
+  };
   return compiled;
 };
 
@@ -64,7 +71,7 @@ export const sendCourseApprovedEmail = async ({ toEmail, ...context }) => {
   await sendMailSafe({
     templateName: 'instructor-course-approved',
     to: toEmail,
-    subject: '✅ Your Course has been Approved!',
+    subject: 'Your Course has been Approved!',
     html
   });
 };
@@ -84,7 +91,7 @@ export const sendCourseRejectedEmail = async ({ toEmail, ...context }) => {
   await sendMailSafe({
     templateName: 'instructor-course-rejected',
     to: toEmail,
-    subject: '❌ Your Course has been Rejected',
+    subject: 'Your Course has been Rejected',
     html
   });
 };
@@ -100,7 +107,7 @@ export const sendPayoutApprovedEmail = async ({ toEmail, ...context }) => {
   await sendMailSafe({
     templateName: 'instructor-payout-approved',
     to: toEmail,
-    subject: '✅ Your Payout Request has been Approved!',
+    subject: 'Your Payout Request has been Approved!',
     html
   });
 };
@@ -120,7 +127,7 @@ export const sendPayoutRejectedEmail = async ({ toEmail, ...context }) => {
   await sendMailSafe({
     templateName: 'instructor-payout-rejected',
     to: toEmail,
-    subject: '❌ Your Payout Request has been Rejected',
+    subject: 'Your Payout Request has been Rejected',
     html
   });
 };
@@ -161,7 +168,7 @@ export const sendStudentEnrollApprovedEmail = async ({ toEmail, ...context }) =>
   await sendMailSafe({
     templateName: 'student-enroll-approved',
     to: toEmail,
-    subject: '✅ Your Enrollment has been Approved!',
+    subject: 'Your Enrollment has been Approved!',
     html
   });
 };
@@ -181,7 +188,7 @@ export const sendStudentEnrollRejectedEmail = async ({ toEmail, ...context }) =>
   await sendMailSafe({
     templateName: 'student-enroll-rejected',
     to: toEmail,
-    subject: '❌ Your Enrollment has been Rejected',
+    subject: 'Your Enrollment has been Rejected',
     html
   });
 };
@@ -197,7 +204,7 @@ export const sendOtpVerificationEmail = async ({ toEmail, ...context }) => {
   await sendMailSafe({
     templateName: 'otp-verification',
     to: toEmail,
-    subject: '🔒 Your Verification Code',
+    subject: 'Your Verification Code',
     html
   });
 };
