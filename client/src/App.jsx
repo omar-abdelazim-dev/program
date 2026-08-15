@@ -216,6 +216,17 @@ export default function App() {
 
   // The Learning Portal and Checkout Page have their own fullscreen layouts
   if (location.pathname.startsWith('/learn/') || location.pathname.startsWith('/checkout/') || location.pathname === '/instructor' || location.pathname === '/admin') {
+    
+    // Protect /admin route
+    if (location.pathname === '/admin' && user?.role !== 'admin' && user?.role !== 'superadmin') {
+      return <Navigate to="/" replace />;
+    }
+
+    // Protect /instructor route
+    if (location.pathname === '/instructor' && user?.role !== 'instructor' && user?.role !== 'admin' && user?.role !== 'superadmin') {
+      return <Navigate to="/" replace />;
+    }
+
     return (
       <Routes>
         <Route path="/learn/:id" element={<LearningPortal user={user} />} />
