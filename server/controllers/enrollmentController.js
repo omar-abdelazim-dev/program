@@ -5,6 +5,7 @@ import Lesson from '../models/Lesson.js';
 import Transaction from '../models/Transaction.js';
 import PromoCode from '../models/PromoCode.js';
 import { getInternalConfig } from '../utils/configFetcher.js';
+import * as emailService from '../utils/emailService.js';
 import Notification from '../models/Notification.js';
 import logger from '../utils/logger.js';
 import { getModulesWithLessons, computeModuleProgress } from '../utils/courseContent.js';
@@ -94,6 +95,24 @@ export const enroll = async (req, res) => {
         
         if (notifications.length > 0) {
           await Notification.insertMany(notifications);
+        }
+
+        try {
+          await emailService.sendAdminNewRequestEmail({
+            adminEmails: admins.map(a => ({ email: a.email, name: a.name })),
+            request_id: enrollment._id,
+            request_type_label: 'New Enrollment Request',
+            request_type_tag: 'ENROLL',
+            submitted_date: new Date().toLocaleDateString(),
+            item_title: course.title,
+            requester_name: studentName,
+            requester_role: 'Student',
+            review_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/admin/enrollments`,
+            queue_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/admin/requests`,
+            settings_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/admin/settings`
+          });
+        } catch (emailErr) {
+          logger.error('Failed to send admin email notification for new enrollment', { err: emailErr.message });
         }
       } catch (err) {
         logger.error('Failed to create admin notifications', { error: err.message, stack: err.stack });

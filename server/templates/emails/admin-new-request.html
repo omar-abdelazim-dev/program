@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New request awaiting review</title>
+<style>
+  @media (max-width: 620px) {
+    .container { width: 100% !important; }
+    .px { padding-left: 20px !important; padding-right: 20px !important; }
+    .stack { display: block !important; width: 100% !important; text-align: left !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background-color:#EFEFF1;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#EFEFF1;padding:32px 0;">
+<tr><td align="center">
+<table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;background-color:#FFFFFF;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.10);">
+
+  <!-- Top banner -->
+  <tr>
+    <td class="px" style="background-color:#15171A;padding:22px 40px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td class="stack" style="vertical-align:middle;">
+            <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+              <td style="width:28px;height:28px;background-color:#E8A33D;border-radius:5px;text-align:center;vertical-align:middle;font-family:'Courier New',Courier,monospace;color:#15171A;font-size:14px;font-weight:700;line-height:28px;">P</td>
+              <td style="padding-left:10px;font-family:Helvetica,Arial,sans-serif;color:#F4F4F5;font-size:14px;letter-spacing:0.3px;">Program <span style="color:#8B8D93;">/ Admin Console</span></td>
+            </tr></table>
+          </td>
+          <td class="stack" align="right" style="vertical-align:middle;">
+            <span style="font-family:'Courier New',Courier,monospace;font-size:11px;color:#E8A33D;letter-spacing:0.5px;">#{{request_id}}</span>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- Alert strip -->
+  <tr>
+    <td class="px" style="padding:24px 40px 0 40px;">
+      <p style="margin:0;font-family:'Courier New',Courier,monospace;font-size:11px;letter-spacing:1.2px;color:#8B8D93;text-transform:uppercase;">Action required</p>
+      <h1 style="font-family:Helvetica,Arial,sans-serif;font-size:21px;color:#15171A;margin:6px 0 4px 0;font-weight:700;">{{request_type_label}}</h1>
+      <p style="font-family:Helvetica,Arial,sans-serif;font-size:14px;color:#6B6D75;margin:0;">Submitted {{submitted_date}} · awaiting your review</p>
+    </td>
+  </tr>
+
+  <!-- Ticket card -->
+  <tr>
+    <td class="px" style="padding:24px 40px 8px 40px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px dashed #D6D7DC;border-radius:8px;">
+        <tr>
+          <td style="padding:20px 22px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td>
+                  <span style="display:inline-block;font-family:'Courier New',Courier,monospace;font-size:11px;letter-spacing:1px;color:#B4761F;background-color:#FBF1DE;border-radius:3px;padding:4px 10px;text-transform:uppercase;">{{request_type_tag}}</span>
+                </td>
+              </tr>
+            </table>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;font-family:Helvetica,Arial,sans-serif;font-size:14px;color:#374151;">
+              <tr><td style="padding:5px 0;color:#8B8D93;width:140px;">Item</td><td style="padding:5px 0;font-weight:600;color:#15171A;">{{item_title}}</td></tr>
+              <tr><td style="padding:5px 0;color:#8B8D93;">Submitted by</td><td style="padding:5px 0;">{{requester_name}} · {{requester_role}}</td></tr>
+              <tr><td style="padding:5px 0;color:#8B8D93;">Request ID</td><td style="padding:5px 0;font-family:'Courier New',Courier,monospace;">{{request_id}}</td></tr>
+              <tr><td style="padding:5px 0;color:#8B8D93;">Submitted on</td><td style="padding:5px 0;">{{submitted_date}}</td></tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- Body copy -->
+  <tr>
+    <td class="px" style="padding:20px 40px 4px 40px;font-family:Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:#374151;">
+      <p style="margin:0;">Hi {{admin_name}}, this request is queued in your review list. Approving or rejecting it will notify {{requester_name}} automatically.</p>
+    </td>
+  </tr>
+
+  <!-- CTA -->
+  <tr>
+    <td class="px" style="padding:24px 40px 40px 40px;">
+      <a href="{{review_url}}" style="display:inline-block;background-color:#E8A33D;color:#15171A;font-family:Helvetica,Arial,sans-serif;font-size:14px;font-weight:700;text-decoration:none;padding:13px 28px;border-radius:6px;">Review request</a>
+      <span style="display:inline-block;padding-left:14px;font-family:Helvetica,Arial,sans-serif;font-size:13px;color:#9CA0A8;">or open the queue in the console</span>
+    </td>
+  </tr>
+
+  <!-- Footer -->
+  <tr>
+    <td class="px" style="padding:20px 40px;background-color:#FAFAFA;border-top:1px solid #EDEDF0;font-family:Helvetica,Arial,sans-serif;font-size:12px;color:#9CA0A8;text-align:center;">
+      <p style="margin:0 0 6px 0;">Program Admin Console · automated notification for platform reviewers.</p>
+      <p style="margin:0;"><a href="{{queue_url}}" style="color:#6B6D75;text-decoration:underline;">Open review queue</a> &nbsp;·&nbsp; <a href="{{settings_url}}" style="color:#6B6D75;text-decoration:underline;">Notification settings</a></p>
+    </td>
+  </tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>

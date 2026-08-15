@@ -259,11 +259,18 @@ export const completePayout = async (req, res) => {
           const otpRecord = await PayoutOTP.findOne({ payoutRequestId: tx._id }).sort({ createdAt: -1 });
           const targetEmail = otpRecord?.email || tx.instructor.email;
 
-          const { sendPayoutStatusEmail } = await import('../utils/payoutOtp.js');
-          await sendPayoutStatusEmail({
+          const { sendPayoutApprovedEmail } = await import('../utils/emailService.js');
+          await sendPayoutApprovedEmail({
             toEmail: targetEmail,
-            instructorName: tx.instructor.name || 'Instructor',
-            status: 'approved'
+            instructor_name: tx.instructor.name || 'Instructor',
+            payout_amount: Math.abs(tx.amount).toLocaleString('en-US', { minimumFractionDigits: 2 }),
+            payout_method: tx.payoutMethod || 'Bank Transfer',
+            payout_reference: tx._id.toString(),
+            approval_date: new Date().toLocaleDateString(),
+            arrival_estimate: '3-5 business days',
+            earnings_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/instructor/earnings`,
+            help_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/help`,
+            settings_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/instructor/settings`
           });
         }
       } catch (err) {
@@ -342,12 +349,17 @@ export const rejectPayout = async (req, res) => {
           const otpRecord = await PayoutOTP.findOne({ payoutRequestId: tx._id }).sort({ createdAt: -1 });
           const targetEmail = otpRecord?.email || tx.instructor.email;
 
-          const { sendPayoutStatusEmail } = await import('../utils/payoutOtp.js');
-          await sendPayoutStatusEmail({
+          const { sendPayoutRejectedEmail } = await import('../utils/emailService.js');
+          await sendPayoutRejectedEmail({
             toEmail: targetEmail,
-            instructorName: tx.instructor.name || 'Instructor',
-            status: 'rejected',
-            reason: tx.rejectionReason
+            instructor_name: tx.instructor.name || 'Instructor',
+            payout_amount: Math.abs(tx.amount).toLocaleString('en-US', { minimumFractionDigits: 2 }),
+            rejection_reason: tx.rejectionReason || 'Does not meet criteria.',
+            payout_reference: tx._id.toString(),
+            review_date: new Date().toLocaleDateString(),
+            payout_settings_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/instructor/settings`,
+            help_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/help`,
+            settings_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/instructor/settings`
           });
         }
       } catch (err) {

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>You're enrolled</title>
+<style>
+  @media (max-width: 620px) {
+    .container { width: 100% !important; }
+    .px { padding-left: 20px !important; padding-right: 20px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background-color:#F3F1EA;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F3F1EA;padding:32px 0;">
+<tr><td align="center">
+<table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;background-color:#FFFDF9;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(15,118,110,0.10);">
+
+  <!-- Top banner -->
+  <tr>
+    <td class="px" style="background-color:#0F766E;padding:26px 40px;text-align:center;">
+      <span style="font-family:Helvetica,Arial,sans-serif;color:#FFFFFF;font-size:16px;font-weight:700;letter-spacing:0.3px;">Program</span>
+    </td>
+  </tr>
+
+  <!-- Progress path -->
+  <tr>
+    <td class="px" style="padding:30px 40px 6px 40px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="center" style="font-family:Helvetica,Arial,sans-serif;font-size:11px;color:#0F766E;">
+            <div style="width:26px;height:26px;border-radius:50%;background-color:#0F766E;color:#FFFFFF;line-height:26px;margin:0 auto 6px auto;font-weight:700;">&#10003;</div>Applied
+          </td>
+          <td width="33%" align="center" style="font-family:Helvetica,Arial,sans-serif;font-size:11px;color:#0F766E;">
+            <div style="width:26px;height:26px;border-radius:50%;background-color:#0F766E;color:#FFFFFF;line-height:26px;margin:0 auto 6px auto;font-weight:700;">&#10003;</div>Reviewed
+          </td>
+          <td width="33%" align="center" style="font-family:Helvetica,Arial,sans-serif;font-size:11px;color:#0F766E;font-weight:700;">
+            <div style="width:26px;height:26px;border-radius:50%;background-color:#0F766E;color:#FFFFFF;line-height:26px;margin:0 auto 6px auto;font-weight:700;">&#10003;</div>Enrolled
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- Headline -->
+  <tr>
+    <td class="px" style="padding:24px 40px 8px 40px;text-align:center;">
+      <h1 style="font-family:Helvetica,Arial,sans-serif;font-size:24px;color:#1F2937;margin:0 0 6px 0;font-weight:800;">You're in! 🎉</h1>
+      <p style="font-family:Helvetica,Arial,sans-serif;font-size:14px;color:#6B7280;margin:0;">Your enrollment has been approved.</p>
+    </td>
+  </tr>
+
+  <tr>
+    <td class="px" style="padding:20px 40px 8px 40px;font-family:Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#374151;">
+      <p style="margin:0 0 16px 0;">Hi {{student_name}},</p>
+      <p style="margin:0 0 16px 0;">You now have full access to <strong>{{course_title}}</strong>. Jump in whenever you're ready — your progress is saved automatically.</p>
+    </td>
+  </tr>
+
+  <!-- Detail card -->
+  <tr>
+    <td class="px" style="padding:0 40px 24px 40px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F0FAF8;border-radius:12px;">
+        <tr><td style="padding:18px 20px;font-family:Helvetica,Arial,sans-serif;font-size:14px;color:#374151;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            <tr><td style="padding:4px 0;color:#6B7280;width:130px;">Course</td><td style="padding:4px 0;font-weight:600;color:#1F2937;">{{course_title}}</td></tr>
+            <tr><td style="padding:4px 0;color:#6B7280;">Instructor</td><td style="padding:4px 0;">{{instructor_name}}</td></tr>
+            <tr><td style="padding:4px 0;color:#6B7280;">Enrolled on</td><td style="padding:4px 0;">{{enrollment_date}}</td></tr>
+            {{#if invoice_code}}
+            <tr><td style="padding:4px 0;color:#6B7280;">Invoice Code</td><td style="padding:4px 0;font-family:'Courier New',monospace;">{{invoice_code}}</td></tr>
+            {{/if}}
+            {{#if payment_time}}
+            <tr><td style="padding:4px 0;color:#6B7280;">Time</td><td style="padding:4px 0;">{{payment_time}}</td></tr>
+            {{/if}}
+            {{#if payment_method}}
+            <tr><td style="padding:4px 0;color:#6B7280;">Payment Method</td><td style="padding:4px 0;">{{payment_method}}</td></tr>
+            {{/if}}
+            {{#if contact_number}}
+            <tr><td style="padding:4px 0;color:#6B7280;">Number</td><td style="padding:4px 0;">{{contact_number}}</td></tr>
+            {{/if}}
+          </table>
+        </td></tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- CTA -->
+  <tr>
+    <td class="px" style="padding:0 40px 40px 40px;text-align:center;">
+      <a href="{{course_url}}" style="display:inline-block;background-color:#0F766E;color:#FFFFFF;font-family:Helvetica,Arial,sans-serif;font-size:14px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:24px;">Start learning</a>
+    </td>
+  </tr>
+
+  <!-- Footer -->
+  <tr>
+    <td class="px" style="padding:22px 40px;background-color:#FBFAF6;border-top:1px solid #F0EEE5;font-family:Helvetica,Arial,sans-serif;font-size:12px;color:#9CA3AF;text-align:center;">
+      <p style="margin:0 0 6px 0;">Program · Learn something new today.</p>
+      <p style="margin:0;"><a href="{{help_url}}" style="color:#6B7280;text-decoration:underline;">Help Center</a> &nbsp;·&nbsp; <a href="{{settings_url}}" style="color:#6B7280;text-decoration:underline;">Notification settings</a></p>
+    </td>
+  </tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>

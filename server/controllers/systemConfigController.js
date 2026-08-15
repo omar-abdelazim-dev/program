@@ -4,6 +4,7 @@ import Enrollment from '../models/Enrollment.js';
 
 import { getInternalConfig, clearConfigCache } from '../utils/configFetcher.js';
 import logger from '../utils/logger.js';
+import * as emailService from '../utils/emailService.js';
 
 // Helper to get or create the global config
 const getGlobalConfig = async () => {
@@ -173,109 +174,147 @@ export const sendTestEmail = async (req, res) => {
       return res.status(400).json({ message: 'SMTP credentials (GMAIL_USER, GMAIL_APP_PASSWORD) are not configured on the server.' });
     }
 
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
-      },
-    });
-
-    let subject = 'Test Email from Program';
-    let title = 'Test Email';
-    let bodyText = `This is a test email for the <strong>${content}</strong> template.`;
-    let bgColor = '#3b82f6'; // default blue
+    const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
 
     switch (content) {
       case 'otp_request':
-        subject = 'Your Verification Code';
-        title = 'Verification Code';
-        bodyText = 'Use the code below to verify your request:<br><br><span style="font-size:2rem;font-weight:bold;letter-spacing:5px;">123456</span>';
-        bgColor = '#3b82f6'; // blue
+        await emailService.sendOtpVerificationEmail({
+          toEmail: recipient,
+          account_email: recipient,
+          otp_code: '123456',
+          expiry_minutes: 10
+        });
         break;
       case 'payout_request':
-        subject = 'New Payout Request Received';
-        title = 'Payout Request';
-        bodyText = 'A new payout request has been submitted by an instructor and is pending admin approval.';
-        bgColor = '#f59e0b'; // amber
+        await emailService.sendAdminNewRequestEmail({
+          adminEmails: [{ email: recipient, name: 'Admin Tester' }],
+          request_id: 'REQ-123456',
+          request_type_label: 'New Payout Request',
+          request_type_tag: 'PAYOUT',
+          submitted_date: new Date().toLocaleDateString(),
+          item_title: 'Instructor Payout - $1500',
+          requester_name: 'Jane Doe',
+          requester_role: 'Instructor',
+          review_url: `${clientUrl}/admin/requests`,
+          queue_url: `${clientUrl}/admin/requests`,
+          settings_url: `${clientUrl}/admin/settings`
+        });
         break;
+      case 'course_request':
       case 'enroll_request':
-        subject = 'New Enrollment Request Received';
-        title = 'Enrollment Request';
-        bodyText = 'A student has requested to enroll in a course. Please review the request.';
-        bgColor = '#f59e0b'; // amber
+        await emailService.sendAdminNewRequestEmail({
+          adminEmails: [{ email: recipient, name: 'Admin Tester' }],
+          request_id: 'REQ-654321',
+          request_type_label: content === 'course_request' ? 'New Course Submission' : 'New Enrollment Request',
+          request_type_tag: content === 'course_request' ? 'COURSE' : 'ENROLL',
+          submitted_date: new Date().toLocaleDateString(),
+          item_title: 'Advanced Masterclass',
+          requester_name: content === 'course_request' ? 'Instructor Jane' : 'Student Bob',
+          requester_role: content === 'course_request' ? 'Instructor' : 'Student',
+          review_url: `${clientUrl}/admin/requests`,
+          queue_url: `${clientUrl}/admin/requests`,
+          settings_url: `${clientUrl}/admin/settings`
+        });
         break;
       case 'course_approved':
-        subject = 'Your Course has been Approved!';
-        title = 'Course Approved';
-        bodyText = 'Congratulations! Your recently submitted course has been reviewed and approved by an admin.';
-        bgColor = '#10b981'; // green
+        await emailService.sendCourseApprovedEmail({
+          toEmail: recipient,
+          instructor_name: 'Instructor Jane',
+          course_title: 'Advanced Masterclass',
+          course_category: 'Technology',
+          approval_date: new Date().toLocaleDateString(),
+          dashboard_url: `${clientUrl}/instructor/courses`,
+          help_url: `${clientUrl}/help`,
+          settings_url: `${clientUrl}/instructor/settings`
+        });
         break;
       case 'course_rejected':
-        subject = 'Your Course has been Rejected';
-        title = 'Course Rejected';
-        bodyText = `Your recently submitted course has been rejected.<br><br><strong>Reason:</strong> ${rejectionReason || 'No reason provided.'}`;
-        bgColor = '#ef4444'; // red
+        await emailService.sendCourseRejectedEmail({
+          toEmail: recipient,
+          instructor_name: 'Instructor Jane',
+          course_title: 'Advanced Masterclass',
+          rejection_reason: rejectionReason || 'Content did not meet the quality guidelines.',
+          review_date: new Date().toLocaleDateString(),
+          edit_course_url: `${clientUrl}/instructor/courses/edit`,
+          help_url: `${clientUrl}/help`,
+          settings_url: `${clientUrl}/instructor/settings`
+        });
         break;
       case 'payout_approved':
-        subject = 'Your Payout Request has been Approved!';
-        title = 'Payout Approved';
-        bodyText = 'Your payout request has been approved. The funds will be transferred to your account shortly.';
-        bgColor = '#10b981'; // green
+        await emailService.sendPayoutApprovedEmail({
+          toEmail: recipient,
+          instructor_name: 'Instructor Jane',
+          payout_amount: '1,500.00',
+          payout_method: 'Bank Transfer',
+          payout_reference: 'PAY-10029',
+          approval_date: new Date().toLocaleDateString(),
+          arrival_estimate: '3-5 business days',
+          invoice_code: 'INV-2026-0814',
+          payment_time: new Date().toLocaleTimeString(),
+          contact_number: '+1 (555) 123-4567',
+          earnings_url: `${clientUrl}/instructor/earnings`,
+          help_url: `${clientUrl}/help`,
+          settings_url: `${clientUrl}/instructor/settings`
+        });
         break;
       case 'payout_rejected':
-        subject = 'Your Payout Request has been Rejected';
-        title = 'Payout Rejected';
-        bodyText = `Your payout request has been rejected.<br><br><strong>Reason:</strong> ${rejectionReason || 'No reason provided.'}`;
-        bgColor = '#ef4444'; // red
+        await emailService.sendPayoutRejectedEmail({
+          toEmail: recipient,
+          instructor_name: 'Instructor Jane',
+          payout_amount: '1,500.00',
+          rejection_reason: rejectionReason || 'Invalid IBAN provided.',
+          payout_reference: 'PAY-10029',
+          review_date: new Date().toLocaleDateString(),
+          invoice_code: 'INV-2026-0814',
+          payment_time: new Date().toLocaleTimeString(),
+          payment_method: 'Bank Transfer',
+          contact_number: '+1 (555) 123-4567',
+          payout_settings_url: `${clientUrl}/instructor/settings`,
+          help_url: `${clientUrl}/help`,
+          settings_url: `${clientUrl}/instructor/settings`
+        });
         break;
       case 'enroll_approved':
-        subject = 'Your Enrollment Request has been Approved!';
-        title = 'Enrollment Approved';
-        bodyText = 'Your request to enroll in the course has been approved. You can now access the course materials.';
-        bgColor = '#10b981'; // green
+        await emailService.sendStudentEnrollApprovedEmail({
+          toEmail: recipient,
+          student_name: 'Student Bob',
+          course_title: 'Advanced Masterclass',
+          instructor_name: 'Instructor Jane',
+          enrollment_date: new Date().toLocaleDateString(),
+          invoice_code: 'INV-2026-0815',
+          payment_time: new Date().toLocaleTimeString(),
+          payment_method: 'Credit Card',
+          contact_number: '**** **** **** 4242',
+          course_url: `${clientUrl}/learn/123`,
+          help_url: `${clientUrl}/help`,
+          settings_url: `${clientUrl}/student/settings`
+        });
         break;
       case 'enroll_rejected':
-        subject = 'Your Enrollment Request has been Rejected';
-        title = 'Enrollment Rejected';
-        bodyText = `Your request to enroll in the course has been rejected.<br><br><strong>Reason:</strong> ${rejectionReason || 'No reason provided.'}`;
-        bgColor = '#ef4444'; // red
+        await emailService.sendStudentEnrollRejectedEmail({
+          toEmail: recipient,
+          student_name: 'Student Bob',
+          course_title: 'Advanced Masterclass',
+          rejection_reason: rejectionReason || 'Payment verification failed.',
+          review_date: new Date().toLocaleDateString(),
+          invoice_code: 'INV-2026-0815',
+          payment_time: new Date().toLocaleTimeString(),
+          payment_method: 'Credit Card',
+          contact_number: '**** **** **** 4242',
+          browse_courses_url: `${clientUrl}/courses`,
+          help_url: `${clientUrl}/help`,
+          settings_url: `${clientUrl}/student/settings`
+        });
         break;
       default:
-        subject = 'Test Email from Program';
-        title = 'Test Email';
-        bodyText = `This is a test email for the <strong>${content}</strong> template.`;
+        await emailService.sendOtpVerificationEmail({
+          toEmail: recipient,
+          account_email: recipient,
+          otp_code: '------',
+          expiry_minutes: 0
+        });
         break;
     }
-
-    const html = `
-    <!DOCTYPE html>
-    <html>
-    <head><meta charset="utf-8"/></head>
-    <body style="font-family:sans-serif;background:#0f172a;color:#e2e8f0;margin:0;padding:0;">
-      <div style="max-width:480px;margin:40px auto;background:#1e293b;border-radius:16px;overflow:hidden;">
-        <div style="background:${bgColor};padding:24px 32px;">
-          <h1 style="margin:0;font-size:1.4rem;color:#fff;">${title}</h1>
-        </div>
-        <div style="padding:32px;">
-          <p>Hi there,</p>
-          <p style="font-size: 16px; line-height: 1.5;">${bodyText}</p>
-          <div style="background:#0f172a;border-radius:8px;padding:14px;margin-top:30px;font-size:13px;color:#94a3b8;">
-            This is a test email dispatched from the Program System Config utility.
-          </div>
-        </div>
-      </div>
-    </body>
-    </html>`;
-
-    logger.info(`Sending test email to ${recipient} with content: ${content}`);
-    
-    await transporter.sendMail({
-      from: `"Program Platform" <${process.env.GMAIL_USER}>`,
-      to: recipient,
-      subject,
-      html,
-    });
 
     res.json({ message: 'Test email dispatched successfully', recipient, format, content, rejectionReason });
   } catch (err) {

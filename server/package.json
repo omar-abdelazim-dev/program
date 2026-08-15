@@ -20,6 +20,7 @@
     "express-rate-limit": "^8.5.2",
     "express-validator": "^7.3.2",
     "file-type": "^19.6.0",
+    "handlebars": "^4.7.9",
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.4.1",

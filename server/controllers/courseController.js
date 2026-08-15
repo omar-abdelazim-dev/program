@@ -3,8 +3,10 @@ import Lesson from '../models/Lesson.js';
 import Module from '../models/Module.js';
 import Enrollment from '../models/Enrollment.js';
 import Review from '../models/Review.js';
+import User from '../models/User.js';
 import Notification from '../models/Notification.js';
 import { escapeRegex } from '../utils/escapeRegex.js';
+import * as emailService from '../utils/emailService.js';
 import { getModulesWithLessons, getLessonIdsForCourse } from '../utils/courseContent.js';
 import mongoose from 'mongoose';
 import fs from 'fs';
@@ -50,6 +52,26 @@ export const createCourse = async (req, res) => {
       status: 'pending', // every new course starts pending — never trust the client to set this either
       courseType, // validated to 'full' | 'ongoing' by validateCreateCourse; immutable after creation (see §9 Option 4 conversion flow, not yet implemented)
     });
+
+    try {
+      const admins = await User.find({ role: { $in: ['admin', 'superadmin'] } }).select('email name');
+      const instructor = await User.findById(req.user.id).select('name');
+      await emailService.sendAdminNewRequestEmail({
+        adminEmails: admins,
+        request_id: course._id,
+        request_type_label: 'New Course Submission',
+        request_type_tag: 'COURSE',
+        submitted_date: new Date().toLocaleDateString(),
+        item_title: course.title,
+        requester_name: instructor?.name || 'Instructor',
+        requester_role: 'Instructor',
+        review_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/admin/courses/${course._id}`,
+        queue_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/admin/requests`,
+        settings_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/admin/settings`
+      });
+    } catch (err) {
+      logger.error('Failed to send admin notification for new course', { err: err.message });
+    }
 
     res.status(201).json({ course });
   } catch (error) {
@@ -376,6 +398,24 @@ export const approveCourse = async (req, res) => {
       type: 'system'
     });
 
+    try {
+      const instructor = await User.findById(course.instructor).select('name email');
+      if (instructor && instructor.email) {
+        await emailService.sendCourseApprovedEmail({
+          toEmail: instructor.email,
+          instructor_name: instructor.name || 'Instructor',
+          course_title: course.title,
+          course_category: course.category || 'General',
+          approval_date: new Date().toLocaleDateString(),
+          dashboard_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/instructor/courses/${course._id}`,
+          help_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/help`,
+          settings_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/instructor/settings`
+        });
+      }
+    } catch (err) {
+      logger.error('Failed to send course approval email', { err: err.message });
+    }
+
     res.status(200).json({ course });
   } catch (error) {
     logger.error('An error occurred', { error: error.message, stack: error.stack });
@@ -522,6 +562,26 @@ export const requestPriceChange = async (req, res) => {
     };
     await course.save();
 
+    try {
+      const admins = await User.find({ role: { $in: ['admin', 'superadmin'] } }).select('email name');
+      const instructor = await User.findById(req.user.id).select('name');
+      await emailService.sendAdminNewRequestEmail({
+        adminEmails: admins,
+        request_id: course._id,
+        request_type_label: 'Ongoing Course Full Submission',
+        request_type_tag: 'COURSE',
+        submitted_date: new Date().toLocaleDateString(),
+        item_title: course.title,
+        requester_name: instructor?.name || 'Instructor',
+        requester_role: 'Instructor',
+        review_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/admin/courses/${course._id}`,
+        queue_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/admin/requests`,
+        settings_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/admin/settings`
+      });
+    } catch (err) {
+      logger.error('Failed to send admin notification for convert-to-full', { err: err.message });
+    }
+
     res.status(200).json({ course });
   } catch (error) {
     logger.error('An error occurred', { error: error.message, stack: error.stack });
@@ -641,6 +701,24 @@ export const rejectCourse = async (req, res) => {
 
     if (!course) {
       return res.status(404).json({ message: 'Course not found' });
+    }
+
+    try {
+      const instructor = await User.findById(course.instructor).select('name email');
+      if (instructor && instructor.email) {
+        await emailService.sendCourseRejectedEmail({
+          toEmail: instructor.email,
+          instructor_name: instructor.name || 'Instructor',
+          course_title: course.title,
+          rejection_reason: reason || 'Does not meet our content standards.',
+          review_date: new Date().toLocaleDateString(),
+          edit_course_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/instructor/courses/${course._id}/edit`,
+          help_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/help`,
+          settings_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/instructor/settings`
+        });
+      }
+    } catch (err) {
+      logger.error('Failed to send course rejection email', { err: err.message });
     }
 
     res.status(200).json({ course });
