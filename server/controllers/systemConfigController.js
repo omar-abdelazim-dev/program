@@ -174,7 +174,6 @@ export const sendTestEmail = async (req, res) => {
       return res.status(400).json({ message: 'SMTP credentials (GMAIL_USER, GMAIL_APP_PASSWORD) are not configured on the server.' });
     }
 
-    let dispatched = false;
     const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
 
     switch (content) {
@@ -308,19 +307,11 @@ export const sendTestEmail = async (req, res) => {
         });
         break;
       default:
-        // Fallback for an unknown template mapping — use standard nodemailer to show they hit a valid endpoint
-        const transporter = nodemailer.createTransport({
-          service: 'gmail',
-          auth: {
-            user: process.env.GMAIL_USER,
-            pass: process.env.GMAIL_APP_PASSWORD,
-          },
-        });
-        await transporter.sendMail({
-          from: `"Program Platform" <${process.env.GMAIL_USER}>`,
-          to: recipient,
-          subject: 'Test Email from Program',
-          html: `<p>This is a test email for the <strong>${content}</strong> template which has not been explicitly mapped to a new Handlebars template.</p>`
+        await emailService.sendOtpVerificationEmail({
+          toEmail: recipient,
+          account_email: recipient,
+          otp_code: '------',
+          expiry_minutes: 0
         });
         break;
     }
