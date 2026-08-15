@@ -105,7 +105,7 @@ const isFieldRestricted = (tab, field, isSuperAdmin) => {
 };
 
 const ToggleSwitch = ({ label, checked, onChange, disabled }) => (
-  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--c-border-subtle)', opacity: disabled ? 0.6 : 1 }} data-tooltip={disabled ? "Super Admin permission required" : ""}>
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--c-border-subtle)', opacity: disabled ? 0.6 : 1 }} data-tooltip={disabled ? "Super Admin permission required" : undefined}>
     <span style={{ color: 'var(--text-h)', fontWeight: 500, fontSize: '0.95rem' }}>{label}</span>
     <label style={{ position: 'relative', display: 'inline-block', width: '44px', height: '24px', cursor: disabled ? 'not-allowed' : 'pointer' }}>
       <input type="checkbox" checked={checked} onChange={e => !disabled && onChange(e)} style={{ opacity: 0, width: 0, height: 0 }} disabled={disabled} />
@@ -124,7 +124,7 @@ const ToggleSwitch = ({ label, checked, onChange, disabled }) => (
 );
 
 const InputField = ({ label, type = "text", value, onChange, disabled, placeholder }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }} data-tooltip={disabled ? "Super Admin permission required" : ""}>
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }} data-tooltip={disabled ? "Super Admin permission required" : undefined}>
     <label style={{ fontSize: '0.85rem', color: 'var(--c-sub)', fontWeight: 600, textTransform: 'uppercase' }}>{label}</label>
     <input
       type={type}
@@ -156,12 +156,14 @@ const SelectField = ({ label, value, onChange, options, disabled }) => {
   const selectedLabel = selectedOption ? (selectedOption.label !== undefined ? selectedOption.label : selectedOption) : '';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }} data-tooltip={disabled ? "Super Admin permission required" : ""}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }} data-tooltip={disabled ? "Super Admin permission required" : undefined}>
       <label style={{ fontSize: '0.85rem', color: 'var(--c-sub)', fontWeight: 600, textTransform: 'uppercase' }}>{label}</label>
       <div ref={dropdownRef} style={{ position: 'relative' }}>
-        <div 
-          className="solid-input"
+        <button
+          type="button"
+          disabled={disabled}
           onClick={() => !disabled && setIsOpen(!isOpen)}
+          className="solid-input"
           style={{ 
             width: '100%', 
             opacity: disabled ? 0.6 : 1, 
@@ -169,81 +171,94 @@ const SelectField = ({ label, value, onChange, options, disabled }) => {
             paddingRight: '40px',
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'space-between',
             userSelect: 'none',
             minHeight: '44px',
-            borderColor: isOpen ? '#f97316' : undefined,
-            boxShadow: isOpen ? '0 0 0 1px #f97316' : undefined,
+            background: 'var(--bg-main)',
+            border: isOpen ? '1px solid #f97316' : '1px solid transparent',
+            borderRadius: '10px',
+            boxShadow: isOpen ? 'var(--outer-shadow), 0 0 0 3px rgba(249, 115, 22, 0.2)' : 'var(--inner-shadow)',
+            color: 'var(--text-primary)',
+            fontSize: '0.95rem',
+            textAlign: 'left',
             transition: 'all 0.2s ease'
           }}
         >
-          {selectedLabel}
-        </div>
-        <i style={{ 
-          position: 'absolute', right: '14px', top: '50%', 
-          transform: `translateY(-50%) ${isOpen ? 'rotate(180deg)' : ''}`, 
-          transition: 'transform 0.2s ease', 
-          color: isOpen ? '#f97316' : 'var(--text-secondary)', 
-          pointerEvents: 'none',
-          fontSize: '0.8rem'
-        }}>
-          ▼
-        </i>
+          <span>{selectedLabel}</span>
+          <span style={{ 
+            position: 'absolute', right: '14px', top: '50%', 
+            transform: `translateY(-50%) ${isOpen ? 'rotate(180deg)' : 'rotate(0deg)'}`, 
+            transition: 'transform 0.2s ease', 
+            color: isOpen ? '#f97316' : 'var(--c-sub)', 
+            pointerEvents: 'none',
+            fontSize: '0.8rem'
+          }}>
+            ▼
+          </span>
+        </button>
         
-        {isOpen && (
+        {isOpen && !disabled && (
           <div style={{
             position: 'absolute',
             top: 'calc(100% + 8px)',
             left: 0,
             right: 0,
-            backgroundColor: 'rgba(26, 29, 39, 0.95)',
-            backdropFilter: 'blur(16px)',
-            border: '1px solid var(--c-border-subtle)',
-            borderRadius: '12px',
-            boxShadow: 'var(--outer-shadow)',
-            zIndex: 100,
+            background: 'var(--bg-surface)',
+            border: 'none',
+            borderRadius: '16px',
+            padding: '8px',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.1), var(--outer-shadow)',
+            zIndex: 9999,
             overflow: 'hidden',
-            maxHeight: '250px',
-            overflowY: 'auto',
-            animation: 'fadeInUp 0.2s ease-out'
+            animation: 'smoothDropdownEnter 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+            transformOrigin: 'top'
           }}>
-            {options.map(opt => {
-              const optValue = opt.value !== undefined ? opt.value : opt;
-              const optLabel = opt.label !== undefined ? opt.label : opt;
-              const isSelected = optValue === value;
-              return (
-                <div
-                  key={optValue}
-                  onClick={() => {
-                    onChange({ target: { value: optValue } });
-                    setIsOpen(false);
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = isSelected ? 'rgba(249, 115, 22, 0.15)' : 'var(--c-bg-hover)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = isSelected ? 'rgba(249, 115, 22, 0.1)' : 'transparent';
-                  }}
-                  style={{
-                    padding: '12px 16px',
-                    cursor: 'pointer',
-                    color: isSelected ? '#f97316' : 'var(--text-primary)',
-                    backgroundColor: isSelected ? 'rgba(249, 115, 22, 0.1)' : 'transparent',
-                    fontWeight: isSelected ? 600 : 400,
-                    transition: 'all 0.2s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
-                  }}
-                >
-                  {optLabel}
-                  {isSelected && (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                  )}
-                </div>
-              );
-            })}
+            <div style={{
+              padding: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px',
+              maxHeight: '250px',
+              overflowY: 'auto'
+            }}>
+              {options.map(opt => {
+                const optValue = opt.value !== undefined ? opt.value : opt;
+                const optLabel = opt.label !== undefined ? opt.label : opt;
+                const isSelected = String(optValue).toLowerCase() === String(value).toLowerCase();
+                return (
+                  <button
+                    key={optValue}
+                    type="button"
+                    onClick={() => {
+                      onChange({ target: { value: optValue } });
+                      setIsOpen(false);
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSelected) e.currentTarget.style.background = 'var(--c-bg-hover)';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSelected) e.currentTarget.style.background = 'transparent';
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '10px 16px',
+                      cursor: 'pointer',
+                      color: isSelected ? '#f97316' : 'var(--c-light)',
+                      background: isSelected ? 'var(--bg-main)' : 'transparent',
+                      boxShadow: isSelected ? 'var(--inner-shadow)' : 'none',
+                      border: 'none',
+                      borderRadius: '50px',
+                      fontWeight: isSelected ? 700 : 400,
+                      fontSize: '0.95rem',
+                      textAlign: 'left',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <span>{optLabel}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
@@ -252,7 +267,7 @@ const SelectField = ({ label, value, onChange, options, disabled }) => {
 };
 
 const TextareaField = ({ label, value, onChange, disabled, placeholder }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }} data-tooltip={disabled ? "Super Admin permission required" : ""}>
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }} data-tooltip={disabled ? "Super Admin permission required" : undefined}>
     <label style={{ fontSize: '0.85rem', color: 'var(--c-sub)', fontWeight: 600, textTransform: 'uppercase' }}>{label}</label>
     <textarea
       value={value}
@@ -357,8 +372,54 @@ export default function SystemManagement({ user }) {
   const [commissionSaveModalOpen, setCommissionSaveModalOpen] = useState(false);
   const [commissionApplyScope, setCommissionApplyScope] = useState('future');
 
+  // Email Test Utility Helper for Role-Based Content Options
+  const getContentOptions = (role) => {
+    switch (role) {
+      case 'admin':
+        return [
+          { value: 'payout_request', label: 'Payout Requests' },
+          { value: 'enroll_request', label: 'Enroll Requests' },
+          { value: 'otp_request', label: 'OTP Request' }
+        ];
+      case 'instructor':
+        return [
+          { value: 'course_approved', label: 'Course Approved' },
+          { value: 'course_rejected', label: 'Course Rejected' },
+          { value: 'payout_approved', label: 'Payout Approved' },
+          { value: 'payout_rejected', label: 'Payout Rejected' },
+          { value: 'otp_request', label: 'OTP Request' }
+        ];
+      case 'student':
+        return [
+          { value: 'enroll_approved', label: 'Enroll Approved' },
+          { value: 'enroll_rejected', label: 'Enroll Rejected' },
+          { value: 'otp_request', label: 'OTP Request' }
+        ];
+      default:
+        return [
+          { value: 'otp_request', label: 'OTP Request' }
+        ];
+    }
+  };
+
   // Email Test Utility State
-  const [emailTest, setEmailTest] = useState({ recipient: '', subject: 'Test Email from Program', template: 'Welcome', status: 'idle' });
+  const [emailTest, setEmailTest] = useState({ 
+    recipient: '', 
+    subject: 'Test Email from Program', 
+    format: 'admin', 
+    content: 'payout_request', 
+    rejectionReason: '',
+    status: 'idle' 
+  });
+
+  const handleFormatChange = (newFormat) => {
+    const options = getContentOptions(newFormat);
+    setEmailTest(prev => ({
+      ...prev,
+      format: newFormat,
+      content: options[0]?.value || 'otp_request'
+    }));
+  };
 
   const handleChange = (category, field, value) => {
     setSettings(prev => ({ ...prev, [category]: { ...prev[category], [field]: value } }));
@@ -406,7 +467,9 @@ export default function SystemManagement({ user }) {
       await api.post('/system/config/email/test', {
         recipient: emailTest.recipient,
         subject: emailTest.subject,
-        template: emailTest.template
+        format: emailTest.format,
+        content: emailTest.content,
+        rejectionReason: emailTest.rejectionReason
       });
       setEmailTest(prev => ({ ...prev, status: 'success' }));
       notyf.success("Test email dispatched successfully");
@@ -566,18 +629,22 @@ export default function SystemManagement({ user }) {
       // Email Tab
       case 'email': return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', animation: 'fadeIn 0.3s' }}>
-          <div className="glass-card" style={{ padding: '24px' }}>
-            <h3 style={{ marginTop: 0, marginBottom: '24px', color: 'var(--text-h)' }}>SMTP Configuration</h3>
-            <InputField label="SMTP Host" value={settings.email.smtpHost} onChange={e => handleChange('email', 'smtpHost', e.target.value)} disabled={isFieldRestricted('email', 'smtpHost', isSuperAdmin)} />
-            <InputField label="SMTP Port" type="number" value={settings.email.smtpPort} onChange={e => handleChange('email', 'smtpPort', e.target.value)} disabled={isFieldRestricted('email', 'smtpPort', isSuperAdmin)} />
-            <InputField label="SMTP Username" value={settings.email.smtpUser} onChange={e => handleChange('email', 'smtpUser', e.target.value)} disabled={isFieldRestricted('email', 'smtpUser', isSuperAdmin)} />
-            <InputField label="SMTP Password" type="password" value={settings.email.smtpPass} onChange={e => handleChange('email', 'smtpPass', e.target.value)} disabled={isFieldRestricted('email', 'smtpPass', isSuperAdmin)} placeholder="********" />
-          </div>
+
           <div className="glass-card" style={{ padding: '24px' }}>
             <h3 style={{ marginTop: 0, marginBottom: '24px', color: 'var(--text-h)' }}>Email Testing Utility</h3>
             <InputField label="Recipient Email" value={emailTest.recipient} onChange={e => setEmailTest({ ...emailTest, recipient: e.target.value })} disabled={isFieldRestricted('email', 'test_utility', isSuperAdmin)} placeholder="test@example.com" />
-            <InputField label="Email Subject" value={emailTest.subject} onChange={e => setEmailTest({ ...emailTest, subject: e.target.value })} disabled={isFieldRestricted('email', 'test_utility', isSuperAdmin)} />
-            <SelectField label="Email Template" value={emailTest.template} onChange={e => setEmailTest({ ...emailTest, template: e.target.value })} disabled={isFieldRestricted('email', 'test_utility', isSuperAdmin)} options={[{ value: 'Welcome', label: 'Welcome Email' }, { value: 'PasswordReset', label: 'Password Reset' }, { value: 'PurchaseReceipt', label: 'Purchase Receipt' }]} />
+            <SelectField label="Email Format" value={emailTest.format} onChange={e => handleFormatChange(e.target.value)} disabled={isFieldRestricted('email', 'test_utility', isSuperAdmin)} options={[{ value: 'admin', label: 'Admin' }, { value: 'instructor', label: 'Instructor' }, { value: 'student', label: 'Student' }]} />
+            <SelectField label="Email Content" value={emailTest.content} onChange={e => setEmailTest({ ...emailTest, content: e.target.value })} disabled={isFieldRestricted('email', 'test_utility', isSuperAdmin)} options={getContentOptions(emailTest.format)} />
+            
+            {['course_rejected', 'payout_rejected', 'enroll_rejected'].includes(emailTest.content) && (
+              <TextareaField 
+                label="Rejection Reason" 
+                value={emailTest.rejectionReason || ''} 
+                onChange={e => setEmailTest({ ...emailTest, rejectionReason: e.target.value })} 
+                disabled={isFieldRestricted('email', 'test_utility', isSuperAdmin)} 
+                placeholder="Enter rejection reason to include in the email..." 
+              />
+            )}
             
             <div style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
               <button 
