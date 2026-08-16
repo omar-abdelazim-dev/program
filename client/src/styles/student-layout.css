@@ -730,7 +730,7 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
 /* Hamburger button — hidden on desktop, visible on mobile */
 .topnav-hamburger {
   display: none;
-  background: var(--bg-surface);
+  background: transparent;
   border: none;
   color: var(--text-primary);
   cursor: pointer;
@@ -739,7 +739,7 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
   margin-inline-start: auto;
   flex-shrink: 0;
   transition: all 0.2s ease;
-  box-shadow: var(--outer-shadow);
+  box-shadow: none;
 }
 
 .topnav-hamburger:hover,
