@@ -312,10 +312,14 @@
   box-shadow: var(--outer-shadow);
   border-radius: var(--radius-card, 12px);
   height: 36px;
-  padding: 0 4px 0 4px;
+  padding: 0 4px 0 8px;
   position: relative;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   box-sizing: border-box;
+}
+
+html[dir="rtl"] .merged-search-filter-group {
+  padding: 0 8px 0 4px;
 }
 
 .merged-search-filter-group:hover,
@@ -326,25 +330,23 @@
 .merged-search-part {
   display: flex;
   align-items: center;
-  justify-content: center;
-  height: 34px;
+  justify-content: flex-start;
+  height: 32px;
   cursor: pointer;
   border-radius: var(--radius-card, 8px);
   transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   box-sizing: border-box;
+  overflow: hidden;
+  padding: 0;
 }
 
 .merged-search-part.collapsed {
-  width: 32px;
-  min-width: 32px;
-  padding: 0;
-  overflow: visible;
+  width: 24px;
+  min-width: 24px;
 }
 
 .merged-search-part.expanded {
-  width: 200px;
-  padding: 0 4px 0 8px;
-  overflow: hidden;
+  width: 210px;
 }
 
 .merged-search-part .search-pill-icon {
@@ -353,8 +355,8 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
 }
 
 .merged-search-part .search-pill-icon svg {
@@ -369,7 +371,8 @@
   color: var(--text-primary);
   font-size: 0.84rem;
   padding: 0 6px;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease;
@@ -385,8 +388,12 @@
   width: 1px;
   height: 16px;
   background-color: var(--border, rgba(255, 255, 255, 0.12));
-  margin: 0 2px;
+  margin: 0 4px 0 6px;
   flex-shrink: 0;
+}
+
+html[dir="rtl"] .merged-filter-divider {
+  margin: 0 6px 0 4px;
 }
 
 .merged-select-part {
