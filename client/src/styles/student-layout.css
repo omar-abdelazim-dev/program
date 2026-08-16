@@ -730,16 +730,25 @@ body.light-mode .solid-card {
 
 .mobile-only-menu {
   display: none;
-  margin-inline-start: 16px;
-  margin-inline-end: 8px;
+  align-items: center;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
   .mobile-only-menu {
-    display: block;
+    display: flex !important;
   }
   .desktop-only-icon {
     display: none !important;
+  }
+}
+
+/* Also collapse utility icons into three dots when search is expanded on medium desktop screens */
+@media (max-width: 1250px) {
+  .student-topnav-header:has(.search-expanded) .desktop-only-icon {
+    display: none !important;
+  }
+  .student-topnav-header:has(.search-expanded) .mobile-only-menu {
+    display: flex !important;
   }
 }
 
@@ -983,7 +992,7 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
 }
 
 /* Responsive: show hamburger and hide nav links on small screens */
-@media (max-width: 768px) {
+@media (max-width: 860px) {
   .topnav-links {
     display: none !important;
   }
@@ -1008,7 +1017,7 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
 }
 
 /* On desktop, hide the mobile dropdown (it's conditionally rendered, but just in case) */
-@media (min-width: 769px) {
+@media (min-width: 861px) {
   .topnav-mobile-dropdown {
     display: none !important;
   }
