@@ -799,22 +799,6 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                 )}
               </div>
             )}
-            
-            {activeTab !== 'settings' && (
-              <div className="profile-wrapper">
-                <button 
-                  className="utility-icon-btn" 
-                  onClick={() => setActiveTab('settings')}
-                  data-tooltip={t('instructor.nav.settings')}
-                  aria-label={t('instructor.nav.settings')}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-                    <circle cx="12" cy="8" r="4"></circle>
-                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"></path>
-                  </svg>
-                </button>
-              </div>
-            )}
           </div>
         </header>
 

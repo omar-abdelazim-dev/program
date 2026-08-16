@@ -553,36 +553,6 @@ export default function StudentLayout({
                 </div>
               </div>
             </div>
-
-            {!isSettingsPage && (
-              <div className="profile-wrapper desktop-only-icon">
-                <div
-                  className="avatar-btn"
-                  data-tooltip={t("student.nav.account", "Account")}
-                >
-                  {user?.avatarUrl ? (
-                    <img src={user.avatarUrl} alt={user?.name || "Profile"} />
-                  ) : (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                    >
-                      <circle cx="12" cy="8" r="4"></circle>
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M4 20c0-4 3.6-7 8-7s8 3 8 7"
-                      ></path>
-                    </svg>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         </header>
 
