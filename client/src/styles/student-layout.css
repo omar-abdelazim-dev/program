@@ -560,10 +560,14 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
   padding: 16px 32px !important;
   background-color: var(--bg-surface) !important;
   border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
+  flex-shrink: 0;
   z-index: 100;
   flex-wrap: nowrap;
+}
+
+.student-topnav-header .header-right {
+  margin-inline-start: auto;
+  flex-shrink: 0;
 }
 
 /* Logo in the top nav */
