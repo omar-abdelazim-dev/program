@@ -417,7 +417,7 @@ html[dir="rtl"] .merged-filter-divider {
   width: 230px !important;
   min-width: 230px !important;
   max-width: 230px !important;
-  border-radius: var(--radius-card, 16px) !important;
+  border-radius: 12px !important;
   box-shadow: 0 14px 32px -4px rgba(0, 0, 0, 0.25), 0 8px 12px -6px rgba(0, 0, 0, 0.15) !important;
 }
 
@@ -546,7 +546,7 @@ html[dir="rtl"] .merged-filter-divider {
   inset-inline-end: 0;
   background-color: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: 12px;
   padding: 8px;
   width: 200px;
   display: flex;
