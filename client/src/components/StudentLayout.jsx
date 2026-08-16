@@ -179,7 +179,6 @@ export default function StudentLayout({
           </button>
 
           <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            {showSearch && (
               <div className="search-pill">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -200,7 +199,6 @@ export default function StudentLayout({
                   onChange={(e) => onSearchChange?.(e.target.value)}
                 />
               </div>
-            )}
             
             {location.pathname === '/student/explore' && (
               <div style={{ position: 'relative', flexShrink: 0, marginInlineEnd: '12px' }}>
