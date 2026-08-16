@@ -213,71 +213,18 @@ export default function StudentLayout({
             className="header-left"
             style={{ display: "flex", alignItems: "center", gap: "16px" }}
           >
-            {showSearch && (
-              <div
-                className={`search-expandable-pill ${isSearchExpanded ? "expanded" : "collapsed"}`}
-                onClick={() => {
-                  if (!isSearchExpanded) {
-                    setIsSearchExpanded(true);
-                    setTimeout(() => searchInputRef.current?.focus(), 150);
-                  }
-                }}
-              >
-                <button
-                  type="button"
-                  className="search-icon-btn"
-                  onClick={(e) => {
+            {location.pathname === "/student/explore" && (
+              <div className={`merged-search-filter-group ${isSearchExpanded ? "search-expanded" : ""}`}>
+                <div
+                  className={`merged-search-part ${isSearchExpanded ? "expanded" : "collapsed"}`}
+                  onClick={() => {
                     if (!isSearchExpanded) {
-                      e.stopPropagation();
                       setIsSearchExpanded(true);
                       setTimeout(() => searchInputRef.current?.focus(), 150);
                     }
                   }}
-                  title={t("student.nav.search_placeholder", "Search")}
-                  aria-label="Search"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                  </svg>
-                </button>
-                <input
-                  ref={searchInputRef}
-                  className="search-expandable-input"
-                  type="text"
-                  placeholder={t(
-                    "student.nav.search_placeholder",
-                    "Search courses, lessons, topics...",
-                  )}
-                  value={searchQuery ?? ""}
-                  onChange={(e) => onSearchChange?.(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Escape") {
-                      if (!searchQuery) setIsSearchExpanded(false);
-                    }
-                  }}
-                  tabIndex={isSearchExpanded ? 0 : -1}
-                />
-                {isSearchExpanded && (
-                  <button
-                    type="button"
-                    className="search-close-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSearchChange?.("");
-                      setIsSearchExpanded(false);
-                    }}
-                    title="Close search"
-                    aria-label="Close search"
-                  >
+                  <span className="search-pill-icon" aria-hidden="true">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       width="16"
@@ -285,59 +232,100 @@ export default function StudentLayout({
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
-                      strokeWidth="2"
+                      strokeWidth="2.5"
                     >
-                      <line x1="18" y1="6" x2="6" y2="18"></line>
-                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
-                  </button>
-                )}
-              </div>
-            )}
-
-            {location.pathname === "/student/explore" && (
-              <div
-                style={{
-                  position: "relative",
-                  flexShrink: 0,
-                  marginInlineEnd: "12px",
-                }}
-              >
-                <CustomSelect
-                  options={[ALL_TAB, ...COLLEGES.map((c) => c.id)].map(
-                    (cat) => {
-                      let label = cat;
-                      if (cat === ALL_TAB)
-                        label = t("student.explore.all", "All");
-                      else {
-                        const college = COLLEGES.find((c) => c.id === cat);
-                        label = college ? t(college.key, cat.replace(/^College of\s+/i, "")) : cat.replace(/^College of\s+/i, "");
+                  </span>
+                  <input
+                    ref={searchInputRef}
+                    className="search-expandable-input"
+                    type="text"
+                    placeholder={t(
+                      "student.nav.search_placeholder",
+                      "Search courses...",
+                    )}
+                    value={searchQuery ?? ""}
+                    onChange={(e) => onSearchChange?.(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") {
+                        if (!searchQuery) setIsSearchExpanded(false);
                       }
-                      return { label, value: cat };
-                    },
+                    }}
+                    tabIndex={isSearchExpanded ? 0 : -1}
+                  />
+                  {isSearchExpanded && (
+                    <button
+                      type="button"
+                      className="search-close-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSearchChange?.("");
+                        setIsSearchExpanded(false);
+                      }}
+                      title="Close search"
+                      aria-label="Close search"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="14"
+                        height="14"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                    </button>
                   )}
-                  value={exploreCollege || ALL_TAB}
-                  onChange={(val) => {
-                    onCollegeChange?.(val);
-                    if (location.pathname !== "/student/explore") {
-                      navigate("/student/explore");
-                    }
-                  }}
-                  placeholder={t(
-                    "student.explore.select_college",
-                    "Select College",
-                  )}
-                  triggerClassName="search-pill"
-                  triggerStyle={{
-                    width: "auto",
-                    minWidth: "90px",
-                    maxWidth: "180px",
-                    margin: 0,
-                    paddingInlineStart: "14px",
-                    paddingInlineEnd: "30px",
-                    textAlign: "start",
-                  }}
-                />
+                </div>
+
+                <div className="merged-filter-divider" />
+
+                <div className="merged-select-part">
+                  <CustomSelect
+                    options={[ALL_TAB, ...COLLEGES.map((c) => c.id)].map(
+                      (cat) => {
+                        let label = cat;
+                        if (cat === ALL_TAB)
+                          label = t("student.explore.all", "All");
+                        else {
+                          const college = COLLEGES.find((c) => c.id === cat);
+                          label = college
+                            ? t(college.key, cat.replace(/^College of\s+/i, ""))
+                            : cat.replace(/^College of\s+/i, "");
+                        }
+                        return { label, value: cat };
+                      },
+                    )}
+                    value={exploreCollege || ALL_TAB}
+                    onChange={(val) => {
+                      onCollegeChange?.(val);
+                      if (location.pathname !== "/student/explore") {
+                        navigate("/student/explore");
+                      }
+                    }}
+                    placeholder={t(
+                      "student.explore.select_college",
+                      "Select College",
+                    )}
+                    triggerClassName="merged-custom-select-trigger"
+                    triggerStyle={{
+                      background: "transparent",
+                      boxShadow: "none",
+                      border: "none",
+                      height: "34px",
+                      minWidth: "75px",
+                      maxWidth: "160px",
+                      paddingInlineStart: "8px",
+                      paddingInlineEnd: "26px",
+                      margin: 0,
+                    }}
+                  />
+                </div>
               </div>
             )}
           </div>
