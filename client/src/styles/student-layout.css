@@ -413,21 +413,36 @@ html[dir="rtl"] .merged-filter-divider {
   border-color: transparent !important;
 }
 
+.merged-select-part .custom-select-dropdown,
+.merged-search-filter-group .custom-select-dropdown,
 .header-left .custom-select-wrapper .custom-select-dropdown {
+  position: absolute !important;
+  top: calc(100% + 8px) !important;
+  inset-inline-end: 0 !important;
+  inset-inline-start: auto !important;
   width: 230px !important;
   min-width: 230px !important;
   max-width: 230px !important;
   border-radius: 12px !important;
   box-shadow: 0 14px 32px -4px rgba(0, 0, 0, 0.25), 0 8px 12px -6px rgba(0, 0, 0, 0.15) !important;
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border) !important;
+  padding: 6px !important;
+  z-index: 1000 !important;
 }
 
+.merged-select-part .custom-select-options,
+.merged-search-filter-group .custom-select-options,
 .header-left .custom-select-wrapper .custom-select-options {
   max-height: 280px !important;
   display: flex !important;
   flex-direction: column !important;
   gap: 2px !important;
+  overflow-y: auto !important;
 }
 
+.merged-select-part .custom-select-option,
+.merged-search-filter-group .custom-select-option,
 .header-left .custom-select-option {
   display: flex !important;
   align-items: center !important;
@@ -436,8 +451,12 @@ html[dir="rtl"] .merged-filter-divider {
   box-sizing: border-box !important;
   border-radius: 10px !important;
   font-size: 0.84rem !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
 }
 
+.merged-select-part .custom-select-option .option-text,
+.merged-search-filter-group .custom-select-option .option-text,
 .header-left .custom-select-option .option-text {
   display: inline-block !important;
   width: 100% !important;
@@ -449,6 +468,8 @@ html[dir="rtl"] .merged-filter-divider {
   font-size: 0.84rem !important;
 }
 
+.merged-select-part .custom-select-value,
+.merged-search-filter-group .custom-select-value,
 .header-left .custom-select-value {
   white-space: nowrap !important;
   overflow: hidden !important;
@@ -465,7 +486,7 @@ html[dir="rtl"] .merged-filter-divider {
 }
 
 .utility-icon-btn {
-  background: var(--bg-surface);
+  background: transparent;
   border: none;
   color: var(--text-primary);
   cursor: pointer;
@@ -475,9 +496,14 @@ html[dir="rtl"] .merged-filter-divider {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.2s ease, background-color 0.2s ease;
   position: relative;
-  box-shadow: var(--outer-shadow);
+  box-shadow: none !important;
+}
+
+body.light-mode .student-topnav-header .utility-icon-btn,
+body.light-mode .utility-icon-btn {
+  box-shadow: none !important;
 }
 
 .utility-icon-btn:hover {
@@ -795,10 +821,12 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
 
 /* Override header to be the full top navigation bar */
 .student-topnav-header {
+  position: relative;
   display: flex !important;
   align-items: center;
-  gap: 24px;
-  padding: 16px 32px !important;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 14px 28px !important;
   background-color: var(--bg-surface) !important;
   border-bottom: none;
   flex-shrink: 0;
@@ -806,9 +834,30 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
   flex-wrap: nowrap;
 }
 
-.student-topnav-header .header-right {
-  margin-inline-start: auto;
+.topnav-left {
+  display: flex;
+  align-items: center;
   flex-shrink: 0;
+  z-index: 2;
+}
+
+.topnav-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-width: 0;
+  margin: 0 16px;
+  z-index: 1;
+}
+
+.student-topnav-header .header-right,
+.topnav-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  z-index: 2;
 }
 
 /* Logo in the top nav */
@@ -981,9 +1030,10 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
   box-shadow: none !important;
 }
 
-/* Responsive: show hamburger and hide nav links on small screens */
-@media (max-width: 860px) {
-  .topnav-links {
+/* Responsive: show hamburger and hide nav links on small/medium screens */
+@media (max-width: 980px) {
+  .topnav-links,
+  .topnav-center {
     display: none !important;
   }
 
@@ -1030,7 +1080,7 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
 }
 
 /* On desktop, hide the mobile dropdown (it's conditionally rendered, but just in case) */
-@media (min-width: 861px) {
+@media (min-width: 981px) {
   .topnav-mobile-dropdown {
     display: none !important;
   }

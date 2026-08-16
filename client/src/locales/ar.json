@@ -58,6 +58,11 @@
     "enrollment_request_approved": "تمت الموافقة على طلب التسجيل",
     "enrollment_request_rejected": "تم رفض طلب التسجيل",
     "new_enrollment_request": "طلب تسجيل جديد",
+    "quiz_graded": "تم تقييم اختبارك",
+    "quiz_graded_msg": "تم تقييم إجاباتك المكتوبة لاختبار \"{{quizTitle}}\".",
+    "enrollment_approved_msg": "تمت الموافقة على طلب تسجيلك في الدورة \"{{courseTitle}}\"! يمكنك البدء في التعلم الآن.",
+    "instructor_reply_title": "قام المحاضر بالرد على سؤالك",
+    "this_course": "هذه الدورة",
     "instructor_reply_msg": "رد المحاضر على تعليقك في {{course}}.",
     "announcement_posted_msg": "تم نشر إعلان في دورتك \"{{course}}\".",
     "total_courses": "إجمالي الدورات",
@@ -74,7 +79,9 @@
     "payout_received_msg": "لقد استلمنا طلب السحب الخاص بك وهو الآن قيد المراجعة.",
     "payout_approved_msg": "تمت الموافقة على طلب السحب الخاص بك بمبلغ {{amount}} جنيه ومعالجته.",
     "payout_rejected_msg": "تم رفض طلب السحب الخاص بك بمبلغ {{amount}} جنيه.",
-    "admin_new_payout_msg": "قام المحاضر {{name}} بتقديم طلب سحب بمبلغ {{amount}} جنيه."
+    "admin_new_payout_msg": "قام المحاضر {{name}} بتقديم طلب سحب بمبلغ {{amount}} جنيه.",
+    "new_quiz_submission": "تقديم اختبار جديد للتقييم",
+    "quiz_submission_msg": "قام طالب بتقديم \"{{quiz}}\" في دورة \"{{course}}\" — الإجابات المكتوبة بحاجة إلى تقييم"
   },
   "student": {
     "welcome_back": "مرحباً بعودتك",
@@ -103,7 +110,9 @@
       "home": "الرئيسية",
       "dashboard": "لوحة التحكم",
       "explore": "استكشف",
-      "settings": "الإعدادات"
+      "cart": "السلة",
+      "settings": "الإعدادات",
+      "search_placeholder": "ابحث عن الدورات..."
     },
     "learning": {
       "loading_portal": "جاري تحميل بوابة التعلم...",

@@ -7,7 +7,6 @@ import logoDark from '../assets/logo-dark.png';
 import logoLight from '../assets/logo-light.png';
 import StudentLayout from './StudentLayout';
 import FullPageLoader from './FullPageLoader';
-import studentLogo from '../assets/logo.png';
 import InstructorAnalyticsTab from './InstructorAnalyticsTab';
 import CurriculumBuilderTab from './CurriculumBuilderTab';
 import QuizBuilder from './QuizBuilder';
@@ -30,6 +29,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
   const [modulesByCourse, setModulesByCourse] = useState({});
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const { t, i18n } = useTranslation();
 
   const toggleLanguage = () => {
@@ -499,73 +499,74 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
     </div>
   );
 
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
-
   return (
     <div className="student-layout-wrapper student-layout-topnav" data-role="instructor">
       {/* MAIN CONTENT AREA */}
       <main className="student-main-area">
         {/* TOP NAVIGATION HEADER */}
         <header className="student-header student-topnav-header">
-          {/* Logo */}
-          <Link to="/instructor" className="topnav-logo">
-            <img
-              src={studentLogo}
-              alt="Program Logo"
-              style={{ scale: '3.1', height: '36px', width: 'auto', objectFit: 'contain' }}
-            />
-          </Link>
+          {/* Very Left: Logo */}
+          <div className="topnav-left">
+            <Link to="/instructor" className="topnav-logo">
+              <img
+                src={isLightMode ? logoLight : logoDark}
+                alt="Program Logo"
+                style={{ height: '32px', width: 'auto', objectFit: 'contain' }}
+              />
+            </Link>
+          </div>
 
-          {/* Horizontal Nav Links (Desktop) */}
-          <nav className="topnav-links">
-            <button className={`topnav-link ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
-              {t('instructor.nav.dashboard', 'Dashboard')}
-            </button>
-            <button className={`topnav-link ${activeTab === 'curriculum' ? 'active' : ''}`} onClick={() => setActiveTab('curriculum')}>
-              {t('instructor.nav.curriculum', 'Curriculum')}
-            </button>
-            <button className={`topnav-link ${activeTab === 'engagement' ? 'active' : ''}`} onClick={() => setActiveTab('engagement')} style={{ position: 'relative' }}>
-              {t('instructor.nav.engagement', 'Engagement')}
-              {unreadEngagementCount > 0 && (
-                <span className="topnav-badge">{unreadEngagementCount > 99 ? '99+' : unreadEngagementCount}</span>
-              )}
-            </button>
-            <button className={`topnav-link ${activeTab === 'grading' ? 'active' : ''}`} onClick={() => setActiveTab('grading')} style={{ position: 'relative' }}>
-              {t('instructor.nav.grading', 'Grading')}
-              {pendingGradingCount > 0 && (
-                <span className="topnav-badge">{pendingGradingCount > 99 ? '99+' : pendingGradingCount}</span>
-              )}
-            </button>
-            <button className={`topnav-link ${activeTab === 'reviews' ? 'active' : ''}`} onClick={() => setActiveTab('reviews')}>
-              {t('instructor.nav.reviews', 'Reviews')}
-            </button>
-            <button className={`topnav-link ${activeTab === 'analytics' ? 'active' : ''}`} onClick={() => setActiveTab('analytics')}>
-              {t('instructor.nav.analytics', 'Analytics')}
-            </button>
-            <button className={`topnav-link ${activeTab === 'financials' ? 'active' : ''}`} onClick={() => setActiveTab('financials')}>
-              {t('instructor.nav.financials', 'Financials')}
-            </button>
-            <button className={`topnav-link ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
-              {t('instructor.nav.settings', 'Settings')}
-            </button>
-          </nav>
+          {/* Center: Tabs */}
+          <div className="topnav-center">
+            <nav className="topnav-links">
+              <button className={`topnav-link ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
+                {t('instructor.nav.dashboard', 'Dashboard')}
+              </button>
+              <button className={`topnav-link ${activeTab === 'curriculum' ? 'active' : ''}`} onClick={() => setActiveTab('curriculum')}>
+                {t('instructor.nav.curriculum', 'Curriculum')}
+              </button>
+              <button className={`topnav-link ${activeTab === 'engagement' ? 'active' : ''}`} onClick={() => setActiveTab('engagement')} style={{ position: 'relative' }}>
+                {t('instructor.nav.engagement', 'Engagement')}
+                {unreadEngagementCount > 0 && (
+                  <span className="topnav-badge">{unreadEngagementCount > 99 ? '99+' : unreadEngagementCount}</span>
+                )}
+              </button>
+              <button className={`topnav-link ${activeTab === 'grading' ? 'active' : ''}`} onClick={() => setActiveTab('grading')} style={{ position: 'relative' }}>
+                {t('instructor.nav.grading', 'Grading')}
+                {pendingGradingCount > 0 && (
+                  <span className="topnav-badge">{pendingGradingCount > 99 ? '99+' : pendingGradingCount}</span>
+                )}
+              </button>
+              <button className={`topnav-link ${activeTab === 'reviews' ? 'active' : ''}`} onClick={() => setActiveTab('reviews')}>
+                {t('instructor.nav.reviews', 'Reviews')}
+              </button>
+              <button className={`topnav-link ${activeTab === 'analytics' ? 'active' : ''}`} onClick={() => setActiveTab('analytics')}>
+                {t('instructor.nav.analytics', 'Analytics')}
+              </button>
+              <button className={`topnav-link ${activeTab === 'financials' ? 'active' : ''}`} onClick={() => setActiveTab('financials')}>
+                {t('instructor.nav.financials', 'Financials')}
+              </button>
+              <button className={`topnav-link ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
+                {t('instructor.nav.settings', 'Settings')}
+              </button>
+            </nav>
+          </div>
 
-          <div className="header-left">
+          {/* Very Right: Title + Utility Icons */}
+          <div className="topnav-right header-right">
             {/* Translated the Instructor Portal title with optional Program badge */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <span style={{ fontSize: '1.2rem', color: 'var(--text-h)', fontWeight: 'bold' }}>{t('instructor.header.title')}</span>
               {user?.isProgramInstructor && (
-                <span className="program-badge-text" style={{ fontSize: '0.55rem', padding: '2px 8px' }}>PROGRAM</span>
+                <span className="program-badge-text" style={{ fontSize: '0.55rem', padding: '2px 8px' }}>{t('instructor.header.program_badge', 'PROGRAM')}</span>
               )}
             </div>
-          </div>
 
-          <div className="header-right">
             {/* Hamburger Toggle (Mobile) */}
             <button
               className={`topnav-hamburger ${mobileNavOpen ? "active" : ""}`}
               onClick={() => setMobileNavOpen(!mobileNavOpen)}
-              aria-label="Toggle navigation"
+              aria-label={t('instructor.nav.toggle_navigation', 'Toggle navigation')}
             >
               {mobileNavOpen ? (
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -587,9 +588,38 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                   onClick={() => setShowNotifications(!showNotifications)}
                   style={{ position: 'relative' }}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                  </svg>
+                  {notifications.some((n) => !n.read) ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M12 2a6 6 0 0 0-6 6v3.586l-.707.707A1 1 0 0 0 5 14h14a1 1 0 0 0 .707-1.707L19 11.586V8a6 6 0 0 0-6-6zM10 18a2 2 0 0 0 4 0h-4z" />
+                    </svg>
+                  ) : (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"
+                      ></path>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M13.73 21a2 2 0 0 1-3.46 0"
+                      ></path>
+                    </svg>
+                  )}
                   {notifications.some(n => !n.read) && (
                     <span style={{
                       position: 'absolute', top: '4px', right: '4px',
@@ -694,6 +724,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                               if (title === 'New Payout Request') return t('notifications.new_payout_request', 'New Payout Request');
                               if (title === 'New Reply') return t('notifications.new_reply', 'New Reply');
                               if (title === 'New Student Enrollment') return t('notifications.new_student_enrollment', 'New Student Enrollment');
+                              if (title === 'New quiz submission to grade') return t('notifications.new_quiz_submission', 'New quiz submission to grade');
                               if (title.startsWith('New Admin Added')) return t('notifications.new_admin_added', 'New Admin Added');
                               if (title.startsWith('New Super Admin Added')) return t('notifications.new_super_admin_added', 'New Super Admin Added');
 
@@ -755,6 +786,11 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                                 const amtMatch = formattedMain.match(/payout request of EGP ([0-9,.]+)/);
                                 const amt = amtMatch ? amtMatch[1] : '';
                                 formattedMain = t('notifications.payout_approved_msg', { amount: amt, defaultValue: `Your payout request of EGP ${amt} has been approved and processed.` });
+                              } else if (formattedMain.startsWith('A student submitted "') && formattedMain.includes(' — written answers need grading')) {
+                                const parts = formattedMain.match(/A student submitted "([^"]+)" in "([^"]+)" — written answers need grading/);
+                                if (parts) {
+                                  formattedMain = t('notifications.quiz_submission_msg', { quiz: parts[1], course: parts[2], defaultValue: formattedMain });
+                                }
                               }
 
                               return (
