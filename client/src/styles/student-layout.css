@@ -754,9 +754,12 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
 }
 
 .topnav-link.active {
-  color: var(--color-accent, #f97316);
-  font-weight: 600;
-  background-color: rgba(249, 115, 22, 0.1);
+  background-image: linear-gradient(135deg, #f97316 0%, #fbbf24 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+  background-color: rgba(249, 115, 22, 0.12);
   box-shadow: var(--inner-shadow);
 }
 
@@ -867,9 +870,12 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
 }
 
 .topnav-mobile-link.active {
-  color: var(--color-accent, #f97316);
-  font-weight: 600;
-  background-color: rgba(249, 115, 22, 0.1);
+  background-image: linear-gradient(135deg, #f97316 0%, #fbbf24 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+  background-color: rgba(249, 115, 22, 0.12);
   box-shadow: var(--inner-shadow);
 }
 
