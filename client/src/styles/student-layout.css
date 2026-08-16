@@ -885,20 +885,29 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
   display: none;
   background: transparent;
   border: none;
-  color: var(--text-primary);
+  color: var(--c-sub, var(--text-secondary));
   cursor: pointer;
   padding: 8px;
-  border-radius: var(--radius-card, 10px);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
   transition: all 0.2s ease;
-  box-shadow: none !important;
 }
 
 .topnav-hamburger:hover,
-.topnav-hamburger:active {
-  background-color: var(--bg-main);
-  box-shadow: none !important;
-  color: var(--color-accent, #f97316);
+.topnav-hamburger:active,
+.topnav-hamburger.active {
+  background: var(--bg-main);
+  box-shadow: var(--inner-shadow);
+  color: var(--text-h, var(--text-primary));
+}
+
+.mobile-only-menu .global-three-dot-trigger {
+  width: 36px;
+  height: 36px;
 }
 
 /* Mobile dropdown menu with smooth accordion slide animation */

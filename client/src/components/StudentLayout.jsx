@@ -292,7 +292,7 @@ export default function StudentLayout({
           <div className="header-right">
             {/* Hamburger Toggle (Mobile) */}
             <button
-              className="topnav-hamburger"
+              className={`topnav-hamburger ${mobileNavOpen ? "active" : ""}`}
               onClick={() => setMobileNavOpen(!mobileNavOpen)}
               aria-label="Toggle navigation"
             >
