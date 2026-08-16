@@ -864,18 +864,18 @@
     "Education": "التعليم"
   },
   "colleges": {
-    "engineering": "كلية الهندسة",
-    "computer_science": "كلية علوم الحاسب وتقنية المعلومات",
-    "business": "كلية إدارة الأعمال",
-    "medicine": "كلية الطب",
-    "pharmacy": "كلية الصيدلة",
-    "dentistry": "كلية طب الأسنان",
-    "applied_medical": "كلية العلوم الطبية التطبيقية",
-    "science": "كلية العلوم",
-    "arts": "كلية الآداب والعلوم الإنسانية",
-    "education": "كلية التربية",
-    "law": "كلية الحقوق",
-    "architecture": "كلية العمارة والتصميم"
+    "engineering": "الهندسة",
+    "computer_science": "علوم الحاسب وتقنية المعلومات",
+    "business": "إدارة الأعمال",
+    "medicine": "الطب",
+    "pharmacy": "الصيدلة",
+    "dentistry": "طب الأسنان",
+    "applied_medical": "العلوم الطبية التطبيقية",
+    "science": "العلوم",
+    "arts": "الآداب والعلوم الإنسانية",
+    "education": "التربية",
+    "law": "الحقوق",
+    "architecture": "العمارة والتصميم"
   },
   "instructorProfile": {
     "loading": "جاري تحميل المدرب",

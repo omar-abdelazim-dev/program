@@ -311,7 +311,7 @@ export default function StudentLayout({
                         label = t("student.explore.all", "All");
                       else {
                         const college = COLLEGES.find((c) => c.id === cat);
-                        label = college ? t(college.key, cat) : cat;
+                        label = college ? t(college.key, cat.replace(/^College of\s+/i, "")) : cat.replace(/^College of\s+/i, "");
                       }
                       return { label, value: cat };
                     },
