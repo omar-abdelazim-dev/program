@@ -758,7 +758,7 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
   font-weight: 600;
-  box-shadow: 0 4px 14px rgba(249, 115, 22, 0.35);
+  box-shadow: var(--inner-shadow);
 }
 
 /* Badge for notification counts on nav links */
@@ -872,7 +872,7 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
   font-weight: 600;
-  box-shadow: 0 4px 14px rgba(249, 115, 22, 0.35);
+  box-shadow: var(--inner-shadow);
 }
 
 /* Responsive: show hamburger and hide nav links on small screens */
