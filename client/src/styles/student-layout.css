@@ -320,33 +320,43 @@
 .header-left .custom-select-wrapper .custom-select-dropdown {
   min-width: 300px !important;
   width: max-content !important;
-  max-width: 380px !important;
+  max-width: 400px !important;
   border-radius: var(--radius-card, 16px) !important;
   box-shadow: 0 14px 32px -4px rgba(0, 0, 0, 0.25), 0 8px 12px -6px rgba(0, 0, 0, 0.15) !important;
 }
 
+.header-left .custom-select-wrapper .custom-select-options {
+  max-height: 280px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+}
+
 .header-left .custom-select-option {
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  padding: 10px 16px !important;
-  display: block !important;
-  max-width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  min-height: 40px !important;
+  padding: 8px 16px !important;
+  box-sizing: border-box !important;
+  border-radius: 12px !important;
 }
 
 .header-left .custom-select-option .option-text {
+  display: inline-block !important;
+  width: 100% !important;
+  white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
-  white-space: nowrap !important;
-  display: block !important;
+  line-height: 1.5 !important;
+  padding-block: 2px !important;
 }
 
 .header-left .custom-select-value {
+  white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
-  white-space: nowrap !important;
   max-width: 220px !important;
-  display: block !important;
+  line-height: 1.5 !important;
 }
 
 .header-right {
