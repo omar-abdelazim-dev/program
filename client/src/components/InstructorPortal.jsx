@@ -510,9 +510,9 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
           {/* Logo */}
           <Link to="/instructor" className="topnav-logo">
             <img
-              src={isLightMode ? logoLight : logoDark}
+              src={studentLogo}
               alt="Program Logo"
-              style={{ height: '32px', objectFit: 'contain' }}
+              style={{ height: '36px', width: 'auto', objectFit: 'contain' }}
             />
           </Link>
 
