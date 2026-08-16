@@ -754,13 +754,11 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
 }
 
 .topnav-link.active {
-  background-image: linear-gradient(135deg, #f97316 0%, #fbbf24 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  font-weight: 700;
-  background-color: rgba(249, 115, 22, 0.12);
-  box-shadow: var(--inner-shadow);
+  background: linear-gradient(135deg, #f97316 0%, #fbbf24 100%) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(249, 115, 22, 0.35);
 }
 
 /* Badge for notification counts on nav links */
@@ -870,13 +868,11 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
 }
 
 .topnav-mobile-link.active {
-  background-image: linear-gradient(135deg, #f97316 0%, #fbbf24 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  font-weight: 700;
-  background-color: rgba(249, 115, 22, 0.12);
-  box-shadow: var(--inner-shadow);
+  background: linear-gradient(135deg, #f97316 0%, #fbbf24 100%) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(249, 115, 22, 0.35);
 }
 
 /* Responsive: show hamburger and hide nav links on small screens */
