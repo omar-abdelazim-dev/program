@@ -312,10 +312,14 @@
   box-shadow: var(--outer-shadow);
   border-radius: var(--radius-card, 12px);
   height: 36px;
-  padding: 0 4px;
+  padding: 0 4px 0 10px;
   position: relative;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   box-sizing: border-box;
+}
+
+html[dir="rtl"] .merged-search-filter-group {
+  padding: 0 10px 0 4px;
 }
 
 .merged-search-filter-group:hover,
@@ -331,17 +335,18 @@
   border-radius: var(--radius-card, 8px);
   transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
-  padding: 0 6px;
+  padding: 0 2px;
 }
 
 .merged-search-part.collapsed {
-  width: 28px;
+  width: 22px;
   justify-content: center;
   padding: 0;
 }
 
 .merged-search-part.expanded {
   width: 200px;
+  padding: 0 4px;
 }
 
 .merged-search-part .search-pill-icon {
@@ -350,7 +355,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 28px;
+  width: 18px;
 }
 
 .merged-search-part .search-expandable-input {
@@ -375,9 +380,13 @@
 .merged-filter-divider {
   width: 1px;
   height: 16px;
-  background-color: var(--border, rgba(255, 255, 255, 0.1));
-  margin: 0 2px;
+  background-color: var(--border, rgba(255, 255, 255, 0.12));
+  margin: 0 6px 0 8px;
   flex-shrink: 0;
+}
+
+html[dir="rtl"] .merged-filter-divider {
+  margin: 0 8px 0 6px;
 }
 
 .merged-select-part {
@@ -390,11 +399,15 @@
   background: transparent !important;
   box-shadow: none !important;
   border: none !important;
-  padding-inline-start: 6px !important;
+  padding-inline-start: 4px !important;
   font-size: 0.84rem !important;
   height: 34px !important;
   display: flex !important;
   align-items: center !important;
+}
+
+.merged-select-part .custom-select-chevron {
+  inset-inline-end: 6px !important;
 }
 
 .merged-custom-select-trigger:hover,

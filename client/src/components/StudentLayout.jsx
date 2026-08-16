@@ -318,10 +318,10 @@ export default function StudentLayout({
                       boxShadow: "none",
                       border: "none",
                       height: "34px",
-                      minWidth: "75px",
-                      maxWidth: "160px",
-                      paddingInlineStart: "8px",
-                      paddingInlineEnd: "26px",
+                      minWidth: "60px",
+                      maxWidth: "150px",
+                      paddingInlineStart: "4px",
+                      paddingInlineEnd: "20px",
                       margin: 0,
                     }}
                   />
