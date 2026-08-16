@@ -182,81 +182,80 @@ export default function StudentLayout({
 
           <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             {showSearch && (
-              <div className={`search-expandable-container ${isSearchExpanded ? 'expanded' : ''}`}>
-                {!isSearchExpanded ? (
+              <div
+                className={`search-expandable-pill ${isSearchExpanded ? 'expanded' : 'collapsed'}`}
+                onClick={() => {
+                  if (!isSearchExpanded) {
+                    setIsSearchExpanded(true);
+                    setTimeout(() => searchInputRef.current?.focus(), 150);
+                  }
+                }}
+              >
+                <button
+                  type="button"
+                  className="search-icon-btn"
+                  onClick={(e) => {
+                    if (!isSearchExpanded) {
+                      e.stopPropagation();
+                      setIsSearchExpanded(true);
+                      setTimeout(() => searchInputRef.current?.focus(), 150);
+                    }
+                  }}
+                  title={t('student.nav.search_placeholder', 'Search')}
+                  aria-label="Search"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                </button>
+                <input
+                  ref={searchInputRef}
+                  className="search-expandable-input"
+                  type="text"
+                  placeholder={t('student.nav.search_placeholder', 'Search courses, lessons, topics...')}
+                  value={searchQuery ?? ""}
+                  onChange={(e) => onSearchChange?.(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") {
+                      if (!searchQuery) setIsSearchExpanded(false);
+                    }
+                  }}
+                  tabIndex={isSearchExpanded ? 0 : -1}
+                />
+                {isSearchExpanded && (
                   <button
                     type="button"
-                    className="utility-icon-btn search-toggle-btn"
-                    onClick={() => {
-                      setIsSearchExpanded(true);
-                      setTimeout(() => searchInputRef.current?.focus(), 50);
+                    className="search-close-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSearchChange?.("");
+                      setIsSearchExpanded(false);
                     }}
-                    title={t('student.nav.search_placeholder', 'Search')}
-                    aria-label="Search"
+                    title="Close search"
+                    aria-label="Close search"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      width="18"
-                      height="18"
+                      width="16"
+                      height="16"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
                       strokeWidth="2"
                     >
-                      <circle cx="11" cy="11" r="8"></circle>
-                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
                   </button>
-                ) : (
-                  <div className="search-pill expanded animate-entrance">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="18"
-                      height="18"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <circle cx="11" cy="11" r="8"></circle>
-                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                    <input
-                      ref={searchInputRef}
-                      type="text"
-                      placeholder={t('student.nav.search_placeholder', 'Search courses, lessons, topics...')}
-                      value={searchQuery ?? ""}
-                      onChange={(e) => onSearchChange?.(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Escape") {
-                          if (!searchQuery) setIsSearchExpanded(false);
-                        }
-                      }}
-                    />
-                    <button
-                      type="button"
-                      className="search-close-btn"
-                      onClick={() => {
-                        onSearchChange?.("");
-                        setIsSearchExpanded(false);
-                      }}
-                      title="Close search"
-                      aria-label="Close search"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                      </svg>
-                    </button>
-                  </div>
                 )}
               </div>
             )}
