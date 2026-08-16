@@ -550,23 +550,6 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
             </button>
           </nav>
 
-          {/* Hamburger Toggle (Mobile) */}
-          <button
-            className="topnav-hamburger"
-            onClick={() => setMobileNavOpen(!mobileNavOpen)}
-            aria-label="Toggle navigation"
-          >
-            {mobileNavOpen ? (
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            )}
-          </button>
-
           <div className="header-left">
             {/* Translated the Instructor Portal title with optional Program badge */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -578,6 +561,22 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
           </div>
 
           <div className="header-right">
+            {/* Hamburger Toggle (Mobile) */}
+            <button
+              className="topnav-hamburger"
+              onClick={() => setMobileNavOpen(!mobileNavOpen)}
+              aria-label="Toggle navigation"
+            >
+              {mobileNavOpen ? (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              )}
+            </button>
 
 
             {/* Notifications */}

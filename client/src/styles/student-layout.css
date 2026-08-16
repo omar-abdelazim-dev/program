@@ -889,7 +889,6 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
   cursor: pointer;
   padding: 8px;
   border-radius: var(--radius-card, 10px);
-  margin-inline-start: auto;
   flex-shrink: 0;
   transition: all 0.2s ease;
   box-shadow: none !important;
