@@ -988,15 +988,38 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
   }
 
   .student-topnav-header {
-    padding: 12px 16px !important;
+    padding: 10px 16px !important;
+    gap: 8px !important;
   }
 
   .student-topnav-header .header-left {
-    display: none !important;
+    display: flex !important;
+    flex: 1;
+    min-width: 0;
+    justify-content: center;
+    margin: 0 4px;
   }
 
   .student-topnav-header .header-right {
     margin-inline-start: auto;
+    flex-shrink: 0;
+    gap: 6px;
+  }
+}
+
+@media (max-width: 580px) {
+  .merged-search-part {
+    width: 100px !important;
+    min-width: 0 !important;
+  }
+
+  .merged-search-part .search-expandable-input {
+    font-size: 0.78rem !important;
+    padding: 0 4px !important;
+  }
+
+  .merged-custom-select-trigger {
+    font-size: 0.78rem !important;
   }
 }
 
