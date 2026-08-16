@@ -2,6 +2,34 @@ import WebsiteContent from '../models/WebsiteContent.js';
 import FAQ from '../models/FAQ.js';
 import Testimonial from '../models/Testimonial.js';
 import Announcement from '../models/Announcement.js';
+import User from '../models/User.js';
+import Notification from '../models/Notification.js';
+
+// Helper for sending notifications
+const sendAnnouncementNotifications = async (announcement) => {
+  try {
+    let query = {};
+    if (announcement.audience === 'Students') query.role = 'student';
+    else if (announcement.audience === 'Instructors') query.role = 'instructor';
+    else if (announcement.audience === 'Admins') query.role = { $in: ['admin', 'superadmin'] };
+
+    const users = await User.find(query).select('_id');
+    
+    const notifications = users.map(user => ({
+      user: user._id,
+      title: `Announcement: ${announcement.title}`,
+      message: announcement.content.substring(0, 150) + (announcement.content.length > 150 ? '...' : ''),
+      type: 'announcement',
+      refId: announcement._id
+    }));
+
+    if (notifications.length > 0) {
+      await Notification.insertMany(notifications, { ordered: false }).catch(e => console.error("Notification insert error:", e));
+    }
+  } catch (error) {
+    console.error("Error sending announcement notifications:", error);
+  }
+};
 
 // Helper for restricted actions (Publish, Delete)
 const checkSuperAdmin = (req, res) => {
@@ -181,11 +209,12 @@ export const getAnnouncements = async (req, res) => {
 export const createAnnouncement = async (req, res) => {
   try {
     const data = { ...req.body, createdBy: req.user.id };
-    if (data.status === 'published') {
-      const check = checkSuperAdmin(req, res);
-      if (check) return check;
-    }
     const announcement = await Announcement.create(data);
+    
+    if (announcement.status === 'published') {
+      sendAnnouncementNotifications(announcement);
+    }
+
     res.status(201).json(announcement);
   } catch (error) {
     res.status(500).json({ message: 'Error creating announcement' });
@@ -194,11 +223,15 @@ export const createAnnouncement = async (req, res) => {
 
 export const updateAnnouncement = async (req, res) => {
   try {
-    if (req.body.status === 'published' || req.body.status === 'archived') {
-      const check = checkSuperAdmin(req, res);
-      if (check) return check;
-    }
+    const original = await Announcement.findById(req.params.id);
+    if (!original) return res.status(404).json({ message: 'Announcement not found' });
+
     const announcement = await Announcement.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    
+    if (original.status !== 'published' && announcement.status === 'published') {
+      sendAnnouncementNotifications(announcement);
+    }
+
     res.json(announcement);
   } catch (error) {
     res.status(500).json({ message: 'Error updating announcement' });
@@ -207,8 +240,6 @@ export const updateAnnouncement = async (req, res) => {
 
 export const deleteAnnouncement = async (req, res) => {
   try {
-    const check = checkSuperAdmin(req, res);
-    if (check) return check;
 
     await Announcement.findByIdAndDelete(req.params.id);
     res.json({ message: 'Announcement deleted' });

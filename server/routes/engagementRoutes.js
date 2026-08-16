@@ -9,7 +9,8 @@ import {
   deleteQuestion,
   getUnreadQuestionsCount,
   updateQuestionStatus,
-  editQuestion
+  editQuestion,
+  getCourseAnnouncements
 } from '../controllers/engagementController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 
@@ -44,5 +45,8 @@ router.post('/questions', protect, createQuestion);
 
 // Get all questions for a specific course
 router.get('/course/:courseId/questions', protect, getCourseQuestions);
+
+// Get all announcements for a specific course
+router.get('/course/:courseId/announcements', protect, getCourseAnnouncements);
 
 export default router;

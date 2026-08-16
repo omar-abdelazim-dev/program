@@ -443,6 +443,11 @@ body.light-mode .nav-icon-btn:hover {
     background: rgba(0, 0, 0, 0.05);
 }
 
+.nav-icon-btn,
+.nav-avatar {
+    box-shadow: none !important;
+}
+
 /* Make the ambient orbs pop more in light mode */
 body.light-mode::before,
 body.light-mode::after {

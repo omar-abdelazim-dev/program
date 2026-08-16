@@ -20,6 +20,7 @@ import { EXPLORE_CATEGORIES } from '../data/exploreCategories';
 import { MAJORS, getMajor } from '../data/majors';
 import { COLLEGES } from '../data/colleges';
 import { useTranslation } from 'react-i18next';
+import GlobalAnnouncementBanner from './GlobalAnnouncementBanner';
 
 export default function InstructorPortal({ user, setUser, onLogout, toggleTheme, isLightMode }) {
   const navigate = useNavigate();
@@ -503,8 +504,8 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
     <div className="student-layout-wrapper student-layout-topnav" data-role="instructor">
       {/* MAIN CONTENT AREA */}
       <main className="student-main-area">
-        {/* TOP NAVIGATION HEADER */}
-        <header className="student-header student-topnav-header">
+        {/* INSTRUCTOR TOP HEADER */}
+        <header className="student-header student-topnav-header" style={{ position: 'relative', zIndex: 1000, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 24px', height: '70px', backgroundColor: 'var(--bg-surface)', borderBottom: isLightMode ? '1px solid rgba(0,0,0,0.1)' : 'none' }}>
           {/* Very Left: Logo */}
           <div className="topnav-left">
             <Link to="/instructor" className="topnav-logo">
@@ -869,6 +870,8 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
             </button>
           </div>
         </nav>
+
+        <GlobalAnnouncementBanner />
 
         {/* INSTRUCTOR CONTENT */}
         <div style={{ flex: 1, minHeight: 0, padding: '24px 40px 40px 40px', overflowY: 'auto', width: '100%', WebkitOverflowScrolling: 'touch' }}>
