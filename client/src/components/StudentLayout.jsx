@@ -127,7 +127,12 @@ export default function StudentLayout({
             <img
               src={studentLogo}
               alt="Program Logo"
-              style={{ height: '36px', width: 'auto', objectFit: 'contain' }}
+              style={{
+                scale: "3.1",
+                height: "36px",
+                width: "auto",
+                objectFit: "contain",
+              }}
             />
           </Link>
 
@@ -137,7 +142,7 @@ export default function StudentLayout({
               className={`topnav-link ${activeTab === "home" ? "active" : ""}`}
               onClick={() => navigate("/student")}
             >
-              {t('student.nav.home', 'Home')}
+              {t("student.nav.home", "Home")}
             </button>
             {user?.role === "student" && (
               <>
@@ -145,13 +150,13 @@ export default function StudentLayout({
                   className={`topnav-link ${activeTab === "dashboard" ? "active" : ""}`}
                   onClick={() => navigate("/student/dashboard")}
                 >
-                  {t('student.nav.dashboard', 'Dashboard')}
+                  {t("student.nav.dashboard", "Dashboard")}
                 </button>
                 <button
                   className={`topnav-link ${activeTab === "explore" ? "active" : ""}`}
                   onClick={() => navigate("/student/explore")}
                 >
-                  {t('student.nav.explore', 'Explore')}
+                  {t("student.nav.explore", "Explore")}
                 </button>
               </>
             )}
@@ -159,7 +164,7 @@ export default function StudentLayout({
               className={`topnav-link ${activeTab === "settings" ? "active" : ""}`}
               onClick={() => navigate("/student/settings")}
             >
-              {t('student.nav.settings', 'Settings')}
+              {t("student.nav.settings", "Settings")}
             </button>
           </nav>
 
@@ -170,20 +175,47 @@ export default function StudentLayout({
             aria-label="Toggle navigation"
           >
             {mobileNavOpen ? (
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
               </svg>
             )}
           </button>
 
-          <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div
+            className="header-left"
+            style={{ display: "flex", alignItems: "center", gap: "16px" }}
+          >
             {showSearch && (
               <div
-                className={`search-expandable-pill ${isSearchExpanded ? 'expanded' : 'collapsed'}`}
+                className={`search-expandable-pill ${isSearchExpanded ? "expanded" : "collapsed"}`}
                 onClick={() => {
                   if (!isSearchExpanded) {
                     setIsSearchExpanded(true);
@@ -201,7 +233,7 @@ export default function StudentLayout({
                       setTimeout(() => searchInputRef.current?.focus(), 150);
                     }
                   }}
-                  title={t('student.nav.search_placeholder', 'Search')}
+                  title={t("student.nav.search_placeholder", "Search")}
                   aria-label="Search"
                 >
                   <svg
@@ -221,7 +253,10 @@ export default function StudentLayout({
                   ref={searchInputRef}
                   className="search-expandable-input"
                   type="text"
-                  placeholder={t('student.nav.search_placeholder', 'Search courses, lessons, topics...')}
+                  placeholder={t(
+                    "student.nav.search_placeholder",
+                    "Search courses, lessons, topics...",
+                  )}
                   value={searchQuery ?? ""}
                   onChange={(e) => onSearchChange?.(e.target.value)}
                   onKeyDown={(e) => {
@@ -259,40 +294,60 @@ export default function StudentLayout({
                 )}
               </div>
             )}
-            
-            {location.pathname === '/student/explore' && (
-              <div style={{ position: 'relative', flexShrink: 0, marginInlineEnd: '12px' }}>
-                <CustomSelect 
-                  options={[ALL_TAB, ...COLLEGES.map(c => c.id)].map(cat => {
-                    let label = cat;
-                    if (cat === ALL_TAB) label = t('student.explore.all', 'All');
-                    else {
-                      const college = COLLEGES.find(c => c.id === cat);
-                      label = college ? t(college.key, cat) : cat;
-                    }
-                    return { label, value: cat };
-                  })}
+
+            {location.pathname === "/student/explore" && (
+              <div
+                style={{
+                  position: "relative",
+                  flexShrink: 0,
+                  marginInlineEnd: "12px",
+                }}
+              >
+                <CustomSelect
+                  options={[ALL_TAB, ...COLLEGES.map((c) => c.id)].map(
+                    (cat) => {
+                      let label = cat;
+                      if (cat === ALL_TAB)
+                        label = t("student.explore.all", "All");
+                      else {
+                        const college = COLLEGES.find((c) => c.id === cat);
+                        label = college ? t(college.key, cat) : cat;
+                      }
+                      return { label, value: cat };
+                    },
+                  )}
                   value={exploreCollege || ALL_TAB}
                   onChange={(val) => {
                     onCollegeChange?.(val);
-                    if (location.pathname !== '/student/explore') {
-                      navigate('/student/explore');
+                    if (location.pathname !== "/student/explore") {
+                      navigate("/student/explore");
                     }
                   }}
-                  placeholder={t('student.explore.select_college', 'Select College')}
+                  placeholder={t(
+                    "student.explore.select_college",
+                    "Select College",
+                  )}
                   triggerClassName="search-pill"
-                  triggerStyle={{ width: 'auto', minWidth: '180px', margin: 0, paddingInlineStart: '24px', paddingInlineEnd: '44px', textAlign: 'start' }}
+                  triggerStyle={{
+                    width: "auto",
+                    minWidth: "180px",
+                    margin: 0,
+                    paddingInlineStart: "24px",
+                    paddingInlineEnd: "44px",
+                    textAlign: "start",
+                  }}
                 />
               </div>
             )}
           </div>
 
           <div className="header-right">
-
-
             {!isSettingsPage && (
               <div className="mobile-only-menu">
-                <ThreeDotMenu options={mobileMenuOptions} placement="bottom-end" />
+                <ThreeDotMenu
+                  options={mobileMenuOptions}
+                  placement="bottom-end"
+                />
               </div>
             )}
 
@@ -324,7 +379,13 @@ export default function StudentLayout({
             <div className="profile-wrapper desktop-only-icon">
               <button className="utility-icon-btn">
                 {notifications && notifications.length > 0 ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path d="M12 2a6 6 0 0 0-6 6v3.586l-.707.707A1 1 0 0 0 5 14h14a1 1 0 0 0 .707-1.707L19 11.586V8a6 6 0 0 0-6-6zM10 18a2 2 0 0 0 4 0h-4z" />
                   </svg>
                 ) : (
@@ -354,16 +415,59 @@ export default function StudentLayout({
                 )}
               </button>
 
-              <div className="profile-dropdown" style={{ width: '360px', right: isRTL ? 'auto' : 0, left: isRTL ? 0 : 'auto', padding: 0, borderRadius: '16px', overflow: 'hidden' }}>
-                <div style={{ padding: 0, display: "flex", flexDirection: "column" }}>
-                  <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--c-border-subtle, rgba(255,255,255,0.08))', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-surface)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }}>
-                    <span style={{ color: 'var(--color-accent, #f97316)', fontSize: '1.05rem' }}>{t('nav.notifications', 'Notifications')}</span>
+              <div
+                className="profile-dropdown"
+                style={{
+                  width: "360px",
+                  right: isRTL ? "auto" : 0,
+                  left: isRTL ? 0 : "auto",
+                  padding: 0,
+                  borderRadius: "16px",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    padding: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: "12px 16px",
+                      borderBottom:
+                        "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))",
+                      fontWeight: "bold",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      backgroundColor: "var(--bg-surface)",
+                      borderTopLeftRadius: "16px",
+                      borderTopRightRadius: "16px",
+                    }}
+                  >
+                    <span
+                      style={{
+                        color: "var(--color-accent, #f97316)",
+                        fontSize: "1.05rem",
+                      }}
+                    >
+                      {t("nav.notifications", "Notifications")}
+                    </span>
                     {notifications && notifications.length > 0 && (
                       <button
                         onClick={handleClearAllNotifications}
-                        style={{ background: 'none', border: 'none', color: 'var(--c-sub)', cursor: 'pointer', fontSize: '0.8rem', textDecoration: 'underline' }}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "var(--c-sub)",
+                          cursor: "pointer",
+                          fontSize: "0.8rem",
+                          textDecoration: "underline",
+                        }}
                       >
-                        {t('nav.clear_all', 'Clear all')}
+                        {t("nav.clear_all", "Clear all")}
                       </button>
                     )}
                   </div>
@@ -376,7 +480,7 @@ export default function StudentLayout({
                         fontSize: "0.9rem",
                       }}
                     >
-                      {t('nav.no_notifications', 'No new notifications')}
+                      {t("nav.no_notifications", "No new notifications")}
                     </div>
                   ) : (
                     <div style={{ maxHeight: "320px", overflowY: "auto" }}>
@@ -385,39 +489,82 @@ export default function StudentLayout({
                         .map((notif, idx) => {
                           const content = (
                             <>
-                              <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-h)', marginBottom: '4px', textAlign: isRTL ? 'right' : 'left' }}>
-                                {formatNotificationTitle(notif.text || notif.title, t)}
+                              <div
+                                style={{
+                                  fontSize: "0.85rem",
+                                  fontWeight: "600",
+                                  color: "var(--text-h)",
+                                  marginBottom: "4px",
+                                  textAlign: isRTL ? "right" : "left",
+                                }}
+                              >
+                                {formatNotificationTitle(
+                                  notif.text || notif.title,
+                                  t,
+                                )}
                               </div>
                               {notif.message && (
-                                <div style={{ fontSize: '0.8rem', color: 'var(--c-sub)', lineHeight: '1.4', marginBottom: '4px', textAlign: isRTL ? 'right' : 'left' }}>
+                                <div
+                                  style={{
+                                    fontSize: "0.8rem",
+                                    color: "var(--c-sub)",
+                                    lineHeight: "1.4",
+                                    marginBottom: "4px",
+                                    textAlign: isRTL ? "right" : "left",
+                                  }}
+                                >
                                   {formatNotificationMessage(notif.message, t)}
                                 </div>
                               )}
-                              <div style={{ fontSize: '0.72rem', color: 'var(--c-sub)', marginTop: '6px', textAlign: isRTL ? 'left' : 'right', opacity: 0.8 }}>
-                                {new Date(notif.timestamp).toLocaleString(undefined, { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                              <div
+                                style={{
+                                  fontSize: "0.72rem",
+                                  color: "var(--c-sub)",
+                                  marginTop: "6px",
+                                  textAlign: isRTL ? "left" : "right",
+                                  opacity: 0.8,
+                                }}
+                              >
+                                {new Date(notif.timestamp).toLocaleString(
+                                  undefined,
+                                  {
+                                    year: "numeric",
+                                    month: "numeric",
+                                    day: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  },
+                                )}
                               </div>
                             </>
                           );
 
                           const itemStyle = {
-                            padding: '12px 16px',
-                            borderBottom: '1px solid var(--c-border-subtle, rgba(255,255,255,0.05))',
-                            backgroundColor: notif.read ? 'transparent' : 'rgba(249, 115, 22, 0.08)',
-                            cursor: 'pointer',
-                            position: 'relative',
-                            transition: 'background 0.2s',
-                            display: 'block',
-                            textDecoration: 'none',
-                            color: 'inherit'
+                            padding: "12px 16px",
+                            borderBottom:
+                              "1px solid var(--c-border-subtle, rgba(255,255,255,0.05))",
+                            backgroundColor: notif.read
+                              ? "transparent"
+                              : "rgba(249, 115, 22, 0.08)",
+                            cursor: "pointer",
+                            position: "relative",
+                            transition: "background 0.2s",
+                            display: "block",
+                            textDecoration: "none",
+                            color: "inherit",
                           };
 
                           if (notif.link) {
                             return (
-                              <Link 
+                              <Link
                                 key={notif.id || idx}
-                                to={notif.link} 
-                                style={itemStyle} 
-                                onClick={() => setNotifications(prev => prev.filter(n => n.id !== notif.id))}
+                                to={notif.link}
+                                style={itemStyle}
+                                onClick={() =>
+                                  setNotifications((prev) =>
+                                    prev.filter((n) => n.id !== notif.id),
+                                  )
+                                }
                               >
                                 {content}
                               </Link>
@@ -425,15 +572,11 @@ export default function StudentLayout({
                           }
 
                           return (
-                            <div 
-                              key={notif.id || idx}
-                              style={itemStyle}
-                            >
+                            <div key={notif.id || idx} style={itemStyle}>
                               {content}
                             </div>
                           );
-                        })
-                      }
+                        })}
                     </div>
                   )}
                 </div>
@@ -442,72 +585,85 @@ export default function StudentLayout({
 
             {!isSettingsPage && (
               <div className="profile-wrapper desktop-only-icon">
-                <div className="avatar-btn" data-tooltip={t('student.nav.account', 'Account')}>
-                {user?.avatarUrl ? (
-                  <img src={user.avatarUrl} alt={user?.name || "Profile"} />
-                ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                  >
-                    <circle cx="12" cy="8" r="4"></circle>
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M4 20c0-4 3.6-7 8-7s8 3 8 7"
-                    ></path>
-                  </svg>
-                )}
+                <div
+                  className="avatar-btn"
+                  data-tooltip={t("student.nav.account", "Account")}
+                >
+                  {user?.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user?.name || "Profile"} />
+                  ) : (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                    >
+                      <circle cx="12" cy="8" r="4"></circle>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M4 20c0-4 3.6-7 8-7s8 3 8 7"
+                      ></path>
+                    </svg>
+                  )}
+                </div>
               </div>
-            </div>
             )}
           </div>
         </header>
 
         {/* Mobile Nav Dropdown */}
-        {mobileNavOpen && (
-          <nav className="topnav-mobile-dropdown">
+        <nav className={`topnav-mobile-dropdown ${mobileNavOpen ? "open" : "closed"}`}>
+          <div className="topnav-mobile-dropdown-inner">
             <button
               className={`topnav-mobile-link ${activeTab === "home" ? "active" : ""}`}
-              onClick={() => { navigate("/student"); setMobileNavOpen(false); }}
+              onClick={() => {
+                navigate("/student");
+                setMobileNavOpen(false);
+              }}
             >
-              {t('student.nav.home', 'Home')}
+              {t("student.nav.home", "Home")}
             </button>
             {user?.role === "student" && (
               <>
                 <button
                   className={`topnav-mobile-link ${activeTab === "dashboard" ? "active" : ""}`}
-                  onClick={() => { navigate("/student/dashboard"); setMobileNavOpen(false); }}
+                  onClick={() => {
+                    navigate("/student/dashboard");
+                    setMobileNavOpen(false);
+                  }}
                 >
-                  {t('student.nav.dashboard', 'Dashboard')}
+                  {t("student.nav.dashboard", "Dashboard")}
                 </button>
                 <button
                   className={`topnav-mobile-link ${activeTab === "explore" ? "active" : ""}`}
-                  onClick={() => { navigate("/student/explore"); setMobileNavOpen(false); }}
+                  onClick={() => {
+                    navigate("/student/explore");
+                    setMobileNavOpen(false);
+                  }}
                 >
-                  {t('student.nav.explore', 'Explore')}
+                  {t("student.nav.explore", "Explore")}
                 </button>
               </>
             )}
             <button
               className={`topnav-mobile-link ${activeTab === "settings" ? "active" : ""}`}
-              onClick={() => { navigate("/student/settings"); setMobileNavOpen(false); }}
+              onClick={() => {
+                navigate("/student/settings");
+                setMobileNavOpen(false);
+              }}
             >
-              {t('student.nav.settings', 'Settings')}
+              {t("student.nav.settings", "Settings")}
             </button>
-          </nav>
-        )}
+          </div>
+        </nav>
 
         {/* PAGE CONTENT */}
         <div className="student-content-scroll">
-          <div style={{ flex: '1 0 auto' }}>
-            {children}
-          </div>
+          <div style={{ flex: "1 0 auto" }}>{children}</div>
           <Footer />
         </div>
       </main>

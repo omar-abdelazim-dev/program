@@ -512,7 +512,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
             <img
               src={studentLogo}
               alt="Program Logo"
-              style={{ height: '36px', width: 'auto', objectFit: 'contain' }}
+              style={{ scale: '3.1', height: '36px', width: 'auto', objectFit: 'contain' }}
             />
           </Link>
 
@@ -820,8 +820,8 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
         </header>
 
         {/* Mobile Nav Dropdown */}
-        {mobileNavOpen && (
-          <nav className="topnav-mobile-dropdown">
+        <nav className={`topnav-mobile-dropdown ${mobileNavOpen ? 'open' : 'closed'}`}>
+          <div className="topnav-mobile-dropdown-inner">
             <button className={`topnav-mobile-link ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => { setActiveTab('dashboard'); setMobileNavOpen(false); }}>
               {t('instructor.nav.dashboard', 'Dashboard')}
             </button>
@@ -848,8 +848,8 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
             <button className={`topnav-mobile-link ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => { setActiveTab('settings'); setMobileNavOpen(false); }}>
               {t('instructor.nav.settings', 'Settings')}
             </button>
-          </nav>
-        )}
+          </div>
+        </nav>
 
         {/* INSTRUCTOR CONTENT */}
         <div style={{ flex: 1, padding: '24px 40px 40px 40px', overflowY: 'auto', width: '100%' }}>
