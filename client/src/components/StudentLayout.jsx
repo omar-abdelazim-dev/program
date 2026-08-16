@@ -173,16 +173,8 @@ export default function StudentLayout({
             style={{ display: "flex", alignItems: "center", gap: "16px" }}
           >
             {location.pathname === "/student/explore" && (
-              <div className={`merged-search-filter-group ${isSearchExpanded ? "search-expanded" : ""}`}>
-                <div
-                  className={`merged-search-part ${isSearchExpanded ? "expanded" : "collapsed"}`}
-                  onClick={() => {
-                    if (!isSearchExpanded) {
-                      setIsSearchExpanded(true);
-                      setTimeout(() => searchInputRef.current?.focus(), 150);
-                    }
-                  }}
-                >
+              <div className="merged-search-filter-group">
+                <div className="merged-search-part">
                   <span className="search-pill-icon" aria-hidden="true">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -207,24 +199,14 @@ export default function StudentLayout({
                     )}
                     value={searchQuery ?? ""}
                     onChange={(e) => onSearchChange?.(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Escape") {
-                        if (!searchQuery) setIsSearchExpanded(false);
-                      }
-                    }}
-                    tabIndex={isSearchExpanded ? 0 : -1}
                   />
-                  {isSearchExpanded && (
+                  {searchQuery && (
                     <button
                       type="button"
                       className="search-close-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSearchChange?.("");
-                        setIsSearchExpanded(false);
-                      }}
-                      title="Close search"
-                      aria-label="Close search"
+                      onClick={() => onSearchChange?.("")}
+                      title="Clear search"
+                      aria-label="Clear search"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
