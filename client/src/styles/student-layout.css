@@ -303,11 +303,12 @@
 .header-left .search-pill {
   background-color: var(--bg-surface) !important;
   box-shadow: var(--outer-shadow) !important;
-  border-radius: var(--radius-card, 12px) !important;
+  border-radius: var(--radius-card, 10px) !important;
   border: 1px solid transparent !important;
-  height: 40px !important;
+  height: 36px !important;
   display: flex !important;
   align-items: center !important;
+  font-size: 0.84rem !important;
   transition: all 0.25s ease !important;
 }
 
