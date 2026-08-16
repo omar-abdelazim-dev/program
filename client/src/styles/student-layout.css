@@ -838,7 +838,7 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
 .topnav-links {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 12px;
   flex-shrink: 0;
 }
 
