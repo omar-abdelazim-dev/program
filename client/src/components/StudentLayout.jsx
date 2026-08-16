@@ -112,137 +112,72 @@ export default function StudentLayout({
       icon: <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
     }
   ];
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   return (
-    <div className="student-layout-wrapper">
-      {/* SIDEBAR */}
-      <aside className="student-sidebar">
-        <div className="sidebar-logo">
-          <Link
-            to="/student"
-            style={{ display: "flex", justifyContent: "center" }}
-          >
-            <img
-              src={studentLogo}
-              alt="Student Logo"
-              style={{
-                marginTop: "10px",
-                width: "100%",
-                scale:'1.5',
-                marginBottom: "0",
-                objectFit: "contain",
-                display: "block",
-                transform: "scale(1.2)",
-              }}
-            />
-          </Link>
-        </div>
-
-        <nav className="sidebar-nav-top">
-          <button
-            className={`sidebar-icon-btn ${activeTab === "home" ? "active" : ""}`}
-            onClick={() => navigate("/student")}
-            data-tooltip={t('student.sidebar.home', 'Home')}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10"
-              />
-            </svg>
-          </button>
-
-          {user?.role === "student" && (
-            <>
-              <button
-                className={`sidebar-icon-btn ${activeTab === "dashboard" ? "active" : ""}`}
-                onClick={() => navigate("/student/dashboard")}
-                data-tooltip={t('student.sidebar.dashboard', 'Dashboard')}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <rect x="3" y="3" width="7" height="7" rx="1" />
-                  <rect x="14" y="3" width="7" height="7" rx="1" />
-                  <rect x="14" y="14" width="7" height="7" rx="1" />
-                  <rect x="3" y="14" width="7" height="7" rx="1" />
-                </svg>
-              </button>
-
-              <button
-                className={`sidebar-icon-btn ${activeTab === "explore" ? "active" : ""}`}
-                onClick={() => navigate("/student/explore")}
-                data-tooltip={t('student.sidebar.explore', 'Explore')}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-              </button>
-            </>
-          )}
-        </nav>
-
-        <nav className="sidebar-nav-bottom">
-          <button
-            className={`sidebar-icon-btn ${activeTab === "settings" ? "active" : ""}`}
-            onClick={() => navigate("/student/settings")}
-            data-tooltip={t('student.sidebar.settings', 'Settings')}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-            </svg>
-          </button>
-        </nav>
-      </aside>
-
+    <div className="student-layout-wrapper student-layout-topnav">
       {/* MAIN CONTENT AREA */}
       <main className="student-main-area">
-        {/* HEADER */}
-        <header className="student-header">
+        {/* TOP NAVIGATION HEADER */}
+        <header className="student-header student-topnav-header">
+          {/* Logo */}
+          <Link to="/student" className="topnav-logo">
+            <img
+              src={isLightMode ? logoLight : logoDark}
+              alt="Program Logo"
+              style={{ height: '32px', objectFit: 'contain' }}
+            />
+          </Link>
+
+          {/* Horizontal Nav Links (Desktop) */}
+          <nav className="topnav-links">
+            <button
+              className={`topnav-link ${activeTab === "home" ? "active" : ""}`}
+              onClick={() => navigate("/student")}
+            >
+              {t('student.nav.home', 'Home')}
+            </button>
+            {user?.role === "student" && (
+              <>
+                <button
+                  className={`topnav-link ${activeTab === "dashboard" ? "active" : ""}`}
+                  onClick={() => navigate("/student/dashboard")}
+                >
+                  {t('student.nav.dashboard', 'Dashboard')}
+                </button>
+                <button
+                  className={`topnav-link ${activeTab === "explore" ? "active" : ""}`}
+                  onClick={() => navigate("/student/explore")}
+                >
+                  {t('student.nav.explore', 'Explore')}
+                </button>
+              </>
+            )}
+            <button
+              className={`topnav-link ${activeTab === "settings" ? "active" : ""}`}
+              onClick={() => navigate("/student/settings")}
+            >
+              {t('student.nav.settings', 'Settings')}
+            </button>
+          </nav>
+
+          {/* Hamburger Toggle (Mobile) */}
+          <button
+            className="topnav-hamburger"
+            onClick={() => setMobileNavOpen(!mobileNavOpen)}
+            aria-label="Toggle navigation"
+          >
+            {mobileNavOpen ? (
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
+          </button>
+
           <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             {showSearch && (
               <div className="search-pill">
@@ -475,6 +410,40 @@ export default function StudentLayout({
             )}
           </div>
         </header>
+
+        {/* Mobile Nav Dropdown */}
+        {mobileNavOpen && (
+          <nav className="topnav-mobile-dropdown">
+            <button
+              className={`topnav-mobile-link ${activeTab === "home" ? "active" : ""}`}
+              onClick={() => { navigate("/student"); setMobileNavOpen(false); }}
+            >
+              {t('student.nav.home', 'Home')}
+            </button>
+            {user?.role === "student" && (
+              <>
+                <button
+                  className={`topnav-mobile-link ${activeTab === "dashboard" ? "active" : ""}`}
+                  onClick={() => { navigate("/student/dashboard"); setMobileNavOpen(false); }}
+                >
+                  {t('student.nav.dashboard', 'Dashboard')}
+                </button>
+                <button
+                  className={`topnav-mobile-link ${activeTab === "explore" ? "active" : ""}`}
+                  onClick={() => { navigate("/student/explore"); setMobileNavOpen(false); }}
+                >
+                  {t('student.nav.explore', 'Explore')}
+                </button>
+              </>
+            )}
+            <button
+              className={`topnav-mobile-link ${activeTab === "settings" ? "active" : ""}`}
+              onClick={() => { navigate("/student/settings"); setMobileNavOpen(false); }}
+            >
+              {t('student.nav.settings', 'Settings')}
+            </button>
+          </nav>
+        )}
 
         {/* PAGE CONTENT */}
         <div className="student-content-scroll">

@@ -99,6 +99,12 @@
       "settings": "الإعدادات",
       "home": "الرئيسية"
     },
+    "nav": {
+      "home": "الرئيسية",
+      "dashboard": "لوحة التحكم",
+      "explore": "استكشف",
+      "settings": "الإعدادات"
+    },
     "learning": {
       "loading_portal": "جاري تحميل بوابة التعلم...",
       "load_error": "فشل تحميل بوابة التعلم.",
@@ -181,6 +187,7 @@
       "dashboard": "لوحة القيادة",
       "curriculum": "المنهج الدراسي",
       "engagement": "التفاعل",
+      "grading": "التقييم",
       "reviews": "التقييمات",
       "analytics": "التحليلات",
       "financials": "المالية",

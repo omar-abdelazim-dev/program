@@ -99,6 +99,12 @@
       "settings": "Settings",
       "home": "Home"
     },
+    "nav": {
+      "home": "Home",
+      "dashboard": "Dashboard",
+      "explore": "Explore",
+      "settings": "Settings"
+    },
     "learning": {
       "loading_portal": "Loading Learning Portal...",
       "load_error": "Failed to load learning portal.",
@@ -181,6 +187,7 @@
       "dashboard": "Dashboard",
       "curriculum": "Curriculum",
       "engagement": "Engagement",
+      "grading": "Grading",
       "reviews": "Reviews",
       "analytics": "Analytics",
       "financials": "Financials",

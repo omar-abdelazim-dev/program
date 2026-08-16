@@ -499,134 +499,74 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
     </div>
   );
 
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
   return (
-    <div className="student-layout-wrapper" data-role="instructor">
-      {/* SIDEBAR */}
-      <aside className="student-sidebar">
-        <div className="sidebar-logo">
-          <Link
-            to="/instructor"
-            style={{ display: "flex", justifyContent: "center" }}
-          >
-            <img
-              src={studentLogo}
-              alt="Program Logo"
-              style={{
-                marginTop: "10px",
-                width: "100%",
-                scale: '1.5',
-                marginBottom: "0",
-                objectFit: "contain",
-                display: "block",
-                transform: "scale(1.2)",
-              }}
-            />
-          </Link>
-        </div>
-
-        <nav className="sidebar-nav-top">
-          <button className={`sidebar-icon-btn ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')} data-tooltip={t('instructor.nav.dashboard')}>
-            {/* Added i18n to Dashboard tooltip title */}
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-            </svg>
-          </button>
-          <button className={`sidebar-icon-btn ${activeTab === 'curriculum' ? 'active' : ''}`} onClick={() => setActiveTab('curriculum')} data-tooltip={t('instructor.nav.curriculum')}>
-            {/* Added i18n to Curriculum tooltip title */}
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-          </button>
-          <button className={`sidebar-icon-btn ${activeTab === 'engagement' ? 'active' : ''}`} style={{ position: 'relative' }} onClick={() => setActiveTab('engagement')} data-tooltip={t('instructor.nav.engagement')}>
-            {/* Added i18n to Engagement tooltip title */}
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
-            </svg>
-            {unreadEngagementCount > 0 && (
-              <span
-                style={{
-                  position: 'absolute',
-                  top: '4px',
-                  right: '4px',
-                  backgroundColor: 'var(--color-accent)',
-                  color: 'white',
-                  fontSize: '0.7rem',
-                  fontWeight: 'bold',
-                  width: '18px',
-                  height: '18px',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  pointerEvents: 'none',
-                }}
-              >
-                {unreadEngagementCount > 99 ? '99+' : unreadEngagementCount}
-              </span>
-            )}
-          </button>
-          <button className={`sidebar-icon-btn ${activeTab === 'grading' ? 'active' : ''}`} style={{ position: 'relative' }} onClick={() => setActiveTab('grading')} data-tooltip={t('instructor.nav.grading', 'Grading')}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-            </svg>
-            {pendingGradingCount > 0 && (
-              <span
-                style={{
-                  position: 'absolute',
-                  top: '4px',
-                  right: '4px',
-                  backgroundColor: 'var(--color-accent)',
-                  color: 'white',
-                  fontSize: '0.7rem',
-                  fontWeight: 'bold',
-                  width: '18px',
-                  height: '18px',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  pointerEvents: 'none',
-                }}
-              >
-                {pendingGradingCount > 99 ? '99+' : pendingGradingCount}
-              </span>
-            )}
-          </button>
-          <button className={`sidebar-icon-btn ${activeTab === 'reviews' ? 'active' : ''}`} onClick={() => setActiveTab('reviews')} data-tooltip={t('instructor.nav.reviews')}>
-            {/* Added i18n to Reviews tooltip title */}
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-            </svg>
-          </button>
-          <button className={`sidebar-icon-btn ${activeTab === 'analytics' ? 'active' : ''}`} onClick={() => setActiveTab('analytics')} data-tooltip={t('instructor.nav.analytics')}>
-            {/* Added i18n to Analytics tooltip title */}
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-          </button>
-          <button className={`sidebar-icon-btn ${activeTab === 'financials' ? 'active' : ''}`} onClick={() => setActiveTab('financials')} data-tooltip={t('instructor.nav.financials')}>
-            {/* Added i18n to Financials tooltip title */}
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </button>
-        </nav>
-        
-        <nav className="sidebar-nav-bottom">
-          <button className={`sidebar-icon-btn ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')} data-tooltip={t('instructor.nav.settings')}>
-            {/* Added i18n to Settings tooltip title */}
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          </button>
-        </nav>
-      </aside>
-
+    <div className="student-layout-wrapper student-layout-topnav" data-role="instructor">
       {/* MAIN CONTENT AREA */}
       <main className="student-main-area">
-        {/* HEADER */}
-        <header className="student-header">
+        {/* TOP NAVIGATION HEADER */}
+        <header className="student-header student-topnav-header">
+          {/* Logo */}
+          <Link to="/instructor" className="topnav-logo">
+            <img
+              src={isLightMode ? logoLight : logoDark}
+              alt="Program Logo"
+              style={{ height: '32px', objectFit: 'contain' }}
+            />
+          </Link>
+
+          {/* Horizontal Nav Links (Desktop) */}
+          <nav className="topnav-links">
+            <button className={`topnav-link ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
+              {t('instructor.nav.dashboard', 'Dashboard')}
+            </button>
+            <button className={`topnav-link ${activeTab === 'curriculum' ? 'active' : ''}`} onClick={() => setActiveTab('curriculum')}>
+              {t('instructor.nav.curriculum', 'Curriculum')}
+            </button>
+            <button className={`topnav-link ${activeTab === 'engagement' ? 'active' : ''}`} onClick={() => setActiveTab('engagement')} style={{ position: 'relative' }}>
+              {t('instructor.nav.engagement', 'Engagement')}
+              {unreadEngagementCount > 0 && (
+                <span className="topnav-badge">{unreadEngagementCount > 99 ? '99+' : unreadEngagementCount}</span>
+              )}
+            </button>
+            <button className={`topnav-link ${activeTab === 'grading' ? 'active' : ''}`} onClick={() => setActiveTab('grading')} style={{ position: 'relative' }}>
+              {t('instructor.nav.grading', 'Grading')}
+              {pendingGradingCount > 0 && (
+                <span className="topnav-badge">{pendingGradingCount > 99 ? '99+' : pendingGradingCount}</span>
+              )}
+            </button>
+            <button className={`topnav-link ${activeTab === 'reviews' ? 'active' : ''}`} onClick={() => setActiveTab('reviews')}>
+              {t('instructor.nav.reviews', 'Reviews')}
+            </button>
+            <button className={`topnav-link ${activeTab === 'analytics' ? 'active' : ''}`} onClick={() => setActiveTab('analytics')}>
+              {t('instructor.nav.analytics', 'Analytics')}
+            </button>
+            <button className={`topnav-link ${activeTab === 'financials' ? 'active' : ''}`} onClick={() => setActiveTab('financials')}>
+              {t('instructor.nav.financials', 'Financials')}
+            </button>
+            <button className={`topnav-link ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
+              {t('instructor.nav.settings', 'Settings')}
+            </button>
+          </nav>
+
+          {/* Hamburger Toggle (Mobile) */}
+          <button
+            className="topnav-hamburger"
+            onClick={() => setMobileNavOpen(!mobileNavOpen)}
+            aria-label="Toggle navigation"
+          >
+            {mobileNavOpen ? (
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
+          </button>
+
           <div className="header-left">
             {/* Translated the Instructor Portal title with optional Program badge */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -878,6 +818,38 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
             )}
           </div>
         </header>
+
+        {/* Mobile Nav Dropdown */}
+        {mobileNavOpen && (
+          <nav className="topnav-mobile-dropdown">
+            <button className={`topnav-mobile-link ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => { setActiveTab('dashboard'); setMobileNavOpen(false); }}>
+              {t('instructor.nav.dashboard', 'Dashboard')}
+            </button>
+            <button className={`topnav-mobile-link ${activeTab === 'curriculum' ? 'active' : ''}`} onClick={() => { setActiveTab('curriculum'); setMobileNavOpen(false); }}>
+              {t('instructor.nav.curriculum', 'Curriculum')}
+            </button>
+            <button className={`topnav-mobile-link ${activeTab === 'engagement' ? 'active' : ''}`} onClick={() => { setActiveTab('engagement'); setMobileNavOpen(false); }}>
+              {t('instructor.nav.engagement', 'Engagement')}
+              {unreadEngagementCount > 0 && <span className="topnav-badge">{unreadEngagementCount > 99 ? '99+' : unreadEngagementCount}</span>}
+            </button>
+            <button className={`topnav-mobile-link ${activeTab === 'grading' ? 'active' : ''}`} onClick={() => { setActiveTab('grading'); setMobileNavOpen(false); }}>
+              {t('instructor.nav.grading', 'Grading')}
+              {pendingGradingCount > 0 && <span className="topnav-badge">{pendingGradingCount > 99 ? '99+' : pendingGradingCount}</span>}
+            </button>
+            <button className={`topnav-mobile-link ${activeTab === 'reviews' ? 'active' : ''}`} onClick={() => { setActiveTab('reviews'); setMobileNavOpen(false); }}>
+              {t('instructor.nav.reviews', 'Reviews')}
+            </button>
+            <button className={`topnav-mobile-link ${activeTab === 'analytics' ? 'active' : ''}`} onClick={() => { setActiveTab('analytics'); setMobileNavOpen(false); }}>
+              {t('instructor.nav.analytics', 'Analytics')}
+            </button>
+            <button className={`topnav-mobile-link ${activeTab === 'financials' ? 'active' : ''}`} onClick={() => { setActiveTab('financials'); setMobileNavOpen(false); }}>
+              {t('instructor.nav.financials', 'Financials')}
+            </button>
+            <button className={`topnav-mobile-link ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => { setActiveTab('settings'); setMobileNavOpen(false); }}>
+              {t('instructor.nav.settings', 'Settings')}
+            </button>
+          </nav>
+        )}
 
         {/* INSTRUCTOR CONTENT */}
         <div style={{ flex: 1, padding: '24px 40px 40px 40px', overflowY: 'auto', width: '100%' }}>
