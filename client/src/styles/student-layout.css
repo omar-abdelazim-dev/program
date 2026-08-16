@@ -317,6 +317,19 @@
   border-color: rgba(249, 115, 22, 0.3) !important;
 }
 
+.header-left .custom-select-wrapper .custom-select-dropdown {
+  min-width: 320px !important;
+  width: max-content !important;
+  max-width: 420px !important;
+  border-radius: var(--radius-card, 16px) !important;
+  box-shadow: 0 14px 32px -4px rgba(0, 0, 0, 0.25), 0 8px 12px -6px rgba(0, 0, 0, 0.15) !important;
+}
+
+.header-left .custom-select-option {
+  white-space: nowrap !important;
+  padding: 10px 16px !important;
+}
+
 .header-right {
   display: flex;
   align-items: center;
