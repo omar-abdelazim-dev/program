@@ -705,6 +705,7 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
   color: var(--color-accent, #f97316);
   font-weight: 600;
   background-color: rgba(249, 115, 22, 0.1);
+  box-shadow: var(--inner-shadow);
 }
 
 /* Badge for notification counts on nav links */
@@ -817,6 +818,7 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
   color: var(--color-accent, #f97316);
   font-weight: 600;
   background-color: rgba(249, 115, 22, 0.1);
+  box-shadow: var(--inner-shadow);
 }
 
 /* Responsive: show hamburger and hide nav links on small screens */
