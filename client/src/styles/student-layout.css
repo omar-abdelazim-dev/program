@@ -318,9 +318,9 @@
 }
 
 .header-left .custom-select-wrapper .custom-select-dropdown {
-  min-width: 300px !important;
-  width: max-content !important;
-  max-width: 400px !important;
+  width: 230px !important;
+  min-width: 230px !important;
+  max-width: 230px !important;
   border-radius: var(--radius-card, 16px) !important;
   box-shadow: 0 14px 32px -4px rgba(0, 0, 0, 0.25), 0 8px 12px -6px rgba(0, 0, 0, 0.15) !important;
 }
@@ -335,10 +335,11 @@
 .header-left .custom-select-option {
   display: flex !important;
   align-items: center !important;
-  min-height: 40px !important;
-  padding: 8px 16px !important;
+  min-height: 36px !important;
+  padding: 6px 12px !important;
   box-sizing: border-box !important;
-  border-radius: 12px !important;
+  border-radius: 10px !important;
+  font-size: 0.84rem !important;
 }
 
 .header-left .custom-select-option .option-text {
@@ -347,16 +348,18 @@
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
-  line-height: 1.5 !important;
+  line-height: 1.4 !important;
   padding-block: 2px !important;
+  font-size: 0.84rem !important;
 }
 
 .header-left .custom-select-value {
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
-  max-width: 220px !important;
-  line-height: 1.5 !important;
+  max-width: 155px !important;
+  line-height: 1.4 !important;
+  font-size: 0.86rem !important;
 }
 
 .header-right {

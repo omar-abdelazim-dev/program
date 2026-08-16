@@ -330,10 +330,11 @@ export default function StudentLayout({
                   triggerClassName="search-pill"
                   triggerStyle={{
                     width: "auto",
-                    minWidth: "220px",
+                    minWidth: "170px",
+                    maxWidth: "210px",
                     margin: 0,
-                    paddingInlineStart: "20px",
-                    paddingInlineEnd: "40px",
+                    paddingInlineStart: "16px",
+                    paddingInlineEnd: "36px",
                     textAlign: "start",
                   }}
                 />
