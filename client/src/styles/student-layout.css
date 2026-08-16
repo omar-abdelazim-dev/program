@@ -340,13 +340,19 @@ html[dir="rtl"] .merged-search-filter-group {
 }
 
 .merged-search-part .search-pill-icon {
-  color: var(--color-accent, #f97316);
+  color: var(--c-sub, var(--text-secondary));
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   width: 24px;
   height: 24px;
+  transition: color 0.2s ease;
+}
+
+.merged-search-part:focus-within .search-pill-icon,
+.merged-search-part.has-value .search-pill-icon {
+  color: var(--color-accent, #f97316);
 }
 
 .merged-search-part .search-pill-icon svg {

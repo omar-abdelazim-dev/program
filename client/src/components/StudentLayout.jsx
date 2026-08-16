@@ -174,7 +174,7 @@ export default function StudentLayout({
           >
             {location.pathname === "/student/explore" && (
               <div className="merged-search-filter-group">
-                <div className="merged-search-part">
+                <div className={`merged-search-part ${searchQuery ? "has-value" : ""}`}>
                   <span className="search-pill-icon" aria-hidden="true">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
