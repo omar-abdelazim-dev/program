@@ -852,11 +852,11 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
 }
 
 .topnav-link.active {
-  background: linear-gradient(135deg, #f97316 0%, #fbbf24 100%) !important;
-  color: #ffffff !important;
-  -webkit-text-fill-color: #ffffff !important;
+  background: transparent !important;
+  color: var(--color-accent, #f97316) !important;
+  -webkit-text-fill-color: var(--color-accent, #f97316) !important;
   font-weight: 600;
-  box-shadow: var(--inner-shadow);
+  box-shadow: none !important;
 }
 
 /* Badge for notification counts on nav links */
@@ -974,11 +974,11 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
 }
 
 .topnav-mobile-link.active {
-  background: linear-gradient(135deg, #f97316 0%, #fbbf24 100%) !important;
-  color: #ffffff !important;
-  -webkit-text-fill-color: #ffffff !important;
+  background: transparent !important;
+  color: var(--color-accent, #f97316) !important;
+  -webkit-text-fill-color: var(--color-accent, #f97316) !important;
   font-weight: 600;
-  box-shadow: var(--inner-shadow);
+  box-shadow: none !important;
 }
 
 /* Responsive: show hamburger and hide nav links on small screens */
