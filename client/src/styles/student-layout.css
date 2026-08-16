@@ -310,11 +310,12 @@
   align-items: center;
   background-color: var(--bg-surface);
   box-shadow: none !important;
+  border: 1px solid transparent;
   border-radius: var(--radius-card, 12px);
   height: 36px;
   padding: 0 4px 0 8px;
   position: relative;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.25s ease;
   box-sizing: border-box;
 }
 
@@ -325,6 +326,7 @@ html[dir="rtl"] .merged-search-filter-group {
 .merged-search-filter-group:hover,
 .merged-search-filter-group:focus-within {
   box-shadow: none !important;
+  border-color: var(--color-accent, #f97316);
 }
 
 .merged-search-part {
