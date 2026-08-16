@@ -848,7 +848,7 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
 
 .topnav-link:hover {
   color: var(--text-primary);
-  background-color: var(--bg-main);
+  background-color: transparent;
 }
 
 .topnav-link.active {
@@ -969,7 +969,7 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
 
 .topnav-mobile-link:hover {
   color: var(--text-primary);
-  background-color: var(--bg-main);
+  background-color: transparent;
   transform: translateX(4px);
 }
 
