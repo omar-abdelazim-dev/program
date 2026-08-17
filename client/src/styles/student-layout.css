@@ -829,6 +829,7 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
   padding: 14px 28px !important;
   background-color: var(--bg-surface) !important;
   border-bottom: none !important;
+  box-shadow: var(--outer-shadow);
   flex-shrink: 0;
   z-index: 100;
   flex-wrap: nowrap;

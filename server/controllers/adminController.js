@@ -24,13 +24,13 @@ export const getStats = async (req, res) => {
     // Course Management tab header cards (ADM-05): Total Courses, Pending
     // Courses, Pending Lessons, Pending Quizzes.
     const totalCourses = await Course.countDocuments();
-    const pendingCourses = await Course.countDocuments({ $or: [{ status: { $in: ["pending", "under_review"] } }, { status: { $exists: false } }] });
-    const pendingQuizzes = await Lesson.countDocuments({ lessonType: "quiz", $or: [{ status: { $in: ["pending", "under_review"] } }, { status: { $exists: false } }] });
-    const pendingModuleLessons = await Lesson.countDocuments({ lessonType: { $ne: "quiz" }, $or: [{ status: { $in: ["pending", "under_review"] } }, { status: { $exists: false } }] });
-    const pendingStandaloneLessons = await StandaloneLesson.countDocuments({ $or: [{ status: { $in: ["pending", "under_review"] } }, { status: { $exists: false } }] });
+    const pendingCourses = await Course.countDocuments({ status: "pending" });
+    const pendingQuizzes = await Lesson.countDocuments({ lessonType: "quiz", status: "pending" });
+    const pendingModuleLessons = await Lesson.countDocuments({ lessonType: { $ne: "quiz" }, status: "pending" });
+    const pendingStandaloneLessons = await StandaloneLesson.countDocuments({ status: "pending" });
     const pendingLessons = pendingModuleLessons + pendingStandaloneLessons;
-    const pendingEnrollments = await Enrollment.countDocuments({ $or: [{ status: { $in: ["pending", "under_review"] } }, { status: { $exists: false } }] });
-    const pendingPayouts = await Transaction.countDocuments({ type: "payout_request", $or: [{ status: { $in: ["pending", "under_review"] } }, { status: { $exists: false } }] });
+    const pendingEnrollments = await Enrollment.countDocuments({ status: { $in: ["pending", "under_review"] } });
+    const pendingPayouts = await Transaction.countDocuments({ type: "payout_request", status: "pending" });
 
     // Revenue total + per-category enrollment counts, computed in Mongo
     // instead of pulling every enrollment (with its populated course) into
