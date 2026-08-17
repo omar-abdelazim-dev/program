@@ -24,13 +24,13 @@ export const getStats = async (req, res) => {
     // Course Management tab header cards (ADM-05): Total Courses, Pending
     // Courses, Pending Lessons, Pending Quizzes.
     const totalCourses = await Course.countDocuments();
-    const pendingCourses = await Course.countDocuments({ status: "pending" });
-    const pendingQuizzes = await Lesson.countDocuments({ lessonType: "quiz", status: "pending" });
-    const pendingModuleLessons = await Lesson.countDocuments({ lessonType: { $ne: "quiz" }, status: "pending" });
-    const pendingStandaloneLessons = await StandaloneLesson.countDocuments({ status: "pending" });
+    const pendingCourses = await Course.countDocuments({ status: { $in: ["pending", "under_review"] } });
+    const pendingQuizzes = await Lesson.countDocuments({ lessonType: "quiz", status: { $in: ["pending", "under_review"] } });
+    const pendingModuleLessons = await Lesson.countDocuments({ lessonType: { $ne: "quiz" }, status: { $in: ["pending", "under_review"] } });
+    const pendingStandaloneLessons = await StandaloneLesson.countDocuments({ status: { $in: ["pending", "under_review"] } });
     const pendingLessons = pendingModuleLessons + pendingStandaloneLessons;
-    const pendingEnrollments = await Enrollment.countDocuments({ status: "pending" });
-    const pendingPayouts = await Transaction.countDocuments({ type: "payout_request", status: "pending" });
+    const pendingEnrollments = await Enrollment.countDocuments({ status: { $in: ["pending", "under_review"] } });
+    const pendingPayouts = await Transaction.countDocuments({ type: "payout_request", status: { $in: ["pending", "under_review"] } });
 
     // Revenue total + per-category enrollment counts, computed in Mongo
     // instead of pulling every enrollment (with its populated course) into
