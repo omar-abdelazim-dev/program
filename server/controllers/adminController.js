@@ -29,6 +29,8 @@ export const getStats = async (req, res) => {
     const pendingModuleLessons = await Lesson.countDocuments({ lessonType: { $ne: "quiz" }, status: "pending" });
     const pendingStandaloneLessons = await StandaloneLesson.countDocuments({ status: "pending" });
     const pendingLessons = pendingModuleLessons + pendingStandaloneLessons;
+    const pendingEnrollments = await Enrollment.countDocuments({ status: "pending" });
+    const pendingPayouts = await Transaction.countDocuments({ type: "payout_request", status: "pending" });
 
     // Revenue total + per-category enrollment counts, computed in Mongo
     // instead of pulling every enrollment (with its populated course) into
@@ -118,6 +120,8 @@ export const getStats = async (req, res) => {
       pendingLessonsCount: pendingLessons,
       pendingQuizzes,
       pendingQuizzesCount: pendingQuizzes,
+      pendingEnrollments,
+      pendingPayouts,
       totalRevenue,
       platformCommission,
       companyShare,
