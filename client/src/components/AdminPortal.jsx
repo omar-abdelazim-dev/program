@@ -14,6 +14,7 @@ import {
 import api from "../api/axios";
 import logoDark from "../assets/logo-dark.png";
 import logoLight from "../assets/logo-light.png";
+
 import AdminPayoutsTab from "./AdminPayoutsTab";
 import AdminAnalyticsTab from "./AdminAnalyticsTab";
 import AdminOverviewTab from "./AdminOverviewTab";
@@ -22,9 +23,12 @@ import { formatNotificationTitle, formatNotificationMessage } from "../utils/not
 import AdminUserManagementTab from "./AdminUserManagementTab";
 import AdminCourseManagementTab from "./AdminCourseManagementTab";
 import AdminLessonsTab from "./AdminLessonsTab";
+import GlobalAnnouncementBanner from "./GlobalAnnouncementBanner";
 import WebsiteManagement from "./WebsiteManagement/WebsiteManagement";
 import SystemManagement from "./SystemManagement";
 import AdminLandingPageTab from "./AdminLandingPageTab";
+import AdminReportsTab from "./AdminReportsTab";
+import AdminRolePermissionsTab from "./AdminRolePermissionsTab";
 import FullPageLoader from "./FullPageLoader";
 import { useTranslation } from 'react-i18next';
 
@@ -278,6 +282,11 @@ export default function AdminPortal({
   const [showScreenshotModal, setShowScreenshotModal] = useState(false);
   const [processingEnrollmentAction, setProcessingEnrollmentAction] = useState(null);
   const [enrollmentPage, setEnrollmentPage] = useState(1);
+  const [pendingEnrollmentPage, setPendingEnrollmentPage] = useState(1);
+  const [enrollmentSubTab, setEnrollmentSubTab] = useState('pending');
+  const pendingEnrollmentTabRef = useRef(null);
+  const processedEnrollmentTabRef = useRef(null);
+  const [enrollmentIndicatorStyle, setEnrollmentIndicatorStyle] = useState({ left: 0, width: 0 });
   const [pendingEnrollmentReject, setPendingEnrollmentReject] = useState(null);
   const [enrollmentRejectReason, setEnrollmentRejectReason] = useState("");
   const [enrollmentRejectReasonError, setEnrollmentRejectReasonError] = useState("");
@@ -382,9 +391,11 @@ export default function AdminPortal({
   const [roleChangeError, setRoleChangeError] = useState("");
   const [blockError, setBlockError] = useState("");
 
-  // Sidebar Dropdown State
+  // Nav State
   const [expandedGroup, setExpandedGroup] = useState("Dashboard");
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [expandedMobileGroup, setExpandedMobileGroup] = useState("Dashboard");
+  const [activeDropdown, setActiveDropdown] = useState(null);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   // Recent Activity Filter
   const [activityFilter, setActivityFilter] = useState("All");
@@ -691,7 +702,6 @@ export default function AdminPortal({
       <FullPageLoader message="Loading Admin Portal..." />
     </div>
   );
-
   const menuGroups =
     user?.role === "superadmin"
       ? [
@@ -704,48 +714,48 @@ export default function AdminPortal({
             ],
           },
           {
-            title: "User Management",
+            title: "Users",
             items: [{ id: "users", label: "Users" }],
           },
-
           {
-            title: "Course Management",
+            title: "Courses",
             items: [
               { id: "courses", label: "Course Management" },
             ],
           },
           {
-            title: "Financial Management",
+            title: "Financials",
             items: [
-              { id: "enrollment", label: "Enrollments" },
+              { id: "enrollment", label: "Enrollment Requests" },
               { id: "financial_payouts", label: "Payout Requests" },
             ],
           },
           {
-            title: "Website Management",
+            title: "Website",
             items: [
               { id: "web_landing_cms", label: "Landing Page CMS" },
               { id: "web_home", label: "Homepage" },
-              { id: "web_about", label: "About" },
+              { id: "web_about", label: "About Us" },
               { id: "web_faq", label: "FAQ" },
-              { id: "web_contact", label: "Contact" },
               { id: "web_testimonials", label: "Testimonials" },
+              { id: "web_contact", label: "Contact Us" },
             ],
           },
           {
-            title: "Announcement Management",
+            title: "Announcements",
             items: [{ id: "announcements", label: "Announcements" }],
           },
           {
-            title: "Reports & Analytics",
-            items: [{ id: "reports", label: "Reports & Analytics" }],
+            title: "Reports",
+            items: [
+              { id: "reports_financial", label: "Financial Reports" },
+              { id: "reports_students", label: "Student Progress" },
+              { id: "reports_instructors", label: "Instructor Performance" },
+              { id: "reports_export", label: "Export Data" },
+            ],
           },
           {
-            title: "Role & Permission",
-            items: [{ id: "roles", label: "Role & Permission Management" }],
-          },
-          {
-            title: "System Settings",
+            title: "Settings",
             items: [{ id: "settings", label: "System Settings" }],
           },
         ]
@@ -759,285 +769,249 @@ export default function AdminPortal({
             ],
           },
           {
-            title: "User Management",
+            title: "Users",
             items: [{ id: "users", label: "Users" }],
           },
           {
-            title: "Course Management",
+            title: "Courses",
             items: [
               { id: "courses", label: "Course Management" },
             ],
           },
           {
-            title: "Financial Management",
+            title: "Financials",
             items: [
-              { id: "enrollment", label: "Enrollments" },
+              { id: "enrollment", label: "Enrollment Requests" },
               { id: "financial_payouts", label: "Payout Requests" },
             ],
           },
           {
-            title: "Announcement Management",
+            title: "Announcements",
             items: [{ id: "announcements", label: "Announcements" }],
           },
           {
             title: "Reports",
-            items: [{ id: "reports", label: "Reports" }],
+            items: [
+              { id: "reports_financial", label: "Financial Reports" },
+              { id: "reports_students", label: "Student Progress" },
+              { id: "reports_instructors", label: "Instructor Performance" },
+              { id: "reports_export", label: "Export Data" },
+            ],
           },
         ];
 
-  const displayedTransactions = transactions.slice((enrollmentPage - 1) * 10, enrollmentPage * 10);
+  const pendingEnrollments = transactions.filter(t => t.status === 'pending' || t.status === 'under_review');
+  const processedEnrollments = transactions.filter(t => t.status !== 'pending' && t.status !== 'under_review');
+  const displayedProcessedTransactions = processedEnrollments.slice((enrollmentPage - 1) * 10, enrollmentPage * 10);
+  const displayedPendingTransactions = pendingEnrollments.slice((pendingEnrollmentPage - 1) * 10, pendingEnrollmentPage * 10);
+
+  useEffect(() => {
+    const activeRef = enrollmentSubTab === 'pending' ? pendingEnrollmentTabRef : processedEnrollmentTabRef;
+    if (activeRef.current) {
+      setEnrollmentIndicatorStyle({
+        left: activeRef.current.offsetLeft,
+        width: activeRef.current.offsetWidth,
+      });
+    }
+  }, [enrollmentSubTab, pendingEnrollments.length]);
+
+  const renderEnrollmentTable = (txs, emptyMessage) => (
+    <div className="glass-card" style={{ width: "100%", padding: "16px", borderRadius: "20px", overflow: "hidden" }}>
+      <div style={{ overflowX: "auto" }}>
+        <table className="admin-table" style={{ width: "100%", minWidth: "750px", borderCollapse: "separate", borderSpacing: "0", textAlign: "left" }}>
+          <thead>
+            <tr>
+              <th style={{ padding: "18px 24px 18px 32px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>DATE</th>
+              <th style={{ padding: "18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>STUDENT</th>
+              <th style={{ padding: "18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>COURSE</th>
+              <th style={{ padding: "18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>INSTRUCTOR</th>
+              <th style={{ padding: "18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", textAlign: "center", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>STATUS</th>
+              <th style={{ padding: "18px 32px 18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", textAlign: "right", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>REVENUE</th>
+            </tr>
+          </thead>
+          <tbody>
+            {txs.length === 0 ? (
+              <tr>
+                <td colSpan="6" style={{ padding: "32px", textAlign: "center", color: "var(--c-sub)" }}>{emptyMessage}</td>
+              </tr>
+            ) : (
+              txs.map((t) => {
+                const norm = (t.status || 'pending').toLowerCase().replace(/\s+/g, '_');
+                const statusConfig = {
+                  pending: { label: 'Pending', bg: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b' },
+                  under_review: { label: 'Under Review', bg: 'rgba(59, 130, 246, 0.12)', color: '#60a5fa' },
+                  approved: { label: 'Approved', bg: 'rgba(16, 185, 129, 0.12)', color: '#34d399' },
+                  rejected: { label: 'Rejected', bg: 'rgba(239, 68, 68, 0.12)', color: '#fca5a5' },
+                  refunded: { label: 'Refunded', bg: 'rgba(168, 85, 247, 0.12)', color: '#c084fc' },
+                };
+                const st = statusConfig[norm] || statusConfig.pending;
+
+                return (
+                  <tr 
+                    key={t._id} 
+                    style={{ cursor: "pointer", transition: "background 0.2s", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.05))" }}
+                    className="hover-row"
+                    onClick={() => setSelectedEnrollment(t)}
+                  >
+                    <td style={{ padding: "18px 24px 18px 32px", verticalAlign: "middle" }}>{new Date(t.createdAt).toLocaleDateString()}</td>
+                    <td style={{ padding: "18px 24px", verticalAlign: "middle" }}><div style={{ color: "var(--text-h)", fontWeight: "500" }}>{t.student?.name || "Unknown Student"}</div></td>
+                    <td style={{ padding: "18px 24px", verticalAlign: "middle" }}><div style={{ color: "var(--text-h)", fontWeight: "500" }}>{t.course?.title || "Unknown Course"}</div></td>
+                    <td style={{ padding: "18px 24px", verticalAlign: "middle", color: "var(--c-sub)" }}>{t.course?.instructor?.name || "Unknown Instructor"}</td>
+                    <td style={{ padding: "18px 24px", textAlign: "center", verticalAlign: "middle" }}>
+                      <span style={{ padding: "6px 14px", borderRadius: "20px", fontSize: "0.85rem", fontWeight: "600", background: st.bg, color: st.color, border: "none", boxShadow: "var(--inner-shadow, inset 0 2px 4px 0 rgba(0,0,0,0.06))", display: "inline-flex", alignItems: "center", gap: "6px", textTransform: "capitalize" }}>
+                        <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: st.color }} />
+                        {st.label}
+                      </span>
+                    </td>
+                    <td style={{ padding: "18px 32px 18px 24px", textAlign: "right", verticalAlign: "middle", color: "#10B981", fontWeight: "600" }}>EGP {t.amountPaid}</td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 
   return (
     <div
       data-role={user?.role}
-      className="page-wrapper"
+      className="student-layout-wrapper student-layout-topnav"
       style={{
         display: "flex",
-        flexDirection: "row",
-        flex: 1,
+        flexDirection: "column",
         width: "100%",
         backgroundColor: "var(--bg-main)",
-        overflow: "hidden",
-        minHeight: 0,
+        minHeight: "100vh",
       }}
     >
-      {/* Sidebar */}
-      <aside className={`admin-sidebar${sidebarCollapsed ? " collapsed" : ""}`}>
-        <div
-          className="admin-sidebar-header"
-          style={{ display: "flex", flexDirection: "column", padding: "16px" }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              marginBottom: "24px",
-            }}
-          >
-            <Link
-              to="/student"
-              style={{ display: "flex", alignItems: "center" }}
-            >
-              <img
-                src={isLightMode ? logoLight : logoDark}
-                alt="Program Logo"
-                style={{
-                  height: "100%",
-                  width: "100%",
-                  transition: "opacity 0.2s ease",
-                }}
-              />
-            </Link>
-          </div>
-
-          {/* <button
-            type="button"
-            className="admin-sidebar-collapse-btn"
-            onClick={() => setSidebarCollapsed((prev) => !prev)}
-            aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            data-tooltip={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-          </button> */}
+      <header className="student-header student-topnav-header" style={{ position: "relative", zIndex: 1000, display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 24px", height: "70px", backgroundColor: "var(--bg-surface)", borderBottom: isLightMode ? "1px solid rgba(0,0,0,0.1)" : "none" }}>
+        <div className="topnav-left">
+          <Link to="/student" className="topnav-logo">
+            <img
+              src={isLightMode ? logoLight : logoDark}
+              alt="Program Logo"
+              style={{ height: "32px", width: "auto", objectFit: "contain" }}
+            />
+          </Link>
         </div>
-
-        <div className="admin-sidebar-nav">
-          {menuGroups.map((group, idx) => {
-          const isGroupExpanded = expandedGroup === group.title;
-          const activeIndex = group.items.findIndex((t) =>
-            isSidebarTabActive(t.id, activeTab),
-          );
-
-          const pendingEnrollmentsCount = transactions.filter((t) => (t.status || 'pending').toLowerCase() === 'pending').length;
-          const pendingPayoutsCount = payouts.filter((p) => ['pending', 'otp_verified', 'approved', 'processing'].includes(p.status)).length;
-          const totalFinancialPending = pendingEnrollmentsCount + pendingPayoutsCount;
-          const totalCoursePending = pendingCourses.length + pendingLessonsCount;
-
-          return (
-            <div key={idx} className="admin-sidebar-group">
-              <button
-                type="button"
-                onClick={() => toggleGroup(group.title)}
-                className="admin-sidebar-group-title hover-glow"
+        
+        {/* Desktop Navigation Links */}
+        <div className="topnav-center" style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+          <nav className="topnav-links" style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'center' }}>
+            {menuGroups.map((group, idx) => {
+              const hasDropdown = group.items.length > 1;
+              return (
+              <div 
+                key={idx} 
+                style={{ position: 'relative' }} 
+                onMouseEnter={() => hasDropdown && setActiveDropdown(group.title)}
+                onMouseLeave={() => hasDropdown && setActiveDropdown(null)}
               >
-                <span className="admin-sidebar-group-icon" aria-hidden="true">
-                  {group.title.charAt(0)}
-                </span>
-                <span className="admin-sidebar-group-label">{group.title}</span>
-                {group.title === "Financial Management" && totalFinancialPending > 0 && (
-                  <span
-                    style={{
-                      marginInlineStart: "auto",
-                      marginInlineEnd: "6px",
-                      padding: "2px 8px",
-                      borderRadius: "12px",
-                      fontSize: "0.75rem",
-                      fontWeight: "700",
-                      color: "#f59e0b",
-                      lineHeight: "1.2",
-                    }}
-                  >
-                    {totalFinancialPending}
-                  </span>
-                )}
-                {group.title === "Course Management" && totalCoursePending > 0 && (
-                  <span
-                    style={{
-                      marginInlineStart: "auto",
-                      marginInlineEnd: "6px",
-                      padding: "2px 8px",
-                      borderRadius: "12px",
-                      fontSize: "0.75rem",
-                      fontWeight: "700",
-                      color: "#f59e0b",
-                      lineHeight: "1.2",
-                    }}
-                  >
-                    {totalCoursePending}
-                  </span>
-                )}
-                <svg
-                  className="admin-sidebar-chevron"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  style={{
-                    transform: isGroupExpanded
-                      ? "rotate(180deg)"
-                      : "rotate(0deg)",
+                <button 
+                  className={`topnav-link ${group.items.some(t => isSidebarTabActive(t.id, activeTab)) ? "active" : ""}`}
+                  style={{ display: "flex", alignItems: "center", gap: "4px", padding: '8px 12px', fontSize: '0.9rem' }}
+                  onClick={() => {
+                    if (hasDropdown) {
+                      setActiveDropdown(activeDropdown === group.title ? null : group.title);
+                    } else {
+                      handleSidebarTabClick(group.items[0].id, group.title);
+                      setActiveDropdown(null);
+                    }
                   }}
                 >
-                  <path d="M6 9l6 6 6-6" />
-                </svg>
-              </button>
-
-              <div
-                className={`admin-sidebar-items${
-                  isGroupExpanded ? " expanded-group" : " collapsed-group"
-                }`}
-              >
-                <div className="admin-sidebar-items-inner">
-                  {/* The Sliding Pill Background */}
-                  <div
-                    className="admin-sidebar-pill"
-                    style={{
-                      position: "absolute",
-                      left: sidebarCollapsed ? "4px" : "14px",
-                      right: sidebarCollapsed ? "4px" : "14px",
-                      height: "40px",
-                      top: `${activeIndex * 44}px`, // 40px tab height + 4px gap
-                      opacity: activeIndex >= 0 ? 1 : 0,
-                      backgroundColor: "var(--c-bg)",
-                      borderRadius: "50px",
-                      transition:
-                        "top 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease",
-                      zIndex: 0,
-                      pointerEvents: "none",
-                      boxShadow: "var(--inner-shadow)",
+                  {group.title}
+                  {hasDropdown && (
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    style={{ 
+                      transform: activeDropdown === group.title ? "rotate(180deg)" : "rotate(0deg)", 
+                      transition: "transform 0.2s" 
                     }}
-                  />
-                  {group.items.map((tab) => {
-                    const isActive = isSidebarTabActive(tab.id, activeTab);
-                    let tabPendingCount = 0;
-                    if (tab.id === "enrollment") tabPendingCount = pendingEnrollmentsCount;
-                    if (tab.id === "financial_payouts") tabPendingCount = pendingPayoutsCount;
-
-                    return (
+                  >
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                  )}
+                </button>
+                {hasDropdown && (
+                  <div 
+                    className="profile-dropdown"
+                    style={{ 
+                      position: 'absolute', 
+                      top: '100%', 
+                      left: '50%', 
+                      transformOrigin: 'top center',
+                      transform: activeDropdown === group.title ? 'translateX(-50%) scaleY(1)' : 'translateX(-50%) scaleY(0)',
+                      opacity: activeDropdown === group.title ? 1 : 0,
+                      visibility: activeDropdown === group.title ? 'visible' : 'hidden',
+                      transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease, visibility 0.4s',
+                      width: 'max-content',
+                      minWidth: '200px',
+                      padding: '8px 0', 
+                      marginTop: '4px',
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      zIndex: 1000 
+                    }}
+                  >
+                    {group.items.map((tab) => (
                       <button
                         key={tab.id}
-                        type="button"
-                        onClick={() =>
-                          handleSidebarTabClick(tab.id, group.title)
-                        }
-                        className={`admin-sidebar-tab ${
-                          isActive ? " active" : ""
-                        }`}
-                        data-tooltip={tab.label}
-                        data-tooltip={sidebarCollapsed ? tab.label : undefined}
+                        onClick={() => {
+                          handleSidebarTabClick(tab.id, group.title);
+                          setActiveDropdown(null);
+                        }}
+                        style={{
+                          padding: '10px 16px',
+                          background: 'transparent',
+                          border: 'none',
+                          textAlign: 'left',
+                          color: isSidebarTabActive(tab.id, activeTab) ? 'var(--color-accent)' : 'var(--text-main)',
+                          fontWeight: isSidebarTabActive(tab.id, activeTab) ? '600' : '400',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center'
+                        }}
+                        className="hover-bg"
                       >
-                        <span className="admin-sidebar-tab-label">
-                          {tab.label}
-                        </span>
-                        {tabPendingCount > 0 && (
-                          <span
-                            style={{
-                              marginLeft: "auto",
-                              padding: "2px 8px",
-                              borderRadius: "12px",
-                              fontSize: "0.75rem",
-                              fontWeight: "700",
-                              color: "#f59e0b",
-                              lineHeight: "1.2",
-                              zIndex: 1,
-                            }}
-                          >
-                            {tabPendingCount}
-                          </span>
-                        )}
-                        <span className="admin-sidebar-tab-short">
-                          {tab.short}
-                        </span>
+                        {tab.label}
                       </button>
-                    );
-                  })}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
-          );
-        })}
+            )})}
+          </nav>
         </div>
-      </aside>
 
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          flex: 1,
-          overflow: "hidden",
-          minHeight: 0,
-        }}
-      >
-        {/* Top Navbar using top-nav styling */}
-        <nav
-          className="top-nav"
-          style={{
-            position: "relative",
-            borderBottom: isLightMode ? "1px solid rgba(0, 0, 0, 0.1)" : "none",
-            zIndex: 1000,
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "0 24px",
-            height: "70px",
-            backgroundColor: "var(--bg-main)",
-          }}
-        >
-          <div className="nav-logo">
-            <h1 style={{ fontSize: "1.2rem", margin: "0" }}>
-              {user?.role === "superadmin"
-                ? "Super Admin Portal"
-                : "Admin Portal"}
-            </h1>
-          </div>
-          <div
-            className="nav-controls"
-            style={{ display: "flex", alignItems: "center" }}
-          >
+        <div className="topnav-right header-right" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            {/* Hamburger Toggle (Mobile) */}
+            <button
+              className={`topnav-hamburger ${mobileNavOpen ? "active" : ""}`}
+              onClick={() => setMobileNavOpen(!mobileNavOpen)}
+              aria-label={t('admin.nav.toggle_navigation', 'Toggle navigation')}
+              style={{ background: 'transparent', border: 'none', color: 'var(--text-h)', cursor: 'pointer' }}
+            >
+              {mobileNavOpen ? (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              )}
+            </button>
+
             {/* Notifications Bell & Popover */}
-            <div className="profile-wrapper" ref={notificationsRef} style={{ position: 'relative', marginRight: '16px' }}>
+            <div className="profile-wrapper" ref={notificationsRef} style={{ position: 'relative' }}>
               <button 
                 type="button"
                 className="nav-icon-btn"
@@ -1063,8 +1037,8 @@ export default function AdminPortal({
                 )}
               </button>
               {showNotifications && (
-                <div className="profile-dropdown" style={{ width: '360px', right: isRTL ? 'auto' : 0, left: isRTL ? 0 : 'auto', padding: 0, borderRadius: '16px', overflow: 'hidden' }}>
-                  <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--c-border-subtle, rgba(255,255,255,0.08))', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-surface)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }}>
+                <div className="profile-dropdown" style={{ width: '360px', right: isRTL ? 'auto' : 0, left: isRTL ? 0 : 'auto', padding: 0, borderRadius: '12px', overflow: 'hidden' }}>
+                  <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--c-border-subtle, rgba(255,255,255,0.08))', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-surface)', borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }}>
                     <span style={{ color: 'var(--color-accent, #f97316)', fontSize: '1.05rem' }}>{t('nav.notifications', 'Notifications')}</span>
                     {notifications.length > 0 && (
                       <button 
@@ -1130,7 +1104,6 @@ export default function AdminPortal({
             <button
               className="nav-icon-btn"
               onClick={toggleTheme}
-              style={{ marginRight: "16px" }}
             >
               {isLightMode ? (
                 <svg
@@ -1166,7 +1139,11 @@ export default function AdminPortal({
                 </svg>
               )}
             </button>
-            <div className="profile-wrapper">
+            <div 
+              className="profile-wrapper hover-glow" 
+              onClick={() => navigate('/student/settings')}
+              style={{ cursor: 'pointer' }}
+            >
               <div className="nav-avatar">
                 {user?.avatarUrl ? (
                   <img
@@ -1193,30 +1170,112 @@ export default function AdminPortal({
                   </svg>
                 )}
               </div>
-              <div className="profile-tooltip">
-                <div className="tooltip-name">{user?.name}</div>
-                <hr className="tooltip-divider" />
-                <a href="#" className="tooltip-link">
-                  Profile
-                </a>
-                <a href="#" className="tooltip-link">
-                  Settings
-                </a>
-                <hr className="tooltip-divider" />
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    onLogout();
-                  }}
-                  className="tooltip-link logout-link"
-                >
-                  Log out
-                </a>
-              </div>
             </div>
           </div>
-        </nav>
+      </header>
+
+      {/* Mobile Nav Dropdown */}
+      <nav className={`topnav-mobile-dropdown ${mobileNavOpen ? 'open' : 'closed'}`}>
+        <div className="topnav-mobile-dropdown-inner" style={{ padding: '16px', maxHeight: '70vh', overflowY: 'auto' }}>
+          {menuGroups.map((group, idx) => {
+            // If the group only has one item, render it directly as a top-level button
+            if (group.items.length === 1) {
+              const tab = group.items[0];
+              const isActive = isSidebarTabActive(tab.id, activeTab);
+              return (
+                <div key={idx} style={{ marginBottom: '8px' }}>
+                  <button
+                    onClick={() => {
+                      handleSidebarTabClick(tab.id, group.title);
+                      setMobileNavOpen(false);
+                    }}
+                    style={{ 
+                      width: '100%', 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center', 
+                      fontSize: '0.85rem', 
+                      color: isActive ? 'var(--color-accent)' : 'var(--text-secondary)', 
+                      textTransform: 'uppercase', 
+                      padding: '12px 8px', 
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      borderRadius: '6px',
+                      border: 'none',
+                      background: isActive ? 'var(--color-accent-transparent, rgba(249,115,22,0.1))' : 'transparent',
+                      textAlign: 'left',
+                      transition: 'background 0.2s ease'
+                    }}
+                  >
+                    {group.title}
+                  </button>
+                </div>
+              );
+            }
+
+            // Otherwise, render as a collapsible accordion
+            return (
+              <div key={idx} style={{ marginBottom: '16px' }}>
+                <div 
+                  style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center', 
+                    fontSize: '0.85rem', 
+                    color: 'var(--text-secondary)', 
+                    textTransform: 'uppercase', 
+                    marginBottom: '8px', 
+                    padding: '12px 8px', 
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    borderRadius: '6px',
+                    background: expandedMobileGroup === group.title ? 'rgba(0,0,0,0.05)' : 'transparent',
+                    transition: 'background 0.2s ease'
+                  }}
+                  onClick={() => setExpandedMobileGroup(prev => prev === group.title ? null : group.title)}
+                >
+                  {group.title}
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width="14" 
+                    height="14" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor" 
+                    strokeWidth="2"
+                    style={{
+                      transform: expandedMobileGroup === group.title ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.2s ease'
+                    }}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+                
+                {expandedMobileGroup === group.title && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    {group.items.map(tab => (
+                      <button
+                        key={tab.id}
+                        className={`topnav-mobile-link ${isSidebarTabActive(tab.id, activeTab) ? 'active' : ''}`}
+                        onClick={() => {
+                          handleSidebarTabClick(tab.id, group.title);
+                          setMobileNavOpen(false);
+                        }}
+                        style={{ textAlign: 'left', padding: '10px 16px', borderRadius: '8px', border: 'none', background: isSidebarTabActive(tab.id, activeTab) ? 'var(--color-accent-transparent, rgba(249,115,22,0.1))' : 'transparent', color: isSidebarTabActive(tab.id, activeTab) ? 'var(--color-accent)' : 'var(--text-h)', cursor: 'pointer', fontSize: '0.95rem' }}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </nav>
+
+        <GlobalAnnouncementBanner />
 
         {/* Main Content Area */}
         <div style={{ flex: 1, padding: "32px 48px", overflowY: "auto", minHeight: 0 }}>
@@ -1398,140 +1457,108 @@ export default function AdminPortal({
                 <h2 style={{ fontSize: "1.8rem", margin: 0 }}>
                   Enrollment Requests
                 </h2>
-                <div className="glass-card" style={{ width: "100%", padding: "16px", borderRadius: "20px", overflow: "hidden" }}>
-                  <div style={{ overflowX: "auto" }}>
-                    <table className="admin-table" style={{ width: "100%", minWidth: "750px", borderCollapse: "separate", borderSpacing: "0", textAlign: "left" }}>
-                    <thead>
-                      <tr>
-                        <th style={{ padding: "18px 24px 18px 32px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>
-                          DATE
-                        </th>
-                        <th style={{ padding: "18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>
-                          STUDENT
-                        </th>
-                        <th style={{ padding: "18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>
-                          COURSE
-                        </th>
-                        <th style={{ padding: "18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>
-                          INSTRUCTOR
-                        </th>
-                        <th style={{ padding: "18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", textAlign: "center", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>
-                          STATUS
-                        </th>
-                        <th style={{ padding: "18px 32px 18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", textAlign: "right", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>
-                          REVENUE
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {displayedTransactions.length === 0 ? (
-                        <tr>
-                          <td colSpan="6" style={{ padding: "32px", textAlign: "center", color: "var(--c-sub)" }}>
-                            No requests found
-                          </td>
-                        </tr>
-                      ) : (
-                        displayedTransactions.map((t) => {
-                          const norm = (t.status || 'pending').toLowerCase().replace(/\s+/g, '_');
-                          const statusConfig = {
-                            pending: { label: 'Pending', bg: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b' },
-                            under_review: { label: 'Under Review', bg: 'rgba(59, 130, 246, 0.12)', color: '#60a5fa' },
-                            approved: { label: 'Approved', bg: 'rgba(16, 185, 129, 0.12)', color: '#34d399' },
-                            rejected: { label: 'Rejected', bg: 'rgba(239, 68, 68, 0.12)', color: '#fca5a5' },
-                            refunded: { label: 'Refunded', bg: 'rgba(168, 85, 247, 0.12)', color: '#c084fc' },
-                          };
-                          const st = statusConfig[norm] || statusConfig.pending;
-
-                          return (
-                            <tr 
-                              key={t._id} 
-                              style={{ 
-                                cursor: "pointer", 
-                                transition: "background 0.2s",
-                                borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.05))"
-                              }}
-                              className="hover-row"
-                              onClick={() => setSelectedEnrollment(t)}
-                            >
-                              <td style={{ padding: "18px 24px 18px 32px", verticalAlign: "middle" }}>
-                                {new Date(t.createdAt).toLocaleDateString()}
-                              </td>
-                              <td style={{ padding: "18px 24px", verticalAlign: "middle" }}>
-                                <div style={{ color: "var(--text-h)", fontWeight: "500" }}>
-                                  {t.student?.name || "Unknown Student"}
-                                </div>
-                              </td>
-                              <td style={{ padding: "18px 24px", verticalAlign: "middle" }}>
-                                <div style={{ color: "var(--text-h)", fontWeight: "500" }}>
-                                  {t.course?.title || "Unknown Course"}
-                                </div>
-                              </td>
-                              <td style={{ padding: "18px 24px", verticalAlign: "middle", color: "var(--c-sub)" }}>
-                                {t.course?.instructor?.name || "Unknown Instructor"}
-                              </td>
-                              <td style={{ padding: "18px 24px", textAlign: "center", verticalAlign: "middle" }}>
-                                <span
-                                  style={{
-                                    padding: "6px 14px",
-                                    borderRadius: "20px",
-                                    fontSize: "0.85rem",
-                                    fontWeight: "600",
-                                    background: st.bg,
-                                    color: st.color,
-                                    border: "none",
-                                    boxShadow: "var(--inner-shadow, inset 0 2px 4px 0 rgba(0,0,0,0.06))",
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: "6px",
-                                    textTransform: "capitalize",
-                                  }}
-                                >
-                                  <span
-                                    style={{
-                                      width: "6px",
-                                      height: "6px",
-                                      borderRadius: "50%",
-                                      backgroundColor: st.color,
-                                    }}
-                                  />
-                                  {st.label}
-                                </span>
-                              </td>
-                              <td style={{ padding: "18px 32px 18px 24px", textAlign: "right", verticalAlign: "middle", color: "#10B981", fontWeight: "600" }}>
-                                EGP {t.amountPaid}
-                              </td>
-                            </tr>
-                          );
-                        })
-                      )}
-                    </tbody>
-                  </table>
-                  </div>
-                  
-                  {transactions.length > 10 && (
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', margin: '20px 0 12px 0', alignItems: 'center' }}>
-                      <button 
-                        disabled={enrollmentPage === 1} 
-                        onClick={() => setEnrollmentPage(prev => prev - 1)}
-                        className="glass-btn hover-glow"
-                        style={{ padding: '8px 20px', fontSize: '0.85rem', cursor: enrollmentPage === 1 ? 'not-allowed' : 'pointer', opacity: enrollmentPage === 1 ? 0.5 : 1 }}
-                      >
-                        Previous
-                      </button>
-                      <span style={{ color: 'var(--c-sub)', fontSize: '0.9rem', fontWeight: '500' }}>
-                        Page {enrollmentPage} of {Math.ceil(transactions.length / 10)}
-                      </span>
-                      <button 
-                        disabled={enrollmentPage >= Math.ceil(transactions.length / 10)} 
-                        onClick={() => setEnrollmentPage(prev => prev + 1)}
-                        className="glass-btn hover-glow"
-                        style={{ padding: '8px 20px', fontSize: '0.85rem', cursor: enrollmentPage >= Math.ceil(transactions.length / 10) ? 'not-allowed' : 'pointer', opacity: enrollmentPage >= Math.ceil(transactions.length / 10) ? 0.5 : 1 }}
-                      >
-                        Next
-                      </button>
-                    </div>
-                  )}
+                
+                <div style={{ position: 'relative', display: 'flex', gap: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
+                  <button
+                    ref={pendingEnrollmentTabRef}
+                    onClick={() => setEnrollmentSubTab('pending')}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: '8px 16px',
+                      fontSize: '1rem',
+                      fontWeight: 600,
+                      color: enrollmentSubTab === 'pending' ? 'var(--text-h)' : 'var(--c-sub)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    Pending ({pendingEnrollments.length})
+                  </button>
+                  <button
+                    ref={processedEnrollmentTabRef}
+                    onClick={() => setEnrollmentSubTab('processed')}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: '8px 16px',
+                      fontSize: '1rem',
+                      fontWeight: 600,
+                      color: enrollmentSubTab === 'processed' ? 'var(--text-h)' : 'var(--c-sub)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    Processed
+                  </button>
+                  <div style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    height: '2px',
+                    background: 'linear-gradient(to right, #f97316, #eab308)',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    ...enrollmentIndicatorStyle
+                  }} />
                 </div>
+                
+                {enrollmentSubTab === 'pending' && (
+                  <div>
+                    {renderEnrollmentTable(displayedPendingTransactions, "No pending enrollment requests.")}
+                    {pendingEnrollments.length > 10 && (
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', margin: '20px 0 12px 0', alignItems: 'center' }}>
+                        <button 
+                          disabled={pendingEnrollmentPage === 1} 
+                          onClick={() => setPendingEnrollmentPage(prev => prev - 1)}
+                          className="glass-btn hover-glow"
+                          style={{ padding: '8px 20px', fontSize: '0.85rem', cursor: pendingEnrollmentPage === 1 ? 'not-allowed' : 'pointer', opacity: pendingEnrollmentPage === 1 ? 0.5 : 1 }}
+                        >
+                          Previous
+                        </button>
+                        <span style={{ color: 'var(--c-sub)', fontSize: '0.9rem', fontWeight: '500' }}>
+                          Page {pendingEnrollmentPage} of {Math.ceil(pendingEnrollments.length / 10)}
+                        </span>
+                        <button 
+                          disabled={pendingEnrollmentPage >= Math.ceil(pendingEnrollments.length / 10)} 
+                          onClick={() => setPendingEnrollmentPage(prev => prev + 1)}
+                          className="glass-btn hover-glow"
+                          style={{ padding: '8px 20px', fontSize: '0.85rem', cursor: pendingEnrollmentPage >= Math.ceil(pendingEnrollments.length / 10) ? 'not-allowed' : 'pointer', opacity: pendingEnrollmentPage >= Math.ceil(pendingEnrollments.length / 10) ? 0.5 : 1 }}
+                        >
+                          Next
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {enrollmentSubTab === 'processed' && (
+                  <div>
+                    {renderEnrollmentTable(displayedProcessedTransactions, "No processed requests found.")}
+                      
+                    {processedEnrollments.length > 10 && (
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', margin: '20px 0 12px 0', alignItems: 'center' }}>
+                    <button 
+                      disabled={enrollmentPage === 1} 
+                      onClick={() => setEnrollmentPage(prev => prev - 1)}
+                      className="glass-btn hover-glow"
+                      style={{ padding: '8px 20px', fontSize: '0.85rem', cursor: enrollmentPage === 1 ? 'not-allowed' : 'pointer', opacity: enrollmentPage === 1 ? 0.5 : 1 }}
+                    >
+                      Previous
+                    </button>
+                    <span style={{ color: 'var(--c-sub)', fontSize: '0.9rem', fontWeight: '500' }}>
+                      Page {enrollmentPage} of {Math.ceil(processedEnrollments.length / 10)}
+                    </span>
+                    <button 
+                      disabled={enrollmentPage >= Math.ceil(processedEnrollments.length / 10)} 
+                      onClick={() => setEnrollmentPage(prev => prev + 1)}
+                      className="glass-btn hover-glow"
+                      style={{ padding: '8px 20px', fontSize: '0.85rem', cursor: enrollmentPage >= Math.ceil(processedEnrollments.length / 10) ? 'not-allowed' : 'pointer', opacity: enrollmentPage >= Math.ceil(processedEnrollments.length / 10) ? 0.5 : 1 }}
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1589,9 +1616,37 @@ export default function AdminPortal({
                 <SystemManagement user={user} />
               </div>
             )}
+
+            {/* Reports sub-tabs */}
+            {visitedTabs.has("reports_financial") && (
+              <div style={{ display: activeTab === "reports_financial" ? "block" : "none" }}>
+                <AdminReportsTab user={user} subTab="financial" />
+              </div>
+            )}
+            {visitedTabs.has("reports_students") && (
+              <div style={{ display: activeTab === "reports_students" ? "block" : "none" }}>
+                <AdminReportsTab user={user} subTab="students" />
+              </div>
+            )}
+            {visitedTabs.has("reports_instructors") && (
+              <div style={{ display: activeTab === "reports_instructors" ? "block" : "none" }}>
+                <AdminReportsTab user={user} subTab="instructors" />
+              </div>
+            )}
+            {visitedTabs.has("reports_export") && (
+              <div style={{ display: activeTab === "reports_export" ? "block" : "none" }}>
+                <AdminReportsTab user={user} subTab="export" />
+              </div>
+            )}
+
+            {/* Permissions tab (superadmin only) */}
+            {visitedTabs.has("roles_permissions") && (
+              <div style={{ display: activeTab === "roles_permissions" ? "block" : "none" }}>
+                <AdminRolePermissionsTab user={user} />
+              </div>
+            )}
           </div>
         </div>
-      </div>
 
       {/* Change Role confirmation modal */}
       {pendingRoleChange && (

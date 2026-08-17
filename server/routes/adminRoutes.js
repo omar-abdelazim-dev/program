@@ -6,6 +6,8 @@ import {
   manualEnroll, createPromoCode, getPromoCodes, togglePromoCode,
   approveEnrollment, rejectEnrollment,
   getInstructorViolations, getInstructorViolationSummary,
+  getStudentAnalytics,
+  getInstructorAnalytics
 } from '../controllers/adminController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 import { validateObjectId } from '../middleware/validationMiddleware.js';
@@ -21,6 +23,8 @@ router.get('/stats', getStats);
 // admin/superadmin gate above.
 router.get('/activity', authorize('superadmin'), getRecentActivity);
 router.get('/revenue-analytics', getRevenueAnalytics);
+router.get('/analytics', getStudentAnalytics);
+router.get('/instructor-analytics', getInstructorAnalytics);
 router.get('/users', getUsers);
 // validateUserIdParam ensures :id is a valid MongoDB ObjectId before hitting the DB
 router.patch('/users/:id/block', validateUserIdParam, toggleBlockUser); // Keep for backwards compatibility

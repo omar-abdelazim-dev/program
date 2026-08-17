@@ -20,6 +20,7 @@ import { EXPLORE_CATEGORIES } from '../data/exploreCategories';
 import { MAJORS, getMajor } from '../data/majors';
 import { COLLEGES } from '../data/colleges';
 import { useTranslation } from 'react-i18next';
+import GlobalAnnouncementBanner from './GlobalAnnouncementBanner';
 
 export default function InstructorPortal({ user, setUser, onLogout, toggleTheme, isLightMode }) {
   const navigate = useNavigate();

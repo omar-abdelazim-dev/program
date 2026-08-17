@@ -11,6 +11,7 @@ import { COLLEGES } from "../data/colleges";
 import CustomSelect from "./CustomSelect";
 import { formatNotificationTitle, formatNotificationMessage } from "../utils/notificationFormatter";
 import api from "../api/axios";
+import GlobalAnnouncementBanner from "./GlobalAnnouncementBanner";
 
 export default function StudentLayout({
   user,

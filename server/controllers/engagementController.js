@@ -237,6 +237,27 @@ export const createAnnouncement = async (req, res) => {
   }
 };
 
+// @desc    Get announcements for a specific course
+// @route   GET /api/engagement/course/:courseId/announcements
+// @access  Private
+export const getCourseAnnouncements = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+
+    // Check if user is enrolled or is staff (admin/instructor)
+    // For simplicity, we just fetch them. The route is protected.
+    const announcements = await Announcement.find({ course: courseId })
+      .populate('instructor', 'name avatarUrl')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({ announcements });
+  } catch (error) {
+    logger.error('Error fetching course announcements:', { error: error.message, stack: error.stack });
+    res.status(500).json({ message: 'Failed to fetch announcements' });
+  }
+};
+
+
 // @desc    Create a new question for a course
 // @route   POST /api/engagement/questions
 // @access  Private

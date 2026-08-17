@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import notyf from '../utils/notyf';
 import ConfirmModal from './ConfirmModal';
 import QuizPlayer from './QuizPlayer';
+import CourseAnnouncementsTab from './CourseAnnouncementsTab';
 
 export default function LearningPortal({ user }) {
   const { t, i18n } = useTranslation();
@@ -481,6 +482,13 @@ export default function LearningPortal({ user }) {
               >
                 {t('student.learning.attachments', 'Attachments')}
               </button>
+              <button
+                className={`nav-tab ${activeTab === "announcements" ? "active" : ""}`}
+                onClick={() => setActiveTab("announcements")}
+                style={{ padding: 0, paddingBottom: "8px", width: "140px", justifyContent: "center", transition: 'color 0.3s ease', color: activeTab === 'announcements' ? 'var(--text-primary)' : 'var(--c-sub)' }}
+              >
+                {t('course.learning.announcements', 'Announcements')}
+              </button>
             </div>
 
             {activeTab === "overview" && (
@@ -887,6 +895,12 @@ export default function LearningPortal({ user }) {
                     {t('student.learning.no_attachments', 'No attachments are available for this lesson.')}
                   </p>
                 )}
+              </div>
+            )}
+
+            {activeTab === "announcements" && (
+              <div style={{ animation: 'fadeIn 0.3s ease' }}>
+                <CourseAnnouncementsTab courseId={id} user={user} />
               </div>
             )}
 

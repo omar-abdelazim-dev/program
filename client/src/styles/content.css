@@ -3051,8 +3051,8 @@ body.light-mode .avatar-btn,
 body.light-mode .utility-icon-btn,
 body.light-mode .nav-avatar {
     color: #4b5563 !important;
-    background-color: var(--bg-surface) !important;
-    box-shadow: var(--outer-shadow) !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
 }
 
 body.light-mode .admin-sidebar-group-icon {
@@ -3513,7 +3513,7 @@ body.light-mode .nav-icon-btn:hover {
     border-radius: 50%;
     overflow: hidden;
     cursor: pointer;
-    background: var(--bg-surface);
+    background: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3521,12 +3521,12 @@ body.light-mode .nav-icon-btn:hover {
     border: 2px solid transparent;
     background-clip: padding-box;
     position: relative;
-    box-shadow: var(--outer-shadow);
+    box-shadow: none;
     transition: all 0.2s ease;
 }
 
 .profile-wrapper:hover .nav-avatar {
-    box-shadow: var(--outer-shadow);
+    box-shadow: none;
 }
 
 body.light-mode .solid-input {
@@ -3629,4 +3629,50 @@ body.light-mode .light-inner-shadow {
     box-shadow: var(--inner-shadow, inset 0 2px 4px rgba(0, 0, 0, 0.4)) !important;
     width: fit-content !important;
     max-width: 100% !important;
+}
+
+/* ADMIN PORTAL CARD RADIUS OVERRIDE */
+/* Ensure CSS variables for radii are also updated */
+body [data-role="admin"],
+body [data-role="superadmin"],
+body.light-mode [data-role="admin"],
+body.light-mode [data-role="superadmin"] {
+    --radius-card: 12px !important;
+    --radius-btn: 12px !important;
+}
+
+/* Universally target all cards and specific containers to override hardcoded 50px radii */
+body [data-role="admin"] .glass-card,
+body [data-role="superadmin"] .glass-card,
+body.light-mode [data-role="admin"] .glass-card,
+body.light-mode [data-role="superadmin"] .glass-card,
+body [data-role="admin"] [class*="-card"],
+body [data-role="superadmin"] [class*="-card"],
+body.light-mode [data-role="admin"] [class*="-card"],
+body.light-mode [data-role="superadmin"] [class*="-card"],
+body [data-role="admin"] .profile-dropdown,
+body [data-role="superadmin"] .profile-dropdown,
+body.light-mode [data-role="admin"] .profile-dropdown,
+body.light-mode [data-role="superadmin"] .profile-dropdown,
+body [data-role="admin"] .settings-section,
+body [data-role="superadmin"] .settings-section,
+body.light-mode [data-role="admin"] .settings-section,
+body.light-mode [data-role="superadmin"] .settings-section,
+body [data-role="admin"] .dash-header,
+body [data-role="superadmin"] .dash-header,
+body.light-mode [data-role="admin"] .dash-header,
+body.light-mode [data-role="superadmin"] .dash-header,
+body [data-role="admin"] .header-search-bar,
+body [data-role="superadmin"] .header-search-bar,
+body.light-mode [data-role="admin"] .header-search-bar,
+body.light-mode [data-role="superadmin"] .header-search-bar,
+body [data-role="admin"] .header-search-input,
+body [data-role="superadmin"] .header-search-input,
+body.light-mode [data-role="admin"] .header-search-input,
+body.light-mode [data-role="superadmin"] .header-search-input {
+    border-radius: 12px !important;
+}
+
+[data-role="admin"], [data-role="superadmin"] {
+    --radius-card: 12px;
 }

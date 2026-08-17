@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useConfig } from '../context/ConfigContext';
 import logoDark from '../assets/logo-dark.png';
+import GlobalAnnouncementBanner from './GlobalAnnouncementBanner';
 import '../styles/landing-page.css';
 
 function ArrowIcon() {
@@ -182,6 +183,8 @@ export default function LandingPage() {
             <Link to="/auth">Sign in</Link>
           </div>
         </nav>
+
+        <GlobalAnnouncementBanner />
 
         <div className="landing-hero__content landing-shell">
           <p className="landing-eyebrow">{c.hero.eyebrow}</p>

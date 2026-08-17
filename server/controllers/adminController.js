@@ -161,6 +161,167 @@ export const getRevenueAnalytics = async (req, res) => {
   }
 };
 
+// @route   GET /api/admin/analytics
+// @access  Private (Admin)
+// Aggregates course performance and student completion rates across all courses.
+export const getStudentAnalytics = async (req, res) => {
+  try {
+    const totalStudents = await User.countDocuments({ role: 'student' });
+    
+    const stats = await Course.aggregate([
+      {
+        $lookup: {
+          from: 'enrollments',
+          localField: '_id',
+          foreignField: 'course',
+          as: 'enrollments'
+        }
+      },
+      {
+        $lookup: {
+          from: 'modules',
+          localField: '_id',
+          foreignField: 'course',
+          as: 'modules'
+        }
+      },
+      {
+        $lookup: {
+          from: 'lessons',
+          localField: 'modules._id',
+          foreignField: 'module',
+          as: 'lessons'
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          title: 1,
+          totalEnrolled: { $size: '$enrollments' },
+          lessonsCount: { $size: '$lessons' },
+          totalCompletions: {
+            $sum: {
+              $map: {
+                input: '$enrollments',
+                as: 'en',
+                in: { $size: '$$en.completedLessons' }
+              }
+            }
+          }
+        }
+      }
+    ]);
+
+    let globalTotalCompletions = 0;
+    let globalTotalPossibleCompletions = 0;
+
+    const coursePerformance = stats.map(course => {
+      let completionRate = 0;
+      if (course.totalEnrolled > 0 && course.lessonsCount > 0) {
+        const totalPossibleCompletions = course.totalEnrolled * course.lessonsCount;
+        completionRate = (course.totalCompletions / totalPossibleCompletions) * 100;
+        
+        globalTotalCompletions += course.totalCompletions;
+        globalTotalPossibleCompletions += totalPossibleCompletions;
+      }
+      return {
+        _id: course._id,
+        title: course.title,
+        enrolledStudents: course.totalEnrolled,
+        completionRate: completionRate,
+        avgScore: null
+      };
+    });
+
+    const avgCompletionRate = globalTotalPossibleCompletions > 0 
+      ? (globalTotalCompletions / globalTotalPossibleCompletions) * 100 
+      : 0;
+
+    res.status(200).json({
+      overview: {
+        totalStudents,
+        avgCompletionRate,
+        totalQuizAttempts: 0
+      },
+      coursePerformance
+    });
+  } catch (error) {
+    logger.error('An error occurred', { error: error.message, stack: error.stack });
+    res.status(500).json({ message: 'Server error fetching student analytics' });
+  }
+};
+
+// @route   GET /api/admin/instructor-analytics
+// @access  Private (Admin)
+// Aggregates instructor performance including revenue and ratings.
+export const getInstructorAnalytics = async (req, res) => {
+  try {
+    const instructors = await User.aggregate([
+      { $match: { role: 'instructor' } },
+      // Step 1: Get all courses for this instructor
+      {
+        $lookup: {
+          from: 'courses',
+          localField: '_id',
+          foreignField: 'instructor',
+          as: 'courses'
+        }
+      },
+      // Step 2: Add courseIds as a plain array of ObjectIds for use in subsequent lookups
+      {
+        $addFields: {
+          courseIds: '$courses._id'
+        }
+      },
+      // Step 3: Lookup enrollments using $in — supports array of IDs correctly
+      {
+        $lookup: {
+          from: 'enrollments',
+          let: { courseIds: '$courseIds' },
+          pipeline: [
+            { $match: { $expr: { $in: ['$course', '$$courseIds'] } } }
+          ],
+          as: 'enrollments'
+        }
+      },
+      // Step 4: Lookup reviews using $in — same pattern
+      {
+        $lookup: {
+          from: 'reviews',
+          let: { courseIds: '$courseIds' },
+          pipeline: [
+            { $match: { $expr: { $in: ['$course', '$$courseIds'] } } }
+          ],
+          as: 'reviews'
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          lastName: 1,
+          email: 1,
+          coursesCount: { $size: '$courses' },
+          totalStudents: { $size: '$enrollments' },
+          totalRevenue: { $sum: '$enrollments.amountPaid' },
+          avgRating: {
+            $cond: {
+              if: { $gt: [{ $size: '$reviews' }, 0] },
+              then: { $avg: '$reviews.rating' },
+              else: 0
+            }
+          }
+        }
+      }
+    ]);
+
+    res.status(200).json({ instructorPerformance: instructors });
+  } catch (error) {
+    logger.error('Error fetching instructor analytics', { error: error.message, stack: error.stack });
+    res.status(500).json({ message: 'Server error fetching instructor analytics' });
+  }
+};
+
 // @route   GET /api/admin/activity
 // @access  Private (Admin)
 // Merges the most recent signups (admin/superadmin only), enrollments, and

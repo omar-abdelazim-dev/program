@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payout approved</title>
+<style>
+  @media (max-width: 620px) {
+    .container { width: 100% !important; }
+    .px { padding-left: 20px !important; padding-right: 20px !important; }
+    .stack { display: block !important; width: 100% !important; text-align: left !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background-color:#EDEFF5;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#EDEFF5;padding:32px 0;">
+<tr><td align="center">
+<table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;background-color:#FFFFFF;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(17,28,63,0.08);">
+
+  <tr>
+    <td class="px" style="background-color:#111C3F;padding:26px 40px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td class="stack" style="vertical-align:middle;">
+            <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+              <td style="width:30px;height:30px;background-color:#4F63D2;border-radius:7px;text-align:center;vertical-align:middle;font-family:Georgia,'Times New Roman',serif;color:#FFFFFF;font-size:15px;font-weight:700;line-height:30px;">S</td>
+              <td style="padding-left:10px;font-family:Georgia,'Times New Roman',serif;color:#FFFFFF;font-size:17px;letter-spacing:0.2px;">Skillbridge</td>
+            </tr></table>
+          </td>
+          <td class="stack" align="right" style="vertical-align:middle;">
+            <span style="font-family:Helvetica,Arial,sans-serif;font-size:11px;letter-spacing:1.5px;color:#9FAAD1;text-transform:uppercase;border:1px solid #2C3A66;border-radius:20px;padding:5px 12px;">Instructor</span>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <tr>
+    <td class="px" style="padding:40px 40px 8px 40px;text-align:center;">
+      <table role="presentation" cellpadding="0" cellspacing="0" align="center"><tr><td style="width:56px;height:56px;border-radius:50%;background-color:#E7F6EE;text-align:center;vertical-align:middle;line-height:56px;">
+        <span style="font-family:Georgia,serif;font-size:26px;color:#1F9D6C;">&#10003;</span>
+      </td></tr></table>
+      <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:24px;color:#111C3F;margin:20px 0 6px 0;font-weight:normal;">Your payout is on its way</h1>
+      <p style="font-family:Helvetica,Arial,sans-serif;font-size:14px;color:#6B7280;margin:0;">Funds have been released to your account.</p>
+    </td>
+  </tr>
+
+  <tr>
+    <td class="px" style="padding:24px 40px 8px 40px;font-family:Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#374151;">
+      <p style="margin:0 0 20px 0;">Hi {{instructor_name}},</p>
+      <p style="margin:0 0 20px 0;">Your payout request has been reviewed and approved. Here are the details for your records.</p>
+    </td>
+  </tr>
+
+  <!-- Amount highlight -->
+  <tr>
+    <td class="px" style="padding:0 40px 20px 40px;text-align:center;">
+      <p style="font-family:Georgia,serif;font-size:36px;color:#111C3F;margin:0;">{{payout_amount}}</p>
+    </td>
+  </tr>
+
+  <tr>
+    <td class="px" style="padding:0 40px 24px 40px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F5F6FA;border-left:3px solid #4F63D2;border-radius:6px;">
+        <tr><td style="padding:18px 20px;font-family:Helvetica,Arial,sans-serif;font-size:14px;color:#374151;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            <tr><td style="padding:4px 0;color:#6B7280;width:130px;">Payout method</td><td style="padding:4px 0;">{{payout_method}}</td></tr>
+            <tr><td style="padding:4px 0;color:#6B7280;">Reference ID</td><td style="padding:4px 0;font-family:'Courier New',monospace;">{{payout_reference}}</td></tr>
+            <tr><td style="padding:4px 0;color:#6B7280;">Approved on</td><td style="padding:4px 0;">{{approval_date}}</td></tr>
+            <tr><td style="padding:4px 0;color:#6B7280;">Expected arrival</td><td style="padding:4px 0;">{{arrival_estimate}}</td></tr>
+          </table>
+        </td></tr>
+      </table>
+    </td>
+  </tr>
+
+  <tr>
+    <td class="px" style="padding:0 40px 40px 40px;text-align:center;">
+      <a href="{{earnings_url}}" style="display:inline-block;background-color:#111C3F;color:#FFFFFF;font-family:Helvetica,Arial,sans-serif;font-size:14px;font-weight:600;text-decoration:none;padding:13px 30px;border-radius:6px;">View earnings</a>
+    </td>
+  </tr>
+
+  <tr>
+    <td class="px" style="padding:24px 40px;background-color:#FAFAFC;border-top:1px solid #EEF0F5;font-family:Helvetica,Arial,sans-serif;font-size:12px;color:#9CA3AF;text-align:center;">
+      <p style="margin:0 0 6px 0;">Skillbridge · This email was sent to instructors of Skillbridge courses.</p>
+      <p style="margin:0;"><a href="{{help_url}}" style="color:#6B7280;text-decoration:underline;">Help Center</a> &nbsp;·&nbsp; <a href="{{settings_url}}" style="color:#6B7280;text-decoration:underline;">Notification settings</a></p>
+    </td>
+  </tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>
