@@ -212,7 +212,7 @@ const AdminOverviewTab = ({ stats, user, setActiveTab, loading }) => {
           <h3 style={{ margin: "0 0 20px 0", fontSize: '1.1rem', color: 'var(--text-h)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span>{t('admin.pending_actions', 'Pending Actions')}</span>
             {( (stats?.pendingCourses || 0) + (stats?.pendingEnrollments || 0) + (stats?.pendingPayouts || 0) + (stats?.pendingLessons || 0) + (stats?.pendingQuizzes || 0) ) > 0 && (
-              <span style={{ fontSize: '0.75rem', padding: '2px 8px', background: 'rgba(249,115,22,0.15)', color: '#f97316', borderRadius: '12px', fontWeight: 'bold' }}>
+              <span style={{ fontSize: '0.75rem', padding: '3px 10px', background: 'rgba(249,115,22,0.12)', color: '#f97316', borderRadius: '12px', fontWeight: 'bold', boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.15)' }}>
                 {(stats?.pendingCourses || 0) + (stats?.pendingEnrollments || 0) + (stats?.pendingPayouts || 0) + (stats?.pendingLessons || 0) + (stats?.pendingQuizzes || 0)} Attention
               </span>
             )}
