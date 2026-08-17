@@ -56,7 +56,7 @@ export default function TopNav({
             type="text"
             placeholder="Search courses, lessons, topics..."
             value={searchQuery ?? ""}
-            onChange={(e) => onSearchChange?.(e.target.value)}
+            onChange={(e) => onSearchChange?.(e.target.value.replace(/[<>]/g, ""))}
           />
         </div>
       </div>

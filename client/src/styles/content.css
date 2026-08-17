@@ -743,16 +743,18 @@ body.light-mode .continue-card {
     flex-direction: column;
     overflow: hidden;
     cursor: pointer;
-    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    transition: transform 0.25s ease, scale 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
     height: 100%;
     background-color: var(--bg-surface);
     padding: 0;
     border-radius: 24px;
+    scale: 0.90;
     /* equal heights in grid row */
 }
 
 .cc-card:hover {
     transform: translateY(-4px);
+    scale: 0.92;
     box-shadow: var(--outer-shadow);
 }
 
@@ -2206,8 +2208,8 @@ body.light-mode .strength-bar.strong {
     overflow: hidden;
     z-index: 1000;
     border: 1px solid var(--border);
-    border-radius: 24px;
-    padding: 8px;
+    border-radius: 12px;
+    padding: 6px;
     box-shadow: var(--outer-shadow), var(--outer-shadow);
     transform-origin: top;
 
@@ -3303,9 +3305,9 @@ body.light-mode .pending-item {
 .global-dropdown-menu {
     background-color: var(--bg-surface);
     border: 1px solid var(--border);
-    border-radius: 40px;
+    border-radius: 12px;
     overflow: hidden;
-    padding: 15px;
+    padding: 6px;
     z-index: var(--z-dropdown, 10000);
     box-shadow: var(--outer-shadow), var(--outer-shadow);
     animation: smoothDropdownEnter 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;

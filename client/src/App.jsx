@@ -48,7 +48,8 @@ export default function App() {
     fetchSession();
   }, []);
   const [isLightMode, setIsLightMode] = useState(() => {
-    return localStorage.getItem('isLightMode') === 'true';
+    const savedMode = localStorage.getItem('isLightMode');
+    return savedMode !== null ? savedMode === 'true' : true;
   });
   
   const [cart, setCart] = useState(() => {

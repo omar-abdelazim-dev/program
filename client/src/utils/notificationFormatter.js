@@ -14,6 +14,8 @@ export const formatNotificationTitle = (rawTitle, t) => {
   if (title === 'Payout Request Rejected') return t('notifications.payout_rejected', 'Payout Request Rejected');
   if (title === 'New Payout Request') return t('notifications.new_payout_request', 'New Payout Request');
   if (title === 'New Student Enrollment') return t('notifications.new_student_enrollment', 'New Student Enrollment');
+  if (title === 'Your quiz has been graded') return t('notifications.quiz_graded', 'Your quiz has been graded');
+  if (title === 'Instructor replied to your question') return t('notifications.instructor_reply_title', 'Instructor replied to your question');
 
   if (title.startsWith('New Announcement: ')) {
     const annTitle = title.replace('New Announcement: ', '');
@@ -36,9 +38,26 @@ export const formatNotificationMessage = (rawMessage, t) => {
     return t('notifications.instructor_reply_msg', { course, defaultValue: `Instructor replied to your comment on ${course}.` });
   }
 
+  if (msg.startsWith('Your instructor has replied to your question in ')) {
+    let course = msg.replace('Your instructor has replied to your question in ', '').trim();
+    if (course === '.undefined') course = t('notifications.this_course', 'this course');
+    else course = course.replace('.undefined', '');
+    return t('notifications.instructor_reply_msg', { course, defaultValue: `Instructor replied to your comment on ${course}.` });
+  }
+
   if (msg.startsWith('An announcement was posted in ')) {
     const course = msg.replace('An announcement was posted in ', '').replace(/\.$/, '');
     return t('notifications.announcement_posted_msg', { course, defaultValue: `An announcement was posted in ${course}.` });
+  }
+
+  if (msg.startsWith('Your written answers for "') && msg.includes('" have been graded.')) {
+    const quizTitle = msg.replace('Your written answers for "', '').replace('" have been graded.', '');
+    return t('notifications.quiz_graded_msg', { quizTitle, defaultValue: `Your written answers for "${quizTitle}" have been graded.` });
+  }
+
+  if (msg.startsWith('Your enrollment request for "') && msg.includes('" has been approved! You can start learning now.')) {
+    const courseTitle = msg.replace('Your enrollment request for "', '').replace('" has been approved! You can start learning now.', '');
+    return t('notifications.enrollment_approved_msg', { courseTitle, defaultValue: `Your enrollment request for "${courseTitle}" has been approved! You can start learning now.` });
   }
 
     if (msg.includes('We have received your payout request')) {

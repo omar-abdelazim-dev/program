@@ -26,6 +26,7 @@ const CustomSelect = ({ options, value, onChange, placeholder, icon, triggerClas
         {icon}
         <div 
           className={`custom-select-value ${!selectedOption ? 'placeholder' : ''}`}
+          title={selectedOption ? selectedOption.label : placeholder}
         >
           {selectedOption ? selectedOption.label : placeholder}
         </div>
@@ -35,14 +36,15 @@ const CustomSelect = ({ options, value, onChange, placeholder, icon, triggerClas
       
         <div className={`custom-select-dropdown ${isOpen ? 'open' : ''}`}>
           <div className="custom-select-options">
-            <div className="custom-select-option disabled">{placeholder}</div>
+            <div className="custom-select-option disabled" title={placeholder}>{placeholder}</div>
             {options.map(opt => (
               <div 
                 key={opt.value}
                 className={`custom-select-option ${value === opt.value ? 'selected' : ''}`}
                 onClick={() => { onChange(opt.value); setIsOpen(false); }}
+                title={opt.label}
               >
-                <span className="option-text">{opt.label}</span>
+                <span className="option-text" title={opt.label}>{opt.label}</span>
               </div>
             ))}
           </div>

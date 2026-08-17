@@ -58,6 +58,11 @@
     "enrollment_request_approved": "Enrollment Request Approved",
     "enrollment_request_rejected": "Enrollment Request Rejected",
     "new_enrollment_request": "New Enrollment Request",
+    "quiz_graded": "Your quiz has been graded",
+    "quiz_graded_msg": "Your written answers for \"{{quizTitle}}\" have been graded.",
+    "enrollment_approved_msg": "Your enrollment request for \"{{courseTitle}}\" has been approved! You can start learning now.",
+    "instructor_reply_title": "Instructor replied to your question",
+    "this_course": "this course",
     "instructor_reply_msg": "Instructor replied to your comment on {{course}}.",
     "announcement_posted_msg": "An announcement was posted in {{course}}.",
     "total_courses": "Total Courses",
@@ -74,7 +79,9 @@
     "payout_received_msg": "We have received your payout request and it is now under review.",
     "payout_approved_msg": "Your payout request of EGP {{amount}} has been approved and processed.",
     "payout_rejected_msg": "Your payout request of EGP {{amount}} was rejected.",
-    "admin_new_payout_msg": "Instructor {{name}} has submitted a payout request of EGP {{amount}}."
+    "admin_new_payout_msg": "Instructor {{name}} has submitted a payout request of EGP {{amount}}.",
+    "new_quiz_submission": "New quiz submission to grade",
+    "quiz_submission_msg": "A student submitted \"{{quiz}}\" in \"{{course}}\" — written answers need grading"
   },
   "student": {
     "welcome_back": "Welcome back",
@@ -98,6 +105,14 @@
       "all_courses": "All Courses",
       "settings": "Settings",
       "home": "Home"
+    },
+    "nav": {
+      "home": "Home",
+      "dashboard": "Dashboard",
+      "explore": "Explore",
+      "cart": "Cart",
+      "settings": "Settings",
+      "search_placeholder": "Search courses..."
     },
     "learning": {
       "loading_portal": "Loading Learning Portal...",
@@ -181,6 +196,7 @@
       "dashboard": "Dashboard",
       "curriculum": "Curriculum",
       "engagement": "Engagement",
+      "grading": "Grading",
       "reviews": "Reviews",
       "analytics": "Analytics",
       "financials": "Financials",
@@ -851,18 +867,18 @@
     "Education": "Education"
   },
   "colleges": {
-    "engineering": "College of Engineering",
-    "computer_science": "College of Computer Science and Information Technology",
-    "business": "College of Business Administration",
-    "medicine": "College of Medicine",
-    "pharmacy": "College of Pharmacy",
-    "dentistry": "College of Dentistry",
-    "applied_medical": "College of Applied Medical Sciences",
-    "science": "College of Science",
-    "arts": "College of Arts and Humanities",
-    "education": "College of Education",
-    "law": "College of Law",
-    "architecture": "College of Architecture and Design"
+    "engineering": "Engineering",
+    "computer_science": "Computer Science and Information Technology",
+    "business": "Business Administration",
+    "medicine": "Medicine",
+    "pharmacy": "Pharmacy",
+    "dentistry": "Dentistry",
+    "applied_medical": "Applied Medical Sciences",
+    "science": "Science",
+    "arts": "Arts and Humanities",
+    "education": "Education",
+    "law": "Law",
+    "architecture": "Architecture and Design"
   },
   "instructorProfile": {
     "loading": "Loading instructor",
