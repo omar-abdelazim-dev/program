@@ -873,6 +873,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
 
         <GlobalAnnouncementBanner />
 
+
         {/* INSTRUCTOR CONTENT */}
         <div style={{ flex: 1, minHeight: 0, padding: '24px 40px 40px 40px', overflowY: 'auto', width: '100%', WebkitOverflowScrolling: 'touch' }}>
           <div style={{ maxWidth: activeTab === 'settings' ? '100%' : '1000px', width: '100%', margin: '0 auto' }}>

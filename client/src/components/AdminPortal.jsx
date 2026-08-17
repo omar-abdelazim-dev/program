@@ -28,6 +28,7 @@ import WebsiteManagement from "./WebsiteManagement/WebsiteManagement";
 import SystemManagement from "./SystemManagement";
 import AdminLandingPageTab from "./AdminLandingPageTab";
 import AdminReportsTab from "./AdminReportsTab";
+import AdminRolePermissionsTab from "./AdminRolePermissionsTab";
 import FullPageLoader from "./FullPageLoader";
 import { useTranslation } from 'react-i18next';
 
@@ -281,6 +282,11 @@ export default function AdminPortal({
   const [showScreenshotModal, setShowScreenshotModal] = useState(false);
   const [processingEnrollmentAction, setProcessingEnrollmentAction] = useState(null);
   const [enrollmentPage, setEnrollmentPage] = useState(1);
+  const [pendingEnrollmentPage, setPendingEnrollmentPage] = useState(1);
+  const [enrollmentSubTab, setEnrollmentSubTab] = useState('pending');
+  const pendingEnrollmentTabRef = useRef(null);
+  const processedEnrollmentTabRef = useRef(null);
+  const [enrollmentIndicatorStyle, setEnrollmentIndicatorStyle] = useState({ left: 0, width: 0 });
   const [pendingEnrollmentReject, setPendingEnrollmentReject] = useState(null);
   const [enrollmentRejectReason, setEnrollmentRejectReason] = useState("");
   const [enrollmentRejectReasonError, setEnrollmentRejectReasonError] = useState("");
@@ -720,7 +726,7 @@ export default function AdminPortal({
           {
             title: "Financials",
             items: [
-              { id: "enrollment", label: "Enrollments" },
+              { id: "enrollment", label: "Enrollment Requests" },
               { id: "financial_payouts", label: "Payout Requests" },
             ],
           },
@@ -775,7 +781,7 @@ export default function AdminPortal({
           {
             title: "Financials",
             items: [
-              { id: "enrollment", label: "Enrollments" },
+              { id: "enrollment", label: "Enrollment Requests" },
               { id: "financial_payouts", label: "Payout Requests" },
             ],
           },
@@ -794,7 +800,79 @@ export default function AdminPortal({
           },
         ];
 
-  const displayedTransactions = transactions.slice((enrollmentPage - 1) * 10, enrollmentPage * 10);
+  const pendingEnrollments = transactions.filter(t => t.status === 'pending' || t.status === 'under_review');
+  const processedEnrollments = transactions.filter(t => t.status !== 'pending' && t.status !== 'under_review');
+  const displayedProcessedTransactions = processedEnrollments.slice((enrollmentPage - 1) * 10, enrollmentPage * 10);
+  const displayedPendingTransactions = pendingEnrollments.slice((pendingEnrollmentPage - 1) * 10, pendingEnrollmentPage * 10);
+
+  useEffect(() => {
+    const activeRef = enrollmentSubTab === 'pending' ? pendingEnrollmentTabRef : processedEnrollmentTabRef;
+    if (activeRef.current) {
+      setEnrollmentIndicatorStyle({
+        left: activeRef.current.offsetLeft,
+        width: activeRef.current.offsetWidth,
+      });
+    }
+  }, [enrollmentSubTab, pendingEnrollments.length]);
+
+  const renderEnrollmentTable = (txs, emptyMessage) => (
+    <div className="glass-card" style={{ width: "100%", padding: "16px", borderRadius: "20px", overflow: "hidden" }}>
+      <div style={{ overflowX: "auto" }}>
+        <table className="admin-table" style={{ width: "100%", minWidth: "750px", borderCollapse: "separate", borderSpacing: "0", textAlign: "left" }}>
+          <thead>
+            <tr>
+              <th style={{ padding: "18px 24px 18px 32px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>DATE</th>
+              <th style={{ padding: "18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>STUDENT</th>
+              <th style={{ padding: "18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>COURSE</th>
+              <th style={{ padding: "18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>INSTRUCTOR</th>
+              <th style={{ padding: "18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", textAlign: "center", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>STATUS</th>
+              <th style={{ padding: "18px 32px 18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", textAlign: "right", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>REVENUE</th>
+            </tr>
+          </thead>
+          <tbody>
+            {txs.length === 0 ? (
+              <tr>
+                <td colSpan="6" style={{ padding: "32px", textAlign: "center", color: "var(--c-sub)" }}>{emptyMessage}</td>
+              </tr>
+            ) : (
+              txs.map((t) => {
+                const norm = (t.status || 'pending').toLowerCase().replace(/\s+/g, '_');
+                const statusConfig = {
+                  pending: { label: 'Pending', bg: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b' },
+                  under_review: { label: 'Under Review', bg: 'rgba(59, 130, 246, 0.12)', color: '#60a5fa' },
+                  approved: { label: 'Approved', bg: 'rgba(16, 185, 129, 0.12)', color: '#34d399' },
+                  rejected: { label: 'Rejected', bg: 'rgba(239, 68, 68, 0.12)', color: '#fca5a5' },
+                  refunded: { label: 'Refunded', bg: 'rgba(168, 85, 247, 0.12)', color: '#c084fc' },
+                };
+                const st = statusConfig[norm] || statusConfig.pending;
+
+                return (
+                  <tr 
+                    key={t._id} 
+                    style={{ cursor: "pointer", transition: "background 0.2s", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.05))" }}
+                    className="hover-row"
+                    onClick={() => setSelectedEnrollment(t)}
+                  >
+                    <td style={{ padding: "18px 24px 18px 32px", verticalAlign: "middle" }}>{new Date(t.createdAt).toLocaleDateString()}</td>
+                    <td style={{ padding: "18px 24px", verticalAlign: "middle" }}><div style={{ color: "var(--text-h)", fontWeight: "500" }}>{t.student?.name || "Unknown Student"}</div></td>
+                    <td style={{ padding: "18px 24px", verticalAlign: "middle" }}><div style={{ color: "var(--text-h)", fontWeight: "500" }}>{t.course?.title || "Unknown Course"}</div></td>
+                    <td style={{ padding: "18px 24px", verticalAlign: "middle", color: "var(--c-sub)" }}>{t.course?.instructor?.name || "Unknown Instructor"}</td>
+                    <td style={{ padding: "18px 24px", textAlign: "center", verticalAlign: "middle" }}>
+                      <span style={{ padding: "6px 14px", borderRadius: "20px", fontSize: "0.85rem", fontWeight: "600", background: st.bg, color: st.color, border: "none", boxShadow: "var(--inner-shadow, inset 0 2px 4px 0 rgba(0,0,0,0.06))", display: "inline-flex", alignItems: "center", gap: "6px", textTransform: "capitalize" }}>
+                        <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: st.color }} />
+                        {st.label}
+                      </span>
+                    </td>
+                    <td style={{ padding: "18px 32px 18px 24px", textAlign: "right", verticalAlign: "middle", color: "#10B981", fontWeight: "600" }}>EGP {t.amountPaid}</td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 
   return (
     <div
@@ -1061,7 +1139,11 @@ export default function AdminPortal({
                 </svg>
               )}
             </button>
-            <div className="profile-wrapper">
+            <div 
+              className="profile-wrapper hover-glow" 
+              onClick={() => navigate('/student/settings')}
+              style={{ cursor: 'pointer' }}
+            >
               <div className="nav-avatar">
                 {user?.avatarUrl ? (
                   <img
@@ -1087,27 +1169,6 @@ export default function AdminPortal({
                     <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"></path>
                   </svg>
                 )}
-              </div>
-              <div className="profile-tooltip">
-                <div className="tooltip-name">{user?.name}</div>
-                <hr className="tooltip-divider" />
-                <a href="#" className="tooltip-link">
-                  Profile
-                </a>
-                <a href="#" className="tooltip-link">
-                  Settings
-                </a>
-                <hr className="tooltip-divider" />
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    onLogout();
-                  }}
-                  className="tooltip-link logout-link"
-                >
-                  Log out
-                </a>
               </div>
             </div>
           </div>
@@ -1396,140 +1457,108 @@ export default function AdminPortal({
                 <h2 style={{ fontSize: "1.8rem", margin: 0 }}>
                   Enrollment Requests
                 </h2>
-                <div className="glass-card" style={{ width: "100%", padding: "16px", borderRadius: "20px", overflow: "hidden" }}>
-                  <div style={{ overflowX: "auto" }}>
-                    <table className="admin-table" style={{ width: "100%", minWidth: "750px", borderCollapse: "separate", borderSpacing: "0", textAlign: "left" }}>
-                    <thead>
-                      <tr>
-                        <th style={{ padding: "18px 24px 18px 32px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>
-                          DATE
-                        </th>
-                        <th style={{ padding: "18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>
-                          STUDENT
-                        </th>
-                        <th style={{ padding: "18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>
-                          COURSE
-                        </th>
-                        <th style={{ padding: "18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>
-                          INSTRUCTOR
-                        </th>
-                        <th style={{ padding: "18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", textAlign: "center", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>
-                          STATUS
-                        </th>
-                        <th style={{ padding: "18px 32px 18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", textAlign: "right", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>
-                          REVENUE
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {displayedTransactions.length === 0 ? (
-                        <tr>
-                          <td colSpan="6" style={{ padding: "32px", textAlign: "center", color: "var(--c-sub)" }}>
-                            No requests found
-                          </td>
-                        </tr>
-                      ) : (
-                        displayedTransactions.map((t) => {
-                          const norm = (t.status || 'pending').toLowerCase().replace(/\s+/g, '_');
-                          const statusConfig = {
-                            pending: { label: 'Pending', bg: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b' },
-                            under_review: { label: 'Under Review', bg: 'rgba(59, 130, 246, 0.12)', color: '#60a5fa' },
-                            approved: { label: 'Approved', bg: 'rgba(16, 185, 129, 0.12)', color: '#34d399' },
-                            rejected: { label: 'Rejected', bg: 'rgba(239, 68, 68, 0.12)', color: '#fca5a5' },
-                            refunded: { label: 'Refunded', bg: 'rgba(168, 85, 247, 0.12)', color: '#c084fc' },
-                          };
-                          const st = statusConfig[norm] || statusConfig.pending;
-
-                          return (
-                            <tr 
-                              key={t._id} 
-                              style={{ 
-                                cursor: "pointer", 
-                                transition: "background 0.2s",
-                                borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.05))"
-                              }}
-                              className="hover-row"
-                              onClick={() => setSelectedEnrollment(t)}
-                            >
-                              <td style={{ padding: "18px 24px 18px 32px", verticalAlign: "middle" }}>
-                                {new Date(t.createdAt).toLocaleDateString()}
-                              </td>
-                              <td style={{ padding: "18px 24px", verticalAlign: "middle" }}>
-                                <div style={{ color: "var(--text-h)", fontWeight: "500" }}>
-                                  {t.student?.name || "Unknown Student"}
-                                </div>
-                              </td>
-                              <td style={{ padding: "18px 24px", verticalAlign: "middle" }}>
-                                <div style={{ color: "var(--text-h)", fontWeight: "500" }}>
-                                  {t.course?.title || "Unknown Course"}
-                                </div>
-                              </td>
-                              <td style={{ padding: "18px 24px", verticalAlign: "middle", color: "var(--c-sub)" }}>
-                                {t.course?.instructor?.name || "Unknown Instructor"}
-                              </td>
-                              <td style={{ padding: "18px 24px", textAlign: "center", verticalAlign: "middle" }}>
-                                <span
-                                  style={{
-                                    padding: "6px 14px",
-                                    borderRadius: "20px",
-                                    fontSize: "0.85rem",
-                                    fontWeight: "600",
-                                    background: st.bg,
-                                    color: st.color,
-                                    border: "none",
-                                    boxShadow: "var(--inner-shadow, inset 0 2px 4px 0 rgba(0,0,0,0.06))",
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: "6px",
-                                    textTransform: "capitalize",
-                                  }}
-                                >
-                                  <span
-                                    style={{
-                                      width: "6px",
-                                      height: "6px",
-                                      borderRadius: "50%",
-                                      backgroundColor: st.color,
-                                    }}
-                                  />
-                                  {st.label}
-                                </span>
-                              </td>
-                              <td style={{ padding: "18px 32px 18px 24px", textAlign: "right", verticalAlign: "middle", color: "#10B981", fontWeight: "600" }}>
-                                EGP {t.amountPaid}
-                              </td>
-                            </tr>
-                          );
-                        })
-                      )}
-                    </tbody>
-                  </table>
-                  </div>
-                  
-                  {transactions.length > 10 && (
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', margin: '20px 0 12px 0', alignItems: 'center' }}>
-                      <button 
-                        disabled={enrollmentPage === 1} 
-                        onClick={() => setEnrollmentPage(prev => prev - 1)}
-                        className="glass-btn hover-glow"
-                        style={{ padding: '8px 20px', fontSize: '0.85rem', cursor: enrollmentPage === 1 ? 'not-allowed' : 'pointer', opacity: enrollmentPage === 1 ? 0.5 : 1 }}
-                      >
-                        Previous
-                      </button>
-                      <span style={{ color: 'var(--c-sub)', fontSize: '0.9rem', fontWeight: '500' }}>
-                        Page {enrollmentPage} of {Math.ceil(transactions.length / 10)}
-                      </span>
-                      <button 
-                        disabled={enrollmentPage >= Math.ceil(transactions.length / 10)} 
-                        onClick={() => setEnrollmentPage(prev => prev + 1)}
-                        className="glass-btn hover-glow"
-                        style={{ padding: '8px 20px', fontSize: '0.85rem', cursor: enrollmentPage >= Math.ceil(transactions.length / 10) ? 'not-allowed' : 'pointer', opacity: enrollmentPage >= Math.ceil(transactions.length / 10) ? 0.5 : 1 }}
-                      >
-                        Next
-                      </button>
-                    </div>
-                  )}
+                
+                <div style={{ position: 'relative', display: 'flex', gap: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
+                  <button
+                    ref={pendingEnrollmentTabRef}
+                    onClick={() => setEnrollmentSubTab('pending')}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: '8px 16px',
+                      fontSize: '1rem',
+                      fontWeight: 600,
+                      color: enrollmentSubTab === 'pending' ? 'var(--text-h)' : 'var(--c-sub)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    Pending ({pendingEnrollments.length})
+                  </button>
+                  <button
+                    ref={processedEnrollmentTabRef}
+                    onClick={() => setEnrollmentSubTab('processed')}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: '8px 16px',
+                      fontSize: '1rem',
+                      fontWeight: 600,
+                      color: enrollmentSubTab === 'processed' ? 'var(--text-h)' : 'var(--c-sub)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    Processed
+                  </button>
+                  <div style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    height: '2px',
+                    background: 'linear-gradient(to right, #f97316, #eab308)',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    ...enrollmentIndicatorStyle
+                  }} />
                 </div>
+                
+                {enrollmentSubTab === 'pending' && (
+                  <div>
+                    {renderEnrollmentTable(displayedPendingTransactions, "No pending enrollment requests.")}
+                    {pendingEnrollments.length > 10 && (
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', margin: '20px 0 12px 0', alignItems: 'center' }}>
+                        <button 
+                          disabled={pendingEnrollmentPage === 1} 
+                          onClick={() => setPendingEnrollmentPage(prev => prev - 1)}
+                          className="glass-btn hover-glow"
+                          style={{ padding: '8px 20px', fontSize: '0.85rem', cursor: pendingEnrollmentPage === 1 ? 'not-allowed' : 'pointer', opacity: pendingEnrollmentPage === 1 ? 0.5 : 1 }}
+                        >
+                          Previous
+                        </button>
+                        <span style={{ color: 'var(--c-sub)', fontSize: '0.9rem', fontWeight: '500' }}>
+                          Page {pendingEnrollmentPage} of {Math.ceil(pendingEnrollments.length / 10)}
+                        </span>
+                        <button 
+                          disabled={pendingEnrollmentPage >= Math.ceil(pendingEnrollments.length / 10)} 
+                          onClick={() => setPendingEnrollmentPage(prev => prev + 1)}
+                          className="glass-btn hover-glow"
+                          style={{ padding: '8px 20px', fontSize: '0.85rem', cursor: pendingEnrollmentPage >= Math.ceil(pendingEnrollments.length / 10) ? 'not-allowed' : 'pointer', opacity: pendingEnrollmentPage >= Math.ceil(pendingEnrollments.length / 10) ? 0.5 : 1 }}
+                        >
+                          Next
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {enrollmentSubTab === 'processed' && (
+                  <div>
+                    {renderEnrollmentTable(displayedProcessedTransactions, "No processed requests found.")}
+                      
+                    {processedEnrollments.length > 10 && (
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', margin: '20px 0 12px 0', alignItems: 'center' }}>
+                    <button 
+                      disabled={enrollmentPage === 1} 
+                      onClick={() => setEnrollmentPage(prev => prev - 1)}
+                      className="glass-btn hover-glow"
+                      style={{ padding: '8px 20px', fontSize: '0.85rem', cursor: enrollmentPage === 1 ? 'not-allowed' : 'pointer', opacity: enrollmentPage === 1 ? 0.5 : 1 }}
+                    >
+                      Previous
+                    </button>
+                    <span style={{ color: 'var(--c-sub)', fontSize: '0.9rem', fontWeight: '500' }}>
+                      Page {enrollmentPage} of {Math.ceil(processedEnrollments.length / 10)}
+                    </span>
+                    <button 
+                      disabled={enrollmentPage >= Math.ceil(processedEnrollments.length / 10)} 
+                      onClick={() => setEnrollmentPage(prev => prev + 1)}
+                      className="glass-btn hover-glow"
+                      style={{ padding: '8px 20px', fontSize: '0.85rem', cursor: enrollmentPage >= Math.ceil(processedEnrollments.length / 10) ? 'not-allowed' : 'pointer', opacity: enrollmentPage >= Math.ceil(processedEnrollments.length / 10) ? 0.5 : 1 }}
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+                  </div>
+                )}
               </div>
             </div>
 

@@ -258,6 +258,7 @@ export const getInstructorAnalytics = async (req, res) => {
   try {
     const instructors = await User.aggregate([
       { $match: { role: 'instructor' } },
+      // Step 1: Get all courses for this instructor
       {
         $lookup: {
           from: 'courses',
@@ -266,19 +267,31 @@ export const getInstructorAnalytics = async (req, res) => {
           as: 'courses'
         }
       },
+      // Step 2: Add courseIds as a plain array of ObjectIds for use in subsequent lookups
+      {
+        $addFields: {
+          courseIds: '$courses._id'
+        }
+      },
+      // Step 3: Lookup enrollments using $in — supports array of IDs correctly
       {
         $lookup: {
           from: 'enrollments',
-          localField: 'courses._id',
-          foreignField: 'course',
+          let: { courseIds: '$courseIds' },
+          pipeline: [
+            { $match: { $expr: { $in: ['$course', '$$courseIds'] } } }
+          ],
           as: 'enrollments'
         }
       },
+      // Step 4: Lookup reviews using $in — same pattern
       {
         $lookup: {
           from: 'reviews',
-          localField: 'courses._id',
-          foreignField: 'course',
+          let: { courseIds: '$courseIds' },
+          pipeline: [
+            { $match: { $expr: { $in: ['$course', '$$courseIds'] } } }
+          ],
           as: 'reviews'
         }
       },
