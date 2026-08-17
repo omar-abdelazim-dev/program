@@ -1,15 +1,19 @@
-import crypto from 'crypto';
-import bcrypt from 'bcryptjs';
-import User from '../models/User.js';
-import EmailOTP from '../models/EmailOTP.js';
-import generateTokenAndSetCookie from '../utils/generateToken.js';
-import { getInternalConfig } from '../utils/configFetcher.js';
-import { logAudit } from '../utils/auditLogger.js';
-import logger from '../utils/logger.js';
-import { requestOTP, verifyOTP, POST_VERIFY_GRACE_MINUTES } from '../utils/otpService.js';
-import { validatePasswordStrength } from '../utils/passwordRules.js';
-import { NAME_PATTERN } from '../validators/authValidators.js';
-import { BCRYPT_ROUNDS } from '../config/security.js';
+import crypto from "crypto";
+import bcrypt from "bcryptjs";
+import User from "../models/User.js";
+import EmailOTP from "../models/EmailOTP.js";
+import generateTokenAndSetCookie from "../utils/generateToken.js";
+import { getInternalConfig } from "../utils/configFetcher.js";
+import { logAudit } from "../utils/auditLogger.js";
+import logger from "../utils/logger.js";
+import {
+  requestOTP,
+  verifyOTP,
+  POST_VERIFY_GRACE_MINUTES,
+} from "../utils/otpService.js";
+import { validatePasswordStrength } from "../utils/passwordRules.js";
+import { NAME_PATTERN } from "../validators/authValidators.js";
+import { BCRYPT_ROUNDS } from "../config/security.js";
 
 // @route   POST /api/auth/check-email
 // @access  Public
@@ -18,16 +22,19 @@ export const checkEmail = async (req, res) => {
     const { email } = req.body;
 
     if (!email) {
-      return res.status(400).json({ message: 'Email is required' });
+      return res.status(400).json({ message: "Email is required" });
     }
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(409).json({ message: 'This email is already exists' });
+      return res.status(409).json({ message: "This email is already exists" });
     }
-    res.status(200).json({ message: 'Email is available' });
+    res.status(200).json({ message: "Email is available" });
   } catch (error) {
-    logger.error('An error occurred', { error: error.message, stack: error.stack });
-    res.status(500).json({ message: 'Server error checking email' });
+    logger.error("An error occurred", {
+      error: error.message,
+      stack: error.stack,
+    });
+    res.status(500).json({ message: "Server error checking email" });
   }
 };
 
@@ -37,7 +44,9 @@ export const sendRegistrationOtp = async (req, res) => {
   try {
     const { name, email, password } = req.body;
     if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Name, email, and password are required' });
+      return res
+        .status(400)
+        .json({ message: "Name, email, and password are required" });
     }
     // This name gets emailed back as-is (see otpService's OTP email
     // template) before validateRegister ever runs on the real /register
@@ -45,13 +54,15 @@ export const sendRegistrationOtp = async (req, res) => {
     // content in an email the app's trusted sender delivers. Same pattern
     // validateRegister already enforces at actual account creation.
     if (!NAME_PATTERN.test(name)) {
-      return res.status(400).json({ message: 'Name can only contain letters and spaces' });
+      return res
+        .status(400)
+        .json({ message: "Name can only contain letters and spaces" });
     }
 
     // Check if email already exists
     const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
-      return res.status(409).json({ message: 'This email is already in use.' });
+      return res.status(409).json({ message: "This email is already in use." });
     }
 
     // Validate password strength
@@ -62,13 +73,13 @@ export const sendRegistrationOtp = async (req, res) => {
 
     await requestOTP({
       email,
-      purpose: 'pre_register_verification',
-      displayName: name
+      purpose: "pre_register_verification",
+      displayName: name,
     });
 
-    res.status(200).json({ message: 'OTP sent successfully to email.' });
+    res.status(200).json({ message: "OTP sent successfully to email." });
   } catch (error) {
-    logger.error('Error in sendRegistrationOtp', { error: error.message });
+    logger.error("Error in sendRegistrationOtp", { error: error.message });
     res.status(400).json({ message: error.message });
   }
 };
@@ -79,16 +90,16 @@ export const verifyRegistrationOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
     if (!email || !otp) {
-      return res.status(400).json({ message: 'Email and OTP are required' });
+      return res.status(400).json({ message: "Email and OTP are required" });
     }
 
     await verifyOTP({
       email,
-      purpose: 'pre_register_verification',
-      otp
+      purpose: "pre_register_verification",
+      otp,
     });
 
-    res.status(200).json({ message: 'Email verified successfully.' });
+    res.status(200).json({ message: "Email verified successfully." });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -98,50 +109,105 @@ export const verifyRegistrationOtp = async (req, res) => {
 // @access  Public
 export const register = async (req, res) => {
   try {
-    const { name, email, password, role, phone, major, university, college, year, track, providedCourses, linkedinUrl, socialUrl, goalsText, selectedPills } = req.body;
+    const {
+      name,
+      email,
+      password,
+      role,
+      phone,
+      major,
+      university,
+      college,
+      year,
+      track,
+      providedCourses,
+      linkedinUrl,
+      socialUrl,
+      goalsText,
+      selectedPills,
+    } = req.body;
 
     if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Name, email, and password are required' });
+      return res
+        .status(400)
+        .json({ message: "Name, email, and password are required" });
     }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(409).json({ message: 'An account with this email already exists' });
+      return res
+        .status(409)
+        .json({ message: "An account with this email already exists" });
     }
 
     // Enforce pre-registration verification
-    const otpRecord = await EmailOTP.findOne({ email, purpose: 'pre_register_verification' });
+    const otpRecord = await EmailOTP.findOne({
+      email,
+      purpose: "pre_register_verification",
+    });
     if (!otpRecord || !otpRecord.usedAt) {
-      return res.status(403).json({ message: 'Email address not verified. Please verify your email first.' });
+      return res.status(403).json({
+        message: "Email address not verified. Please verify your email first.",
+      });
     }
-    const timeSinceVerification = (Date.now() - otpRecord.usedAt.getTime()) / 1000 / 60;
+    const timeSinceVerification =
+      (Date.now() - otpRecord.usedAt.getTime()) / 1000 / 60;
     if (timeSinceVerification > POST_VERIFY_GRACE_MINUTES) {
-      return res.status(403).json({ message: 'Verification expired. Please restart registration.' });
+      return res.status(403).json({
+        message: "Verification expired. Please restart registration.",
+      });
     }
 
     // Only allow 'student' or 'instructor' at signup — nobody should be able
     // to register themselves as 'admin' through a public form. Admins are
     // created manually (e.g. directly in the DB or by another admin).
-    const safeRole = role === 'instructor' ? 'instructor' : 'student';
+    const safeRole = role === "instructor" ? "instructor" : "student";
 
     // Verify system configurations for registration
     const config = await getInternalConfig();
-    
-    if (safeRole === 'student' && !config.registration?.studentRegistration) {
-      return res.status(403).json({ message: 'Student registration is currently disabled by administrators.' });
+
+    if (safeRole === "student" && !config.registration?.studentRegistration) {
+      return res.status(403).json({
+        message:
+          "Student registration is currently disabled by administrators.",
+      });
     }
-    
-    if (safeRole === 'instructor' && !config.registration?.instructorRegistration) {
-      return res.status(403).json({ message: 'Instructor registration is currently disabled by administrators.' });
+
+    if (
+      safeRole === "instructor" &&
+      !config.registration?.instructorRegistration
+    ) {
+      return res.status(403).json({
+        message:
+          "Instructor registration is currently disabled by administrators.",
+      });
     }
-    
-    if (config.registration?.eduEmailOnly && !email.toLowerCase().endsWith('.edu')) {
-      return res.status(403).json({ message: 'Only .edu email addresses are allowed to register.' });
+
+    if (
+      config.registration?.eduEmailOnly &&
+      !email.toLowerCase().endsWith(".edu")
+    ) {
+      return res.status(403).json({
+        message: "Only .edu email addresses are allowed to register.",
+      });
     }
 
     const user = await User.create({
-      name, email, password, role: safeRole, phone: phone || '',
-      major, university, college, year, track, providedCourses, linkedinUrl, socialUrl, goalsText, selectedPills,
+      name,
+      email,
+      password,
+      role: safeRole,
+      phone: phone || "",
+      major,
+      university,
+      college,
+      year,
+      track,
+      providedCourses,
+      linkedinUrl,
+      socialUrl,
+      goalsText,
+      selectedPills,
       isVerified: true,
     });
 
@@ -160,8 +226,11 @@ export const register = async (req, res) => {
       },
     });
   } catch (error) {
-    logger.error('An error occurred', { error: error.message, stack: error.stack });
-    res.status(500).json({ message: 'Server error during registration' });
+    logger.error("An error occurred", {
+      error: error.message,
+      stack: error.stack,
+    });
+    res.status(500).json({ message: "Server error during registration" });
   }
 };
 
@@ -172,12 +241,14 @@ export const login = async (req, res) => {
     const { email, password, rememberMe } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required' });
+      return res
+        .status(400)
+        .json({ message: "Email and password are required" });
     }
 
     // .select('+password') is needed because the User model excludes password
-    const user = await User.findOne({ email }).select('+password');
-    
+    const user = await User.findOne({ email }).select("+password");
+
     // Deliberately checked before the password: a locked-out user by
     // definition may not have their correct password to offer, so gating
     // this disclosure behind a correct password would make the account
@@ -187,46 +258,54 @@ export const login = async (req, res) => {
     // there's no equivalent recovery reason to reveal it pre-auth).
     if (user && user.lockedForReset) {
       await logAudit({
-        action: 'LOGIN_BLOCKED_PENDING_RESET',
-        module: 'auth',
+        action: "LOGIN_BLOCKED_PENDING_RESET",
+        module: "auth",
         userId: user._id,
         ipAddress: req.ip,
-        userAgent: req.get('user-agent'),
-        severity: 'warn',
+        userAgent: req.get("user-agent"),
+        severity: "warn",
       });
-      return res.status(423).json({ message: 'Account is locked due to multiple failed login attempts. Please reset your password.', code: 'LOCKED_PENDING_RESET' });
+      return res.status(423).json({
+        message:
+          "Account is locked due to multiple failed login attempts. Please reset your password.",
+        code: "LOCKED_PENDING_RESET",
+      });
     }
 
     if (!user || !(await user.comparePassword(password))) {
       // Handle lockout
       if (user) {
         user.failedLoginAttempts += 1;
-        
+
         if (user.failedLoginAttempts >= 5) {
           user.lockedForReset = true;
           user.lockedAt = new Date();
           await logAudit({
-            action: 'ACCOUNT_LOCKED_FOR_RESET',
-            module: 'auth',
+            action: "ACCOUNT_LOCKED_FOR_RESET",
+            module: "auth",
             userId: user._id,
             ipAddress: req.ip,
-            severity: 'warn'
+            severity: "warn",
           });
         }
         await user.save();
 
         if (user.lockedForReset) {
-          return res.status(423).json({ message: 'Account is locked due to multiple failed login attempts. Please reset your password.', code: 'LOCKED_PENDING_RESET' });
+          return res.status(423).json({
+            message:
+              "Account is locked due to multiple failed login attempts. Please reset your password.",
+            code: "LOCKED_PENDING_RESET",
+          });
         }
       }
 
       await logAudit({
-        action: 'LOGIN_FAILURE',
-        module: 'auth',
+        action: "LOGIN_FAILURE",
+        module: "auth",
         userId: user?._id || null,
         ipAddress: req.ip,
-        userAgent: req.get('user-agent'),
-        severity: 'warn',
+        userAgent: req.get("user-agent"),
+        severity: "warn",
         metadata: { email: email.toLowerCase() },
       });
       // Always a real number, including for an email that isn't registered
@@ -235,10 +314,12 @@ export const login = async (req, res) => {
       // entirely, and the key's mere presence/absence would enumerate
       // which emails are registered just as effectively as the message
       // text would.
-      const remainingAttempts = user ? Math.max(0, 5 - user.failedLoginAttempts) : 4;
+      const remainingAttempts = user
+        ? Math.max(0, 5 - user.failedLoginAttempts)
+        : 4;
       return res.status(401).json({
-        message: 'Invalid email or password',
-        remainingAttempts
+        message: "Invalid email or password",
+        remainingAttempts,
       });
     }
 
@@ -255,39 +336,47 @@ export const login = async (req, res) => {
     // attacker can use to enumerate registered emails and their
     // verification state without ever knowing a valid password.
     if (!user.isVerified) {
-      return res.status(403).json({ message: 'Your email address is not verified.', code: 'EMAIL_NOT_VERIFIED' });
+      return res.status(403).json({
+        message: "Your email address is not verified.",
+        code: "EMAIL_NOT_VERIFIED",
+      });
     }
 
     if (user.isBlocked) {
       await logAudit({
-        action: 'LOGIN_BLOCKED',
-        module: 'auth',
+        action: "LOGIN_BLOCKED",
+        module: "auth",
         userId: user._id,
         ipAddress: req.ip,
-        userAgent: req.get('user-agent'),
-        severity: 'warn',
+        userAgent: req.get("user-agent"),
+        severity: "warn",
         metadata: { email: user.email },
       });
-      return res.status(403).json({ message: 'Your account has been blocked. Please contact support.' });
+      return res.status(403).json({
+        message: "Your account has been blocked. Please contact support.",
+      });
     }
 
     const config = await getInternalConfig();
-    if (config.security?.maintenanceLock && user.role !== 'superadmin') {
-      return res.status(403).json({ message: 'Platform is locked for maintenance. Only Super Admins can log in.' });
+    if (config.security?.maintenanceLock && user.role !== "superadmin") {
+      return res.status(403).json({
+        message:
+          "Platform is locked for maintenance. Only Super Admins can log in.",
+      });
     }
 
     await generateTokenAndSetCookie(res, user._id, req);
 
     // Audit successful login
     await logAudit({
-      action: 'LOGIN_SUCCESS',
-      module: 'auth',
+      action: "LOGIN_SUCCESS",
+      module: "auth",
       userId: user._id,
       targetId: user._id,
-      targetModel: 'User',
+      targetModel: "User",
       ipAddress: req.ip,
-      userAgent: req.get('user-agent'),
-      severity: 'info',
+      userAgent: req.get("user-agent"),
+      severity: "info",
       metadata: { role: user.role },
     });
 
@@ -302,61 +391,67 @@ export const login = async (req, res) => {
       },
     });
   } catch (error) {
-    logger.error('An error occurred', { error: error.message, stack: error.stack });
-    res.status(500).json({ message: 'Server error during login' });
+    logger.error("An error occurred", {
+      error: error.message,
+      stack: error.stack,
+    });
+    res.status(500).json({ message: "Server error during login" });
   }
 };
 
 // @route   POST /api/auth/logout
 // @access  Private
 export const logout = async (req, res) => {
-  res.clearCookie('token', {
+  res.clearCookie("token", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   });
-  res.clearCookie('refreshToken', {
+  res.clearCookie("refreshToken", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    path: '/api/auth/refresh'
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    path: "/api/auth/refresh",
   });
   // Also clear the CSRF token cookie on logout
-  res.clearCookie('csrfToken', {
+  res.clearCookie("csrfToken", {
     httpOnly: false,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   });
 
   // Revoke session if refreshToken was provided
   const refreshToken = req.cookies.refreshToken;
   if (refreshToken) {
     try {
-      const crypto = await import('crypto');
-      const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
-      const Session = (await import('../models/Session.js')).default;
-      await Session.findOneAndUpdate(
-        { refreshTokenHash },
-        { revoked: true }
-      );
+      const crypto = await import("crypto");
+      const refreshTokenHash = crypto
+        .createHash("sha256")
+        .update(refreshToken)
+        .digest("hex");
+      const Session = (await import("../models/Session.js")).default;
+      await Session.findOneAndUpdate({ refreshTokenHash }, { revoked: true });
     } catch (e) {
-      logger.error('Error revoking session on logout:', { error: e.message, stack: e.stack });
+      logger.error("Error revoking session on logout:", {
+        error: e.message,
+        stack: e.stack,
+      });
     }
   }
 
   // Fire-and-forget audit log — logout doesn't need to wait for it
   if (req.user?.id) {
     logAudit({
-      action: 'LOGOUT',
-      module: 'auth',
+      action: "LOGOUT",
+      module: "auth",
       userId: req.user.id,
       ipAddress: req.ip,
-      userAgent: req.get('user-agent'),
-      severity: 'info',
+      userAgent: req.get("user-agent"),
+      severity: "info",
     });
   }
 
-  res.status(200).json({ message: 'Logged out successfully' });
+  res.status(200).json({ message: "Logged out successfully" });
 };
 
 // @route   GET /api/auth/me
@@ -371,16 +466,29 @@ export const getMe = async (req, res) => {
 // @access  Private — a user editing their own name/email/avatar (Settings page)
 export const updateProfile = async (req, res) => {
   try {
-    const { name, lastName, email, avatarUrl, college, major, providedCourses, linkedinUrl, socialUrl, phone, university, goalsText } = req.body;
+    const {
+      name,
+      lastName,
+      email,
+      avatarUrl,
+      college,
+      major,
+      providedCourses,
+      linkedinUrl,
+      socialUrl,
+      phone,
+      university,
+      goalsText,
+    } = req.body;
     const user = await User.findById(req.user.id);
 
     if (!user) {
-      return res.status(401).json({ message: 'User no longer exists' });
+      return res.status(401).json({ message: "User no longer exists" });
     }
 
     if (name !== undefined) {
       if (!name.trim()) {
-        return res.status(400).json({ message: 'Name cannot be empty' });
+        return res.status(400).json({ message: "Name cannot be empty" });
       }
       user.name = name.trim();
     }
@@ -388,7 +496,9 @@ export const updateProfile = async (req, res) => {
     if (email !== undefined && email !== user.email) {
       const existingUser = await User.findOne({ email });
       if (existingUser) {
-        return res.status(409).json({ message: 'An account with this email already exists' });
+        return res
+          .status(409)
+          .json({ message: "An account with this email already exists" });
       }
       user.email = email;
     }
@@ -429,8 +539,11 @@ export const updateProfile = async (req, res) => {
       },
     });
   } catch (error) {
-    logger.error('An error occurred', { error: error.message, stack: error.stack });
-    res.status(500).json({ message: 'Server error updating profile' });
+    logger.error("An error occurred", {
+      error: error.message,
+      stack: error.stack,
+    });
+    res.status(500).json({ message: "Server error updating profile" });
   }
 };
 
@@ -439,15 +552,25 @@ export const updateProfile = async (req, res) => {
 export const requestChangePasswordOtp = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
-    if (!currentPassword || !newPassword) return res.status(400).json({ message: 'Current and new password are required' });
-    if (currentPassword === newPassword) return res.status(400).json({ message: 'New password cannot be the same as the current password' });
+    if (!currentPassword || !newPassword)
+      return res
+        .status(400)
+        .json({ message: "Current and new password are required" });
+    if (currentPassword === newPassword)
+      return res.status(400).json({
+        message: "New password cannot be the same as the current password",
+      });
 
-    const user = await User.findById(req.user.id).select('+password');
-    if (!user) return res.status(404).json({ message: 'User not found' });
-    if (user.lockedForReset) return res.status(403).json({ message: 'Account is locked. Please use the reset password flow instead.' });
+    const user = await User.findById(req.user.id).select("+password");
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (user.lockedForReset)
+      return res.status(403).json({
+        message:
+          "Account is locked. Please use the reset password flow instead.",
+      });
 
     if (!(await user.comparePassword(currentPassword))) {
-      return res.status(401).json({ message: 'Current password is incorrect' });
+      return res.status(401).json({ message: "Current password is incorrect" });
     }
 
     const policyError = validatePasswordStrength(newPassword);
@@ -460,18 +583,25 @@ export const requestChangePasswordOtp = async (req, res) => {
       await requestOTP({
         userId: user._id,
         email: user.email,
-        purpose: 'password_change',
+        purpose: "password_change",
         metadata: { newPasswordHash: hashedPassword },
-        displayName: user.name
+        displayName: user.name,
       });
     } catch (otpErr) {
       return res.status(400).json({ message: otpErr.message });
     }
 
-    res.status(200).json({ message: 'An OTP has been sent to your email to confirm the change.' });
+    res.status(200).json({
+      message: "An OTP has been sent to your email to confirm the change.",
+    });
   } catch (error) {
-    logger.error('An error occurred', { error: error.message, stack: error.stack });
-    res.status(500).json({ message: 'Server error requesting password change' });
+    logger.error("An error occurred", {
+      error: error.message,
+      stack: error.stack,
+    });
+    res
+      .status(500)
+      .json({ message: "Server error requesting password change" });
   }
 };
 
@@ -480,20 +610,24 @@ export const requestChangePasswordOtp = async (req, res) => {
 export const verifyChangePasswordOtp = async (req, res) => {
   try {
     const { otp } = req.body;
-    if (!otp) return res.status(400).json({ message: 'OTP is required' });
+    if (!otp) return res.status(400).json({ message: "OTP is required" });
 
     const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!user) return res.status(404).json({ message: "User not found" });
 
     let metadata;
     try {
-      metadata = await verifyOTP({ userId: user._id, purpose: 'password_change', otp });
+      metadata = await verifyOTP({
+        userId: user._id,
+        purpose: "password_change",
+        otp,
+      });
     } catch (otpErr) {
       return res.status(400).json({ message: otpErr.message });
     }
 
     if (!metadata || !metadata.newPasswordHash) {
-      return res.status(400).json({ message: 'Invalid OTP metadata' });
+      return res.status(400).json({ message: "Invalid OTP metadata" });
     }
 
     // updateOne bypasses the pre('save') hook that normally stamps
@@ -501,31 +635,44 @@ export const verifyChangePasswordOtp = async (req, res) => {
     // since protect (authMiddleware.js) uses that field to invalidate JWTs
     // issued before the change. Without it, a token stolen before this
     // change keeps working right through it.
-    await User.updateOne({ _id: user._id }, { $set: { password: metadata.newPasswordHash, passwordChangedAt: new Date() } });
+    await User.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          password: metadata.newPasswordHash,
+          passwordChangedAt: new Date(),
+        },
+      },
+    );
 
-    const Session = (await import('../models/Session.js')).default;
+    const Session = (await import("../models/Session.js")).default;
     await Session.updateMany({ userId: user._id }, { revoked: true });
-    res.clearCookie('token');
+    res.clearCookie("token");
     // Cookie identity includes path — refreshToken was set with a
     // restricted path (utils/generateToken.js), so clearing it without the
     // matching path option (the default '/') sets an unrelated deletion
     // cookie and leaves the real one intact in the browser. See refresh()'s
     // token-reuse handler below for the correct pattern this now matches.
-    res.clearCookie('refreshToken', { path: '/api/auth/refresh' });
-    res.clearCookie('csrfToken');
+    res.clearCookie("refreshToken", { path: "/api/auth/refresh" });
+    res.clearCookie("csrfToken");
 
     await logAudit({
-      action: 'PASSWORD_CHANGE_SUCCESS',
-      module: 'auth',
+      action: "PASSWORD_CHANGE_SUCCESS",
+      module: "auth",
       userId: user._id,
       ipAddress: req.ip,
-      severity: 'info',
+      severity: "info",
     });
 
-    res.status(200).json({ message: 'Password changed successfully. Please log in again.' });
+    res
+      .status(200)
+      .json({ message: "Password changed successfully. Please log in again." });
   } catch (error) {
-    logger.error('An error occurred', { error: error.message, stack: error.stack });
-    res.status(500).json({ message: 'Server error verifying password change' });
+    logger.error("An error occurred", {
+      error: error.message,
+      stack: error.stack,
+    });
+    res.status(500).json({ message: "Server error verifying password change" });
   }
 };
 
@@ -534,7 +681,10 @@ export const verifyChangePasswordOtp = async (req, res) => {
 export const requestPasswordResetOtp = async (req, res) => {
   try {
     const { email, newPassword } = req.body;
-    if (!email || !newPassword) return res.status(400).json({ message: 'Email and new password are required' });
+    if (!email || !newPassword)
+      return res
+        .status(400)
+        .json({ message: "Email and new password are required" });
 
     // Checked before the account lookup, and deliberately still returned as
     // a real 400 either way: this only depends on the submitted password
@@ -545,7 +695,9 @@ export const requestPasswordResetOtp = async (req, res) => {
     const policyError = validatePasswordStrength(newPassword);
     if (policyError) return res.status(400).json({ message: policyError });
 
-    const genericSent = { message: 'If an account with that email exists, an OTP has been sent.' };
+    const genericSent = {
+      message: "If an account with that email exists, an OTP has been sent.",
+    };
 
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
@@ -559,9 +711,9 @@ export const requestPasswordResetOtp = async (req, res) => {
       await requestOTP({
         userId: user._id,
         email: user.email,
-        purpose: 'password_reset',
+        purpose: "password_reset",
         metadata: { newPasswordHash: hashedPassword },
-        displayName: user.name
+        displayName: user.name,
       });
     } catch (otpErr) {
       // requestOTP's resend-cooldown error only fires when a record
@@ -573,22 +725,30 @@ export const requestPasswordResetOtp = async (req, res) => {
       // returning 200/generic keeps this call indistinguishable from the
       // non-existent-account path; the user's next email will simply be
       // the same code as before rather than a new one.
-      logger.warn('Password reset OTP request hit an internal error, responding generically', { error: otpErr.message });
+      logger.warn(
+        "Password reset OTP request hit an internal error, responding generically",
+        { error: otpErr.message },
+      );
       return res.status(200).json(genericSent);
     }
 
     await logAudit({
-      action: 'PASSWORD_RESET_REQUESTED',
-      module: 'auth',
+      action: "PASSWORD_RESET_REQUESTED",
+      module: "auth",
       userId: user._id,
       ipAddress: req.ip,
-      severity: 'info',
+      severity: "info",
     });
 
-    res.status(200).json({ message: 'If an account with that email exists, an OTP has been sent.' });
+    res.status(200).json({
+      message: "If an account with that email exists, an OTP has been sent.",
+    });
   } catch (error) {
-    logger.error('An error occurred', { error: error.message, stack: error.stack });
-    res.status(500).json({ message: 'Server error' });
+    logger.error("An error occurred", {
+      error: error.message,
+      stack: error.stack,
+    });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -597,7 +757,8 @@ export const requestPasswordResetOtp = async (req, res) => {
 export const verifyPasswordResetOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
-    if (!email || !otp) return res.status(400).json({ message: 'Email and OTP are required' });
+    if (!email || !otp)
+      return res.status(400).json({ message: "Email and OTP are required" });
 
     // request-otp always returns the same 200 whether the account exists or
     // not, so an attacker can't learn anything from that call alone — but
@@ -608,20 +769,24 @@ export const verifyPasswordResetOtp = async (req, res) => {
     // record exists for that email at all, i.e. whether request-otp
     // actually created one. Every failure path here has to collapse to the
     // same response, not just the account-not-found case.
-    const genericInvalid = { message: 'Invalid or expired code.' };
+    const genericInvalid = { message: "Invalid or expired code." };
 
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) return res.status(400).json(genericInvalid);
 
     let metadata;
     try {
-      metadata = await verifyOTP({ userId: user._id, purpose: 'password_reset', otp });
+      metadata = await verifyOTP({
+        userId: user._id,
+        purpose: "password_reset",
+        otp,
+      });
     } catch (otpErr) {
       return res.status(400).json(genericInvalid);
     }
 
     if (!metadata || !metadata.newPasswordHash) {
-      return res.status(400).json({ message: 'Invalid OTP metadata' });
+      return res.status(400).json({ message: "Invalid OTP metadata" });
     }
 
     // See the same fix in verifyChangePasswordOtp above — updateOne skips
@@ -629,31 +794,39 @@ export const verifyPasswordResetOtp = async (req, res) => {
     // set explicitly or a token issued before this reset keeps working.
     // Doubly important here: this is the account-recovery path for a
     // locked-out or compromised account.
-    await User.updateOne({ _id: user._id }, {
-      $set: {
-        password: metadata.newPasswordHash,
-        passwordChangedAt: new Date(),
-        failedLoginAttempts: 0,
-        lockedForReset: false,
-        lockedAt: null
-      }
-    });
+    await User.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          password: metadata.newPasswordHash,
+          passwordChangedAt: new Date(),
+          failedLoginAttempts: 0,
+          lockedForReset: false,
+          lockedAt: null,
+        },
+      },
+    );
 
-    const Session = (await import('../models/Session.js')).default;
+    const Session = (await import("../models/Session.js")).default;
     await Session.updateMany({ userId: user._id }, { revoked: true });
 
     await logAudit({
-      action: 'PASSWORD_RESET_SUCCESS',
-      module: 'auth',
+      action: "PASSWORD_RESET_SUCCESS",
+      module: "auth",
       userId: user._id,
       ipAddress: req.ip,
-      severity: 'info',
+      severity: "info",
     });
 
-    res.status(200).json({ message: 'Password has been reset successfully. You can now log in.' });
+    res.status(200).json({
+      message: "Password has been reset successfully. You can now log in.",
+    });
   } catch (error) {
-    logger.error('An error occurred', { error: error.message, stack: error.stack });
-    res.status(500).json({ message: 'Server error resetting password' });
+    logger.error("An error occurred", {
+      error: error.message,
+      stack: error.stack,
+    });
+    res.status(500).json({ message: "Server error resetting password" });
   }
 };
 
@@ -663,65 +836,74 @@ export const refresh = async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshToken;
     if (!refreshToken) {
-      return res.status(401).json({ message: 'No refresh token provided' });
+      return res.status(401).json({ message: "No refresh token provided" });
     }
 
-    const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
-    const Session = (await import('../models/Session.js')).default;
-    
+    const refreshTokenHash = crypto
+      .createHash("sha256")
+      .update(refreshToken)
+      .digest("hex");
+    const Session = (await import("../models/Session.js")).default;
+
     const session = await Session.findOne({ refreshTokenHash });
     if (!session) {
-      return res.status(401).json({ message: 'Invalid refresh token' });
+      return res.status(401).json({ message: "Invalid refresh token" });
     }
 
     if (session.revoked) {
       // Possible token theft / replay attack
       await Session.updateMany({ userId: session.userId }, { revoked: true });
       await logAudit({
-        action: 'TOKEN_REUSE',
-        module: 'auth',
+        action: "TOKEN_REUSE",
+        module: "auth",
         userId: session.userId,
         ipAddress: req.ip,
-        severity: 'error',
-        metadata: { sessionId: session._id }
+        severity: "error",
+        metadata: { sessionId: session._id },
       });
-      res.clearCookie('token');
-      res.clearCookie('refreshToken', { path: '/api/auth/refresh' });
-      return res.status(401).json({ message: 'Security violation: Refresh token reused. All sessions revoked.' });
+      res.clearCookie("token");
+      res.clearCookie("refreshToken", { path: "/api/auth/refresh" });
+      return res.status(401).json({
+        message:
+          "Security violation: Refresh token reused. All sessions revoked.",
+      });
     }
 
     if (session.expiresAt < Date.now()) {
       session.revoked = true;
       await session.save();
-      return res.status(401).json({ message: 'Refresh token expired' });
+      return res.status(401).json({ message: "Refresh token expired" });
     }
 
     const user = await User.findById(session.userId);
     if (!user || user.isBlocked) {
-      return res.status(401).json({ message: 'User invalid or blocked' });
+      return res.status(401).json({ message: "User invalid or blocked" });
     }
 
     // Mark current session as revoked so it can't be used again (Rotation)
-    // We allow a small grace period for concurrent requests? 
+    // We allow a small grace period for concurrent requests?
     // Actually, destroying the session and creating a new one is safer, but let's just revoke it.
     session.revoked = true;
     await session.save();
-    
+
     // Create new session via generateTokenAndSetCookie
     await generateTokenAndSetCookie(res, user._id, req);
 
     await logAudit({
-      action: 'TOKEN_ROTATED',
-      module: 'auth',
+      action: "TOKEN_ROTATED",
+      module: "auth",
       userId: user._id,
       ipAddress: req.ip,
-      severity: 'info',
+      severity: "info",
     });
 
-    res.status(200).json({ message: 'Token refreshed successfully' });
+    res.status(200).json({ message: "Token refreshed successfully" });
   } catch (error) {
-    logger.error('An error occurred', { error: error.message, stack: error.stack });
-    res.status(500).json({ message: 'Server error during refresh' });
+    logger.error("An error occurred", {
+      error: error.message,
+      stack: error.stack,
+    });
+    res.status(500).json({ message: "Server error during refresh" });
   }
 };
 
@@ -729,11 +911,14 @@ export const refresh = async (req, res) => {
 // @access  Private
 export const getSessions = async (req, res) => {
   try {
-    const Session = (await import('../models/Session.js')).default;
-    const sessions = await Session.find({ userId: req.user.id, revoked: false }).select('-refreshTokenHash');
+    const Session = (await import("../models/Session.js")).default;
+    const sessions = await Session.find({
+      userId: req.user.id,
+      revoked: false,
+    }).select("-refreshTokenHash");
     res.status(200).json({ sessions });
   } catch (err) {
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -741,25 +926,28 @@ export const getSessions = async (req, res) => {
 // @access  Private
 export const revokeSession = async (req, res) => {
   try {
-    const Session = (await import('../models/Session.js')).default;
-    const session = await Session.findOne({ _id: req.params.sessionId, userId: req.user.id });
-    if (!session) return res.status(404).json({ message: 'Session not found' });
-    
+    const Session = (await import("../models/Session.js")).default;
+    const session = await Session.findOne({
+      _id: req.params.sessionId,
+      userId: req.user.id,
+    });
+    if (!session) return res.status(404).json({ message: "Session not found" });
+
     session.revoked = true;
     await session.save();
-    
+
     await logAudit({
-      action: 'SESSION_REVOKED',
-      module: 'auth',
+      action: "SESSION_REVOKED",
+      module: "auth",
       userId: req.user.id,
       ipAddress: req.ip,
-      severity: 'info',
-      metadata: { sessionId: session._id }
+      severity: "info",
+      metadata: { sessionId: session._id },
     });
 
-    res.status(200).json({ message: 'Session revoked' });
+    res.status(200).json({ message: "Session revoked" });
   } catch (err) {
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -767,20 +955,20 @@ export const revokeSession = async (req, res) => {
 // @access  Private
 export const revokeAllSessions = async (req, res) => {
   try {
-    const Session = (await import('../models/Session.js')).default;
+    const Session = (await import("../models/Session.js")).default;
     await Session.updateMany({ userId: req.user.id }, { revoked: true });
-    
+
     await logAudit({
-      action: 'SESSION_REVOKED_ALL',
-      module: 'auth',
+      action: "SESSION_REVOKED_ALL",
+      module: "auth",
       userId: req.user.id,
       ipAddress: req.ip,
-      severity: 'info'
+      severity: "info",
     });
 
-    res.status(200).json({ message: 'All sessions revoked' });
+    res.status(200).json({ message: "All sessions revoked" });
   } catch (err) {
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -789,20 +977,25 @@ export const revokeAllSessions = async (req, res) => {
 export const verifyEmail = async (req, res) => {
   try {
     const { email, otp } = req.body;
-    if (!email || !otp) return res.status(400).json({ message: 'Email and OTP are required' });
+    if (!email || !otp)
+      return res.status(400).json({ message: "Email and OTP are required" });
 
     // Same enumeration-resistance requirement as resendVerification right
     // below: this is public and unauthenticated, so a differentiated
     // "user not found" vs "already verified" vs a wrong-code message would
     // let anyone probe arbitrary emails for registration/verification
     // state. Every failure path here returns the identical message.
-    const genericInvalid = { message: 'Invalid or expired code.' };
+    const genericInvalid = { message: "Invalid or expired code." };
 
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user || user.isVerified) return res.status(400).json(genericInvalid);
 
     try {
-      await verifyOTP({ userId: user._id, purpose: 'register_verification', otp });
+      await verifyOTP({
+        userId: user._id,
+        purpose: "register_verification",
+        otp,
+      });
     } catch (otpErr) {
       return res.status(400).json(genericInvalid);
     }
@@ -811,17 +1004,20 @@ export const verifyEmail = async (req, res) => {
     await user.save();
 
     await logAudit({
-      action: 'EMAIL_VERIFIED',
-      module: 'auth',
+      action: "EMAIL_VERIFIED",
+      module: "auth",
       userId: user._id,
       ipAddress: req.ip,
-      severity: 'info',
+      severity: "info",
     });
 
-    res.status(200).json({ message: 'Email verified successfully' });
+    res.status(200).json({ message: "Email verified successfully" });
   } catch (error) {
-    logger.error('An error occurred', { error: error.message, stack: error.stack });
-    res.status(500).json({ message: 'Server error during email verification' });
+    logger.error("An error occurred", {
+      error: error.message,
+      stack: error.stack,
+    });
+    res.status(500).json({ message: "Server error during email verification" });
   }
 };
 
@@ -836,9 +1032,11 @@ export const verifyEmail = async (req, res) => {
 export const resendVerification = async (req, res) => {
   try {
     const { email } = req.body;
-    if (!email) return res.status(400).json({ message: 'Email is required' });
+    if (!email) return res.status(400).json({ message: "Email is required" });
 
-    const genericResponse = { message: 'If that account needs verification, a code has been sent.' };
+    const genericResponse = {
+      message: "If that account needs verification, a code has been sent.",
+    };
 
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user || user.isVerified) {
@@ -849,8 +1047,8 @@ export const resendVerification = async (req, res) => {
       await requestOTP({
         userId: user._id,
         email: user.email,
-        purpose: 'register_verification',
-        displayName: user.name
+        purpose: "register_verification",
+        displayName: user.name,
       });
     } catch (otpErr) {
       return res.status(400).json({ message: otpErr.message });
@@ -858,8 +1056,11 @@ export const resendVerification = async (req, res) => {
 
     res.status(200).json(genericResponse);
   } catch (error) {
-    logger.error('An error occurred', { error: error.message, stack: error.stack });
-    res.status(500).json({ message: 'Server error resending verification' });
+    logger.error("An error occurred", {
+      error: error.message,
+      stack: error.stack,
+    });
+    res.status(500).json({ message: "Server error resending verification" });
   }
 };
 

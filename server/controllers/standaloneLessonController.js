@@ -102,7 +102,8 @@ export const deleteStandaloneLesson = async (req, res) => {
     if (!lesson) {
       return res.status(404).json({ message: 'Standalone lesson not found' });
     }
-    if (lesson.instructor.toString() !== req.user.id.toString()) {
+    const isAdmin = req.user.role === 'admin' || req.user.role === 'superadmin' || req.user.role === 'superAdmin';
+    if (lesson.instructor.toString() !== req.user.id.toString() && !isAdmin) {
       return res.status(403).json({ message: 'Not authorized to delete this lesson' });
     }
 

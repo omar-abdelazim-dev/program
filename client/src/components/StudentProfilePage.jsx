@@ -79,7 +79,7 @@ export default function StudentProfilePage({ isLightMode, user }) {
             <span style={{
               display: 'inline-block',
               padding: '4px 14px',
-              borderRadius: '50px',
+              borderRadius: '12px',
               background: 'rgba(249, 115, 22, 0.12)',
               color: 'var(--color-accent)',
               fontSize: '0.78rem',

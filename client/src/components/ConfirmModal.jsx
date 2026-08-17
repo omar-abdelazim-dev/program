@@ -36,7 +36,7 @@ export default function ConfirmModal({ isOpen, title, message, onConfirm, onCanc
             onClick={onCancel}
             style={{
               padding: '12px 24px',
-              borderRadius: '999px',
+              borderRadius: '12px',
               border: 'none',
               background: 'transparent',
               boxShadow: 'var(--inner-shadow)',

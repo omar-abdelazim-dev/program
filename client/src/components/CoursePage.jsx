@@ -1,74 +1,89 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import api from '../api/axios';
-import FullPageLoader from './FullPageLoader';
-import ThreeDotMenu from './common/ThreeDotMenu';
-import notyf from '../utils/notyf';
-import PaymentModal from './PaymentModal';
+import { useState, useEffect } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import api from "../api/axios";
+import FullPageLoader from "./FullPageLoader";
+import ThreeDotMenu from "./common/ThreeDotMenu";
+import notyf from "../utils/notyf";
+import PaymentModal from "./PaymentModal";
 
 export default function CoursePage({ cart = [], setCart, user }) {
   const { t, i18n } = useTranslation();
-  const isRTL = i18n.dir() === 'rtl';
+  const isRTL = i18n.dir() === "rtl";
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const fromDashboard = location.state?.from === 'dashboard';
-  const [activeTab, setActiveTab] = useState('syllabus');
+  const fromDashboard = location.state?.from === "dashboard";
+  const [activeTab, setActiveTab] = useState("syllabus");
 
   const [course, setCourse] = useState(null);
   const [modules, setModules] = useState([]);
   const [collapsedModules, setCollapsedModules] = useState({});
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [enrollStatus, setEnrollStatus] = useState(null);
   const [isEnrolling, setIsEnrolling] = useState(false);
-  const [enrollError, setEnrollError] = useState('');
+  const [enrollError, setEnrollError] = useState("");
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   // Standalone related lessons (spec §11) — discoverable independently,
   // purchased separately, never inserted into this course's own modules.
   const [standaloneLessons, setStandaloneLessons] = useState([]);
-  const [purchasedStandaloneIds, setPurchasedStandaloneIds] = useState(new Set());
-  const [purchasingStandaloneLesson, setPurchasingStandaloneLesson] = useState(null);
+  const [purchasedStandaloneIds, setPurchasedStandaloneIds] = useState(
+    new Set(),
+  );
+  const [purchasingStandaloneLesson, setPurchasingStandaloneLesson] =
+    useState(null);
   const [isPurchasingStandalone, setIsPurchasingStandalone] = useState(false);
 
   const [reviews, setReviews] = useState([]);
   const [reviewRating, setReviewRating] = useState(5);
-  const [reviewText, setReviewText] = useState('');
+  const [reviewText, setReviewText] = useState("");
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [hasReviewed, setHasReviewed] = useState(false);
 
   const [editingReviewId, setEditingReviewId] = useState(null);
   const [editReviewRating, setEditReviewRating] = useState(5);
-  const [editReviewText, setEditReviewText] = useState('');
+  const [editReviewText, setEditReviewText] = useState("");
   const [isUpdatingReview, setIsUpdatingReview] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
     const fetchData = async () => {
       try {
-        const { data } = await api.get(`/courses/${id}`, { signal: controller.signal });
+        const { data } = await api.get(`/courses/${id}`, {
+          signal: controller.signal,
+        });
         setCourse(data.course);
         setModules(data.modules || []);
 
         try {
-          const enrollRes = await api.get(`/enrollments/${id}`, { signal: controller.signal });
+          const enrollRes = await api.get(`/enrollments/${id}`, {
+            signal: controller.signal,
+          });
           if (enrollRes.data && enrollRes.data.enrolled) {
             setIsEnrolled(true);
-            setEnrollStatus(enrollRes.data.status || 'approved');
+            setEnrollStatus(enrollRes.data.status || "approved");
           }
-        } catch(e) {
+        } catch (e) {
           // Ignore — likely 404 (not enrolled) or the request was cancelled
         }
 
         try {
-          const reviewsRes = await api.get(`/reviews/course/${id}`, { signal: controller.signal });
+          const reviewsRes = await api.get(`/reviews/course/${id}`, {
+            signal: controller.signal,
+          });
           if (reviewsRes.data && reviewsRes.data.reviews) {
             setReviews(reviewsRes.data.reviews);
-            if (user && reviewsRes.data.reviews.some(r => r.student?._id === user._id || r.student?._id === user.id)) {
+            if (
+              user &&
+              reviewsRes.data.reviews.some(
+                (r) =>
+                  r.student?._id === user._id || r.student?._id === user.id,
+              )
+            ) {
               setHasReviewed(true);
             }
           }
@@ -77,26 +92,32 @@ export default function CoursePage({ cart = [], setCart, user }) {
         }
 
         try {
-          const standaloneRes = await api.get(`/standalone-lessons?relatedCourseId=${id}`, { signal: controller.signal });
+          const standaloneRes = await api.get(
+            `/standalone-lessons?relatedCourseId=${id}`,
+            { signal: controller.signal },
+          );
           setStandaloneLessons(standaloneRes.data.lessons || []);
         } catch (e) {
           // Ignore — standalone lessons are supplementary, not core to the page
         }
 
-        if (user?.role === 'student') {
+        if (user?.role === "student") {
           try {
-            const purchasedRes = await api.get('/standalone-lessons/mine-purchased', { signal: controller.signal });
+            const purchasedRes = await api.get(
+              "/standalone-lessons/mine-purchased",
+              { signal: controller.signal },
+            );
             const approvedIds = (purchasedRes.data.purchases || [])
-              .filter(p => p.status === 'approved')
-              .map(p => p.lesson?._id);
+              .filter((p) => p.status === "approved")
+              .map((p) => p.lesson?._id);
             setPurchasedStandaloneIds(new Set(approvedIds));
           } catch (e) {
             // Ignore
           }
         }
       } catch (err) {
-        if (err.code === 'ERR_CANCELED') return;
-        setError(err.response?.data?.message || t('course_page.fetch_error'));
+        if (err.code === "ERR_CANCELED") return;
+        setError(err.response?.data?.message || t("course_page.fetch_error"));
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
@@ -106,12 +127,16 @@ export default function CoursePage({ cart = [], setCart, user }) {
   }, [id]);
 
   useEffect(() => {
-    if (isEnrolled && enrollStatus === 'pending') {
+    if (isEnrolled && enrollStatus === "pending") {
       const interval = setInterval(async () => {
         try {
           const enrollRes = await api.get(`/enrollments/${id}`);
-          if (enrollRes.data && enrollRes.data.enrolled && enrollRes.data.status === 'approved') {
-            setEnrollStatus('approved');
+          if (
+            enrollRes.data &&
+            enrollRes.data.enrolled &&
+            enrollRes.data.status === "approved"
+          ) {
+            setEnrollStatus("approved");
             clearInterval(interval);
           }
         } catch (e) {
@@ -132,17 +157,22 @@ export default function CoursePage({ cart = [], setCart, user }) {
 
   const handleEnroll = async (paymentDetails = {}) => {
     setIsEnrolling(true);
-    setEnrollError('');
+    setEnrollError("");
     setShowPaymentModal(false);
     try {
       const res = await api.post(`/enrollments/${id}`, paymentDetails);
       setIsEnrolled(true);
-      setEnrollStatus(res.data.enrollment?.status || (course.price > 0 ? 'pending' : 'approved'));
+      setEnrollStatus(
+        res.data.enrollment?.status ||
+          (course.price > 0 ? "pending" : "approved"),
+      );
     } catch (err) {
       if (err.response?.status === 409) {
         setIsEnrolled(true);
       } else {
-        setEnrollError(err.response?.data?.message || t('course_page.enroll_error'));
+        setEnrollError(
+          err.response?.data?.message || t("course_page.enroll_error"),
+        );
       }
     } finally {
       setIsEnrolling(false);
@@ -157,17 +187,35 @@ export default function CoursePage({ cart = [], setCart, user }) {
     }
   };
 
-  const handlePurchaseStandaloneLesson = async (lesson, paymentDetails = {}) => {
+  const handlePurchaseStandaloneLesson = async (
+    lesson,
+    paymentDetails = {},
+  ) => {
     setIsPurchasingStandalone(true);
     setPurchasingStandaloneLesson(null);
     try {
-      await api.post(`/standalone-lessons/${lesson._id}/purchase`, paymentDetails);
-      notyf.success(t('course_page.standalone.purchased', 'Purchase submitted — awaiting admin approval.'));
+      await api.post(
+        `/standalone-lessons/${lesson._id}/purchase`,
+        paymentDetails,
+      );
+      notyf.success(
+        t(
+          "course_page.standalone.purchased",
+          "Purchase submitted — awaiting admin approval.",
+        ),
+      );
     } catch (err) {
       if (err.response?.status === 409) {
-        notyf.error(t('course_page.standalone.already_purchased', 'You already purchased this lesson.'));
+        notyf.error(
+          t(
+            "course_page.standalone.already_purchased",
+            "You already purchased this lesson.",
+          ),
+        );
       } else {
-        notyf.error(err.response?.data?.message || t('course_page.enroll_error'));
+        notyf.error(
+          err.response?.data?.message || t("course_page.enroll_error"),
+        );
       }
     } finally {
       setIsPurchasingStandalone(false);
@@ -177,22 +225,30 @@ export default function CoursePage({ cart = [], setCart, user }) {
   const submitReview = async (e) => {
     e.preventDefault();
     if (!reviewText.trim() || !reviewRating) return;
-    
+
     setIsSubmittingReview(true);
     try {
-      const res = await api.post('/reviews', { courseId: id, rating: reviewRating, text: reviewText });
+      const res = await api.post("/reviews", {
+        courseId: id,
+        rating: reviewRating,
+        text: reviewText,
+      });
       if (res.data.review) {
         const newReview = res.data.review;
-        newReview.student = { _id: user?._id || user?.id, name: user?.name, avatarUrl: user?.avatarUrl };
+        newReview.student = {
+          _id: user?._id || user?.id,
+          name: user?.name,
+          avatarUrl: user?.avatarUrl,
+        };
         setReviews([newReview, ...reviews].slice(0, 10)); // Keep max 10
         setHasReviewed(true);
-        setReviewText('');
+        setReviewText("");
         setReviewRating(5);
-        notyf.success('Review submitted successfully');
+        notyf.success("Review submitted successfully");
       }
     } catch (err) {
-      console.error('Failed to submit review', err);
-      notyf.error(err.response?.data?.message || 'Failed to submit review');
+      console.error("Failed to submit review", err);
+      notyf.error(err.response?.data?.message || "Failed to submit review");
     } finally {
       setIsSubmittingReview(false);
     }
@@ -206,7 +262,7 @@ export default function CoursePage({ cart = [], setCart, user }) {
 
   const cancelEditReview = () => {
     setEditingReviewId(null);
-    setEditReviewText('');
+    setEditReviewText("");
     setEditReviewRating(5);
   };
 
@@ -216,15 +272,20 @@ export default function CoursePage({ cart = [], setCart, user }) {
 
     setIsUpdatingReview(true);
     try {
-      const res = await api.put(`/reviews/${editingReviewId}`, { rating: editReviewRating, text: editReviewText });
+      const res = await api.put(`/reviews/${editingReviewId}`, {
+        rating: editReviewRating,
+        text: editReviewText,
+      });
       if (res.data.review) {
-        setReviews(reviews.map(r => r._id === editingReviewId ? res.data.review : r));
+        setReviews(
+          reviews.map((r) => (r._id === editingReviewId ? res.data.review : r)),
+        );
         setEditingReviewId(null);
-        notyf.success('Review updated successfully');
+        notyf.success("Review updated successfully");
       }
     } catch (err) {
-      console.error('Failed to update review', err);
-      notyf.error(err.response?.data?.message || 'Failed to update review');
+      console.error("Failed to update review", err);
+      notyf.error(err.response?.data?.message || "Failed to update review");
     } finally {
       setIsUpdatingReview(false);
     }
@@ -233,17 +294,29 @@ export default function CoursePage({ cart = [], setCart, user }) {
   const handleDeleteReview = async (reviewId) => {
     try {
       await api.delete(`/reviews/${reviewId}`);
-      setReviews(reviews.filter(r => r._id !== reviewId));
+      setReviews(reviews.filter((r) => r._id !== reviewId));
       setHasReviewed(false);
-      notyf.success('Review deleted successfully');
+      notyf.success("Review deleted successfully");
     } catch (err) {
-      console.error('Failed to delete review', err);
-      notyf.error(err.response?.data?.message || 'Failed to delete review');
+      console.error("Failed to delete review", err);
+      notyf.error(err.response?.data?.message || "Failed to delete review");
     }
   };
 
-  if (loading) return <FullPageLoader message={t('course_page.loading')} />;
-  if (error) return <div style={{ padding: '100px', textAlign: 'center', color: '#ef4444', fontSize: '1.2rem' }}>{error}</div>;
+  if (loading) return <FullPageLoader message={t("course_page.loading")} />;
+  if (error)
+    return (
+      <div
+        style={{
+          padding: "100px",
+          textAlign: "center",
+          color: "#ef4444",
+          fontSize: "1.2rem",
+        }}
+      >
+        {error}
+      </div>
+    );
   if (!course) return null;
 
   return (
@@ -297,7 +370,7 @@ export default function CoursePage({ cart = [], setCart, user }) {
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            style={{ transform: isRTL ? 'scaleX(-1)' : 'none' }}
+            style={{ transform: isRTL ? "scaleX(-1)" : "none" }}
           >
             <path d="M19 12H5M12 19l-7-7 7-7" />
           </svg>
@@ -321,7 +394,10 @@ export default function CoursePage({ cart = [], setCart, user }) {
             boxShadow: "var(--inner-shadow)",
           }}
         >
-          {t(`categories.${course.category.replace(/\s+/g, '_').toLowerCase()}`, t(course.category, course.category))}
+          {t(
+            `categories.${course.category.replace(/\s+/g, "_").toLowerCase()}`,
+            t(course.category, course.category),
+          )}
         </span>
 
         <h1
@@ -439,7 +515,9 @@ export default function CoursePage({ cart = [], setCart, user }) {
                 onClick={() => setActiveTab("reviews")}
                 style={{ paddingBottom: "16px", borderRadius: "0" }}
               >
-                {t("course_page.reviews_tab", "Reviews ({{count}})", { count: reviews.length })}
+                {t("course_page.reviews_tab", "Reviews ({{count}})", {
+                  count: reviews.length,
+                })}
               </button>
             </div>
 
@@ -465,7 +543,10 @@ export default function CoursePage({ cart = [], setCart, user }) {
                     {t("course_page.lessons_title")}
                   </h3>
                   {(() => {
-                    const totalLessons = modules.reduce((sum, m) => sum + (m.lessons?.length || 0), 0);
+                    const totalLessons = modules.reduce(
+                      (sum, m) => sum + (m.lessons?.length || 0),
+                      0,
+                    );
                     return (
                       <span
                         style={{
@@ -511,7 +592,12 @@ export default function CoursePage({ cart = [], setCart, user }) {
                         }}
                       >
                         <button
-                          onClick={() => setCollapsedModules((prev) => ({ ...prev, [module._id]: !prev[module._id] }))}
+                          onClick={() =>
+                            setCollapsedModules((prev) => ({
+                              ...prev,
+                              [module._id]: !prev[module._id],
+                            }))
+                          }
                           style={{
                             width: "100%",
                             padding: "18px 24px",
@@ -525,25 +611,65 @@ export default function CoursePage({ cart = [], setCart, user }) {
                           }}
                         >
                           <div>
-                            <h4 style={{ margin: 0, fontSize: "1.05rem", fontWeight: "700", color: "var(--text-primary)" }}>
-                              {t("course_page.module_label", "Module")} {mIndex + 1} — {module.title}
+                            <h4
+                              style={{
+                                margin: 0,
+                                fontSize: "1.05rem",
+                                fontWeight: "700",
+                                color: "var(--text-primary)",
+                              }}
+                            >
+                              {t("course_page.module_label", "Module")}{" "}
+                              {mIndex + 1} — {module.title}
                             </h4>
-                            <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+                            <span
+                              style={{
+                                fontSize: "0.85rem",
+                                color: "var(--text-secondary)",
+                              }}
+                            >
                               {moduleLessons.length}{" "}
-                              {moduleLessons.length === 1 ? t("course_page.lesson_singular") : t("course_page.lesson_plural")}
+                              {moduleLessons.length === 1
+                                ? t("course_page.lesson_singular")
+                                : t("course_page.lesson_plural")}
                             </span>
                           </div>
                           <svg
-                            width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                            style={{ transition: "transform 0.25s", transform: isCollapsed ? "rotate(-90deg)" : "rotate(0deg)", flexShrink: 0, color: "var(--text-secondary)" }}
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            style={{
+                              transition: "transform 0.25s",
+                              transform: isCollapsed
+                                ? "rotate(-90deg)"
+                                : "rotate(0deg)",
+                              flexShrink: 0,
+                              color: "var(--text-secondary)",
+                            }}
                           >
                             <polyline points="6 9 12 15 18 9" />
                           </svg>
                         </button>
 
-                        <div className={`expandable-section ${!isCollapsed ? 'expanded' : ''}`}>
+                        <div
+                          className={`expandable-section ${!isCollapsed ? "expanded" : ""}`}
+                        >
                           <div style={{ overflow: "hidden" }}>
-                            <div style={{ display: "flex", flexDirection: "column", gap: "10px", padding: moduleLessons.length ? "0 16px 16px 16px" : "0" }}>
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "10px",
+                                padding: moduleLessons.length
+                                  ? "0 16px 16px 16px"
+                                  : "0",
+                              }}
+                            >
                               {moduleLessons.map((lesson, i) => (
                                 <div
                                   key={lesson._id}
@@ -596,371 +722,506 @@ export default function CoursePage({ cart = [], setCart, user }) {
               </div>
             )}
 
-            {activeTab === "reviews" && (() => {
-              /* Calculate average rating from reviews */
-              const avgRating = reviews.length > 0
-                ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
-                : '0.0';
+            {activeTab === "reviews" &&
+              (() => {
+                /* Calculate average rating from reviews */
+                const avgRating =
+                  reviews.length > 0
+                    ? (
+                        reviews.reduce((sum, r) => sum + r.rating, 0) /
+                        reviews.length
+                      ).toFixed(1)
+                    : "0.0";
 
-              return (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "24px",
-                }}
-              >
-                {/* Average Rating Summary */}
-                <div style={{ padding: '24px', background: 'var(--bg-main)', borderRadius: '12px', boxShadow: 'var(--inner-shadow)', display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
-                  <div style={{ textAlign: 'center', minWidth: '80px' }}>
-                    <div style={{ fontSize: '2.5rem', fontWeight: '800', color: 'var(--text-primary)', lineHeight: '1' }}>{avgRating}</div>
-                    <div style={{ display: 'flex', gap: '2px', justifyContent: 'center', marginTop: '8px' }}>
-                      {[...Array(5)].map((_, i) => (
-                        <span key={i} style={{ color: i < Math.round(parseFloat(avgRating)) ? '#f59e0b' : 'var(--border)', fontSize: '1.1rem' }}>★</span>
-                      ))}
-                    </div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                      {reviews.length} {t('course_page.review_label', reviews.length === 1 ? 'review' : 'reviews')}
-                    </div>
-                  </div>
-                  {/* Rating breakdown bars */}
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px', minWidth: '200px' }}>
-                    {[5, 4, 3, 2, 1].map(star => {
-                      const count = reviews.filter(r => r.rating === star).length;
-                      const pct = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
-                      return (
-                        <div key={star} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', width: '16px', textAlign: 'right' }}>{star}</span>
-                          <span style={{ color: '#f59e0b', fontSize: '0.85rem' }}>★</span>
-                          <div style={{ flex: 1, height: '8px', borderRadius: '4px', background: 'var(--bg-surface)', overflow: 'hidden' }}>
-                            <div style={{ width: `${pct}%`, height: '100%', borderRadius: '4px', background: '#f59e0b', transition: 'width 0.3s ease' }} />
-                          </div>
-                          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', width: '24px' }}>{count}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {isEnrolled && !hasReviewed && (
+                return (
                   <div
                     style={{
-                      padding: "24px",
-                      background: "var(--bg-main)",
-                      borderRadius: "12px",
-                      boxShadow: "var(--inner-shadow)",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "24px",
                     }}
                   >
-                    <h4
+                    {/* Average Rating Summary */}
+                    <div
                       style={{
-                        margin: "0 0 16px 0",
-                        fontSize: "1.1rem",
-                        color: "var(--text-primary)",
+                        padding: "24px",
+                        background: "var(--bg-main)",
+                        borderRadius: "12px",
+                        boxShadow: "var(--inner-shadow)",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "24px",
+                        flexWrap: "wrap",
                       }}
                     >
-                      Leave a Review
-                    </h4>
-                    <form onSubmit={submitReview}>
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "8px",
-                          marginBottom: "16px",
-                        }}
-                      >
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <button
-                            key={star}
-                            type="button"
-                            onClick={() => setReviewRating(star)}
-                            style={{
-                              background: "none",
-                              border: "none",
-                              cursor: "pointer",
-                              color:
-                                star <= reviewRating
-                                  ? "#f59e0b"
-                                  : "var(--border)",
-                              fontSize: "1.5rem",
-                              padding: 0,
-                            }}
-                          >
-                            ★
-                          </button>
-                        ))}
-                      </div>
-                      <textarea
-                        value={reviewText}
-                        onChange={(e) => setReviewText(e.target.value)}
-                        placeholder="Write your review here..."
-                        style={{
-                          width: "100%",
-                          height: "100px",
-                          padding: "25px",
-                          borderRadius: "25px",
-                          border: "1px solid var(--border)",
-                          background: "var(--bg-surface)",
-                          color: "var(--text-primary)",
-                          marginBottom: "16px",
-                          resize: "vertical",
-                          boxShadow: "var(--outer-shadow)",
-                          boxSizing: "border-box",
-                        }}
-                        required
-                      />
-                      <button
-                        type="submit"
-                        className="solid-btn"
-                        disabled={isSubmittingReview}
-                      >
-                        {isSubmittingReview ? "Submitting..." : "Submit Review"}
-                      </button>
-                    </form>
-                  </div>
-                )}
-
-                {reviews.length === 0 ? (
-                  <div
-                    style={{
-                      padding: "48px 32px",
-                      textAlign: "center",
-                      background: "var(--bg-main)",
-                      borderRadius: "12px",
-                      color: "var(--text-secondary)",
-                      boxShadow: "var(--inner-shadow)",
-                    }}
-                  >
-                    <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>📝</div>
-                    <div style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '6px' }}>{t('common.no_reviews_yet', 'No reviews yet')}</div>
-                    <div style={{ fontSize: '0.9rem' }}>{t('student.learning.be_first_review', 'Be the first to share your experience with this course!')}</div>
-                  </div>
-                ) : (
-                  reviews.map((review) => {
-                    const isOwner =
-                      user &&
-                      (review.student?._id === user._id ||
-                        review.student?._id === user.id);
-                    const isEditing = editingReviewId === review._id;
-
-                    if (isEditing) {
-                      return (
+                      <div style={{ textAlign: "center", minWidth: "80px" }}>
                         <div
-                          key={review._id}
                           style={{
-                            padding: "24px",
-                            background: "var(--bg-main)",
-                            borderRadius: "12px",
-                            boxShadow: "var(--inner-shadow)",
+                            fontSize: "2.5rem",
+                            fontWeight: "800",
+                            color: "var(--text-primary)",
+                            lineHeight: "1",
                           }}
                         >
-                          <h4
-                            style={{
-                              margin: "0 0 16px 0",
-                              fontSize: "1.1rem",
-                              color: "var(--text-primary)",
-                            }}
-                          >
-                            Edit Review
-                          </h4>
-                          <form onSubmit={updateReview}>
-                            <div
+                          {avgRating}
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "2px",
+                            justifyContent: "center",
+                            marginTop: "8px",
+                          }}
+                        >
+                          {[...Array(5)].map((_, i) => (
+                            <span
+                              key={i}
                               style={{
-                                display: "flex",
-                                gap: "8px",
-                                marginBottom: "16px",
+                                color:
+                                  i < Math.round(parseFloat(avgRating))
+                                    ? "#f59e0b"
+                                    : "var(--border)",
+                                fontSize: "1.1rem",
                               }}
                             >
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <button
-                                  key={star}
-                                  type="button"
-                                  onClick={() => setEditReviewRating(star)}
-                                  style={{
-                                    background: "none",
-                                    border: "none",
-                                    cursor: "pointer",
-                                    color:
-                                      star <= editReviewRating
-                                        ? "#f59e0b"
-                                        : "var(--border)",
-                                    fontSize: "1.5rem",
-                                    padding: 0,
-                                  }}
-                                >
-                                  ★
-                                </button>
-                              ))}
-                            </div>
-                            <textarea
-                              value={editReviewText}
-                              onChange={(e) =>
-                                setEditReviewText(e.target.value)
-                              }
-                              placeholder="Update your review..."
+                              ★
+                            </span>
+                          ))}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "0.85rem",
+                            color: "var(--text-secondary)",
+                            marginTop: "4px",
+                          }}
+                        >
+                          {reviews.length}{" "}
+                          {t(
+                            "course_page.review_label",
+                            reviews.length === 1 ? "review" : "reviews",
+                          )}
+                        </div>
+                      </div>
+                      {/* Rating breakdown bars */}
+                      <div
+                        style={{
+                          flex: 1,
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "6px",
+                          minWidth: "200px",
+                        }}
+                      >
+                        {[5, 4, 3, 2, 1].map((star) => {
+                          const count = reviews.filter(
+                            (r) => r.rating === star,
+                          ).length;
+                          const pct =
+                            reviews.length > 0
+                              ? (count / reviews.length) * 100
+                              : 0;
+                          return (
+                            <div
+                              key={star}
                               style={{
-                                width: "100%",
-                                height: "100px",
-                                padding: "25px",
-                                borderRadius: "25px",
-                                border: "1px solid var(--border)",
-                                background: "var(--bg-surface)",
-                                color: "var(--text-primary)",
-                                marginBottom: "16px",
-                                resize: "vertical",
-                                boxShadow: "var(--outer-shadow)",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
                               }}
-                              required
-                            />
-                            <div style={{ display: "flex", gap: "12px" }}>
-                              <button
-                                type="submit"
-                                className="solid-btn"
-                                disabled={isUpdatingReview}
-                              >
-                                {isUpdatingReview ? "Saving..." : "Save"}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={cancelEditReview}
+                            >
+                              <span
                                 style={{
-                                  padding: "12px 24px",
-                                  borderRadius: "50px",
-                                  border: "1px solid var(--border)",
-                                  background: "transparent",
-                                  color: "var(--text-primary)",
-                                  fontWeight: "600",
-                                  cursor: "pointer",
+                                  fontSize: "0.8rem",
+                                  color: "var(--text-secondary)",
+                                  width: "16px",
+                                  textAlign: "right",
                                 }}
                               >
-                                Cancel
-                              </button>
+                                {star}
+                              </span>
+                              <span
+                                style={{
+                                  color: "#f59e0b",
+                                  fontSize: "0.85rem",
+                                }}
+                              >
+                                ★
+                              </span>
+                              <div
+                                style={{
+                                  flex: 1,
+                                  height: "8px",
+                                  borderRadius: "4px",
+                                  background: "var(--bg-surface)",
+                                  overflow: "hidden",
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    width: `${pct}%`,
+                                    height: "100%",
+                                    borderRadius: "4px",
+                                    background: "#f59e0b",
+                                    transition: "width 0.3s ease",
+                                  }}
+                                />
+                              </div>
+                              <span
+                                style={{
+                                  fontSize: "0.8rem",
+                                  color: "var(--text-secondary)",
+                                  width: "24px",
+                                }}
+                              >
+                                {count}
+                              </span>
                             </div>
-                          </form>
-                        </div>
-                      );
-                    }
+                          );
+                        })}
+                      </div>
+                    </div>
 
-                    return (
+                    {isEnrolled && !hasReviewed && (
                       <div
-                        key={review._id}
                         style={{
                           padding: "24px",
                           background: "var(--bg-main)",
                           borderRadius: "12px",
                           boxShadow: "var(--inner-shadow)",
-                          position: "relative",
                         }}
                       >
-                        {isOwner && (
+                        <h4
+                          style={{
+                            margin: "0 0 16px 0",
+                            fontSize: "1.1rem",
+                            color: "var(--text-primary)",
+                          }}
+                        >
+                          Leave a Review
+                        </h4>
+                        <form onSubmit={submitReview}>
                           <div
                             style={{
-                              position: "absolute",
-                              top: "16px",
-                              insetInlineEnd: "16px",
+                              display: "flex",
+                              gap: "8px",
+                              marginBottom: "16px",
                             }}
                           >
-                            <ThreeDotMenu
-                              options={[
-                                {
-                                  label: t('common.edit', 'Edit'),
-                                  action: () => handleEditReviewClick(review),
-                                },
-                                {
-                                  label: t('common.delete', 'Delete'),
-                                  action: () => handleDeleteReview(review._id),
-                                  danger: true,
-                                },
-                              ]}
-                            />
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <button
+                                key={star}
+                                type="button"
+                                onClick={() => setReviewRating(star)}
+                                style={{
+                                  background: "none",
+                                  border: "none",
+                                  cursor: "pointer",
+                                  color:
+                                    star <= reviewRating
+                                      ? "#f59e0b"
+                                      : "var(--border)",
+                                  fontSize: "1.5rem",
+                                  padding: 0,
+                                }}
+                              >
+                                ★
+                              </button>
+                            ))}
                           </div>
-                        )}
+                          <textarea
+                            value={reviewText}
+                            onChange={(e) => setReviewText(e.target.value)}
+                            placeholder="Write your review here..."
+                            style={{
+                              width: "100%",
+                              height: "100px",
+                              padding: "25px",
+                              borderRadius: "25px",
+                              border: "1px solid var(--border)",
+                              background: "var(--bg-surface)",
+                              color: "var(--text-primary)",
+                              marginBottom: "16px",
+                              resize: "vertical",
+                              boxShadow: "var(--outer-shadow)",
+                              boxSizing: "border-box",
+                            }}
+                            required
+                          />
+                          <button
+                            type="submit"
+                            className="solid-btn"
+                            disabled={isSubmittingReview}
+                          >
+                            {isSubmittingReview
+                              ? "Submitting..."
+                              : "Submit Review"}
+                          </button>
+                        </form>
+                      </div>
+                    )}
+
+                    {reviews.length === 0 ? (
+                      <div
+                        style={{
+                          padding: "48px 32px",
+                          textAlign: "center",
+                          background: "var(--bg-main)",
+                          borderRadius: "12px",
+                          color: "var(--text-secondary)",
+                          boxShadow: "var(--inner-shadow)",
+                        }}
+                      >
+                        <div
+                          style={{ fontSize: "2.5rem", marginBottom: "12px" }}
+                        >
+                          📝
+                        </div>
                         <div
                           style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "12px",
-                            marginBottom: "12px",
+                            fontSize: "1.1rem",
+                            fontWeight: "600",
+                            color: "var(--text-primary)",
+                            marginBottom: "6px",
                           }}
                         >
-                          {review.student?.avatarUrl ? (
-                            <img
-                              src={review.student.avatarUrl}
-                              alt={`${review.student.name || 'Student'}'s profile picture`}
-                              style={{
-                                width: "40px",
-                                height: "40px",
-                                borderRadius: "50%",
-                                objectFit: "cover",
-                              }}
-                            />
-                          ) : (
-                            <div
-                              style={{
-                                width: "40px",
-                                height: "40px",
-                                borderRadius: "50%",
-                                background: "var(--bg-surface)",
-                                border: "1px solid var(--border)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                fontWeight: "700",
-                              }}
-                            >
-                              {(review.student?.name || "A")
-                                .charAt(0)
-                                .toUpperCase()}
-                            </div>
+                          {t("common.no_reviews_yet", "No reviews yet")}
+                        </div>
+                        <div style={{ fontSize: "0.9rem" }}>
+                          {t(
+                            "student.learning.be_first_review",
+                            "Be the first to share your experience with this course!",
                           )}
-                          <div>
+                        </div>
+                      </div>
+                    ) : (
+                      reviews.map((review) => {
+                        const isOwner =
+                          user &&
+                          (review.student?._id === user._id ||
+                            review.student?._id === user.id);
+                        const isEditing = editingReviewId === review._id;
+
+                        if (isEditing) {
+                          return (
                             <div
+                              key={review._id}
                               style={{
-                                fontWeight: "600",
-                                color: "var(--text-primary)",
+                                padding: "24px",
+                                background: "var(--bg-main)",
+                                borderRadius: "12px",
+                                boxShadow: "var(--inner-shadow)",
                               }}
                             >
-                              {review.student?.name || "Anonymous"}
-                            </div>
-                            <div
-                              style={{
-                                display: "flex",
-                                gap: "4px",
-                                color: "#f59e0b",
-                                fontSize: "0.9rem",
-                              }}
-                            >
-                              {[...Array(5)].map((_, i) => (
-                                <span
-                                  key={i}
+                              <h4
+                                style={{
+                                  margin: "0 0 16px 0",
+                                  fontSize: "1.1rem",
+                                  color: "var(--text-primary)",
+                                }}
+                              >
+                                Edit Review
+                              </h4>
+                              <form onSubmit={updateReview}>
+                                <div
                                   style={{
-                                    color:
-                                      i < review.rating
-                                        ? "#f59e0b"
-                                        : "var(--border)",
+                                    display: "flex",
+                                    gap: "8px",
+                                    marginBottom: "16px",
                                   }}
                                 >
-                                  ★
-                                </span>
-                              ))}
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <button
+                                      key={star}
+                                      type="button"
+                                      onClick={() => setEditReviewRating(star)}
+                                      style={{
+                                        background: "none",
+                                        border: "none",
+                                        cursor: "pointer",
+                                        color:
+                                          star <= editReviewRating
+                                            ? "#f59e0b"
+                                            : "var(--border)",
+                                        fontSize: "1.5rem",
+                                        padding: 0,
+                                      }}
+                                    >
+                                      ★
+                                    </button>
+                                  ))}
+                                </div>
+                                <textarea
+                                  value={editReviewText}
+                                  onChange={(e) =>
+                                    setEditReviewText(e.target.value)
+                                  }
+                                  placeholder="Update your review..."
+                                  style={{
+                                    width: "100%",
+                                    height: "100px",
+                                    padding: "25px",
+                                    borderRadius: "25px",
+                                    border: "1px solid var(--border)",
+                                    background: "var(--bg-surface)",
+                                    color: "var(--text-primary)",
+                                    marginBottom: "16px",
+                                    resize: "vertical",
+                                    boxShadow: "var(--outer-shadow)",
+                                  }}
+                                  required
+                                />
+                                <div style={{ display: "flex", gap: "12px" }}>
+                                  <button
+                                    type="submit"
+                                    className="solid-btn"
+                                    disabled={isUpdatingReview}
+                                  >
+                                    {isUpdatingReview ? "Saving..." : "Save"}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={cancelEditReview}
+                                    style={{
+                                      padding: "12px 24px",
+                                      borderRadius: "12px",
+                                      border: "1px solid var(--border)",
+                                      background: "transparent",
+                                      color: "var(--text-primary)",
+                                      fontWeight: "600",
+                                      cursor: "pointer",
+                                    }}
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </form>
                             </div>
+                          );
+                        }
+
+                        return (
+                          <div
+                            key={review._id}
+                            style={{
+                              padding: "24px",
+                              background: "var(--bg-main)",
+                              borderRadius: "12px",
+                              boxShadow: "var(--inner-shadow)",
+                              position: "relative",
+                            }}
+                          >
+                            {isOwner && (
+                              <div
+                                style={{
+                                  position: "absolute",
+                                  top: "16px",
+                                  insetInlineEnd: "16px",
+                                }}
+                              >
+                                <ThreeDotMenu
+                                  options={[
+                                    {
+                                      label: t("common.edit", "Edit"),
+                                      action: () =>
+                                        handleEditReviewClick(review),
+                                    },
+                                    {
+                                      label: t("common.delete", "Delete"),
+                                      action: () =>
+                                        handleDeleteReview(review._id),
+                                      danger: true,
+                                    },
+                                  ]}
+                                />
+                              </div>
+                            )}
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "12px",
+                                marginBottom: "12px",
+                              }}
+                            >
+                              {review.student?.avatarUrl ? (
+                                <img
+                                  src={review.student.avatarUrl}
+                                  alt={`${review.student.name || "Student"}'s profile picture`}
+                                  style={{
+                                    width: "40px",
+                                    height: "40px",
+                                    borderRadius: "50%",
+                                    objectFit: "cover",
+                                  }}
+                                />
+                              ) : (
+                                <div
+                                  style={{
+                                    width: "40px",
+                                    height: "40px",
+                                    borderRadius: "50%",
+                                    background: "var(--bg-surface)",
+                                    border: "1px solid var(--border)",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    fontWeight: "700",
+                                  }}
+                                >
+                                  {(review.student?.name || "A")
+                                    .charAt(0)
+                                    .toUpperCase()}
+                                </div>
+                              )}
+                              <div>
+                                <div
+                                  style={{
+                                    fontWeight: "600",
+                                    color: "var(--text-primary)",
+                                  }}
+                                >
+                                  {review.student?.name || "Anonymous"}
+                                </div>
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    gap: "4px",
+                                    color: "#f59e0b",
+                                    fontSize: "0.9rem",
+                                  }}
+                                >
+                                  {[...Array(5)].map((_, i) => (
+                                    <span
+                                      key={i}
+                                      style={{
+                                        color:
+                                          i < review.rating
+                                            ? "#f59e0b"
+                                            : "var(--border)",
+                                      }}
+                                    >
+                                      ★
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                            <p
+                              style={{
+                                margin: 0,
+                                color: "var(--text-secondary)",
+                                lineHeight: "1.6",
+                              }}
+                            >
+                              {review.text}
+                            </p>
                           </div>
-                        </div>
-                        <p
-                          style={{
-                            margin: 0,
-                            color: "var(--text-secondary)",
-                            lineHeight: "1.6",
-                          }}
-                        >
-                          {review.text}
-                        </p>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-              );
-            })()}
+                        );
+                      })
+                    )}
+                  </div>
+                );
+              })()}
           </div>
         </div>
 
@@ -1039,7 +1300,7 @@ export default function CoursePage({ cart = [], setCart, user }) {
             }}
           >
             {isEnrolled ? (
-              enrollStatus === 'pending' ? (
+              enrollStatus === "pending" ? (
                 <button
                   className="solid-btn"
                   style={{
@@ -1052,7 +1313,7 @@ export default function CoursePage({ cart = [], setCart, user }) {
                   }}
                   disabled
                 >
-                  {t('admin.pending_approval', 'Pending Approval')}
+                  {t("admin.pending_approval", "Pending Approval")}
                 </button>
               ) : (
                 <button
@@ -1103,7 +1364,7 @@ export default function CoursePage({ cart = [], setCart, user }) {
                   background: "var(--bg-main)",
                   boxShadow: "var(--inner-shadow)",
                   border: "1px solid var(--border)",
-                  borderRadius: "50px",
+                  borderRadius: "12px",
                   color: "var(--text-primary)",
                   fontWeight: "700",
                   fontSize: "1.05rem",
@@ -1134,31 +1395,85 @@ export default function CoursePage({ cart = [], setCart, user }) {
       </div>
 
       {standaloneLessons.length > 0 && (
-        <div style={{ maxWidth: '1200px', margin: '32px auto 0', padding: '0 24px' }}>
-          <h3 style={{ fontSize: '1.3rem', fontWeight: '700', marginBottom: '16px' }}>
-            {t('course_page.standalone.section_title', 'Related Standalone Lessons')}
+        <div
+          style={{
+            maxWidth: "1200px",
+            margin: "32px auto 0",
+            padding: "0 24px",
+          }}
+        >
+          <h3
+            style={{
+              fontSize: "1.3rem",
+              fontWeight: "700",
+              marginBottom: "16px",
+            }}
+          >
+            {t(
+              "course_page.standalone.section_title",
+              "Related Standalone Lessons",
+            )}
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '16px' }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+              gap: "16px",
+            }}
+          >
             {standaloneLessons.map((lesson) => {
               const alreadyPurchased = purchasedStandaloneIds.has(lesson._id);
               return (
-                <div key={lesson._id} className="solid-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--c-sub)', fontWeight: 600 }}>
-                    {t('course_page.standalone.related_to', 'Related to: {{course}}', { course: course.title })}
+                <div
+                  key={lesson._id}
+                  className="solid-card"
+                  style={{
+                    padding: "20px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "8px",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "0.75rem",
+                      color: "var(--c-sub)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {t(
+                      "course_page.standalone.related_to",
+                      "Related to: {{course}}",
+                      { course: course.title },
+                    )}
                   </div>
-                  <div style={{ fontWeight: 700, fontSize: '1.05rem' }}>{lesson.title}</div>
-                  <div style={{ color: 'var(--text)', fontSize: '0.9rem', flex: 1 }}>{lesson.description}</div>
-                  <div style={{ fontWeight: 700 }}>{lesson.price > 0 ? `EGP ${lesson.price}` : t('course_page.free', 'Free')}</div>
+                  <div style={{ fontWeight: 700, fontSize: "1.05rem" }}>
+                    {lesson.title}
+                  </div>
+                  <div
+                    style={{
+                      color: "var(--text)",
+                      fontSize: "0.9rem",
+                      flex: 1,
+                    }}
+                  >
+                    {lesson.description}
+                  </div>
+                  <div style={{ fontWeight: 700 }}>
+                    {lesson.price > 0
+                      ? `EGP ${lesson.price}`
+                      : t("course_page.free", "Free")}
+                  </div>
                   <button
                     type="button"
                     disabled={alreadyPurchased || isPurchasingStandalone}
                     onClick={() => handleStandaloneLessonClick(lesson)}
                     className="solid-btn"
-                    style={{ marginTop: '8px' }}
+                    style={{ marginTop: "8px" }}
                   >
                     {alreadyPurchased
-                      ? t('course_page.standalone.owned', 'Purchased')
-                      : t('course_page.standalone.buy', 'Purchase')}
+                      ? t("course_page.standalone.owned", "Purchased")
+                      : t("course_page.standalone.buy", "Purchase")}
                   </button>
                 </div>
               );
@@ -1180,7 +1495,12 @@ export default function CoursePage({ cart = [], setCart, user }) {
         <PaymentModal
           course={purchasingStandaloneLesson}
           isEnrolling={isPurchasingStandalone}
-          onConfirm={(paymentDetails) => handlePurchaseStandaloneLesson(purchasingStandaloneLesson, paymentDetails)}
+          onConfirm={(paymentDetails) =>
+            handlePurchaseStandaloneLesson(
+              purchasingStandaloneLesson,
+              paymentDetails,
+            )
+          }
           onCancel={() => setPurchasingStandaloneLesson(null)}
         />
       )}

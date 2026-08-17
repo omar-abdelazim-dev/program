@@ -395,7 +395,7 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                                 transition: 'all 0.25s', 
                                 transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
                                 padding: '6px',
-                                borderRadius: '50px',
+                                borderRadius: '12px',
                                 boxShadow: hoveredModuleId === module._id ? 'var(--inner-shadow, inset 0 2px 4px 0 rgba(0,0,0,0.06))' : 'none'
                               }}
                               title={isCollapsed ? 'Expand' : 'Collapse'}
@@ -533,14 +533,14 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                                       {(() => {
                                         const isPublished = (pendingStatuses[lesson._id] || lesson.status) === 'published';
                                         return (
-                                          <div style={{ position: 'relative', display: 'flex', background: 'var(--bg-surface)', padding: '4px', borderRadius: '50px', boxShadow: 'var(--outer-shadow)', width: '180px', height: '34px' }}>
+                                          <div style={{ position: 'relative', display: 'flex', background: 'var(--bg-surface)', padding: '4px', borderRadius: '12px', boxShadow: 'var(--outer-shadow)', width: '180px', height: '34px' }}>
                                             <div style={{
                                               position: 'absolute',
                                               top: '4px',
                                               insetInlineStart: isPublished ? '50%' : '4px',
                                               width: 'calc(50% - 4px)',
                                               height: 'calc(100% - 8px)',
-                                              borderRadius: '50px',
+                                              borderRadius: '12px',
                                               background: 'var(--bg-main)',
                                               boxShadow: 'var(--inner-shadow)',
                                               transition: 'inset-inline-start 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -548,13 +548,13 @@ export default function CurriculumBuilderTab({ courses = [], modulesByCourse = {
                                             }} />
                                             <button
                                               onClick={() => { if (isPublished) handleTogglePublish(selectedCourseId, lesson); }}
-                                              style={{ flex: 1, position: 'relative', zIndex: 1, padding: '0', borderRadius: '50px', border: 'none', background: 'transparent', color: !isPublished ? 'var(--text-h)' : 'var(--c-sub)', cursor: 'pointer', fontWeight: !isPublished ? '600' : '400', transition: 'color 0.3s, font-weight 0.3s', fontSize: '0.82rem' }}
+                                              style={{ flex: 1, position: 'relative', zIndex: 1, padding: '0', borderRadius: '12px', border: 'none', background: 'transparent', color: !isPublished ? 'var(--text-h)' : 'var(--c-sub)', cursor: 'pointer', fontWeight: !isPublished ? '600' : '400', transition: 'color 0.3s, font-weight 0.3s', fontSize: '0.82rem' }}
                                             >
                                               {t('instructor.dashboard.status.draft', 'Draft')}
                                             </button>
                                             <button
                                               onClick={() => { if (!isPublished) handleTogglePublish(selectedCourseId, lesson); }}
-                                              style={{ flex: 1, position: 'relative', zIndex: 1, padding: '0', borderRadius: '50px', border: 'none', background: 'transparent', color: isPublished ? 'var(--text-h)' : 'var(--c-sub)', cursor: 'pointer', fontWeight: isPublished ? '600' : '400', transition: 'color 0.3s, font-weight 0.3s', fontSize: '0.82rem' }}
+                                              style={{ flex: 1, position: 'relative', zIndex: 1, padding: '0', borderRadius: '12px', border: 'none', background: 'transparent', color: isPublished ? 'var(--text-h)' : 'var(--c-sub)', cursor: 'pointer', fontWeight: isPublished ? '600' : '400', transition: 'color 0.3s, font-weight 0.3s', fontSize: '0.82rem' }}
                                             >
                                               {t('instructor.dashboard.status.published', 'Published')}
                                             </button>

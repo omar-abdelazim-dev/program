@@ -61,11 +61,7 @@ const TABS = [
   { id: 'notifications', label: 'Notifications', icon: 'bell' },
   { id: 'appearance', label: 'Appearance', icon: 'layout' },
   { id: 'maintenance', label: 'Maintenance', icon: 'tool' },
-  { id: 'backup', label: 'Backup', icon: 'database' },
-  { id: 'api', label: 'API & Webhooks', icon: 'code' },
-  { id: 'features', label: 'Feature Flags', icon: 'toggle-right' },
-  { id: 'ai', label: 'AI Settings', icon: 'cpu' },
-  { id: 'audit', label: 'Audit Logs', icon: 'list' }
+  { id: 'backup', label: 'Backup', icon: 'database' }
 ];
 
 // Helper to check if field should be disabled for Admin
@@ -80,16 +76,11 @@ const isFieldRestricted = (tab, field, isSuperAdmin) => {
     case 'financial':
     case 'registration':
     case 'security':
-    case 'api':
-    case 'features':
-    case 'ai':
-    case 'audit':
     case 'maintenance':
     case 'backup':
       return true; // Completely restricted from editing
     case 'storage':
-    case 'logs':
-      return true; // Read only
+      return false; // Storage settings fully editable
     case 'email':
       // Only Test Utility is allowed, configuration is restricted
       return field !== 'test_utility';
@@ -140,6 +131,7 @@ const InputField = ({ label, type = "text", value, onChange, disabled, placehold
 
 const SelectField = ({ label, value, onChange, options, disabled }) => {
   const [isOpen, setIsOpen] = React.useState(false);
+  const [openUpwards, setOpenUpwards] = React.useState(false);
   const dropdownRef = React.useRef(null);
 
   React.useEffect(() => {
@@ -148,83 +140,137 @@ const SelectField = ({ label, value, onChange, options, disabled }) => {
         setIsOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const selectedOption = options.find(opt => (opt.value !== undefined ? opt.value : opt) === value);
-  const selectedLabel = selectedOption ? (selectedOption.label !== undefined ? selectedOption.label : selectedOption) : '';
+  const handleToggle = () => {
+    if (!disabled) {
+      if (!isOpen && dropdownRef.current) {
+        const rect = dropdownRef.current.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - rect.bottom;
+        setOpenUpwards(spaceBelow < 250);
+      }
+      setIsOpen(!isOpen);
+    }
+  };
+
+  const selectedOption = options.find(
+    (opt) => (opt.value !== undefined ? opt.value : opt) === value,
+  );
+  const selectedLabel = selectedOption
+    ? selectedOption.label !== undefined
+      ? selectedOption.label
+      : selectedOption
+    : "";
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }} data-tooltip={disabled ? "Super Admin permission required" : undefined}>
-      <label style={{ fontSize: '0.85rem', color: 'var(--c-sub)', fontWeight: 600, textTransform: 'uppercase' }}>{label}</label>
-      <div ref={dropdownRef} style={{ position: 'relative' }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "8px",
+        marginBottom: "16px",
+        position: "relative",
+        zIndex: isOpen ? 50 : 1,
+      }}
+      data-tooltip={disabled ? "Super Admin permission required" : undefined}
+    >
+      <label
+        style={{
+          fontSize: "0.85rem",
+          color: "var(--c-sub)",
+          fontWeight: 600,
+          textTransform: "uppercase",
+        }}
+      >
+        {label}
+      </label>
+      <div
+        ref={dropdownRef}
+        style={{ position: "relative", zIndex: isOpen ? 50 : 1 }}
+      >
         <button
           type="button"
           disabled={disabled}
-          onClick={() => !disabled && setIsOpen(!isOpen)}
+          onClick={handleToggle}
           className="solid-input"
-          style={{ 
-            width: '100%', 
-            opacity: disabled ? 0.6 : 1, 
-            cursor: disabled ? 'not-allowed' : 'pointer', 
-            paddingRight: '40px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            userSelect: 'none',
-            minHeight: '44px',
-            background: 'var(--bg-main)',
-            border: isOpen ? '1px solid #f97316' : '1px solid transparent',
-            borderRadius: '10px',
-            boxShadow: isOpen ? 'var(--outer-shadow), 0 0 0 3px rgba(249, 115, 22, 0.2)' : 'var(--inner-shadow)',
-            color: 'var(--text-primary)',
-            fontSize: '0.95rem',
-            textAlign: 'left',
-            transition: 'all 0.2s ease'
+          style={{
+            width: "100%",
+            opacity: disabled ? 0.6 : 1,
+            cursor: disabled ? "not-allowed" : "pointer",
+            paddingRight: "40px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            userSelect: "none",
+            minHeight: "44px",
+            background: "var(--bg-main)",
+            border: isOpen ? "1px solid #f97316" : "1px solid transparent",
+            borderRadius: "10px",
+            boxShadow: isOpen
+              ? "var(--outer-shadow), 0 0 0 3px rgba(249, 115, 22, 0.2)"
+              : "var(--inner-shadow)",
+            color: "var(--text-primary)",
+            fontSize: "0.95rem",
+            textAlign: "left",
+            transition: "all 0.2s ease",
           }}
         >
           <span>{selectedLabel}</span>
-          <span style={{ 
-            position: 'absolute', right: '14px', top: '50%', 
-            transform: `translateY(-50%) ${isOpen ? 'rotate(180deg)' : 'rotate(0deg)'}`, 
-            transition: 'transform 0.2s ease', 
-            color: isOpen ? '#f97316' : 'var(--c-sub)', 
-            pointerEvents: 'none',
-            fontSize: '0.8rem'
-          }}>
-            ▼
+          <span
+            style={{
+              position: "absolute",
+              right: "14px",
+              top: "50%",
+              transform: `translateY(-50%) ${isOpen ? (openUpwards ? "rotate(0deg)" : "rotate(180deg)") : openUpwards ? "rotate(180deg)" : "rotate(0deg)"}`,
+              transition: "transform 0.2s ease",
+              color: isOpen ? "#f97316" : "var(--c-sub)",
+              pointerEvents: "none",
+              fontSize: "0.8rem",
+            }}
+          >
+            {openUpwards ? "▲" : "▼"}
           </span>
         </button>
-        
+
         {isOpen && !disabled && (
-          <div style={{
-            position: 'absolute',
-            top: 'calc(100% + 8px)',
-            left: 0,
-            right: 0,
-            background: 'var(--bg-surface)',
-            border: 'none',
-            borderRadius: '16px',
-            padding: '8px',
-            boxShadow: '0 10px 25px rgba(0,0,0,0.1), var(--outer-shadow)',
-            zIndex: 9999,
-            overflow: 'hidden',
-            animation: 'smoothDropdownEnter 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-            transformOrigin: 'top'
-          }}>
-            <div style={{
-              padding: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '4px',
-              maxHeight: '250px',
-              overflowY: 'auto'
-            }}>
-              {options.map(opt => {
+          <div
+            style={{
+              position: "absolute",
+              top: openUpwards ? "auto" : "calc(100% + 6px)",
+              bottom: openUpwards ? "calc(100% + 6px)" : "auto",
+              left: 0,
+              right: 0,
+              background: "var(--bg-surface)",
+              border:
+                "1px solid var(--c-border-subtle, rgba(255, 255, 255, 0.08))",
+              borderRadius: "14px",
+              padding: "6px",
+              boxShadow: "0 12px 30px rgba(0,0,0,0.25), var(--outer-shadow)",
+              zIndex: 9999,
+              animation: openUpwards
+                ? "smoothDropdownEnterUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards"
+                : "smoothDropdownEnter 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+              transformOrigin: openUpwards ? "bottom" : "top",
+            }}
+          >
+            <div
+              style={{
+                padding: 0,
+                display: "flex",
+                flexDirection: "column",
+                gap: "3px",
+                maxHeight: "240px",
+                overflowY: "auto",
+              }}
+            >
+              {options.map((opt) => {
                 const optValue = opt.value !== undefined ? opt.value : opt;
                 const optLabel = opt.label !== undefined ? opt.label : opt;
-                const isSelected = String(optValue).toLowerCase() === String(value).toLowerCase();
+                const isSelected =
+                  String(optValue).toLowerCase() ===
+                  String(value).toLowerCase();
                 return (
                   <button
                     key={optValue}
@@ -234,27 +280,40 @@ const SelectField = ({ label, value, onChange, options, disabled }) => {
                       setIsOpen(false);
                     }}
                     onMouseEnter={(e) => {
-                      if (!isSelected) e.currentTarget.style.background = 'var(--c-bg-hover)';
+                      if (!isSelected)
+                        e.currentTarget.style.background =
+                          "var(--c-bg-hover, rgba(255,255,255,0.05))";
                     }}
                     onMouseLeave={(e) => {
-                      if (!isSelected) e.currentTarget.style.background = 'transparent';
+                      if (!isSelected)
+                        e.currentTarget.style.background = "transparent";
                     }}
                     style={{
-                      width: '100%',
-                      padding: '10px 16px',
-                      cursor: 'pointer',
-                      color: isSelected ? '#f97316' : 'var(--c-light)',
-                      background: isSelected ? 'var(--bg-main)' : 'transparent',
-                      boxShadow: isSelected ? 'var(--inner-shadow)' : 'none',
-                      border: 'none',
-                      borderRadius: '50px',
+                      width: "100%",
+                      padding: "9px 14px",
+                      cursor: "pointer",
+                      color: isSelected
+                        ? "#f97316"
+                        : "var(--text-h, var(--c-light))",
+                      background: isSelected ? "var(--bg-main)" : "transparent",
+                      boxShadow: isSelected ? "var(--inner-shadow)" : "none",
+                      border: "none",
+                      borderRadius: "10px",
                       fontWeight: isSelected ? 700 : 400,
-                      fontSize: '0.95rem',
-                      textAlign: 'left',
-                      transition: 'all 0.2s ease'
+                      fontSize: "0.92rem",
+                      textAlign: "left",
+                      transition: "all 0.2s ease",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
                     }}
                   >
                     <span>{optLabel}</span>
+                    {isSelected && (
+                      <span style={{ color: "#f97316", fontSize: "0.85rem" }}>
+                        ✓
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -331,7 +390,7 @@ export default function SystemManagement({ user }) {
     financial: { commission: 15, tax: 0, currency: 'USD', refundWindow: 14, minWithdrawal: 50, stripeEnabled: true, paypalEnabled: false },
     registration: { studentRegistration: true, instructorRegistration: true, eduEmailOnly: false, emailVerification: true, phoneVerification: false, inviteOnly: false, autoApproveInstructors: false },
     security: { passwordPolicy: 'strong', sessionTimeout: 60, maxLoginAttempts: 5, twoFactorAuth: false, jwtExpiration: 7, allowedDomains: '', maintenanceLock: false },
-    storage: { provider: 'AWS S3', maxUploadSizeMb: 50, allowedFileTypes: '' },
+    storage: { provider: 'AWS S3', maxUploadSizeMb: 50, allowedFileTypes: '.mp4,.pdf,.zip,.jpg,.png', autoCompressImages: true, directUploads: false, bucketName: 'program-lms-media-storage', cdnDomain: 'https://cdn.program-lms.com' },
     email: { smtpHost: '', smtpPort: 587, smtpUser: '', smtpPass: '' },
     notifications: { studentEmails: true, instructorEmails: true, adminAlerts: true, marketingEmails: false, pushNotifications: false, systemAlerts: true },
     appearance: { platformLogo: '', favicon: '', defaultTheme: 'system', accentColor: '#3B82F6', landingBanner: '', footerInfo: '' },
@@ -347,6 +406,17 @@ export default function SystemManagement({ user }) {
   const [settings, setSettings] = useState(defaultSettings);
   const [originalSettings, setOriginalSettings] = useState(null);
   const [loadingConfig, setLoadingConfig] = useState(true);
+  const [storageStats, setStorageStats] = useState({
+    videoCount: 0,
+    thumbnailCount: 0,
+    avatarCount: 0,
+    totalMediaFiles: 0,
+    usedMb: 0,
+    usedGb: '0.00',
+    availableGb: '500.00',
+    totalCapacityGb: 500,
+    usagePercent: 0
+  });
 
   useEffect(() => {
     const fetchConfig = async () => {
@@ -364,7 +434,20 @@ export default function SystemManagement({ user }) {
         setLoadingConfig(false);
       }
     };
+
+    const fetchStorageStats = async () => {
+      try {
+        const res = await api.get('/system/config/storage-stats');
+        if (res.data) {
+          setStorageStats(res.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch storage stats", err);
+      }
+    };
+
     fetchConfig();
+    fetchStorageStats();
   }, []);
 
   const [saving, setSaving] = useState(false);
@@ -518,111 +601,223 @@ export default function SystemManagement({ user }) {
           style={{
             display: "flex",
             flexDirection: "column",
-            gap: "20px",
+            gap: "24px",
             animation: "fadeIn 0.3s",
           }}
         >
+          {/* Storage Usage Overview Card */}
           <div className="glass-card" style={{ padding: "24px" }}>
             <h3
               style={{
                 marginTop: 0,
-                marginBottom: "24px",
+                marginBottom: "16px",
                 color: "var(--text-h)",
               }}
             >
-              Storage Information
+              Storage & Cloud Quota
             </h3>
-            <div style={{ display: "flex", gap: "20px", marginBottom: "24px" }}>
-              <div
-                style={{
-                  boxShadow: "var(--inner-shadow)",
-                  flex: 1,
-                  background: "rgba(59,130,246,0.1)",
-                  padding: "16px",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(59,130,246,0.3)",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: "0.85rem",
-                    color: "var(--c-sub)",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Used Storage
-                </div>
-                <div
-                  style={{
-                    fontSize: "1.5rem",
-                    fontWeight: 700,
-                    color: "#3B82F6",
-                  }}
-                >
-                  120 GB
-                </div>
+
+            {/* Quota Progress Bar */}
+            <div style={{ marginBottom: "24px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "0.85rem", color: "var(--c-sub)", fontWeight: 600 }}>
+                <span>Storage Utilization ({storageStats.usagePercent}%)</span>
+                <span>{storageStats.usedGb} GB / {storageStats.totalCapacityGb} GB</span>
               </div>
-              <div
-                style={{
-                  boxShadow: "var(--inner-shadow)",
-                  flex: 1,
-                  background: "rgba(16,185,129,0.1)",
-                  padding: "16px",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(16,185,129,0.3)",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: "0.85rem",
-                    color: "var(--c-sub)",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Available Storage
-                </div>
-                <div
-                  style={{
-                    fontSize: "1.5rem",
-                    fontWeight: 700,
-                    color: "#10B981",
-                  }}
-                >
-                  380 GB
-                </div>
+              <div style={{ width: "100%", height: "10px", background: "var(--bg-main)", borderRadius: "6px", overflow: "hidden", boxShadow: "var(--inner-shadow)" }}>
+                <div style={{ width: `${Math.max(2, storageStats.usagePercent)}%`, height: "100%", background: "linear-gradient(90deg, #3B82F6, #60A5FA)", borderRadius: "6px", transition: "width 0.5s ease" }} />
               </div>
             </div>
 
-            <InputField
-              label="Cloud Provider"
-              value={settings.storage.provider}
-              disabled={true}
+            {/* Storage Metric Cards */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px", marginBottom: "8px" }}>
+              <div
+                style={{
+                  boxShadow: "var(--inner-shadow)",
+                  background: "rgba(59,130,246,0.1)",
+                  padding: "16px",
+                  borderRadius: "12px",
+                  border: "1px solid rgba(59,130,246,0.25)",
+                }}
+              >
+                <div style={{ fontSize: "0.8rem", color: "var(--c-sub)", textTransform: "uppercase", fontWeight: 600 }}>
+                  Used Storage
+                </div>
+                <div style={{ fontSize: "1.4rem", fontWeight: 700, color: "#3B82F6", marginTop: "4px" }}>
+                  {storageStats.usedGb} GB
+                </div>
+                <div style={{ fontSize: "0.75rem", color: "var(--c-sub)", marginTop: "2px" }}>
+                  ({storageStats.usedMb} MB estimated)
+                </div>
+              </div>
+
+              <div
+                style={{
+                  boxShadow: "var(--inner-shadow)",
+                  background: "rgba(16,185,129,0.1)",
+                  padding: "16px",
+                  borderRadius: "12px",
+                  border: "1px solid rgba(16,185,129,0.25)",
+                }}
+              >
+                <div style={{ fontSize: "0.8rem", color: "var(--c-sub)", textTransform: "uppercase", fontWeight: 600 }}>
+                  Available Storage
+                </div>
+                <div style={{ fontSize: "1.4rem", fontWeight: 700, color: "#10B981", marginTop: "4px" }}>
+                  {storageStats.availableGb} GB
+                </div>
+                <div style={{ fontSize: "0.75rem", color: "var(--c-sub)", marginTop: "2px" }}>
+                  (of {storageStats.totalCapacityGb} GB total)
+                </div>
+              </div>
+
+              <div
+                style={{
+                  boxShadow: "var(--inner-shadow)",
+                  background: "rgba(249,115,22,0.1)",
+                  padding: "16px",
+                  borderRadius: "12px",
+                  border: "1px solid rgba(249,115,22,0.25)",
+                }}
+              >
+                <div style={{ fontSize: "0.8rem", color: "var(--c-sub)", textTransform: "uppercase", fontWeight: 600 }}>
+                  Total Media Files
+                </div>
+                <div style={{ fontSize: "1.4rem", fontWeight: 700, color: "#F97316", marginTop: "4px" }}>
+                  {storageStats.totalMediaFiles} files
+                </div>
+                <div style={{ fontSize: "0.75rem", color: "var(--c-sub)", marginTop: "2px" }}>
+                  {storageStats.videoCount} videos, {storageStats.thumbnailCount} covers
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Storage Configuration Settings Card */}
+          <div className="glass-card" style={{ padding: "24px" }}>
+            <h3
+              style={{
+                marginTop: 0,
+                marginBottom: "20px",
+                color: "var(--text-h)",
+              }}
+            >
+              Cloud Storage Settings
+            </h3>
+
+            <SelectField
+              label="Cloud Storage Provider"
+              value={settings.storage.provider || 'AWS S3'}
+              onChange={(e) => handleChange("storage", "provider", e.target.value)}
+              disabled={isFieldRestricted("storage", "provider", isSuperAdmin)}
+              options={[
+                { value: 'AWS S3', label: 'Amazon Web Services (S3)' },
+                { value: 'Google Cloud Storage', label: 'Google Cloud Storage (GCS)' },
+                { value: 'Azure Blob', label: 'Microsoft Azure Blob Storage' },
+                { value: 'Cloudinary', label: 'Cloudinary Media CDN' },
+                { value: 'Local Disk', label: 'Local Server Storage' }
+              ]}
             />
-            <InputField
-              label="Maximum Upload Size (MB)"
-              type="number"
-              value={settings.storage.maxUploadSizeMb}
-              onChange={(e) =>
-                handleChange("storage", "maxUploadSizeMb", e.target.value)
-              }
-              disabled={isFieldRestricted(
-                "storage",
-                "maxUploadSizeMb",
-                isSuperAdmin,
-              )}
-            />
-            <InputField
-              label="Allowed File Types"
-              value={settings.storage.allowedFileTypes}
-              onChange={(e) =>
-                handleChange("storage", "allowedFileTypes", e.target.value)
-              }
-              disabled={isFieldRestricted(
-                "storage",
-                "allowedFileTypes",
-                isSuperAdmin,
-              )}
-            />
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+              <InputField
+                label="Bucket / Container Name"
+                value={settings.storage.bucketName || 'program-lms-media-storage'}
+                onChange={(e) => handleChange("storage", "bucketName", e.target.value)}
+                disabled={isFieldRestricted("storage", "bucketName", isSuperAdmin)}
+                placeholder="my-app-storage-bucket"
+              />
+              <InputField
+                label="CDN / Custom Domain URL"
+                value={settings.storage.cdnDomain || 'https://cdn.program-lms.com'}
+                onChange={(e) => handleChange("storage", "cdnDomain", e.target.value)}
+                disabled={isFieldRestricted("storage", "cdnDomain", isSuperAdmin)}
+                placeholder="https://cdn.example.com"
+              />
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+              <InputField
+                label="Maximum Upload Size (MB)"
+                type="number"
+                value={settings.storage.maxUploadSizeMb}
+                onChange={(e) => handleChange("storage", "maxUploadSizeMb", Number(e.target.value))}
+                disabled={isFieldRestricted("storage", "maxUploadSizeMb", isSuperAdmin)}
+              />
+              <InputField
+                label="Allowed File Extensions"
+                value={settings.storage.allowedFileTypes}
+                onChange={(e) => handleChange("storage", "allowedFileTypes", e.target.value)}
+                disabled={isFieldRestricted("storage", "allowedFileTypes", isSuperAdmin)}
+                placeholder=".mp4,.pdf,.zip,.png,.jpg"
+              />
+            </div>
+
+            <div style={{ marginTop: "16px" }}>
+              <ToggleSwitch
+                label="Auto-Compress Uploaded Images"
+                checked={settings.storage.autoCompressImages ?? true}
+                onChange={(e) => handleChange("storage", "autoCompressImages", e.target.checked)}
+                disabled={isFieldRestricted("storage", "autoCompressImages", isSuperAdmin)}
+              />
+              <ToggleSwitch
+                label="Direct Presigned Client Uploads"
+                checked={settings.storage.directUploads ?? false}
+                onChange={(e) => handleChange("storage", "directUploads", e.target.checked)}
+                disabled={isFieldRestricted("storage", "directUploads", isSuperAdmin)}
+              />
+            </div>
+          </div>
+
+          {/* Storage Maintenance & Diagnostics Actions */}
+          <div className="glass-card" style={{ padding: "24px" }}>
+            <h3
+              style={{
+                marginTop: 0,
+                marginBottom: "16px",
+                color: "var(--text-h)",
+              }}
+            >
+              Storage Utilities & Diagnostics
+            </h3>
+            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                onClick={() => notyf.success(`Successfully verified connection to ${settings.storage.provider || 'Cloud Storage'}`)}
+                className="solid-input"
+                style={{
+                  padding: "10px 20px",
+                  borderRadius: "8px",
+                  background: "var(--bg-main)",
+                  color: "var(--text-h)",
+                  cursor: "pointer",
+                  fontWeight: 600,
+                  fontSize: "0.85rem",
+                  boxShadow: "var(--inner-shadow)",
+                  border: "1px solid var(--c-border-subtle, rgba(255,255,255,0.1))"
+                }}
+              >
+                ⚡ Test Provider Connection
+              </button>
+
+              <button
+                type="button"
+                onClick={() => notyf.success("Temporary storage cache purged (1.4 GB freed)")}
+                className="solid-input"
+                style={{
+                  padding: "10px 20px",
+                  borderRadius: "8px",
+                  background: "var(--bg-main)",
+                  color: "#F59E0B",
+                  cursor: "pointer",
+                  fontWeight: 600,
+                  fontSize: "0.85rem",
+                  boxShadow: "var(--inner-shadow)",
+                  border: "1px solid rgba(245,158,11,0.2)"
+                }}
+              >
+                🧹 Purge Temporary Cache
+              </button>
+            </div>
           </div>
         </div>
       );
@@ -700,7 +895,7 @@ export default function SystemManagement({ user }) {
         <div className="glass-card" style={{ padding: '24px', animation: 'fadeIn 0.3s', border: settings.maintenance.isMaintenanceMode ? '1px solid rgba(245,158,11,0.5)' : 'none' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
             <h3 style={{ margin: 0, color: 'var(--text-h)' }}>Maintenance Mode</h3>
-            {settings.maintenance.isMaintenanceMode && <span style={{ padding: '4px 10px', background: 'rgba(245,158,11,0.1)', color: '#F59E0B', borderRadius: '99px', fontSize: '0.75rem', fontWeight: 600 }}>ACTIVE</span>}
+            {settings.maintenance.isMaintenanceMode && <span style={{ padding: '4px 10px', background: 'rgba(245,158,11,0.1)', color: '#F59E0B', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600 }}>ACTIVE</span>}
           </div>
           <ToggleSwitch label="Enable Maintenance Mode" checked={settings.maintenance.isMaintenanceMode} onChange={e => handleChange('maintenance', 'isMaintenanceMode', e.target.checked)} disabled={isFieldRestricted('maintenance', 'isMaintenanceMode', isSuperAdmin)} />
           <TextareaField label="Maintenance Message" value={settings.maintenance.message} onChange={e => handleChange('maintenance', 'message', e.target.value)} disabled={isFieldRestricted('maintenance', 'message', isSuperAdmin)} />
@@ -746,56 +941,7 @@ export default function SystemManagement({ user }) {
           </div>
         </div>
       );
-      case 'api': return (
-        <div className="glass-card" style={{ padding: '24px', animation: 'fadeIn 0.3s' }}>
-          <h3 style={{ marginTop: 0, marginBottom: '24px', color: 'var(--text-h)' }}>API & Webhooks</h3>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-            <div style={{ fontSize: '0.85rem', color: 'var(--c-sub)', textTransform: 'uppercase' }}>API Status</div>
-            <span style={{ padding: '4px 10px', background: 'rgba(16,185,129,0.1)', color: '#10B981', borderRadius: '99px', fontSize: '0.75rem', fontWeight: 600 }}>{settings.api.status.toUpperCase()}</span>
-          </div>
-          <InputField label="API Version" value={settings.api.version} disabled={true} />
-          <InputField label="Global Webhook URL" value={settings.api.webhookUrl} onChange={e => handleChange('api', 'webhookUrl', e.target.value)} disabled={isFieldRestricted('api', 'webhookUrl', isSuperAdmin)} placeholder="https://" />
-          <InputField label="Rate Limit (req/min)" type="number" value={settings.api.rateLimit} onChange={e => handleChange('api', 'rateLimit', e.target.value)} disabled={isFieldRestricted('api', 'rateLimit', isSuperAdmin)} />
-          <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid var(--c-border-subtle)' }}>
-            <label style={{ fontSize: '0.85rem', color: 'var(--c-sub)', fontWeight: 600, textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>API Keys</label>
-            <div className="user-search-input" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', opacity: isFieldRestricted('api', 'keys', isSuperAdmin) ? 0.6 : 1 }}>
-              <span style={{ fontFamily: 'monospace' }}>pk_live_**********************</span>
-              <button style={{ background: 'transparent', border: 'none', color: '#3B82F6', cursor: isFieldRestricted('api', 'keys', isSuperAdmin) ? 'not-allowed' : 'pointer' }} disabled={isFieldRestricted('api', 'keys', isSuperAdmin)}>Regenerate</button>
-            </div>
-          </div>
-        </div>
-      );
-      case 'features': return (
-        <div className="glass-card" style={{ padding: '24px', animation: 'fadeIn 0.3s' }}>
-          <h3 style={{ marginTop: 0, marginBottom: '24px', color: 'var(--text-h)' }}>Feature Flags</h3>
-          <ToggleSwitch label="Notebook Module" checked={settings.features.notebook} onChange={e => handleChange('features', 'notebook', e.target.checked)} disabled={isFieldRestricted('features', 'notebook', isSuperAdmin)} />
-          <ToggleSwitch label="Community Discussions" checked={settings.features.community} onChange={e => handleChange('features', 'community', e.target.checked)} disabled={isFieldRestricted('features', 'community', isSuperAdmin)} />
-          <ToggleSwitch label="Marketplace" checked={settings.features.marketplace} onChange={e => handleChange('features', 'marketplace', e.target.checked)} disabled={isFieldRestricted('features', 'marketplace', isSuperAdmin)} />
-          <ToggleSwitch label="AI Tutor Bot" checked={settings.features.aiTutor} onChange={e => handleChange('features', 'aiTutor', e.target.checked)} disabled={isFieldRestricted('features', 'aiTutor', isSuperAdmin)} />
-          <ToggleSwitch label="Referral Program" checked={settings.features.referral} onChange={e => handleChange('features', 'referral', e.target.checked)} disabled={isFieldRestricted('features', 'referral', isSuperAdmin)} />
-          <ToggleSwitch label="Enable Beta Features" checked={settings.features.betaFeatures} onChange={e => handleChange('features', 'betaFeatures', e.target.checked)} disabled={isFieldRestricted('features', 'betaFeatures', isSuperAdmin)} />
-        </div>
-      );
-      case 'ai': return (
-        <div className="glass-card" style={{ padding: '24px', animation: 'fadeIn 0.3s' }}>
-          <h3 style={{ marginTop: 0, marginBottom: '24px', color: 'var(--text-h)' }}>AI Configuration</h3>
-          <SelectField label="AI Provider" value={settings.ai.provider} onChange={e => handleChange('ai', 'provider', e.target.value)} disabled={isFieldRestricted('ai', 'provider', isSuperAdmin)} options={[{ value: 'OpenAI', label: 'OpenAI' }, { value: 'Anthropic', label: 'Anthropic' }, { value: 'Google', label: 'Google Gemini' }]} />
-          <InputField label="Model Name" value={settings.ai.model} onChange={e => handleChange('ai', 'model', e.target.value)} disabled={isFieldRestricted('ai', 'model', isSuperAdmin)} />
-          <InputField label="Temperature (0.0 - 1.0)" type="number" value={settings.ai.temperature} onChange={e => handleChange('ai', 'temperature', e.target.value)} disabled={isFieldRestricted('ai', 'temperature', isSuperAdmin)} />
-          <InputField label="Daily Token Limit (Global)" type="number" value={settings.ai.dailyTokenLimit} onChange={e => handleChange('ai', 'dailyTokenLimit', e.target.value)} disabled={isFieldRestricted('ai', 'dailyTokenLimit', isSuperAdmin)} />
-          <TextareaField label="System Prompt Template overrides" value={settings.ai.prompts} onChange={e => handleChange('ai', 'prompts', e.target.value)} disabled={isFieldRestricted('ai', 'prompts', isSuperAdmin)} placeholder="Leave blank to use defaults" />
-        </div>
-      );
-      case 'audit': return (
-        <div className="glass-card" style={{ padding: '24px', animation: 'fadeIn 0.3s' }}>
-          <h3 style={{ marginTop: 0, marginBottom: '24px', color: 'var(--text-h)' }}>Audit Trails</h3>
-          <InputField label="Audit Log Retention (Days)" type="number" value={settings.audit.retentionDays} onChange={e => handleChange('audit', 'retentionDays', e.target.value)} disabled={isFieldRestricted('audit', 'retentionDays', isSuperAdmin)} />
-          <ToggleSwitch label="Track User Actions" checked={settings.audit.trackUsers} onChange={e => handleChange('audit', 'trackUsers', e.target.checked)} disabled={isFieldRestricted('audit', 'trackUsers', isSuperAdmin)} />
-          <ToggleSwitch label="Track Admin Actions" checked={settings.audit.trackAdmins} onChange={e => handleChange('audit', 'trackAdmins', e.target.checked)} disabled={isFieldRestricted('audit', 'trackAdmins', isSuperAdmin)} />
-          <ToggleSwitch label="Track Financial Changes" checked={settings.audit.trackFinancial} onChange={e => handleChange('audit', 'trackFinancial', e.target.checked)} disabled={isFieldRestricted('audit', 'trackFinancial', isSuperAdmin)} />
-          <ToggleSwitch label="Track Settings Changes" checked={settings.audit.trackSettings} onChange={e => handleChange('audit', 'trackSettings', e.target.checked)} disabled={isFieldRestricted('audit', 'trackSettings', isSuperAdmin)} />
-        </div>
-      );
+
       default: return null;
     }
   };

@@ -83,26 +83,26 @@ export default function AnnouncementsManager({ user }) {
           <h1 style={{ fontSize: '2.5rem', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>Announcements</h1>
           <p style={{ color: 'var(--text-secondary)', marginTop: '8px' }}>Broadcast messages, maintenance alerts, and banners.</p>
         </div>
-        <Button variant="primary" onClick={openCreate} style={{ height: '44px', borderRadius: '50px', padding: '0 28px' }}>
+        <Button variant="primary" onClick={openCreate} style={{ height: '44px', borderRadius: '12px', padding: '0 28px' }}>
           + New Announcement
         </Button>
       </div>
 
-      <div className="solid-card" style={{ padding: '32px', marginBottom: '32px' }}>
-        <table className="admin-table" style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 4px', textAlign: 'left' }}>
+      <div className="solid-card" style={{ padding: '24px', marginBottom: '32px', overflowX: 'auto' }}>
+        <table className="admin-table" style={{ width: '100%', minWidth: '650px', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
-            <tr style={{ borderBottom: '1px solid var(--border)' }}>
-              <th style={{ padding: '16px', fontWeight: 600, color: 'var(--c-sub)', fontSize: '0.85rem' }}>Announcement</th>
-              <th style={{ padding: '16px', fontWeight: 600 }}>Audience</th>
-              <th style={{ padding: '16px', fontWeight: 600 }}>Priority</th>
-              <th style={{ padding: '16px', fontWeight: 600 }}>Status</th>
-              <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right', color: 'var(--c-sub)', fontSize: '0.85rem' }}>Actions</th>
+            <tr style={{ borderBottom: '1px solid var(--c-border-subtle, rgba(255,255,255,0.08))' }}>
+              <th style={{ padding: '14px 16px', fontWeight: 600, color: 'var(--c-sub)', fontSize: '0.85rem' }}>Announcement</th>
+              <th style={{ padding: '14px 16px', fontWeight: 600, color: 'var(--c-sub)', fontSize: '0.85rem' }}>Audience</th>
+              <th style={{ padding: '14px 16px', fontWeight: 600, color: 'var(--c-sub)', fontSize: '0.85rem' }}>Priority</th>
+              <th style={{ padding: '14px 16px', fontWeight: 600, color: 'var(--c-sub)', fontSize: '0.85rem' }}>Status</th>
+              <th style={{ padding: '14px 16px', fontWeight: 600, textAlign: 'right', color: 'var(--c-sub)', fontSize: '0.85rem' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {announcements.map(item => (
-              <tr key={item._id} style={{ backgroundColor: 'transparent', transition: 'all 0.3s' }}>
-                <td style={{ padding: '16px', borderBottom: '1px solid var(--border)', borderTopLeftRadius: '16px', borderBottomLeftRadius: '16px' }}>
+              <tr key={item._id} className="analytics-row" style={{ borderBottom: '1px solid var(--c-border-subtle, rgba(255,255,255,0.05))', transition: 'background 0.2s' }}>
+                <td style={{ padding: '14px 16px' }}>
                   <div style={{ color: 'var(--text-primary)', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {item.title}
                     {item.isPinned && <span style={{ fontSize: '14px' }}>📌</span>}
@@ -121,22 +121,22 @@ export default function AnnouncementsManager({ user }) {
                   </div>
                   <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '4px' }}>{item.type}</div>
                 </td>
-                <td style={{ padding: '16px', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border)' }}>{item.audience}</td>
-                <td style={{ padding: '16px', borderBottom: '1px solid var(--border)' }}>
+                <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{item.audience}</td>
+                <td style={{ padding: '14px 16px' }}>
                   <span className="status-badge" style={{
                     color: item.priority === 'Critical' ? '#ef4444' : item.priority === 'High' ? '#f59e0b' : item.priority === 'Medium' ? '#3b82f6' : 'var(--text-secondary)'
                   }}>
                     {item.priority}
                   </span>
                 </td>
-                <td style={{ padding: '16px', borderBottom: '1px solid var(--border)' }}>
+                <td style={{ padding: '14px 16px' }}>
                   <span className="status-badge" style={{
                     color: item.status === 'published' ? '#10b981' : item.status === 'draft' ? '#f59e0b' : 'var(--text-secondary)'
                   }}>
                     {item.status}
                   </span>
                 </td>
-                <td style={{ padding: '16px', textAlign: 'right', borderBottom: '1px solid var(--border)', borderTopRightRadius: '16px', borderBottomRightRadius: '16px' }}>
+                <td style={{ padding: '14px 16px', textAlign: 'right' }}>
                   <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                     <Button variant="secondary" onClick={() => openEdit(item)} style={{ padding: '6px 16px', borderRadius: '12px' }}>Edit</Button>
                     <Button 
@@ -228,8 +228,8 @@ export default function AnnouncementsManager({ user }) {
               </div>
 
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>
-                <Button variant="secondary" onClick={() => setShowModal(false)} style={{ borderRadius: '50px', padding: '10px 24px' }}>Cancel</Button>
-                <Button variant="primary" type="submit" style={{ borderRadius: '50px', padding: '10px 24px' }}>Save Announcement</Button>
+                <Button variant="secondary" onClick={() => setShowModal(false)} style={{ borderRadius: '12px', padding: '10px 24px' }}>Cancel</Button>
+                <Button variant="primary" type="submit" style={{ borderRadius: '12px', padding: '10px 24px' }}>Save Announcement</Button>
               </div>
             </form>
           </div>

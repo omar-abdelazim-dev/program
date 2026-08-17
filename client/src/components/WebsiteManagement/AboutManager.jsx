@@ -59,7 +59,7 @@ export default function AboutManager({ user }) {
           variant="primary"
           onClick={handleSave}
           disabled={saving}
-          style={{ height: '44px', borderRadius: '50px', padding: '0 32px' }}
+          style={{ height: '44px', borderRadius: '12px', padding: '0 32px' }}
         >
           {saving ? "Saving..." : "Save Changes"}
         </Button>

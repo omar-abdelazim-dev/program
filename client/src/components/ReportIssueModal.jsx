@@ -349,7 +349,7 @@ export default function ReportIssueModal({ isOpen, course, onClose, onSubmit }) 
                 border: '1px solid #F5A623', 
                 color: 'var(--text)', 
                 background: 'transparent',
-                borderRadius: '999px',
+                borderRadius: '12px',
                 transition: 'all 0.2s ease'
               }}
             >

@@ -563,7 +563,7 @@ export default function InstructorFinancialsTab({ user }) {
                   return (
                     <span className="status-badge" style={{
                       padding: '4px 12px',
-                      borderRadius: '50px',
+                      borderRadius: '12px',
                       fontSize: '0.75rem',
                       fontWeight: 'bold',
                       color: isCleared ? '#10b981' : isProcessing ? '#3b82f6' : selectedTxForDetails.status === 'rejected' ? '#ef4444' : '#f59e0b',

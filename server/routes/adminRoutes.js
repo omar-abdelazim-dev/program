@@ -2,7 +2,7 @@ import express from 'express';
 import {
   toggleProgramInstructor,
   getStats, getRecentActivity, getRevenueAnalytics, getUsers, toggleBlockUser, changeUserRole,
-  softDeleteUser, restoreUser, getTransactions, getPendingPayouts, getPayoutRevenueTrace, getAllLessons, approveLesson, rejectLesson,
+  softDeleteUser, restoreUser, getTransactions, getPendingPayouts, getPayoutRevenueTrace, getAllLessons, approveLesson, rejectLesson, deleteLessonAdmin,
   manualEnroll, createPromoCode, getPromoCodes, togglePromoCode,
   approveEnrollment, rejectEnrollment,
   getInstructorViolations, getInstructorViolationSummary,
@@ -42,6 +42,7 @@ router.patch('/promo-codes/:id/toggle', validateObjectId('id'), togglePromoCode)
 router.get('/lessons', getAllLessons);
 router.patch('/lessons/:id/approve', validateObjectId('id'), approveLesson);
 router.patch('/lessons/:id/reject', validateObjectId('id'), rejectLesson);
+router.delete('/lessons/:id', validateObjectId('id'), deleteLessonAdmin);
 router.patch('/enrollments/:id/approve', validateObjectId('id'), approveEnrollment);
 router.patch('/enrollments/:id/reject', validateObjectId('id'), rejectEnrollment);
 router.get('/instructor-violations/summary', getInstructorViolationSummary);

@@ -505,7 +505,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
       {/* MAIN CONTENT AREA */}
       <main className="student-main-area">
         {/* INSTRUCTOR TOP HEADER */}
-        <header className="student-header student-topnav-header" style={{ position: 'relative', zIndex: 1000, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 24px', height: '70px', backgroundColor: 'var(--bg-surface)', borderBottom: isLightMode ? '1px solid rgba(0,0,0,0.1)' : 'none' }}>
+        <header className="student-header student-topnav-header" style={{ position: 'relative', zIndex: 1000, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 24px', height: '70px', backgroundColor: 'var(--bg-surface)', borderBottom: 'none' }}>
           {/* Very Left: Logo */}
           <div className="topnav-left">
             <Link to="/instructor" className="topnav-logo">
@@ -1185,7 +1185,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                             <span
                               style={{
                                 padding: "4px 10px",
-                                borderRadius: "50px",
+                                borderRadius: "12px",
                                 fontSize: "0.8rem",
                                 fontWeight: "bold",
                                 boxShadow: "var(--inner-shadow)",
@@ -1218,7 +1218,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                               <span
                                 style={{
                                   padding: "4px 10px",
-                                  borderRadius: "50px",
+                                  borderRadius: "12px",
                                   fontSize: "0.8rem",
                                   fontWeight: "bold",
                                   boxShadow: "var(--inner-shadow)",
@@ -1248,7 +1248,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                                 onClick={(e) => handleTogglePublish(course._id, e)}
                                 style={{
                                   padding: "4px 12px",
-                                  borderRadius: "50px",
+                                  borderRadius: "12px",
                                   background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
                                   color: "white",
                                   border: "none",
@@ -1267,7 +1267,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                                 onClick={(e) => handleTogglePublish(course._id, e)}
                                 style={{
                                   padding: "4px 12px",
-                                  borderRadius: "50px",
+                                  borderRadius: "12px",
                                   background: "rgba(255, 255, 255, 0.08)",
                                   color: "var(--text-h)",
                                   border: "1px solid var(--border)",
@@ -1302,7 +1302,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                                   padding: "6px 14px",
                                   background: course.status === "suspended" ? "rgba(245, 158, 11, 0.2)" : "rgba(239, 68, 68, 0.2)",
                                   border: "none",
-                                  borderRadius: "50px",
+                                  borderRadius: "12px",
                                   fontSize: "0.85rem",
                                   color: "var(--text)",
                                   width: "fit-content",
@@ -1633,7 +1633,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                   <div className="input-hint">{editingLessonId ? t('instructor.curriculum.leave_blank_video') : t('instructor.curriculum.upload_cloudinary')}</div>
                   {submitting && videoFile && (
                     <div style={{ marginTop: '8px' }}>
-                      <div style={{ height: '6px', borderRadius: '999px', background: 'var(--c-border, rgba(255,255,255,0.1))', overflow: 'hidden' }}>
+                      <div style={{ height: '6px', borderRadius: '12px', background: 'var(--c-border, rgba(255,255,255,0.1))', overflow: 'hidden' }}>
                         <div style={{ width: `${videoUploadProgress}%`, height: '100%', background: 'var(--color-accent, #6B5DD3)', transition: 'width 0.2s ease' }} />
                       </div>
                       <div className="input-hint" style={{ marginTop: '4px' }}>

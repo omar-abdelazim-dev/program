@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import CardSkeleton from './common/CardSkeleton';
 
 const AnimatedNumber = ({ value }) => {
   return <span>{value.toLocaleString()}</span>;
@@ -17,7 +18,7 @@ const GrowthBadge = ({ growth }) => {
         alignItems: "center",
         gap: "4px",
         padding: "4px 8px",
-        borderRadius: "99px",
+        borderRadius: "12px",
         background: "var(--bg-main)",
         boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.2)",
         color: isPositive ? "#10B981" : "#ef4444",
@@ -37,9 +38,18 @@ const GrowthBadge = ({ growth }) => {
   );
 };
 
-const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
+const AdminOverviewTab = ({ stats, user, setActiveTab, loading }) => {
   const { t } = useTranslation();
   const [time, setTime] = useState(new Date());
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <CardSkeleton type="stat" count={3} />
+        <CardSkeleton type="horizontal" count={2} />
+      </div>
+    );
+  }
 
   useEffect(() => {
     // Just a static time for "Last refreshed" to avoid constant re-renders
@@ -240,7 +250,7 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
             <button style={{ 
               background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', 
               color: 'var(--c-sub)', fontSize: '0.75rem', letterSpacing: '1px', 
-              padding: '6px 16px', borderRadius: '99px', cursor: 'not-allowed'
+              padding: '6px 16px', borderRadius: '12px', cursor: 'not-allowed'
             }}>
               {t('admin.pending_integration', 'PENDING INTEGRATION')}
             </button>
@@ -275,7 +285,7 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
             <button style={{ 
               background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', 
               color: 'var(--c-sub)', fontSize: '0.75rem', letterSpacing: '1px', 
-              padding: '6px 16px', borderRadius: '99px', cursor: 'not-allowed'
+              padding: '6px 16px', borderRadius: '12px', cursor: 'not-allowed'
             }}>
               {t('admin.pending_integration', 'PENDING INTEGRATION')}
             </button>
