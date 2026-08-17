@@ -24,13 +24,13 @@ export const getStats = async (req, res) => {
     // Course Management tab header cards (ADM-05): Total Courses, Pending
     // Courses, Pending Lessons, Pending Quizzes.
     const totalCourses = await Course.countDocuments();
-    const pendingCourses = await Course.countDocuments({ status: { $in: ["pending", "under_review"] } });
-    const pendingQuizzes = await Lesson.countDocuments({ lessonType: "quiz", status: { $in: ["pending", "under_review"] } });
-    const pendingModuleLessons = await Lesson.countDocuments({ lessonType: { $ne: "quiz" }, status: { $in: ["pending", "under_review"] } });
-    const pendingStandaloneLessons = await StandaloneLesson.countDocuments({ status: { $in: ["pending", "under_review"] } });
+    const pendingCourses = await Course.countDocuments({ $or: [{ status: { $in: ["pending", "under_review"] } }, { status: { $exists: false } }] });
+    const pendingQuizzes = await Lesson.countDocuments({ lessonType: "quiz", $or: [{ status: { $in: ["pending", "under_review"] } }, { status: { $exists: false } }] });
+    const pendingModuleLessons = await Lesson.countDocuments({ lessonType: { $ne: "quiz" }, $or: [{ status: { $in: ["pending", "under_review"] } }, { status: { $exists: false } }] });
+    const pendingStandaloneLessons = await StandaloneLesson.countDocuments({ $or: [{ status: { $in: ["pending", "under_review"] } }, { status: { $exists: false } }] });
     const pendingLessons = pendingModuleLessons + pendingStandaloneLessons;
-    const pendingEnrollments = await Enrollment.countDocuments({ status: { $in: ["pending", "under_review"] } });
-    const pendingPayouts = await Transaction.countDocuments({ type: "payout_request", status: { $in: ["pending", "under_review"] } });
+    const pendingEnrollments = await Enrollment.countDocuments({ $or: [{ status: { $in: ["pending", "under_review"] } }, { status: { $exists: false } }] });
+    const pendingPayouts = await Transaction.countDocuments({ type: "payout_request", $or: [{ status: { $in: ["pending", "under_review"] } }, { status: { $exists: false } }] });
 
     // Revenue total + per-category enrollment counts, computed in Mongo
     // instead of pulling every enrollment (with its populated course) into
