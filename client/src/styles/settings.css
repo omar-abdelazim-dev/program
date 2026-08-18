@@ -143,9 +143,11 @@
     margin: 0 0 4px;
 }
 
-.settings-section .solid-card {
+.settings-section .solid-card,
+.settings-page .solid-card {
     min-width: 0;
     overflow: hidden;
+    border-radius: 12px;
 }
 
 .settings-section-desc {

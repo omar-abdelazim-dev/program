@@ -116,11 +116,20 @@ export default function QuizBuilder({ courseId, moduleId, lesson, onClose, onSav
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '20px' }}>
-      <div className="solid-card animate-entrance" style={{ width: '100%', maxWidth: '760px', maxHeight: '88vh', overflowY: 'auto', padding: '32px' }}>
-        <h2 style={{ margin: '0 0 24px 0' }}>
-          {isEditing ? t('instructor.quiz.edit_title', 'Edit Quiz') : t('instructor.quiz.add_title', 'Create Quiz')}
-        </h2>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '20px' }}>
+      <div className="solid-card animate-entrance" style={{ width: '100%', maxWidth: '760px', maxHeight: '90vh', overflowY: 'auto', padding: '28px 32px', borderRadius: '12px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h2 style={{ margin: 0 }}>
+            {isEditing ? t('instructor.quiz.edit_title', 'Edit Quiz') : t('instructor.quiz.add_title', 'Create Quiz')}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{ background: 'var(--bg-main)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--c-sub)', cursor: 'pointer', boxShadow: 'var(--inner-shadow)', fontSize: '0.9rem' }}
+          >
+            ✕
+          </button>
+        </div>
 
         {loading ? (
           <div style={{ padding: '40px', textAlign: 'center', color: 'var(--c-sub)' }}>{t('instructor.quiz.loading', 'Loading quiz…')}</div>
@@ -135,13 +144,27 @@ export default function QuizBuilder({ courseId, moduleId, lesson, onClose, onSav
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {questions.map((q, qIndex) => (
-                <div key={qIndex} style={{ padding: '18px', borderRadius: '14px', background: 'var(--bg-main)', boxShadow: 'var(--inner-shadow)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
-                    <span style={{ fontWeight: 600, color: 'var(--text-h)', fontSize: '0.9rem' }}>
+                <div key={qIndex} style={{ padding: '20px', borderRadius: '16px', background: 'var(--bg-main)', boxShadow: 'var(--inner-shadow)', border: '1px solid var(--border)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+                    <span style={{ fontWeight: 700, color: 'var(--text-h)', fontSize: '0.95rem' }}>
                       {t('instructor.quiz.question_n', 'Question {{n}}', { n: qIndex + 1 })} · {q.type === 'mcq' ? t('instructor.quiz.mcq', 'Multiple Choice') : t('instructor.quiz.written', 'Written Answer')}
                     </span>
                     {questions.length > 1 && (
-                      <button type="button" onClick={() => removeQuestion(qIndex)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.85rem' }}>
+                      <button
+                        type="button"
+                        onClick={() => removeQuestion(qIndex)}
+                        style={{
+                          background: 'rgba(239, 68, 68, 0.1)',
+                          border: 'none',
+                          borderRadius: '12px',
+                          color: '#ef4444',
+                          cursor: 'pointer',
+                          fontSize: '0.8rem',
+                          fontWeight: 600,
+                          padding: '4px 12px',
+                          boxShadow: 'var(--inner-shadow)'
+                        }}
+                      >
                         {t('instructor.dashboard.actions.delete', 'Delete')}
                       </button>
                     )}
@@ -153,54 +176,171 @@ export default function QuizBuilder({ courseId, moduleId, lesson, onClose, onSav
                     onChange={(e) => updateQuestion(qIndex, { prompt: e.target.value })}
                     placeholder={t('instructor.quiz.ph_prompt', 'Question text')}
                     rows={2}
-                    style={{ width: '100%', marginBottom: '12px', resize: 'vertical' }}
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      borderRadius: '12px',
+                      background: 'var(--bg-surface)',
+                      border: '1px solid var(--border)',
+                      boxShadow: 'var(--inner-shadow)',
+                      color: 'var(--text-h)',
+                      fontSize: '0.92rem',
+                      outline: 'none',
+                      resize: 'vertical',
+                      marginBottom: '14px',
+                      fontFamily: 'inherit'
+                    }}
                   />
 
                   {q.type === 'mcq' ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {q.options.map((opt, optIndex) => (
-                        <div key={optIndex} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <input
-                            type="radio"
-                            name={`correct-${qIndex}`}
-                            checked={q.correctOptionIndex === optIndex}
-                            onChange={() => updateQuestion(qIndex, { correctOptionIndex: optIndex })}
-                            title={t('instructor.quiz.mark_correct', 'Mark as correct answer')}
-                          />
-                          <input
-                            required
-                            type="text"
-                            value={opt}
-                            onChange={(e) => updateOption(qIndex, optIndex, e.target.value)}
-                            placeholder={t('instructor.quiz.ph_option', 'Option {{n}}', { n: optIndex + 1 })}
-                            style={{ flex: 1 }}
-                          />
-                          {q.options.length > MIN_OPTIONS && (
-                            <button type="button" onClick={() => removeOption(qIndex, optIndex)} style={{ background: 'transparent', border: 'none', color: 'var(--c-sub)', cursor: 'pointer' }}>
-                              ✕
-                            </button>
-                          )}
-                        </div>
-                      ))}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      {q.options.map((opt, optIndex) => {
+                        const isCorrect = q.correctOptionIndex === optIndex;
+                        return (
+                          <div
+                            key={optIndex}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '12px',
+                              padding: '8px 14px',
+                              borderRadius: '12px',
+                              background: isCorrect ? 'rgba(16, 185, 129, 0.08)' : 'var(--bg-surface)',
+                              border: isCorrect ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid var(--border)',
+                              boxShadow: 'var(--inner-shadow)',
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              name={`correct-${qIndex}`}
+                              checked={isCorrect}
+                              onChange={() => updateQuestion(qIndex, { correctOptionIndex: optIndex })}
+                              title={t('instructor.quiz.mark_correct', 'Mark as correct answer')}
+                              style={{
+                                cursor: 'pointer',
+                                width: '18px',
+                                height: '18px',
+                                accentColor: '#10b981',
+                                flexShrink: 0
+                              }}
+                            />
+                            <input
+                              required
+                              type="text"
+                              value={opt}
+                              onChange={(e) => updateOption(qIndex, optIndex, e.target.value)}
+                              placeholder={t('instructor.quiz.ph_option', 'Option {{n}}', { n: optIndex + 1 })}
+                              style={{
+                                flex: 1,
+                                background: 'transparent',
+                                border: 'none',
+                                outline: 'none',
+                                color: 'var(--text-h)',
+                                fontSize: '0.92rem',
+                                padding: '4px 0',
+                                fontFamily: 'inherit'
+                              }}
+                            />
+                            {isCorrect && (
+                              <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600, flexShrink: 0 }}>
+                                ✓ {t('instructor.quiz.correct', 'Correct')}
+                              </span>
+                            )}
+                            {q.options.length > MIN_OPTIONS && (
+                              <button
+                                type="button"
+                                onClick={() => removeOption(qIndex, optIndex)}
+                                style={{
+                                  background: 'transparent',
+                                  border: 'none',
+                                  color: 'var(--c-sub)',
+                                  cursor: 'pointer',
+                                  padding: '4px',
+                                  fontSize: '0.85rem',
+                                  flexShrink: 0
+                                }}
+                                title="Remove option"
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
                       {q.options.length < MAX_OPTIONS && (
-                        <button type="button" onClick={() => addOption(qIndex)} style={{ width: 'auto', alignSelf: 'flex-start', background: 'transparent', border: 'none', color: 'var(--color-accent, #6B5DD3)', cursor: 'pointer', fontSize: '0.85rem', padding: '4px 0' }}>
+                        <button
+                          type="button"
+                          onClick={() => addOption(qIndex)}
+                          style={{
+                            width: 'auto',
+                            alignSelf: 'flex-start',
+                            background: 'var(--bg-main)',
+                            border: 'none',
+                            color: 'var(--color-accent, #6B5DD3)',
+                            borderRadius: '16px',
+                            boxShadow: 'var(--inner-shadow)',
+                            cursor: 'pointer',
+                            fontSize: '0.82rem',
+                            fontWeight: 600,
+                            padding: '6px 14px',
+                            marginTop: '2px',
+                            transition: 'all 0.2s'
+                          }}
+                        >
                           {t('instructor.quiz.add_option', '+ Add option')}
                         </button>
                       )}
-                      <div className="input-hint">{t('instructor.quiz.select_correct_hint', 'Select the radio button next to the correct answer.')}</div>
+                      <div className="input-hint" style={{ fontSize: '0.78rem', color: 'var(--c-sub)', marginTop: '4px' }}>
+                        {t('instructor.quiz.select_correct_hint', 'Select the radio button next to the correct answer.')}
+                      </div>
                     </div>
                   ) : (
-                    <div className="input-hint">{t('instructor.quiz.written_hint', "Students type a free-text answer — you'll grade it manually after they submit.")}</div>
+                    <div className="input-hint" style={{ fontSize: '0.78rem', color: 'var(--c-sub)', marginTop: '4px' }}>
+                      {t('instructor.quiz.written_hint', "Students type a free-text answer — you'll grade it manually after they submit.")}
+                    </div>
                   )}
                 </div>
               ))}
             </div>
 
             <div style={{ display: 'flex', gap: '12px' }}>
-              <button type="button" onClick={() => addQuestion('mcq')} style={{ width: 'auto', borderRadius: '20px', padding: '8px 16px', fontWeight: 600, fontSize: '0.85rem', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: 'none', cursor: 'pointer' }}>
+              <button
+                type="button"
+                onClick={() => addQuestion('mcq')}
+                style={{
+                  width: 'auto',
+                  borderRadius: '20px',
+                  padding: '8px 18px',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  background: 'var(--bg-main)',
+                  color: '#10b981',
+                  border: 'none',
+                  boxShadow: 'var(--inner-shadow)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
                 {t('instructor.quiz.add_mcq', '+ Add Multiple Choice')}
               </button>
-              <button type="button" onClick={() => addQuestion('written')} style={{ width: 'auto', borderRadius: '20px', padding: '8px 16px', fontWeight: 600, fontSize: '0.85rem', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: 'none', cursor: 'pointer' }}>
+              <button
+                type="button"
+                onClick={() => addQuestion('written')}
+                style={{
+                  width: 'auto',
+                  borderRadius: '20px',
+                  padding: '8px 18px',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  background: 'var(--bg-main)',
+                  color: '#3b82f6',
+                  border: 'none',
+                  boxShadow: 'var(--inner-shadow)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
                 {t('instructor.quiz.add_written', '+ Add Written Answer')}
               </button>
             </div>

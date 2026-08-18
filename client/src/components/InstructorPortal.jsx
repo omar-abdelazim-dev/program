@@ -526,7 +526,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
               <button className={`topnav-link ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
                 {t('instructor.nav.dashboard', 'Dashboard')}
               </button>
-              <button className={`topnav-link ${activeTab === 'curriculum' ? 'active' : ''}`} onClick={() => setActiveTab('curriculum')}>
+              <button className={`topnav-link ${activeTab === 'curriculum' ? 'active' : ''}`} onClick={() => { setSelectedCourseId(null); setActiveTab('curriculum'); }}>
                 {t('instructor.nav.curriculum', 'Curriculum')}
               </button>
               <button className={`topnav-link ${activeTab === 'engagement' ? 'active' : ''}`} onClick={() => setActiveTab('engagement')} style={{ position: 'relative' }}>
@@ -849,7 +849,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
             <button className={`topnav-mobile-link ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => { setActiveTab('dashboard'); setMobileNavOpen(false); }}>
               {t('instructor.nav.dashboard', 'Dashboard')}
             </button>
-            <button className={`topnav-mobile-link ${activeTab === 'curriculum' ? 'active' : ''}`} onClick={() => { setActiveTab('curriculum'); setMobileNavOpen(false); }}>
+            <button className={`topnav-mobile-link ${activeTab === 'curriculum' ? 'active' : ''}`} onClick={() => { setSelectedCourseId(null); setActiveTab('curriculum'); setMobileNavOpen(false); }}>
               {t('instructor.nav.curriculum', 'Curriculum')}
             </button>
             <button className={`topnav-mobile-link ${activeTab === 'engagement' ? 'active' : ''}`} onClick={() => { setActiveTab('engagement'); setMobileNavOpen(false); }}>
@@ -887,7 +887,14 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
               <CurriculumBuilderTab
                 courses={courses}
                 modulesByCourse={modulesByCourse}
+                selectedCourseId={selectedCourseId}
+                onSelectCourse={setSelectedCourseId}
                 onAction={fetchMyCourses}
+                onCreateCourse={() => { setError(''); setEditingCourse(null); setFormData({ title: '', description: '', price: '', college: '', semester: '', courseType: '' }); setShowCourseTypeModal(true); }}
+                onTogglePublish={handleTogglePublish}
+                onRepublish={handleRepublish}
+                onRequestPriceChange={(course) => { setPriceChangeCourseId(course._id); setPriceChangeValue(String(course.price || '')); }}
+                onConvertCourse={(course) => { setConvertCourseId(course._id); setConvertPriceValue(String(course.price || '')); }}
                 onOpenStandaloneLessons={(course) => { setStandaloneManageCourse(course); setStandaloneLessons([]); fetchStandaloneLessonsForCourse(course._id); }}
                 onOpenAddLesson={(courseId, moduleId) => {
                   setError('');
@@ -902,7 +909,11 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                 onOpenEditLesson={(lesson) => {
                   setError('');
                   setEditingLessonId(lesson._id);
-                  setLessonData({ title: lesson.title, attachmentTitle: lesson.attachmentTitle || '' });
+                  setLessonData({
+                    title: lesson.title,
+                    attachmentTitle: lesson.attachmentTitle || '',
+                    attachmentUrl: lesson.attachmentUrl || ''
+                  });
                   setVideoFile(null);
                   setAttachmentFile(null);
                   setShowLessonModal(true);
@@ -1071,321 +1082,140 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
               );
             })()}
               
-              <div className="flex justify-between items-center mb-8" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-              {/* Translated My Courses header */}
-              <h2 style={{ fontSize: '2rem', margin: 0, color: 'var(--text-h)' }}>{t('instructor.dashboard.my_courses')}</h2>
-              <button
-                // INS-03: Resetting formData correctly without category/major
-                onClick={() => { setError(''); setEditingCourse(null); setFormData({ title: '', description: '', price: '', college: '', semester: '', courseType: '' }); setShowCourseTypeModal(true); }}
-                style={{ width: 'auto', borderRadius: '24px', padding: '10px 24px', fontWeight: 700, background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: 'none', boxShadow: 'var(--inner-shadow)', cursor: 'pointer', transition: 'all 0.2s' }}
-                onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)'; e.currentTarget.style.boxShadow = 'var(--inner-shadow)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
-                onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'; e.currentTarget.style.boxShadow = 'var(--inner-shadow)'; e.currentTarget.style.filter = 'none'; }}
-              >
-                {/* Translated Create New Course button */}
-                {t('instructor.dashboard.create_course')}
-              </button>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
-            {courses.length === 0 ? (
-              <div className="solid-card" style={{ padding: '40px', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px', gridColumn: '1 / -1' }}>
-                <p style={{ color: 'var(--text)', fontSize: '1.1rem', margin: 0 }}>
-                  {t('instructor.no_courses', "You haven't created any courses yet. Start sharing your knowledge with the world!")}
-                </p>
-              </div>
-            ) : (
-              courses.map(course => {
-                const modules = modulesByCourse[course._id] || [];
-                const lessonCount = modules.reduce((sum, m) => sum + (m.lessons?.length || 0), 0);
-                return (
-                  <div
-                    key={course._id}
-                    className={`solid-card hover-glow ${course.status === 'suspended' ? 'clickable' : ''}`}
-                    onClick={() => course.status === 'suspended' && handleRepublish(course._id)}
-                    style={{
-                      padding: "24px",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "16px",
-                      cursor: course.status === 'suspended' ? 'pointer' : 'default'
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "20px",
-                          alignItems: "center",
-                        }}
-                      >
-                        {course.thumbnailUrl ? (
-                          <img
-                            src={course.thumbnailUrl}
-                            alt={course.title}
-                            style={{
-                              width: "120px",
-                              height: "80px",
-                              objectFit: "cover",
-                              borderRadius: "8px",
-                            }}
-                          />
-                        ) : (
-                          <div
-                            style={{
-                              width: "120px",
-                              height: "80px",
-                              background:
-                                "linear-gradient(135deg, #3B82F6, #8B5CF6)",
-                              borderRadius: "8px",
-                            }}
-                          ></div>
-                        )}
-                        <div>
-                          <h3
-                            style={{ fontSize: "1.3rem", margin: "0 0 8px 0" }}
-                          >
-                            {course.title}
-                          </h3>
-                          <div
-                            style={{
-                              color: "var(--text)",
-                              fontSize: "0.95rem",
-                            }}
-                          >
-                            {t("instructor.dashboard.price")}: EGP{" "}
-                            {course.price} •{" "}
-                            {t("instructor.dashboard.category")}:{" "}
-                            {t(`categories.${course.category.replace(/\s+/g, '_').toLowerCase()}`, course.category)}
-                          </div>
-                          {course.courseType === "full" && (
-                            course.pendingPriceChange?.status === "pending" ? (
-                              <div style={{ fontSize: "0.8rem", color: "#f59e0b", marginTop: "4px" }}>
-                                {t('instructor.dashboard.price_change.pending', 'Price change pending: EGP {{price}} awaiting admin approval', { price: course.pendingPriceChange.requestedPrice })}
-                              </div>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={(e) => { e.stopPropagation(); setPriceChangeCourseId(course._id); setPriceChangeValue(String(course.price)); }}
-                                style={{ background: "none", border: "none", color: "#3b82f6", textDecoration: "underline", cursor: "pointer", padding: 0, fontSize: "0.8rem", marginTop: "4px" }}
-                              >
-                                {t('instructor.dashboard.price_change.request', 'Request Price Change')}
-                              </button>
-                            )
-                          )}
-                          <div
-                            style={{
-                              marginTop: "8px",
-                              display: "flex",
-                              gap: "8px",
-                              alignItems: "center",
-                            }}
-                          >
-                            <span
-                              style={{
-                                padding: "4px 10px",
-                                borderRadius: "12px",
-                                fontSize: "0.8rem",
-                                fontWeight: "bold",
-                                boxShadow: "var(--inner-shadow)",
-                                background:
-                                  course.status === "approved"
-                                    ? "rgba(16, 185, 129, 0.2)"
-                                    : course.status === "draft"
-                                      ? "rgba(59, 130, 246, 0.2)"
-                                      : course.status === "rejected"
-                                        ? "rgba(239, 68, 68, 0.2)"
-                                        : course.status === "archived"
-                                          ? "rgba(148, 163, 184, 0.2)"
-                                          : "rgba(245, 158, 11, 0.2)",
-                                color:
-                                  course.status === "approved"
-                                    ? "#10B981"
-                                    : course.status === "draft"
-                                      ? "#3B82F6"
-                                      : course.status === "rejected"
-                                        ? "#ef4444"
-                                        : course.status === "archived"
-                                          ? "#94a3b8"
-                                          : "#F59E0B",
-                              }}
-                            >
-                              {course.status === "approved" ? "LIVE" : course.status === "draft" ? "DRAFT" : (t(`instructor.dashboard.status.${course.status}`) || course.status.toUpperCase())}
-                            </span>
-
-                            {course.courseType && (
-                              <span
-                                style={{
-                                  padding: "4px 10px",
-                                  borderRadius: "12px",
-                                  fontSize: "0.8rem",
-                                  fontWeight: "bold",
-                                  boxShadow: "var(--inner-shadow)",
-                                  background: "rgba(148, 163, 184, 0.15)",
-                                  color: "var(--text)",
-                                }}
-                              >
-                                {course.courseType === "full"
-                                  ? t('instructor.create_course.full_course_title', 'Full Course')
-                                  : t('instructor.create_course.ongoing_course_title', 'Ongoing Course')}
-                                {course.courseType === "full" && course.status === "approved" && ` · ${t('instructor.curriculum.content_locked', 'Content Locked')}`}
-                              </span>
-                            )}
-
-                            {course.courseType === "ongoing" && course.status !== "draft" && (
-                              <button
-                                type="button"
-                                onClick={(e) => { e.stopPropagation(); setConvertCourseId(course._id); setConvertPriceValue(String(course.price || '')); }}
-                                style={{ background: "none", border: "none", color: "#3b82f6", textDecoration: "underline", cursor: "pointer", padding: 0, fontSize: "0.8rem" }}
-                              >
-                                {t('instructor.dashboard.convert.button', 'Convert to Full Course')}
-                              </button>
-                            )}
-
-                            {course.status === "draft" && (
-                              <button
-                                onClick={(e) => handleTogglePublish(course._id, e)}
-                                style={{
-                                  padding: "4px 12px",
-                                  borderRadius: "12px",
-                                  background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                                  color: "white",
-                                  border: "none",
-                                  cursor: "pointer",
-                                  fontSize: "0.8rem",
-                                  fontWeight: "bold",
-                                  boxShadow: "0 2px 8px rgba(16, 185, 129, 0.3)"
-                                }}
-                              >
-                                Go Live
-                              </button>
-                            )}
-
-                            {course.status === "approved" && (
-                              <button
-                                onClick={(e) => handleTogglePublish(course._id, e)}
-                                style={{
-                                  padding: "4px 12px",
-                                  borderRadius: "12px",
-                                  background: "rgba(255, 255, 255, 0.08)",
-                                  color: "var(--text-h)",
-                                  border: "1px solid var(--border)",
-                                  boxShadow: "var(--inner-shadow)",
-                                  cursor: "pointer",
-                                  fontSize: "0.75rem"
-                                }}
-                              >
-                                Make Draft
-                              </button>
-                            )}
-
-                            <span
-                              style={{
-                                fontSize: "0.85rem",
-                                color: "var(--text)",
-                              }}
-                            >
-                              {lessonCount === 0
-                                ? t(
-                                    "instructor.dashboard.status.no_lessons_yet",
-                                  )
-                                : `${lessonCount} ${lessonCount === 1 ? t("instructor.dashboard.status.lesson") : t("instructor.dashboard.status.lessons")}`}
-                            </span>
-                          </div>
-                          {(course.status === "rejected" || course.status === "suspended") &&
-                            course.rejectionReason && (
-                              <div
-                                style={{
-                                  boxShadow: "var(--inner-shadow)",
-                                  marginTop: "8px",
-                                  padding: "6px 14px",
-                                  background: course.status === "suspended" ? "rgba(245, 158, 11, 0.2)" : "rgba(239, 68, 68, 0.2)",
-                                  border: "none",
-                                  borderRadius: "12px",
-                                  fontSize: "0.85rem",
-                                  color: "var(--text)",
-                                  width: "fit-content",
-                                }}
-                              >
-                                <span
-                                  style={{ color: course.status === "suspended" ? "#f59e0b" : "#ef4444", fontWeight: 600 }}
-                                >
-                                  {t("instructor.dashboard.status.reason")}
-                                  :{" "}
-                                </span>
-                                {course.rejectionReason}
-                              </div>
-                            )}
-                          {course.courseType === "ongoing" && course.status === "approved" && course.lastPublishedContentAt && (() => {
-                            const daysSince = Math.floor((Date.now() - new Date(course.lastPublishedContentAt).getTime()) / (24 * 60 * 60 * 1000));
-                            const daysLeft = Math.max(0, 14 - daysSince);
-                            return (
-                              <div style={{ marginTop: "8px", fontSize: "0.85rem", color: "var(--text)" }}>
-                                {t('instructor.dashboard.ongoing.last_lecture', 'Last Lecture: {{days}} days ago', { days: daysSince })}
-                                {' · '}
-                                {t('instructor.dashboard.ongoing.next_deadline', 'Next Activity Deadline: {{days}} days', { days: daysLeft })}
-                              </div>
-                            );
-                          })()}
-                          {course.courseType === "ongoing" && course.status === "draft" && course.draftStartedAt && (() => {
-                            const daysSinceDraft = Math.floor((Date.now() - new Date(course.draftStartedAt).getTime()) / (24 * 60 * 60 * 1000));
-                            const daysUntilArchive = Math.max(0, 90 - daysSinceDraft);
-                            return (
-                              <div
-                                style={{
-                                  boxShadow: "var(--inner-shadow)",
-                                  marginTop: "8px",
-                                  padding: "6px 14px",
-                                  background: "rgba(59, 130, 246, 0.15)",
-                                  borderRadius: "12px",
-                                  fontSize: "0.85rem",
-                                  color: "var(--text)",
-                                  width: "fit-content",
-                                }}
-                              >
-                                <div>{t('instructor.dashboard.ongoing.draft_reason', 'No new lecture was published for 14 days.')}</div>
-                                <div style={{ marginTop: "4px", fontWeight: 600 }}>
-                                  {t('instructor.dashboard.ongoing.draft_deletion', 'Removed in {{days}} days unless you publish a new lesson or convert to a Full Course.', { days: daysUntilArchive })}
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={(e) => { e.stopPropagation(); setConvertCourseId(course._id); setConvertPriceValue(String(course.price || '')); }}
-                                  style={{ marginTop: "8px", background: "none", border: "none", color: "#3b82f6", textDecoration: "underline", cursor: "pointer", padding: 0, fontSize: "0.8rem" }}
-                                >
-                                  {t('instructor.dashboard.convert.button', 'Convert to Full Course')}
-                                </button>
-                              </div>
-                            );
-                          })()}
-                          {course.status === "archived" && (
-                            <div style={{ marginTop: "8px", fontSize: "0.85rem", color: "var(--text)" }}>
-                              {t('instructor.dashboard.ongoing.archived_notice', 'This course was archived after 90 days of inactivity. Its content and history have been preserved.')}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
+              {/* Dashboard Quick Navigation & Course Overview */}
+              <div className="solid-card animate-entrance" style={{ padding: '28px', marginTop: '32px', borderRadius: '24px', background: 'var(--bg-surface)', boxShadow: 'var(--outer-shadow)', border: '1px solid var(--border)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1.4rem', margin: 0, color: 'var(--text-h)' }}>{t('instructor.dashboard.my_courses')}</h3>
+                    <p style={{ margin: '4px 0 0 0', color: 'var(--c-sub)', fontSize: '0.9rem' }}>
+                      {t('instructor.dashboard.quick_access_desc', 'Manage your course materials, lessons, quizzes, and curriculum structure.')}
+                    </p>
                   </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-      )}
+                  <div>
+                    <button
+                      onClick={() => {
+                        setSelectedCourseId(null);
+                        setActiveTab('curriculum');
+                      }}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        background: 'var(--bg-main)',
+                        boxShadow: 'var(--inner-shadow)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '24px',
+                        padding: '10px 20px',
+                        fontSize: '0.9rem',
+                        fontWeight: 600,
+                        color: 'var(--text-h)',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        width: 'auto',
+                        whiteSpace: 'nowrap'
+                      }}
+                      onMouseOver={(e) => { e.currentTarget.style.filter = 'brightness(1.15)'; }}
+                      onMouseOut={(e) => { e.currentTarget.style.filter = 'none'; }}
+                    >
+                      <span>{t('instructor.dashboard.go_to_curriculum', 'Go to Curriculum')}</span>
+                      <span>{i18n.language === 'ar' ? '←' : '→'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {courses.length === 0 ? (
+                  <div style={{ padding: '32px', textAlign: 'center', color: 'var(--c-sub)', border: '1px dashed var(--border)', borderRadius: '16px' }}>
+                    <p style={{ margin: 0, fontSize: '0.95rem' }}>
+                      {t('instructor.no_courses', "You haven't created any courses yet. Start sharing your knowledge with the world!")}
+                    </p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {courses.slice(0, 5).map(course => {
+                      const modules = modulesByCourse[course._id] || [];
+                      const lessonCount = modules.reduce((sum, m) => sum + (m.lessons?.length || 0), 0);
+                      return (
+                        <div
+                          key={course._id}
+                          onClick={() => {
+                            setSelectedCourseId(course._id);
+                            setActiveTab('curriculum');
+                          }}
+                          className="hover-glow"
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '16px 20px',
+                            borderRadius: '16px',
+                            background: 'var(--bg-main)',
+                            boxShadow: 'var(--inner-shadow)',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            flexWrap: 'wrap',
+                            gap: '12px'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', minWidth: 0 }}>
+                            {course.thumbnailUrl ? (
+                              <img
+                                src={course.thumbnailUrl}
+                                alt={course.title}
+                                style={{ width: '60px', height: '40px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0 }}
+                              />
+                            ) : (
+                              <div style={{ width: '60px', height: '40px', background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', borderRadius: '8px', flexShrink: 0 }} />
+                            )}
+                            <div style={{ minWidth: 0 }}>
+                              <h4 style={{ margin: 0, fontSize: '1rem', color: 'var(--text-h)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {course.title}
+                              </h4>
+                              <div style={{ fontSize: '0.8rem', color: 'var(--c-sub)', marginTop: '2px' }}>
+                                {lessonCount} {lessonCount === 1 ? t('instructor.dashboard.status.lesson') : t('instructor.dashboard.status.lessons')} · EGP {course.price}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <span
+                              style={{
+                                padding: '4px 10px',
+                                borderRadius: '12px',
+                                fontSize: '0.75rem',
+                                fontWeight: 'bold',
+                                boxShadow: 'var(--inner-shadow)',
+                                background: course.status === 'approved' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(59, 130, 246, 0.2)',
+                                color: course.status === 'approved' ? '#10B981' : '#3B82F6'
+                              }}
+                            >
+                              {course.status === 'approved' ? t('instructor.dashboard.status.live', 'LIVE') : t('instructor.dashboard.status.draft', 'DRAFT')}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Course Type Picker — shown before the create form for brand-new courses only; type is immutable after creation */}
       {showCourseTypeModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-          <div className="solid-card animate-entrance" style={{ width: '100%', maxWidth: '600px', padding: '32px' }}>
-            <h2 style={{ margin: '0 0 8px 0' }}>{t('instructor.create_course.choose_type_title', 'Choose Course Type')}</h2>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '20px' }}>
+          <div className="solid-card animate-entrance" style={{ width: '100%', maxWidth: '600px', padding: '32px', maxHeight: '90vh', overflowY: 'auto', borderRadius: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <h2 style={{ margin: 0 }}>{t('instructor.create_course.choose_type_title', 'Choose Course Type')}</h2>
+              <button
+                type="button"
+                onClick={() => setShowCourseTypeModal(false)}
+                style={{ background: 'var(--bg-main)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--c-sub)', cursor: 'pointer', boxShadow: 'var(--inner-shadow)', fontSize: '0.9rem' }}
+              >
+                ✕
+              </button>
+            </div>
             <p style={{ margin: '0 0 24px 0', color: 'var(--text)' }}>{t('instructor.create_course.choose_type_subtitle', 'This cannot be changed once the course is created.')}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <button
@@ -1416,9 +1246,18 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
 
       {/* Request Price Change Modal (Full Courses only — spec §5) */}
       {priceChangeCourseId && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-          <div className="solid-card animate-entrance" style={{ width: '100%', maxWidth: '440px', padding: '32px' }}>
-            <h2 style={{ margin: '0 0 8px 0' }}>{t('instructor.dashboard.price_change.title', 'Request Price Change')}</h2>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '20px' }}>
+          <div className="solid-card animate-entrance" style={{ width: '100%', maxWidth: '440px', padding: '32px', maxHeight: '90vh', overflowY: 'auto', borderRadius: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <h2 style={{ margin: 0 }}>{t('instructor.dashboard.price_change.title', 'Request Price Change')}</h2>
+              <button
+                type="button"
+                onClick={() => { setPriceChangeCourseId(null); setPriceChangeValue(''); }}
+                style={{ background: 'var(--bg-main)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--c-sub)', cursor: 'pointer', boxShadow: 'var(--inner-shadow)', fontSize: '0.9rem' }}
+              >
+                ✕
+              </button>
+            </div>
             <p style={{ margin: '0 0 20px 0', color: 'var(--text)', fontSize: '0.9rem' }}>
               {t('instructor.dashboard.price_change.subtitle', 'The public price stays the same until an admin approves this request.')}
             </p>
@@ -1440,9 +1279,18 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
 
       {/* Convert Ongoing -> Full Course Modal (spec §9 Option 4) */}
       {convertCourseId && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-          <div className="solid-card animate-entrance" style={{ width: '100%', maxWidth: '440px', padding: '32px' }}>
-            <h2 style={{ margin: '0 0 8px 0' }}>{t('instructor.dashboard.convert.title', 'Convert to Full Course')}</h2>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '20px' }}>
+          <div className="solid-card animate-entrance" style={{ width: '100%', maxWidth: '440px', padding: '32px', maxHeight: '90vh', overflowY: 'auto', borderRadius: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <h2 style={{ margin: 0 }}>{t('instructor.dashboard.convert.title', 'Convert to Full Course')}</h2>
+              <button
+                type="button"
+                onClick={() => { setConvertCourseId(null); setConvertPriceValue(''); }}
+                style={{ background: 'var(--bg-main)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--c-sub)', cursor: 'pointer', boxShadow: 'var(--inner-shadow)', fontSize: '0.9rem' }}
+              >
+                ✕
+              </button>
+            </div>
             <p style={{ margin: '0 0 20px 0', color: 'var(--text)', fontSize: '0.9rem' }}>
               {t('instructor.dashboard.convert.subtitle', 'This course will be resubmitted for admin review as a Full Course, using the price you set here. Once approved and published, no further modules or lessons can be added.')}
             </p>
@@ -1464,9 +1312,18 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
 
       {/* Standalone Related Lessons Manager (spec §11) */}
       {standaloneManageCourse && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-          <div className="solid-card animate-entrance" style={{ width: '100%', maxWidth: '600px', padding: '32px', maxHeight: '85vh', overflowY: 'auto' }}>
-            <h2 style={{ margin: '0 0 4px 0' }}>{t('instructor.curriculum.standalone.title', 'Standalone Lessons')}</h2>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '20px' }}>
+          <div className="solid-card animate-entrance" style={{ width: '100%', maxWidth: '600px', padding: '32px', maxHeight: '85vh', overflowY: 'auto', borderRadius: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+              <h2 style={{ margin: 0 }}>{t('instructor.curriculum.standalone.title', 'Standalone Lessons')}</h2>
+              <button
+                type="button"
+                onClick={() => { setStandaloneManageCourse(null); setStandaloneLessons([]); }}
+                style={{ background: 'var(--bg-main)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--c-sub)', cursor: 'pointer', boxShadow: 'var(--inner-shadow)', fontSize: '0.9rem' }}
+              >
+                ✕
+              </button>
+            </div>
             <p style={{ margin: '0 0 20px 0', color: 'var(--text)', fontSize: '0.9rem' }}>
               {t('course_page.standalone.related_to', 'Related to: {{course}}', { course: standaloneManageCourse.title })}
             </p>
@@ -1540,12 +1397,21 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
 
       {/* Create / Edit Course Modal */}
       {showCreateModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-          <div className="solid-card animate-entrance" style={{ width: '100%', maxWidth: '600px', padding: '32px' }}>
-            <h2 style={{ margin: '0 0 8px 0' }}>{editingCourse ? t('instructor.create_course.edit_title') : t('instructor.create_course.title')}</h2>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '16px' }}>
+          <div className="solid-card animate-entrance" style={{ width: '100%', maxWidth: '560px', padding: '20px 24px', borderRadius: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+              <h2 style={{ margin: 0, fontSize: '1.3rem' }}>{editingCourse ? t('instructor.create_course.edit_title') : t('instructor.create_course.title')}</h2>
+              <button
+                type="button"
+                onClick={() => { setShowCreateModal(false); setEditingCourse(null); }}
+                style={{ background: 'var(--bg-main)', border: 'none', borderRadius: '50%', width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--c-sub)', cursor: 'pointer', boxShadow: 'var(--inner-shadow)', fontSize: '0.85rem' }}
+              >
+                ✕
+              </button>
+            </div>
 
             {!editingCourse && formData.courseType && (
-              <div style={{ margin: '0 0 16px 0', color: 'var(--text)', fontSize: '0.9rem' }}>
+              <div style={{ margin: '0 0 10px 0', color: 'var(--text)', fontSize: '0.82rem' }}>
                 {formData.courseType === 'full'
                   ? t('instructor.create_course.full_course_title', 'Full Course')
                   : t('instructor.create_course.ongoing_course_title', 'Ongoing Course')}
@@ -1556,20 +1422,20 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
               </div>
             )}
 
-            {error && <div className="error-message" style={{ marginBottom: '16px' }}>{error}</div>}
+            {error && <div className="error-message" style={{ marginBottom: '10px' }}>{error}</div>}
             
-            <form noValidate onSubmit={handleSaveCourse} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <form noValidate onSubmit={handleSaveCourse} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <div className="input-group">
                 <label>{t('instructor.create_course.form.title')} <span style={{ color: '#ef4444' }}>*</span></label>
                 <input required type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className={error && !formData.title.trim() ? 'input-error' : ''} />
               </div>
               <div className="input-group">
                 <label>{t('instructor.create_course.form.description')} <span style={{ color: '#ef4444' }}>*</span></label>
-                <textarea required value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} style={{ minHeight: '100px', resize: 'vertical' }} className={error && !formData.description.trim() ? 'input-error' : ''} />
+                <textarea required value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} style={{ minHeight: '52px', height: '52px', resize: 'none' }} className={error && !formData.description.trim() ? 'input-error' : ''} />
               </div>
               {/* INS-05: Hide the price input entirely if we are editing the course */}
               {!editingCourse && (
-                <div className="input-row" style={{ marginBottom: '-16px' }}>
+                <div className="input-row" style={{ marginBottom: '-10px' }}>
                   <div className="input-group">
                     <label>{t('instructor.create_course.form.price')} (EGP) <span style={{ color: '#ef4444' }}>*</span></label>
                     <input required type="number" min="0" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className={error && formData.price === '' ? 'input-error' : ''} />
@@ -1602,10 +1468,10 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
               <div className="input-group">
                 <label>{t('instructor.create_course.form.thumbnail')} <span style={{ color: '#ef4444' }}>*</span></label>
                 <input required={!editingCourse} type="file" accept="image/*" onChange={e => setThumbnailFile(e.target.files[0])} />
-                <div className="input-hint">{editingCourse ? t('instructor.create_course.leave_blank_placeholder') : ''}</div>
+                <div className="input-hint" style={{ marginTop: '2px', fontSize: '0.75rem' }}>{editingCourse ? t('instructor.create_course.leave_blank_placeholder') : ''}</div>
               </div>
               
-              <div className="input-row" style={{ marginTop: '16px' }}>
+              <div className="input-row" style={{ marginTop: '4px' }}>
                 <button type="button" onClick={() => { setShowCreateModal(false); setEditingCourse(null); }} className="sys-btn-secondary">{t('instructor.create_course.cancel')}</button>
                 <button type="submit" disabled={submitting} className="sys-btn-primary">
                   {submitting ? t('instructor.create_course.saving') : t('instructor.create_course.save')}
@@ -1618,23 +1484,32 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
 
       {/* Add Lesson Modal */}
       {showLessonModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-          <div className="solid-card animate-entrance" style={{ width: '100%', maxWidth: '700px', padding: '32px' }}>
-            {/* Translated Add Lesson Modal Title */}
-            <h2 style={{ margin: '0 0 24px 0' }}>{editingLessonId ? t('instructor.curriculum.edit_lesson', 'Edit Lesson') : t('instructor.curriculum.add_lesson')}</h2>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '20px' }}>
+          <div className="solid-card animate-entrance" style={{ width: '100%', maxWidth: '700px', padding: '32px', maxHeight: '90vh', overflowY: 'auto', borderRadius: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h2 style={{ margin: 0 }}>{editingLessonId ? t('instructor.curriculum.edit_lesson', 'Edit Lesson') : t('instructor.curriculum.add_lesson')}</h2>
+              <button
+                type="button"
+                onClick={() => { setShowLessonModal(false); setEditingLessonId(null); }}
+                style={{ background: 'var(--bg-main)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--c-sub)', cursor: 'pointer', boxShadow: 'var(--inner-shadow)', fontSize: '0.9rem' }}
+              >
+                ✕
+              </button>
+            </div>
             {error && <div style={{ color: '#ef4444', marginBottom: '16px' }}>{error}</div>}
             
             <form noValidate onSubmit={handleSaveLesson} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '24px' }}>
-                <div className="input-group">
-                  <label>{t('instructor.curriculum.lesson_title')}</label>
-                  <input required type="text" value={lessonData.title} onChange={e => setLessonData({...lessonData, title: e.target.value})} placeholder={t('instructor.curriculum.ph_lesson_title')} />
-                  <div className="input-hint">{t('instructor.curriculum.lessons_numbered_auto')}</div>
-                </div>
+              <div className="input-group">
+                <label>{t('instructor.curriculum.lesson_title')}</label>
+                <input required type="text" value={lessonData.title} onChange={e => setLessonData({...lessonData, title: e.target.value})} placeholder={t('instructor.curriculum.ph_lesson_title')} />
+                <div className="input-hint">{t('instructor.curriculum.lessons_numbered_auto')}</div>
+              </div>
+
+              {!editingLessonId && (
                 <div className="input-group">
                   <label>{t('instructor.curriculum.video_file')}</label>
-                  <input required={!editingLessonId} type="file" accept="video/*" onChange={e => setVideoFile(e.target.files[0])} />
-                  <div className="input-hint">{editingLessonId ? t('instructor.curriculum.leave_blank_video') : t('instructor.curriculum.upload_cloudinary')}</div>
+                  <input required type="file" accept="video/*" onChange={e => setVideoFile(e.target.files[0])} />
+                  <div className="input-hint">{t('instructor.curriculum.upload_cloudinary')}</div>
                   {submitting && videoFile && (
                     <div style={{ marginTop: '8px' }}>
                       <div style={{ height: '6px', borderRadius: '12px', background: 'var(--c-border, rgba(255,255,255,0.1))', overflow: 'hidden' }}>
@@ -1648,15 +1523,48 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                     </div>
                   )}
                 </div>
-                
-                <div className="input-group">
-                  <label>{t('instructor.curriculum.attachment_title')}</label>
-                  <input type="text" value={lessonData.attachmentTitle} onChange={e => setLessonData({...lessonData, attachmentTitle: e.target.value})} placeholder={t('instructor.curriculum.ph_attachment_title')} />
+              )}
+              
+              {/* PDF / Document Attachment Section */}
+              <div style={{ padding: '16px', borderRadius: '12px', background: 'var(--bg-main)', boxShadow: 'var(--inner-shadow)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontWeight: 600, color: 'var(--text-h)', fontSize: '0.9rem' }}>
+                    📎 {t('instructor.curriculum.attachment_section', 'PDF / Document Attachment')}
+                  </span>
+                  {lessonData.attachmentUrl && (
+                    <a
+                      href={lessonData.attachmentUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ fontSize: '0.8rem', color: '#3b82f6', textDecoration: 'underline' }}
+                    >
+                      {t('instructor.curriculum.view_current_pdf', 'View current PDF')} ↗
+                    </a>
+                  )}
                 </div>
+
                 <div className="input-group">
-                  <label>{t('instructor.curriculum.attachment_file')}</label>
-                  <input type="file" onChange={e => setAttachmentFile(e.target.files[0])} />
-                  <div className="input-hint">{editingLessonId ? t('instructor.curriculum.leave_blank_attachment') : t('instructor.curriculum.optional_doc')}</div>
+                  <label>{t('instructor.curriculum.attachment_title', 'Attachment Title')}</label>
+                  <input
+                    type="text"
+                    value={lessonData.attachmentTitle}
+                    onChange={e => setLessonData({...lessonData, attachmentTitle: e.target.value})}
+                    placeholder={t('instructor.curriculum.ph_attachment_title', 'e.g. Lecture Slides / Exercise Sheet')}
+                  />
+                </div>
+
+                <div className="input-group">
+                  <label>{lessonData.attachmentUrl ? t('instructor.curriculum.replace_pdf', 'Upload New / Replace PDF') : t('instructor.curriculum.upload_pdf', 'Upload PDF / File')}</label>
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx,.ppt,.pptx,.zip"
+                    onChange={e => setAttachmentFile(e.target.files[0])}
+                  />
+                  <div className="input-hint" style={{ fontSize: '0.78rem' }}>
+                    {editingLessonId
+                      ? t('instructor.curriculum.leave_blank_attachment', 'Choose a new file to upload/replace, or leave empty to keep the existing one.')
+                      : t('instructor.curriculum.optional_doc', 'Attach supplemental documents (PDF, DOCX, ZIP).')}
+                  </div>
                 </div>
               </div>
               
