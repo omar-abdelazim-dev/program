@@ -145,7 +145,7 @@ input:focus {
 }
 
 .nav-icon-btn {
-    background: var(--bg-surface);
+    background: transparent;
     color: var(--c-sub);
     width: 40px;
     height: 40px;
@@ -155,12 +155,14 @@ input:focus {
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s;
+    box-shadow: none;
 }
 
-.nav-icon-btn:hover {
+.nav-icon-btn:hover,
+.nav-icon-btn:active {
     color: var(--c-light);
-    border-color: var(--c-orange);
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--bg-main);
+    box-shadow: var(--inner-shadow) !important;
 }
 
 /* Sun/moon theme toggle: both icons are always mounted and stacked, cross-
@@ -202,20 +204,42 @@ input:focus {
 .profile-wrapper {
     position: relative;
     cursor: pointer;
+    border-radius: 50%;
 }
 
 .nav-avatar {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: var(--bg-surface);
+    background: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
     color: var(--text-primary);
-    box-shadow: var(--outer-shadow);
-    transition: border-color 0.2s;
+    box-shadow: none;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.nav-avatar::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    pointer-events: none;
+    box-shadow: none;
+    transition: box-shadow 0.2s;
+}
+
+.profile-wrapper:hover .nav-avatar,
+.profile-wrapper:active .nav-avatar {
+    background: var(--bg-main);
+}
+
+.profile-wrapper:hover .nav-avatar::after,
+.profile-wrapper:active .nav-avatar::after {
+    box-shadow: var(--inner-shadow) !important;
 }
 
 .profile-tooltip {
