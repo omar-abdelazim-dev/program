@@ -601,7 +601,7 @@ body.light-mode .utility-icon-btn:active {
 }
 
 .student-topnav-header .profile-dropdown {
-  top: calc(100% + 24px);
+  top: calc(100% + 20px);
 }
 
 .profile-dropdown::before {
