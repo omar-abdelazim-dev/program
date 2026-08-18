@@ -1225,7 +1225,7 @@ export default function AdminPortal({
                       className="profile-dropdown"
                       style={{
                         position: "absolute",
-                        top: "calc(100% + 18px)",
+                        top: "calc(100% + 20px)",
                         left: "50%",
                         transformOrigin: "top center",
                         transform:
