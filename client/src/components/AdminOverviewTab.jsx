@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import CardSkeleton from './common/CardSkeleton';
 
 const AnimatedNumber = ({ value }) => {
   return <span>{value.toLocaleString()}</span>;
@@ -17,7 +18,7 @@ const GrowthBadge = ({ growth }) => {
         alignItems: "center",
         gap: "4px",
         padding: "4px 8px",
-        borderRadius: "99px",
+        borderRadius: "12px",
         background: "var(--bg-main)",
         boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.2)",
         color: isPositive ? "#10B981" : "#ef4444",
@@ -37,9 +38,18 @@ const GrowthBadge = ({ growth }) => {
   );
 };
 
-const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
+const AdminOverviewTab = ({ stats, user, setActiveTab, loading }) => {
   const { t } = useTranslation();
   const [time, setTime] = useState(new Date());
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <CardSkeleton type="stat" count={3} />
+        <CardSkeleton type="horizontal" count={2} />
+      </div>
+    );
+  }
 
   useEffect(() => {
     // Just a static time for "Last refreshed" to avoid constant re-renders
@@ -199,20 +209,104 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
 
         {/* Pending Actions */}
         <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
-          <h3 style={{ margin: "0 0 24px 0", fontSize: '1.1rem', color: 'var(--text-h)' }}>{t('admin.pending_actions', 'Pending Actions')}</h3>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-            <div style={{ 
-              width: '48px', height: '48px', borderRadius: '50%', 
-              background: 'var(--bg-main)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)', 
-              display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' 
-            }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
+          <h3 style={{ margin: "0 0 20px 0", fontSize: '1.1rem', color: 'var(--text-h)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>{t('admin.pending_actions', 'Pending Actions')}</span>
+            {( (stats?.pendingCourses || 0) + (stats?.pendingEnrollments || 0) + (stats?.pendingPayouts || 0) + (stats?.pendingLessons || 0) + (stats?.pendingQuizzes || 0) ) > 0 && (
+              <span style={{ fontSize: '0.75rem', padding: '3px 10px', background: 'rgba(249,115,22,0.12)', color: '#f97316', borderRadius: '12px', fontWeight: 'bold', boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.15)' }}>
+                {(stats?.pendingCourses || 0) + (stats?.pendingEnrollments || 0) + (stats?.pendingPayouts || 0) + (stats?.pendingLessons || 0) + (stats?.pendingQuizzes || 0)} Attention
+              </span>
+            )}
+          </h3>
+
+          {( (stats?.pendingCourses || 0) + (stats?.pendingEnrollments || 0) + (stats?.pendingPayouts || 0) + (stats?.pendingLessons || 0) + (stats?.pendingQuizzes || 0) ) > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {(stats?.pendingCourses || 0) > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: 'var(--bg-main)', borderRadius: '12px', boxShadow: 'var(--inner-shadow)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '1.1rem' }}>📚</span>
+                    <div>
+                      <div style={{ fontWeight: '600', fontSize: '0.85rem', color: 'var(--text-h)' }}>{stats.pendingCourses} Course(s) Awaiting Review</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--c-sub)' }}>Submitted for admin approval</div>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => setActiveTab('courses')}
+                    style={{ padding: '6px 14px', borderRadius: '8px', background: 'rgba(249,115,22,0.15)', color: '#f97316', border: 'none', fontWeight: 600, fontSize: '0.78rem', cursor: 'pointer', transition: 'all 0.2s' }}
+                  >
+                    Review
+                  </button>
+                </div>
+              )}
+
+              {(stats?.pendingEnrollments || 0) > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: 'var(--bg-main)', borderRadius: '12px', boxShadow: 'var(--inner-shadow)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '1.1rem' }}>🎓</span>
+                    <div>
+                      <div style={{ fontWeight: '600', fontSize: '0.85rem', color: 'var(--text-h)' }}>{stats.pendingEnrollments} Enrollment Request(s)</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--c-sub)' }}>Student course access approvals</div>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => setActiveTab('enrollment')}
+                    style={{ padding: '6px 14px', borderRadius: '8px', background: 'rgba(59,130,246,0.15)', color: '#3b82f6', border: 'none', fontWeight: 600, fontSize: '0.78rem', cursor: 'pointer', transition: 'all 0.2s' }}
+                  >
+                    Review
+                  </button>
+                </div>
+              )}
+
+              {(stats?.pendingPayouts || 0) > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: 'var(--bg-main)', borderRadius: '12px', boxShadow: 'var(--inner-shadow)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '1.1rem' }}>💳</span>
+                    <div>
+                      <div style={{ fontWeight: '600', fontSize: '0.85rem', color: 'var(--text-h)' }}>{stats.pendingPayouts} Payout Request(s)</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--c-sub)' }}>Instructor earnings withdrawal requests</div>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => setActiveTab('financial_payouts')}
+                    style={{ padding: '6px 14px', borderRadius: '8px', background: 'rgba(16,185,129,0.15)', color: '#10b981', border: 'none', fontWeight: 600, fontSize: '0.78rem', cursor: 'pointer', transition: 'all 0.2s' }}
+                  >
+                    Review
+                  </button>
+                </div>
+              )}
+
+              {((stats?.pendingLessons || 0) + (stats?.pendingQuizzes || 0)) > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: 'var(--bg-main)', borderRadius: '12px', boxShadow: 'var(--inner-shadow)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '1.1rem' }}>📝</span>
+                    <div>
+                      <div style={{ fontWeight: '600', fontSize: '0.85rem', color: 'var(--text-h)' }}>{(stats?.pendingLessons || 0) + (stats?.pendingQuizzes || 0)} Lesson/Quiz Update(s)</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--c-sub)' }}>Content revisions needing verification</div>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => setActiveTab('courses')}
+                    style={{ padding: '6px 14px', borderRadius: '8px', background: 'rgba(168,85,247,0.15)', color: '#a855f7', border: 'none', fontWeight: 600, fontSize: '0.78rem', cursor: 'pointer', transition: 'all 0.2s' }}
+                  >
+                    Review
+                  </button>
+                </div>
+              )}
             </div>
-            <div style={{ fontWeight: '600', color: '#10b981', marginBottom: '4px' }}>{t('admin.up_to_date', 'Everything is up to date.')}</div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--c-sub)' }}>{t('admin.no_actions_attention', 'No actions require attention.')}</div>
-          </div>
+          ) : (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '24px 0' }}>
+              <div style={{ 
+                width: '48px', height: '48px', borderRadius: '50%', 
+                background: 'var(--bg-main)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)', 
+                display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' 
+              }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+              <div style={{ fontWeight: '600', color: '#10b981', marginBottom: '4px' }}>{t('admin.up_to_date', 'Everything is up to date.')}</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--c-sub)' }}>{t('admin.no_actions_attention', 'No actions require attention.')}</div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -240,7 +334,7 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
             <button style={{ 
               background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', 
               color: 'var(--c-sub)', fontSize: '0.75rem', letterSpacing: '1px', 
-              padding: '6px 16px', borderRadius: '99px', cursor: 'not-allowed'
+              padding: '6px 16px', borderRadius: '12px', cursor: 'not-allowed'
             }}>
               {t('admin.pending_integration', 'PENDING INTEGRATION')}
             </button>
@@ -275,7 +369,7 @@ const AdminOverviewTab = ({ stats, user, setActiveTab }) => {
             <button style={{ 
               background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', 
               color: 'var(--c-sub)', fontSize: '0.75rem', letterSpacing: '1px', 
-              padding: '6px 16px', borderRadius: '99px', cursor: 'not-allowed'
+              padding: '6px 16px', borderRadius: '12px', cursor: 'not-allowed'
             }}>
               {t('admin.pending_integration', 'PENDING INTEGRATION')}
             </button>

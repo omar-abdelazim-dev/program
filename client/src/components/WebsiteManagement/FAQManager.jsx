@@ -78,7 +78,7 @@ export default function FAQManager({ user }) {
             Manage frequently asked questions.
           </p>
         </div>
-        <Button variant="primary" onClick={openCreate} style={{ height: '44px', borderRadius: '50px', padding: '0 28px' }}>
+        <Button variant="primary" onClick={openCreate} style={{ height: '44px', borderRadius: '12px', padding: '0 28px' }}>
           + Add FAQ
         </Button>
       </div>
@@ -180,8 +180,8 @@ export default function FAQManager({ user }) {
                 />
               </div>
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>
-                <Button variant="secondary" onClick={() => setShowModal(false)} style={{ borderRadius: '50px', padding: '10px 24px' }}>Cancel</Button>
-                <Button variant="primary" type="submit" style={{ borderRadius: '50px', padding: '10px 24px' }}>Save FAQ</Button>
+                <Button variant="secondary" onClick={() => setShowModal(false)} style={{ borderRadius: '12px', padding: '10px 24px' }}>Cancel</Button>
+                <Button variant="primary" type="submit" style={{ borderRadius: '12px', padding: '10px 24px' }}>Save FAQ</Button>
               </div>
             </form>
           </div>

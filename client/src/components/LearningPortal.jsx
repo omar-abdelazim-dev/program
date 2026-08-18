@@ -565,21 +565,21 @@ export default function LearningPortal({ user }) {
 
                 {/* Sub QA Tabs (Only for My Questions) */}
                 {qaMainTab === 'my_questions' && (
-                  <div style={{ display: 'flex', position: 'relative', background: 'var(--bg-main)', padding: '6px', borderRadius: '50px', boxShadow: 'var(--inner-shadow)', width: '260px', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', position: 'relative', background: 'var(--bg-main)', padding: '6px', borderRadius: '12px', boxShadow: 'var(--inner-shadow)', width: '260px', marginBottom: '8px' }}>
                     <div style={{
                       position: 'absolute',
                       top: '6px', bottom: '6px',
                       insetInlineStart: qaSubTab === 'pending' ? '6px' : '130px',
                       width: '124px',
                       background: 'var(--bg-surface)',
-                      borderRadius: '50px',
+                      borderRadius: '12px',
                       boxShadow: 'var(--outer-shadow)',
                       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                     }} />
                     <button
                       onClick={() => { setQaSubTab('pending'); setCurrentPage(1); }}
                       style={{
-                        flex: 1, padding: '6px 0', borderRadius: '50px', border: 'none',
+                        flex: 1, padding: '6px 0', borderRadius: '12px', border: 'none',
                         background: 'transparent', position: 'relative', zIndex: 1,
                         color: qaSubTab === 'pending' ? 'var(--text-h)' : 'var(--c-sub)',
                         cursor: 'pointer', fontWeight: qaSubTab === 'pending' ? '600' : '400',
@@ -591,7 +591,7 @@ export default function LearningPortal({ user }) {
                     <button
                       onClick={() => { setQaSubTab('replied'); setCurrentPage(1); }}
                       style={{
-                        flex: 1, padding: '6px 0', borderRadius: '50px', border: 'none',
+                        flex: 1, padding: '6px 0', borderRadius: '12px', border: 'none',
                         background: 'transparent', position: 'relative', zIndex: 1,
                         color: qaSubTab === 'replied' ? 'var(--text-h)' : 'var(--c-sub)',
                         cursor: 'pointer', fontWeight: qaSubTab === 'replied' ? '600' : '400',
@@ -637,7 +637,7 @@ export default function LearningPortal({ user }) {
                             <div key={q._id} style={{
                         background: "var(--bg-surface)",
                         border: "none",
-                        borderRadius: "50px",
+                        borderRadius: "12px",
                         padding: "25px",
                         boxShadow: "var(--inner-shadow)"
                       }}>

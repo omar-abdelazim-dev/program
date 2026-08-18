@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import api from "../api/axios";
+import ConfirmModal from "./ConfirmModal";
+import Pagination from "./common/Pagination";
 import notyf from "../utils/notyf";
 import { createPortal } from "react-dom";
 import SegmentedControl from "./common/SegmentedControl";
@@ -15,7 +17,12 @@ const CustomDropdown = ({
   inline = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
+  const [dropdownPos, setDropdownPos] = useState({
+    top: 0,
+    left: 0,
+    width: 0,
+    openUp: false,
+  });
   const dropdownRef = useRef(null);
   const menuRef = useRef(null);
 
@@ -36,10 +43,17 @@ const CustomDropdown = ({
       const updatePosition = () => {
         if (dropdownRef.current) {
           const rect = dropdownRef.current.getBoundingClientRect();
+          const estimatedHeight = options.length * 44 + 24;
+          const spaceBelow = window.innerHeight - rect.bottom;
+          const openUp = spaceBelow < estimatedHeight && rect.top > spaceBelow;
+
           setDropdownPos({
-            top: rect.bottom + 8 + window.scrollY,
+            top: openUp
+              ? rect.top - 8 + window.scrollY
+              : rect.bottom + 8 + window.scrollY,
             left: rect.left + window.scrollX,
             width: rect.width,
+            openUp,
           });
         }
       };
@@ -54,7 +68,7 @@ const CustomDropdown = ({
         window.removeEventListener("resize", updatePosition);
       };
     }
-  }, [isOpen]);
+  }, [isOpen, options.length]);
 
   return (
     <div ref={dropdownRef} style={{ position: "relative", width }}>
@@ -64,16 +78,18 @@ const CustomDropdown = ({
         style={{
           width: "100%",
           height: inline ? "auto" : "42px",
-          padding: inline ? "8px 12px" : "0 16px",
+          padding: inline ? "6px 8px" : "0 16px",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
           background: inline ? "transparent" : "var(--bg-main)",
           border: isOpen && !inline ? "1px solid #f97316" : "none",
-          borderRadius: inline ? "0" : "50px",
-          boxShadow: inline ? "none" : (isOpen
-            ? "var(--outer-shadow), 0 0 0 3px rgba(249, 115, 22, 0.2)"
-            : "var(--inner-shadow)"),
+          borderRadius: inline ? "0" : "12px",
+          boxShadow: inline
+            ? "none"
+            : isOpen
+              ? "var(--outer-shadow), 0 0 0 3px rgba(249, 115, 22, 0.2)"
+              : "var(--inner-shadow)",
           color: "var(--c-light)",
           cursor: disabled ? "not-allowed" : "pointer",
           opacity: disabled ? 0.5 : 1,
@@ -104,6 +120,8 @@ const CustomDropdown = ({
               top: dropdownPos.top,
               left: dropdownPos.left,
               width: dropdownPos.width,
+              transform: dropdownPos.openUp ? "translateY(-100%)" : "none",
+              transformOrigin: dropdownPos.openUp ? "bottom" : "top",
               background: "var(--bg-surface)",
               border: "none",
               borderRadius: "12px",
@@ -135,7 +153,7 @@ const CustomDropdown = ({
                   border: "none",
                   textAlign: "left",
                   cursor: "pointer",
-                  borderRadius: "50px",
+                  borderRadius: "12px",
                   fontSize: "0.95rem",
                   transition: "all 0.2s ease",
                   color:
@@ -453,12 +471,16 @@ export default function AdminUserManagementTab({
       </div>
 
       {/* Role Tabs and Search Pill Row */}
-      <div style={{ 
-        display: "flex", 
-        justifyContent: "space-between", 
-        alignItems: "center", 
-        marginBottom: "20px" 
-      }}>
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "16px",
+          marginBottom: "20px",
+        }}
+      >
         {/* Role Tabs (Segmented Control) */}
         <SegmentedControl
           tabs={[
@@ -477,24 +499,26 @@ export default function AdminUserManagementTab({
           style={{ marginBottom: "0px" }}
         />
 
-        <div 
-          style={{ 
-            display: "flex", 
+        <div
+          style={{
+            display: "flex",
             alignItems: "center",
             background: "var(--bg-surface)",
-            borderRadius: "99px",
-            boxShadow: isSearchFocused 
+            borderRadius: "12px",
+            boxShadow: isSearchFocused
               ? "var(--outer-shadow), 0 0 0 3px rgba(249, 115, 22, 0.2)"
               : "var(--outer-shadow)",
-            padding: "4px 8px 4px 16px",
+            padding: "4px 8px 4px 12px",
             transition: "all 0.3s ease",
-            border: isSearchFocused ? "1px solid #f97316" : "1px solid transparent",
+            border: isSearchFocused
+              ? "1px solid #f97316"
+              : "1px solid transparent",
           }}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="18"
-            height="18"
+            width="17"
+            height="17"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -515,31 +539,27 @@ export default function AdminUserManagementTab({
               background: "transparent",
               border: "none",
               outline: "none",
-              padding: "8px 12px",
+              padding: "6px 8px",
               color: "var(--c-light)",
-              width: "180px",
-              fontSize: "0.95rem"
+              width: "110px",
+              fontSize: "0.92rem",
             }}
           />
 
-          <div style={{ width: "1px", height: "22px", background: "rgba(255, 255, 255, 0.1)", margin: "0 4px" }} />
+          <div
+            style={{
+              width: "1px",
+              height: "20px",
+              background: "rgba(255, 255, 255, 0.1)",
+              margin: "0 2px",
+            }}
+          />
 
-          <div style={{ width: "135px", position: "relative" }}>
+          <div style={{ width: "116px", position: "relative" }}>
             <CustomDropdown
               value={accountStatus}
               options={["All Statuses", "Active", "Suspended", "Deleted"]}
               onChange={setAccountStatus}
-              inline={true}
-            />
-          </div>
-
-          <div style={{ width: "1px", height: "22px", background: "rgba(255, 255, 255, 0.1)", margin: "0 4px" }} />
-
-          <div style={{ width: "110px", position: "relative" }}>
-            <CustomDropdown
-              value={verification}
-              options={["All", "Verified", "Unverified"]}
-              onChange={setVerification}
               inline={true}
             />
           </div>
@@ -679,405 +699,331 @@ export default function AdminUserManagementTab({
           width: "100%",
         }}
       >
-        <table
-          className="admin-table"
-          style={{
-            width: "100%",
-            borderCollapse: "separate",
-            borderSpacing: "0 4px",
-            textAlign: "left",
-          }}
-        >
-          <thead>
-            <tr>
-              <th style={{ width: "50px", padding: "16px 24px" }}>
-                <input
-                  type="checkbox"
-                  checked={
-                    visibleUsers.length > 0 &&
-                    selectedIds.size === visibleUsers.length
-                  }
-                  onChange={handleSelectAll}
-                  style={{
-                    cursor: "pointer",
-                    width: "16px",
-                    height: "16px",
-                    accentColor: "#4f46e5",
-                  }}
-                />
-              </th>
-              <th
-                style={{
-                  padding: "16px",
-                  fontWeight: "600",
-                  color: "var(--c-sub)",
-                  fontSize: "0.85rem",
-                }}
-              >
-                {t("admin.name", "User")}
-              </th>
-              <th
-                style={{
-                  padding: "16px",
-                  fontWeight: "600",
-                  color: "var(--c-sub)",
-                  fontSize: "0.85rem",
-                }}
-              >
-                {t("admin.role", "Role")}
-              </th>
-              <th
-                style={{
-                  padding: "16px",
-                  fontWeight: "600",
-                  color: "var(--c-sub)",
-                  fontSize: "0.85rem",
-                }}
-              >
-                {t("common.status", "Status")}
-              </th>
-              <th
-                style={{
-                  padding: "16px",
-                  fontWeight: "600",
-                  color: "var(--c-sub)",
-                  fontSize: "0.85rem",
-                }}
-              >
-                {t("admin.registered", "Registered")}
-              </th>
-              <th
-                style={{
-                  padding: "16px 24px",
-                  fontWeight: "600",
-                  color: "var(--c-sub)",
-                  fontSize: "0.85rem",
-                  textAlign: "right",
-                }}
-              >
-                {t("admin.action", "Action")}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentUsers.length === 0 ? (
+        <div style={{ width: "100%", overflow: "hidden" }}>
+          <table
+            className="admin-table"
+            style={{
+              width: "100%",
+              borderCollapse: "separate",
+              borderSpacing: "0 4px",
+              textAlign: "left",
+            }}
+          >
+            <thead>
               <tr>
-                <td
-                  colSpan="7"
+                <th
                   style={{
-                    padding: "40px",
-                    textAlign: "center",
-                    color: "var(--c-sub)",
+                    width: "36px",
+                    padding: "12px 12px 12px 16px",
+                    whiteSpace: "nowrap",
                   }}
                 >
-                  No users found.
-                </td>
-              </tr>
-            ) : (
-              currentUsers.map((u) => (
-                <tr
-                  key={u._id}
-                  className={selectedIds.has(u._id) ? "selected" : ""}
+                  <input
+                    type="checkbox"
+                    checked={
+                      visibleUsers.length > 0 &&
+                      selectedIds.size === visibleUsers.length
+                    }
+                    onChange={handleSelectAll}
+                    style={{
+                      cursor: "pointer",
+                      width: "16px",
+                      height: "16px",
+                      accentColor: "#4f46e5",
+                    }}
+                  />
+                </th>
+                <th
+                  style={{
+                    padding: "12px 8px",
+                    fontWeight: "600",
+                    color: "var(--c-sub)",
+                    fontSize: "0.82rem",
+                    whiteSpace: "nowrap",
+                  }}
                 >
-                  <td style={{ padding: "16px 24px" }}>
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.has(u._id)}
-                      onChange={() => handleSelectOne(u._id)}
-                      style={{
-                        cursor: "pointer",
-                        width: "16px",
-                        height: "16px",
-                        accentColor: "#4f46e5",
-                      }}
-                    />
+                  {t("admin.name", "User")}
+                </th>
+                <th
+                  style={{
+                    padding: "12px 8px",
+                    fontWeight: "600",
+                    color: "var(--c-sub)",
+                    fontSize: "0.82rem",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {t("admin.role", "Role")}
+                </th>
+                <th
+                  style={{
+                    padding: "12px 8px",
+                    fontWeight: "600",
+                    color: "var(--c-sub)",
+                    fontSize: "0.82rem",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {t("common.status", "Status")}
+                </th>
+                <th
+                  style={{
+                    padding: "12px 16px 12px 8px",
+                    fontWeight: "600",
+                    color: "var(--c-sub)",
+                    fontSize: "0.82rem",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {t("admin.registered", "Registered")}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentUsers.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan="5"
+                    style={{
+                      padding: "40px",
+                      textAlign: "center",
+                      color: "var(--c-sub)",
+                    }}
+                  >
+                    No users found.
                   </td>
-                  <td style={{ padding: "16px" }}>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "12px",
-                      }}
+                </tr>
+              ) : (
+                currentUsers.map((u) => (
+                  <tr
+                    key={u._id}
+                    className={`analytics-row ${selectedIds.has(u._id) ? "selected" : ""}`}
+                    onClick={() => setSidePanelUserId(u._id)}
+                    style={{
+                      cursor: "pointer",
+                      transition: "background 0.15s ease",
+                    }}
+                  >
+                    <td
+                      style={{ padding: "12px 12px 12px 16px" }}
+                      onClick={(e) => e.stopPropagation()}
                     >
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(u._id)}
+                        onChange={() => handleSelectOne(u._id)}
+                        style={{
+                          cursor: "pointer",
+                          width: "16px",
+                          height: "16px",
+                          accentColor: "#4f46e5",
+                        }}
+                      />
+                    </td>
+                    <td style={{ padding: "12px 8px" }}>
                       <div
                         style={{
-                          width: "36px",
-                          height: "36px",
-                          borderRadius: "50%",
-                          background: "var(--bg-main)",
-                          color: "var(--c-light)",
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "center",
-                          fontWeight: "600",
-                          fontSize: "0.9rem",
-                          flexShrink: 0,
+                          gap: "10px",
                         }}
                       >
-                        {u.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
                         <div
                           style={{
+                            width: "32px",
+                            height: "32px",
+                            borderRadius: "50%",
+                            background: "var(--bg-main)",
+                            color: "var(--c-light)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
                             fontWeight: "600",
-                            color: "var(--text-h)",
-                            fontSize: "0.95rem",
+                            fontSize: "0.85rem",
+                            flexShrink: 0,
                           }}
                         >
-                          {u.name}
+                          {u.name.charAt(0).toUpperCase()}
                         </div>
-                        <div
-                          style={{ color: "var(--c-sub)", fontSize: "0.8rem" }}
-                        >
-                          {u.email}
+                        <div>
+                          <div
+                            style={{
+                              fontWeight: "600",
+                              color: "var(--text-h)",
+                              fontSize: "0.9rem",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {u.name}
+                          </div>
+                          <div
+                            style={{
+                              color: "var(--c-sub)",
+                              fontSize: "0.78rem",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {u.email}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </td>
-                  <td style={{ padding: "16px" }}>
-                    <span
-                      style={{
-                        background: "var(--bg-surface)",
-                        border: "none",
-                        boxShadow: "var(--inner-shadow)",
-                        color: "var(--text-h)",
-                        padding: "4px 10px",
-                        borderRadius: "99px",
-                        fontSize: "0.75rem",
-                        fontWeight: "600",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.5px",
-                        marginRight: u.isProgramInstructor ? "8px" : "0",
-                      }}
-                    >
-                      {u.role}
-                    </span>
-                    {u.role === "instructor" && violationSummary[u._id] && (
-                      <span
-                        title="Abandoned Ongoing Course violations"
-                        style={{
-                          background: violationSummary[u._id].latestStage === "final_warning" ? "rgba(239, 68, 68, 0.15)" : violationSummary[u._id].latestStage === "admin_review" ? "rgba(245, 158, 11, 0.15)" : "rgba(148, 163, 184, 0.15)",
-                          color: violationSummary[u._id].latestStage === "final_warning" ? "#ef4444" : violationSummary[u._id].latestStage === "admin_review" ? "#f59e0b" : "var(--text-h)",
-                          border: "none",
-                          padding: "4px 10px",
-                          borderRadius: "99px",
-                          fontSize: "0.75rem",
-                          fontWeight: "600",
-                          marginRight: "8px",
-                        }}
-                      >
-                        ⚠ {violationSummary[u._id].count}
-                      </span>
-                    )}
-                    {u.role === "instructor" && u.isProgramInstructor && (
+                    </td>
+                    <td style={{ padding: "12px 8px", whiteSpace: "nowrap" }}>
                       <span
                         style={{
                           background: "var(--bg-surface)",
                           border: "none",
                           boxShadow: "var(--inner-shadow)",
-                          padding: "4px 10px",
-                          borderRadius: "99px",
-                          fontSize: "0.75rem",
+                          color: "var(--text-h)",
+                          padding: "3px 8px",
+                          borderRadius: "12px",
+                          fontSize: "0.72rem",
                           fontWeight: "600",
                           textTransform: "uppercase",
                           letterSpacing: "0.5px",
+                          marginRight: u.isProgramInstructor ? "6px" : "0",
                         }}
                       >
+                        {u.role}
+                      </span>
+                      {u.role === "instructor" && violationSummary[u._id] && (
                         <span
+                          title="Abandoned Ongoing Course violations"
                           style={{
-                            backgroundImage:
-                              "linear-gradient(90deg, #f97316, #fbad41)",
-                            WebkitBackgroundClip: "text",
-                            WebkitTextFillColor: "transparent",
+                            background:
+                              violationSummary[u._id].latestStage ===
+                              "final_warning"
+                                ? "rgba(239, 68, 68, 0.15)"
+                                : violationSummary[u._id].latestStage ===
+                                    "admin_review"
+                                  ? "rgba(245, 158, 11, 0.15)"
+                                  : "rgba(148, 163, 184, 0.15)",
+                            color:
+                              violationSummary[u._id].latestStage ===
+                              "final_warning"
+                                ? "#ef4444"
+                                : violationSummary[u._id].latestStage ===
+                                    "admin_review"
+                                  ? "#f59e0b"
+                                  : "var(--text-h)",
+                            border: "none",
+                            padding: "3px 8px",
+                            borderRadius: "12px",
+                            fontSize: "0.72rem",
+                            fontWeight: "600",
+                            marginRight: "6px",
                           }}
                         >
-                          Program
+                          ⚠ {violationSummary[u._id].count}
                         </span>
-                      </span>
-                    )}
-                  </td>
-                  <td style={{ padding: "16px" }}>
-                    {u.isDeleted ? (
-                      <span
-                        style={{
-                          color: "var(--c-sub)",
-                          fontSize: "0.75rem",
-                          fontWeight: "700",
-                          letterSpacing: "0.5px",
-                          background: "var(--bg-surface)",
-                          border: "none",
-                          boxShadow: "var(--inner-shadow)",
-                          padding: "4px 10px",
-                          borderRadius: "99px",
-                        }}
-                      >
-                        DELETED
-                      </span>
-                    ) : u.isBlocked ? (
-                      <span
-                        style={{
-                          color: "#f87171",
-                          fontSize: "0.75rem",
-                          fontWeight: "700",
-                          letterSpacing: "0.5px",
-                          background: "rgba(239,68,68,0.15)",
-                          border: "none",
-                          boxShadow: "var(--inner-shadow)",
-                          padding: "4px 10px",
-                          borderRadius: "99px",
-                        }}
-                      >
-                        SUSPENDED
-                      </span>
-                    ) : (
-                      <span
-                        style={{
-                          color: "#34d399",
-                          fontSize: "0.75rem",
-                          fontWeight: "700",
-                          letterSpacing: "0.5px",
-                          background: "rgba(16,185,129,0.15)",
-                          border: "none",
-                          boxShadow: "var(--inner-shadow)",
-                          padding: "4px 10px",
-                          borderRadius: "99px",
-                        }}
-                      >
-                        ACTIVE
-                      </span>
-                    )}
-                  </td>
-                  <td
-                    style={{
-                      padding: "16px",
-                      color: "var(--c-sub)",
-                      fontSize: "0.9rem",
-                    }}
-                  >
-                    {new Date(u.createdAt || Date.now()).toLocaleDateString(
-                      "en-US",
-                      { month: "short", day: "numeric", year: "numeric" },
-                    )}
-                  </td>
-                  <td style={{ padding: "16px 24px", textAlign: "right" }}>
-                    <button
-                      onClick={() => setSidePanelUserId(u._id)}
+                      )}
+                      {u.role === "instructor" && u.isProgramInstructor && (
+                        <span
+                          style={{
+                            background: "var(--bg-surface)",
+                            border: "none",
+                            boxShadow: "var(--inner-shadow)",
+                            padding: "3px 8px",
+                            borderRadius: "12px",
+                            fontSize: "0.72rem",
+                            fontWeight: "600",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.5px",
+                          }}
+                        >
+                          <span
+                            style={{
+                              backgroundImage:
+                                "linear-gradient(90deg, #f97316, #fbad41)",
+                              WebkitBackgroundClip: "text",
+                              WebkitTextFillColor: "transparent",
+                            }}
+                          >
+                            Program
+                          </span>
+                        </span>
+                      )}
+                    </td>
+                    <td style={{ padding: "12px 8px", whiteSpace: "nowrap" }}>
+                      {u.isDeleted ? (
+                        <span
+                          style={{
+                            color: "var(--c-sub)",
+                            fontSize: "0.72rem",
+                            fontWeight: "700",
+                            letterSpacing: "0.5px",
+                            background: "var(--bg-surface)",
+                            border: "none",
+                            boxShadow: "var(--inner-shadow)",
+                            padding: "3px 8px",
+                            borderRadius: "12px",
+                          }}
+                        >
+                          DELETED
+                        </span>
+                      ) : u.isBlocked ? (
+                        <span
+                          style={{
+                            color: "#f87171",
+                            fontSize: "0.72rem",
+                            fontWeight: "700",
+                            letterSpacing: "0.5px",
+                            background: "rgba(239,68,68,0.15)",
+                            border: "none",
+                            boxShadow: "var(--inner-shadow)",
+                            padding: "3px 8px",
+                            borderRadius: "12px",
+                          }}
+                        >
+                          SUSPENDED
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            color: "#34d399",
+                            fontSize: "0.72rem",
+                            fontWeight: "700",
+                            letterSpacing: "0.5px",
+                            background: "rgba(16,185,129,0.15)",
+                            border: "none",
+                            boxShadow: "var(--inner-shadow)",
+                            padding: "3px 8px",
+                            borderRadius: "12px",
+                          }}
+                        >
+                          ACTIVE
+                        </span>
+                      )}
+                    </td>
+                    <td
                       style={{
-                        padding: "6px 14px",
-                        fontSize: "0.8rem",
-                        width: "fit-content",
-                        marginLeft: "auto",
-                        display: "block",
-                        whiteSpace: "nowrap",
-                        background: "var(--bg-main)",
+                        padding: "12px 16px 12px 8px",
                         color: "var(--c-sub)",
-                        border: "none",
-                        borderRadius: "999px",
-                        cursor: "pointer",
-                        transition: "all 0.2s ease",
-                        boxShadow: "var(--inner-shadow)",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "var(--c-bg-hover)";
-                        e.currentTarget.style.color = "var(--text-h)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "var(--bg-main)";
-                        e.currentTarget.style.color = "var(--c-sub)";
+                        fontSize: "0.85rem",
+                        whiteSpace: "nowrap",
                       }}
                     >
-                      View Profile
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                      {new Date(u.createdAt || Date.now()).toLocaleDateString(
+                        "en-US",
+                        { month: "short", day: "numeric", year: "numeric" },
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
 
         {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginTop: "auto",
-              paddingTop: "24px",
-              paddingBottom: "24px",
-              paddingLeft: "24px",
-              paddingRight: "24px",
-              borderTop: "1px solid var(--c-border-subtle)",
-            }}
-          >
-            <span style={{ color: "var(--c-sub)", fontSize: "0.9rem" }}>
-              Showing {indexOfFirstItem + 1} to{" "}
-              {Math.min(indexOfLastItem, visibleUsers.length)} of{" "}
-              {visibleUsers.length} users
-            </span>
-            <div style={{ display: "flex", gap: "8px" }}>
-              <button
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                style={{
-                  padding: "8px 16px",
-                  borderRadius: "8px",
-                  background:
-                    currentPage === 1 ? "transparent" : "var(--c-bg-subtle)",
-                  color:
-                    currentPage === 1
-                      ? "var(--c-border-subtle)"
-                      : "var(--c-light)",
-                  border: "1px solid var(--c-border-subtle)",
-                  cursor: currentPage === 1 ? "not-allowed" : "pointer",
-                  fontWeight: "500",
-                  transition: "all 0.2s",
-                }}
-              >
-                Previous
-              </button>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  padding: "0 12px",
-                  color: "var(--text-h)",
-                  fontWeight: "600",
-                  fontSize: "0.95rem",
-                }}
-              >
-                Page {currentPage} of {totalPages}
-              </div>
-              <button
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                }
-                disabled={currentPage === totalPages}
-                style={{
-                  padding: "8px 16px",
-                  borderRadius: "8px",
-                  background:
-                    currentPage === totalPages
-                      ? "transparent"
-                      : "var(--c-bg-subtle)",
-                  color:
-                    currentPage === totalPages
-                      ? "var(--c-border-subtle)"
-                      : "var(--c-light)",
-                  border: "1px solid var(--c-border-subtle)",
-                  cursor:
-                    currentPage === totalPages ? "not-allowed" : "pointer",
-                  fontWeight: "500",
-                  transition: "all 0.2s",
-                }}
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        )}
+        <Pagination 
+          currentPage={currentPage} 
+          totalPages={totalPages} 
+          onPageChange={setCurrentPage} 
+          totalItems={visibleUsers.length} 
+          itemsPerPage={itemsPerPage} 
+          label="users" 
+        />
       </div>
 
       {/* Side Panel Overlay */}
@@ -1127,7 +1073,7 @@ export default function AdminUserManagementTab({
                   border: "none",
                   color: "var(--c-sub)",
                   padding: "6px 12px",
-                  borderRadius: "99px",
+                  borderRadius: "12px",
                   width: "fit-content",
                   display: "flex",
                   alignItems: "center",
@@ -1187,7 +1133,7 @@ export default function AdminUserManagementTab({
                         border: "none",
                         color: "var(--text-h)",
                         padding: "2px 8px",
-                        borderRadius: "99px",
+                        borderRadius: "12px",
                         fontSize: "0.7rem",
                         fontWeight: "600",
                         textTransform: "uppercase",
@@ -1204,7 +1150,7 @@ export default function AdminUserManagementTab({
                           fontWeight: "700",
                           background: "var(--bg-surface)",
                           padding: "2px 8px",
-                          borderRadius: "99px",
+                          borderRadius: "12px",
                           boxShadow: "var(--inner-shadow)",
                         }}
                       >
@@ -1218,7 +1164,7 @@ export default function AdminUserManagementTab({
                           fontWeight: "700",
                           background: "rgba(239,68,68,0.1)",
                           padding: "2px 8px",
-                          borderRadius: "99px",
+                          borderRadius: "12px",
                           boxShadow: "var(--inner-shadow)",
                         }}
                       >
@@ -1232,7 +1178,7 @@ export default function AdminUserManagementTab({
                           fontWeight: "700",
                           background: "rgba(16,185,129,0.1)",
                           padding: "2px 8px",
-                          borderRadius: "99px",
+                          borderRadius: "12px",
                           boxShadow: "var(--inner-shadow)",
                         }}
                       >
@@ -1379,7 +1325,7 @@ export default function AdminUserManagementTab({
                         fontSize: "0.9rem",
                         background: "var(--bg-main)",
                         padding: "12px",
-                        borderRadius: "50px",
+                        borderRadius: "12px",
                         lineHeight: "1.5",
                         whiteSpace: "pre-wrap",
                         maxHeight: "120px",

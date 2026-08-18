@@ -10,7 +10,7 @@
 .explore-tab-btn {
   flex: 0 0 auto;
   padding: 9px 20px;
-  border-radius: 50px;
+  border-radius: 12px;
   border: 1px solid var(--bg-surface);
   background: var(--bg-surface);
   color: var(--text-secondary);

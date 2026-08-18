@@ -59,7 +59,7 @@
 
 .ic-expertise-tag {
   padding: 3px 10px;
-  border-radius: 50px;
+  border-radius: 12px;
   background: var(--bg-main);
   color: var(--text-secondary);
   font-size: 0.75rem;
@@ -85,7 +85,7 @@
   gap: 24px;
   padding: 32px;
   margin-bottom: 24px;
-  border-radius: 50px !important;
+  border-radius: 12px !important;
 }
 
 .profile-header .ic-avatar {

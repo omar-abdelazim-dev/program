@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import api from "../api/axios";
 import CourseCard from "./CourseCard";
+import CardSkeleton from "./common/CardSkeleton";
 import { useTranslation } from "react-i18next";
 import { COLLEGES } from "../data/colleges";
 import "../styles/home.css";
@@ -84,13 +85,7 @@ export default function ExploreTab({ user, searchQuery = "", isLightMode }) {
     return () => controller.abort();
   }, [debouncedSearch, userCollegeId]);
 
-  const skeletonGrid = (
-    <div className="cc-grid">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="cc-skeleton solid-card skeleton-shimmer" style={{ height: "320px" }} />
-      ))}
-    </div>
-  );
+  const skeletonGrid = <CardSkeleton type="course" count={4} />;
 
   return (
     <>

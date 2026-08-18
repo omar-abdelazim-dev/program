@@ -104,7 +104,7 @@ export default function TestimonialsManager({ user }) {
             Approve, feature, or reject student reviews.
           </p>
         </div>
-        <Button variant="primary" onClick={() => setShowModal(true)} style={{ height: '44px', borderRadius: '50px', padding: '0 28px' }}>
+        <Button variant="primary" onClick={() => setShowModal(true)} style={{ height: '44px', borderRadius: '12px', padding: '0 28px' }}>
           + Add Testimonial
         </Button>
       </div>
@@ -215,8 +215,8 @@ export default function TestimonialsManager({ user }) {
                 rows={4}
               />
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>
-                <Button variant="secondary" onClick={() => setShowModal(false)} style={{ borderRadius: '50px', padding: '10px 24px' }}>Cancel</Button>
-                <Button variant="primary" type="submit" style={{ borderRadius: '50px', padding: '10px 24px' }}>Add Testimonial</Button>
+                <Button variant="secondary" onClick={() => setShowModal(false)} style={{ borderRadius: '12px', padding: '10px 24px' }}>Cancel</Button>
+                <Button variant="primary" type="submit" style={{ borderRadius: '12px', padding: '10px 24px' }}>Add Testimonial</Button>
               </div>
             </form>
           </div>

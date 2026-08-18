@@ -16,8 +16,12 @@ export default function AdminPayoutsTab() {
   const [isViewingTrace, setIsViewingTrace] = useState(false);
   const [isConfirmingReject, setIsConfirmingReject] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
-  const [traceData, setTraceData] = useState(null);
   const [isFetchingTrace, setIsFetchingTrace] = useState(false);
+
+  // Pagination state
+  const [pendingPage, setPendingPage] = useState(1);
+  const [processedPage, setProcessedPage] = useState(1);
+  const itemsPerPage = 8;
 
   const fetchPayouts = async () => {
     try {
@@ -92,15 +96,97 @@ export default function AdminPayoutsTab() {
   const rejectedPayouts = payouts.filter(p => p.status === 'rejected');
   const processedPayouts = payouts.filter(p => ['cleared', 'paid', 'rejected', 'failed'].includes(p.status));
 
+  // Paginated Slices
+  const totalPendingPages = Math.ceil(pendingPayouts.length / itemsPerPage);
+  const paginatedPending = pendingPayouts.slice((pendingPage - 1) * itemsPerPage, pendingPage * itemsPerPage);
+
+  const totalProcessedPages = Math.ceil(processedPayouts.length / itemsPerPage);
+  const paginatedProcessed = processedPayouts.slice((processedPage - 1) * itemsPerPage, processedPage * itemsPerPage);
+
+  const renderPagination = (currentPage, totalPages, onPageChange, totalItems) => {
+    if (totalPages <= 1) return null;
+    const startItem = (currentPage - 1) * itemsPerPage + 1;
+    const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+
+    return (
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginTop: '20px',
+          paddingTop: '16px',
+          borderTop: '1px solid var(--border)',
+        }}
+      >
+        <span style={{ color: 'var(--c-sub)', fontSize: '0.85rem' }}>
+          Showing {startItem}–{endItem} of {totalItems} requests
+        </span>
+        <div style={{ display: 'flex', gap: '6px' }}>
+          <button
+            onClick={() => onPageChange(Math.max(currentPage - 1, 1))}
+            disabled={currentPage === 1}
+            style={{
+              padding: '6px 12px',
+              borderRadius: '8px',
+              background: 'var(--bg-main)',
+              color: currentPage === 1 ? 'var(--c-sub)' : 'var(--text-h)',
+              border: 'none',
+              boxShadow: 'var(--inner-shadow)',
+              cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+              opacity: currentPage === 1 ? 0.5 : 1,
+              fontSize: '0.85rem',
+              fontWeight: 600
+            }}
+          >
+            Previous
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            <button
+              key={page}
+              onClick={() => onPageChange(page)}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '8px',
+                background: currentPage === page ? 'linear-gradient(90deg, #f97316, #fbad41)' : 'var(--bg-main)',
+                color: currentPage === page ? '#ffffff' : 'var(--c-sub)',
+                border: 'none',
+                boxShadow: currentPage === page ? '0 2px 8px rgba(249, 115, 22, 0.3)' : 'var(--inner-shadow)',
+                cursor: 'pointer',
+                fontSize: '0.85rem',
+                fontWeight: currentPage === page ? 700 : 500
+              }}
+            >
+              {page}
+            </button>
+          ))}
+
+          <button
+            onClick={() => onPageChange(Math.min(currentPage + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            style={{
+              padding: '6px 12px',
+              borderRadius: '8px',
+              background: 'var(--bg-main)',
+              color: currentPage === totalPages ? 'var(--c-sub)' : 'var(--text-h)',
+              border: 'none',
+              boxShadow: 'var(--inner-shadow)',
+              cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+              opacity: currentPage === totalPages ? 0.5 : 1,
+              fontSize: '0.85rem',
+              fontWeight: 600
+            }}
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div data-role="admin">
-      <div className="glass-card animate-entrance" style={{ padding: '24px', marginBottom: '32px' }}>
-        <h2 style={{ fontSize: '1.5rem', marginBottom: '16px', color: 'var(--text-h)' }}>Payout Requests Queue</h2>
-        <p style={{ color: 'var(--c-sub)', marginBottom: '0' }}>
-          Approve pending payout requests below. Once approved, the status is marked as 'cleared' and the instructor's sensitive payout details (bank/phone) are permanently scrubbed from the database.
-        </p>
-      </div>
-
       <div className="glass-card animate-entrance" style={{ padding: '24px', overflow: 'hidden' }}>
         <h3 style={{ fontSize: '1.2rem', marginBottom: '24px', color: 'var(--text-h)' }}>Pending Requests ({pendingPayouts.length})</h3>
         <div style={{ overflowX: 'auto' }}>
@@ -130,7 +216,7 @@ export default function AdminPayoutsTab() {
                   </td>
                 </tr>
               ) : (
-                pendingPayouts.map((tx) => {
+                paginatedPending.map((tx) => {
                   const grossAmount = Math.abs(tx.amount || 0);
                   const feeAmount = tx.expectedFees !== undefined ? tx.expectedFees : (grossAmount * 0.02);
                   const netPayout = tx.expectedPayout !== undefined ? tx.expectedPayout : (grossAmount - feeAmount);
@@ -182,6 +268,7 @@ export default function AdminPayoutsTab() {
             </tbody>
           </table>
         </div>
+        {renderPagination(pendingPage, totalPendingPages, setPendingPage, pendingPayouts.length)}
       </div>
 
       {processedPayouts.length > 0 && (
@@ -200,7 +287,7 @@ export default function AdminPayoutsTab() {
                 </tr>
               </thead>
               <tbody>
-                {processedPayouts.map((tx) => {
+                {paginatedProcessed.map((tx) => {
                   const grossAmount = Math.abs(tx.amount || 0);
                   const netPayout = tx.expectedPayout !== undefined ? tx.expectedPayout : (grossAmount * 0.98);
                   return (
@@ -233,6 +320,7 @@ export default function AdminPayoutsTab() {
               </tbody>
             </table>
           </div>
+          {renderPagination(processedPage, totalProcessedPages, setProcessedPage, processedPayouts.length)}
         </div>
       )}
 
@@ -269,7 +357,7 @@ export default function AdminPayoutsTab() {
               {!isViewingTrace && (
                 <span className="status-badge" style={{
                   padding: '4px 14px',
-                  borderRadius: '50px',
+                  borderRadius: '12px',
                   fontSize: '0.8rem',
                   fontWeight: 'bold',
                   color: selectedPayout.status === 'cleared' || selectedPayout.status === 'paid' ? '#10b981' : selectedPayout.status === 'rejected' ? '#ef4444' : '#f59e0b',

@@ -73,7 +73,7 @@ export default function CommissionSlider({ value, onChange, disabled }) {
           <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--text-h)', textShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>
             {localValue}%
           </div>
-          <div style={{ display: 'inline-block', marginTop: '8px', padding: '4px 12px', borderRadius: '99px', background: `${indicatorColor}20`, color: indicatorColor, fontSize: '0.8rem', fontWeight: 600, border: `1px solid ${indicatorColor}40` }}>
+          <div style={{ display: 'inline-block', marginTop: '8px', padding: '4px 12px', borderRadius: '12px', background: `${indicatorColor}20`, color: indicatorColor, fontSize: '0.8rem', fontWeight: 600, border: `1px solid ${indicatorColor}40` }}>
             <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: indicatorColor, marginRight: '6px' }} />
             {indicatorText}
           </div>

@@ -812,7 +812,7 @@ function AccountSection({ user, setUser, onLogout }) {
               alignSelf: "flex-start",
               width: "auto",
               padding: "12px 32px",
-              borderRadius: "50px",
+              borderRadius: "12px",
             }}
           >
             {savingDetails
@@ -1012,7 +1012,7 @@ function AccountSection({ user, setUser, onLogout }) {
                   alignSelf: "flex-start",
                   width: "auto",
                   padding: "12px 32px",
-                  borderRadius: "50px",
+                  borderRadius: "12px",
                   background: "var(--bg-secondary)",
                   color: "var(--text-primary)"
                 }}
@@ -1029,7 +1029,7 @@ function AccountSection({ user, setUser, onLogout }) {
                 alignSelf: "flex-start",
                 width: "auto",
                 padding: "12px 32px",
-                borderRadius: "50px",
+                borderRadius: "12px",
                 background: "linear-gradient(135deg, #fbbf24 0%, #f97316 100%)",
               }}
             >
@@ -1084,7 +1084,7 @@ function AccountSection({ user, setUser, onLogout }) {
               width: "auto",
               padding: "10px 24px",
               marginTop: "4px",
-              borderRadius: "50px",
+              borderRadius: "12px",
               transition: "all 0.2s ease",
               cursor: "pointer",
             }}
@@ -1144,7 +1144,7 @@ function AccountSection({ user, setUser, onLogout }) {
               width: "auto",
               padding: "10px 24px",
               marginTop: "4px",
-              borderRadius: "50px",
+              borderRadius: "12px",
               transition: "all 0.2s ease",
               cursor: "pointer",
             }}
@@ -1205,7 +1205,7 @@ function AppearanceSection({ user, isLightMode, toggleTheme }) {
           position: "relative",
           background: "var(--bg-main)",
           padding: "6px",
-          borderRadius: "50px",
+          borderRadius: "12px",
           boxShadow: "var(--inner-shadow)"
         }}
       >
@@ -1217,7 +1217,7 @@ function AppearanceSection({ user, isLightMode, toggleTheme }) {
             insetInlineStart: "6px",
             width: "calc(50% - 8px)",
             background: "var(--bg-surface)",
-            borderRadius: "50px",
+            borderRadius: "12px",
             boxShadow: "var(--outer-shadow)",
             transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
             transform: isLightMode
@@ -1240,7 +1240,7 @@ function AppearanceSection({ user, isLightMode, toggleTheme }) {
             gap: "8px",
             flex: 1,
             padding: "12px",
-            borderRadius: "50px",
+            borderRadius: "12px",
             border: "none",
             background: "transparent",
             color: !isLightMode
@@ -1279,7 +1279,7 @@ function AppearanceSection({ user, isLightMode, toggleTheme }) {
             gap: "8px",
             flex: 1,
             padding: "12px",
-            borderRadius: "50px",
+            borderRadius: "12px",
             border: "none",
             background: "transparent",
             color: isLightMode
@@ -1333,7 +1333,7 @@ function AppearanceSection({ user, isLightMode, toggleTheme }) {
             position: "relative",
             background: "var(--bg-main)",
             padding: "6px",
-            borderRadius: "50px",
+            borderRadius: "12px",
             boxShadow: "var(--inner-shadow)"
           }}
         >
@@ -1345,7 +1345,7 @@ function AppearanceSection({ user, isLightMode, toggleTheme }) {
               left: "6px",
               width: "calc(50% - 8px)",
               background: "var(--bg-surface)",
-              borderRadius: "50px",
+              borderRadius: "12px",
               boxShadow: "var(--outer-shadow)",
               transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
               transform: i18n.language !== "en"
@@ -1366,7 +1366,7 @@ function AppearanceSection({ user, isLightMode, toggleTheme }) {
               gap: "8px",
               flex: 1,
               padding: "12px",
-              borderRadius: "50px",
+              borderRadius: "12px",
               border: "none",
               background: "transparent",
               color: i18n.language === "en"
@@ -1395,7 +1395,7 @@ function AppearanceSection({ user, isLightMode, toggleTheme }) {
               gap: "8px",
               flex: 1,
               padding: "12px",
-              borderRadius: "50px",
+              borderRadius: "12px",
               border: "none",
               background: "transparent",
               color: i18n.language !== "en"

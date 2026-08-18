@@ -6,6 +6,7 @@ import api from "../api/axios";
 import FullPageLoader from './FullPageLoader';
 import ReportIssueModal from "./ReportIssueModal";
 import ThreeDotMenu from "./common/ThreeDotMenu";
+import CardSkeleton from "./common/CardSkeleton";
 
 const InProgressCard = ({
   enrollment,
@@ -232,7 +233,12 @@ export default function DashboardTab() {
     return () => clearTimeout(timer);
   }, [activeSubTab, loading, enrollments, i18n.language]);
 
-  if (loading) return <FullPageLoader message={t('student.loading_courses', 'Loading your courses...')} fullScreen={false} />;
+  if (loading) return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
+      <CardSkeleton type="stat" count={3} />
+      <CardSkeleton type="horizontal" count={3} />
+    </div>
+  );
   if (error) return <p style={{ color: "#ef4444" }}>{error}</p>;
 
   const completedLessonCount = enrollments.reduce(

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import api from "../api/axios";
 import CourseCard from "./CourseCard";
 import InstructorCard from "./InstructorCard";
+import CardSkeleton from "./common/CardSkeleton";
 import { INSTRUCTORS_TAB, ALL_TAB } from "../data/exploreCategories";
 import { COLLEGES } from "../data/colleges";
 import { useTranslation } from "react-i18next";
@@ -104,11 +105,7 @@ export default function DiscoverTab({ searchQuery = "", activeCollege: activeTab
             </p>
           )
         ) : coursesLoading ? (
-          <div className="cc-grid">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="cc-skeleton solid-card skeleton-shimmer" style={{ height: "320px" }} />
-            ))}
-          </div>
+          <CardSkeleton type="course" count={8} />
         ) : courses.length > 0 ? (
           <div className="cc-grid">
             {courses.map((course, idx) => (

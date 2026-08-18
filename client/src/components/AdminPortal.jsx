@@ -19,18 +19,23 @@ import AdminPayoutsTab from "./AdminPayoutsTab";
 import AdminAnalyticsTab from "./AdminAnalyticsTab";
 import AdminOverviewTab from "./AdminOverviewTab";
 import SegmentedControl from "./common/SegmentedControl";
-import { formatNotificationTitle, formatNotificationMessage } from "../utils/notificationFormatter";
+import {
+  formatNotificationTitle,
+  formatNotificationMessage,
+} from "../utils/notificationFormatter";
 import AdminUserManagementTab from "./AdminUserManagementTab";
 import AdminCourseManagementTab from "./AdminCourseManagementTab";
-import AdminLessonsTab from "./AdminLessonsTab";
 import GlobalAnnouncementBanner from "./GlobalAnnouncementBanner";
 import WebsiteManagement from "./WebsiteManagement/WebsiteManagement";
 import SystemManagement from "./SystemManagement";
 import AdminLandingPageTab from "./AdminLandingPageTab";
 import AdminReportsTab from "./AdminReportsTab";
 import AdminRolePermissionsTab from "./AdminRolePermissionsTab";
+import AdminRoleManageTab from "./AdminRoleManageTab";
+import AdminRoleAssignmentsTab from "./AdminRoleAssignmentsTab";
 import FullPageLoader from "./FullPageLoader";
-import { useTranslation } from 'react-i18next';
+import Pagination from "./common/Pagination";
+import { useTranslation } from "react-i18next";
 
 const ROLE_OPTIONS = ["student", "instructor", "admin"];
 const SIDEBAR_TAB_STEP = 44;
@@ -213,7 +218,7 @@ const GrowthBadge = ({ growth }) => {
         display: "inline-flex",
         alignItems: "center",
         padding: "3px 10px",
-        borderRadius: "99px",
+        borderRadius: "12px",
         background: positive ? "rgba(16,185,129,0.12)" : "rgba(239,68,68,0.12)",
         border: `1px solid ${positive ? "rgba(16,185,129,0.3)" : "rgba(239,68,68,0.3)"}`,
         fontSize: "0.78rem",
@@ -239,14 +244,20 @@ export default function AdminPortal({
   const [activeTab, setActiveTabRaw] = useState("dashboard_overview");
   // Tracks which tabs have been visited at least once — components are only
   // mounted on first visit and kept alive forever after (no re-fetches).
-  const [visitedTabs, setVisitedTabs] = useState(() => new Set(["dashboard_overview"]));
+  const [visitedTabs, setVisitedTabs] = useState(
+    () => new Set(["dashboard_overview"]),
+  );
 
   const setActiveTab = (tab) => {
-    setVisitedTabs((prev) => { const s = new Set(prev); s.add(tab); return s; });
+    setVisitedTabs((prev) => {
+      const s = new Set(prev);
+      s.add(tab);
+      return s;
+    });
     setActiveTabRaw(tab);
   };
   const { t, i18n } = useTranslation();
-  const isRTL = i18n.language === 'ar';
+  const isRTL = i18n.language === "ar";
 
   const toggleLanguage = () => {
     const newLang = i18n.language === "en" ? "ar" : "en";
@@ -280,45 +291,56 @@ export default function AdminPortal({
 
   const [selectedEnrollment, setSelectedEnrollment] = useState(null);
   const [showScreenshotModal, setShowScreenshotModal] = useState(false);
-  const [processingEnrollmentAction, setProcessingEnrollmentAction] = useState(null);
+  const [processingEnrollmentAction, setProcessingEnrollmentAction] =
+    useState(null);
   const [enrollmentPage, setEnrollmentPage] = useState(1);
   const [pendingEnrollmentPage, setPendingEnrollmentPage] = useState(1);
-  const [enrollmentSubTab, setEnrollmentSubTab] = useState('pending');
+  const [enrollmentSubTab, setEnrollmentSubTab] = useState("pending");
   const pendingEnrollmentTabRef = useRef(null);
   const processedEnrollmentTabRef = useRef(null);
-  const [enrollmentIndicatorStyle, setEnrollmentIndicatorStyle] = useState({ left: 0, width: 0 });
+  const [enrollmentIndicatorStyle, setEnrollmentIndicatorStyle] = useState({
+    left: 0,
+    width: 0,
+  });
   const [pendingEnrollmentReject, setPendingEnrollmentReject] = useState(null);
   const [enrollmentRejectReason, setEnrollmentRejectReason] = useState("");
-  const [enrollmentRejectReasonError, setEnrollmentRejectReasonError] = useState("");
+  const [enrollmentRejectReasonError, setEnrollmentRejectReasonError] =
+    useState("");
 
   const handleApproveEnrollment = async (id) => {
-    setProcessingEnrollmentAction('approving');
+    setProcessingEnrollmentAction("approving");
     try {
       await api.patch(`/admin/enrollments/${id}/approve`);
-      notyf.success('Enrollment request approved successfully');
-      setTransactions(prev => prev.map(t => t._id === id ? { ...t, status: 'approved' } : t));
+      notyf.success("Enrollment request approved successfully");
+      setTransactions((prev) =>
+        prev.map((t) => (t._id === id ? { ...t, status: "approved" } : t)),
+      );
       setSelectedEnrollment(null);
     } catch (err) {
       console.error(err);
-      notyf.error(err.response?.data?.message || 'Failed to approve enrollment');
+      notyf.error(
+        err.response?.data?.message || "Failed to approve enrollment",
+      );
     } finally {
       setProcessingEnrollmentAction(null);
     }
   };
 
   const handleRejectEnrollment = async (id, reason) => {
-    setProcessingEnrollmentAction('rejecting');
+    setProcessingEnrollmentAction("rejecting");
     try {
       await api.patch(`/admin/enrollments/${id}/reject`, { reason });
-      notyf.success('Enrollment request rejected successfully');
-      setTransactions(prev => prev.map(t => t._id === id ? { ...t, status: 'rejected' } : t));
+      notyf.success("Enrollment request rejected successfully");
+      setTransactions((prev) =>
+        prev.map((t) => (t._id === id ? { ...t, status: "rejected" } : t)),
+      );
       setSelectedEnrollment(null);
       setPendingEnrollmentReject(null);
       setEnrollmentRejectReason("");
       setEnrollmentRejectReasonError("");
     } catch (err) {
       console.error(err);
-      notyf.error(err.response?.data?.message || 'Failed to reject enrollment');
+      notyf.error(err.response?.data?.message || "Failed to reject enrollment");
     } finally {
       setProcessingEnrollmentAction(null);
     }
@@ -327,10 +349,15 @@ export default function AdminPortal({
   const confirmEnrollmentReject = async () => {
     if (!pendingEnrollmentReject) return;
     if (!enrollmentRejectReason.trim()) {
-      setEnrollmentRejectReasonError("Please enter a reason for rejecting this request.");
+      setEnrollmentRejectReasonError(
+        "Please enter a reason for rejecting this request.",
+      );
       return;
     }
-    await handleRejectEnrollment(pendingEnrollmentReject._id, enrollmentRejectReason.trim());
+    await handleRejectEnrollment(
+      pendingEnrollmentReject._id,
+      enrollmentRejectReason.trim(),
+    );
   };
 
   // Notifications State
@@ -340,19 +367,19 @@ export default function AdminPortal({
 
   const fetchNotifications = async () => {
     try {
-      const res = await api.get('/notifications');
+      const res = await api.get("/notifications");
       setNotifications(res.data.notifications || []);
     } catch (err) {
-      console.error('Failed to fetch notifications', err);
+      console.error("Failed to fetch notifications", err);
     }
   };
 
   const clearAllNotifications = async () => {
     try {
-      await api.delete('/notifications');
+      await api.delete("/notifications");
       setNotifications([]);
     } catch (err) {
-      console.error('Failed to clear all notifications', err);
+      console.error("Failed to clear all notifications", err);
       setNotifications([]);
     }
   };
@@ -366,12 +393,15 @@ export default function AdminPortal({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (notificationsRef.current && !notificationsRef.current.contains(event.target)) {
+      if (
+        notificationsRef.current &&
+        !notificationsRef.current.contains(event.target)
+      ) {
         setShowNotifications(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // Search
@@ -414,11 +444,13 @@ export default function AdminPortal({
       const [statsRes, pendingRes, lessonsRes] = await Promise.all([
         api.get("/admin/stats"),
         api.get("/courses/pending"),
-        api.get("/admin/lessons")
+        api.get("/admin/lessons"),
       ]);
       setStats(statsRes.data);
       setPendingCourses(pendingRes.data.courses || []);
-      const pLessons = (lessonsRes.data.lessons || []).filter(l => l.status === 'pending');
+      const pLessons = (lessonsRes.data.lessons || []).filter(
+        (l) => l.status === "pending",
+      );
       setPendingLessonsCount(pLessons.length);
     } catch (err) {
       console.error(err);
@@ -697,11 +729,19 @@ export default function AdminPortal({
     );
   }
 
-  if (loading) return (
-    <div data-role="admin" style={{ background: 'var(--bg-main)', minHeight: '100vh', width: '100%' }}>
-      <FullPageLoader message="Loading Admin Portal..." />
-    </div>
-  );
+  if (loading)
+    return (
+      <div
+        data-role="admin"
+        style={{
+          background: "var(--bg-main)",
+          minHeight: "100vh",
+          width: "100%",
+        }}
+      >
+        <FullPageLoader message="Loading Admin Portal..." />
+      </div>
+    );
   const menuGroups =
     user?.role === "superadmin"
       ? [
@@ -719,9 +759,7 @@ export default function AdminPortal({
           },
           {
             title: "Courses",
-            items: [
-              { id: "courses", label: "Course Management" },
-            ],
+            items: [{ id: "courses", label: "Course Management" }],
           },
           {
             title: "Financials",
@@ -755,6 +793,14 @@ export default function AdminPortal({
             ],
           },
           {
+            title: "Roles & Permissions",
+            items: [
+              { id: "roles_manage", label: "Manage Roles" },
+              { id: "roles_assignments", label: "Role Assignments" },
+              { id: "roles_permissions", label: "Permissions" },
+            ],
+          },
+          {
             title: "Settings",
             items: [{ id: "settings", label: "System Settings" }],
           },
@@ -774,9 +820,7 @@ export default function AdminPortal({
           },
           {
             title: "Courses",
-            items: [
-              { id: "courses", label: "Course Management" },
-            ],
+            items: [{ id: "courses", label: "Course Management" }],
           },
           {
             title: "Financials",
@@ -800,13 +844,26 @@ export default function AdminPortal({
           },
         ];
 
-  const pendingEnrollments = transactions.filter(t => t.status === 'pending' || t.status === 'under_review');
-  const processedEnrollments = transactions.filter(t => t.status !== 'pending' && t.status !== 'under_review');
-  const displayedProcessedTransactions = processedEnrollments.slice((enrollmentPage - 1) * 10, enrollmentPage * 10);
-  const displayedPendingTransactions = pendingEnrollments.slice((pendingEnrollmentPage - 1) * 10, pendingEnrollmentPage * 10);
+  const pendingEnrollments = transactions.filter(
+    (t) => t.status === "pending" || t.status === "under_review",
+  );
+  const processedEnrollments = transactions.filter(
+    (t) => t.status !== "pending" && t.status !== "under_review",
+  );
+  const displayedProcessedTransactions = processedEnrollments.slice(
+    (enrollmentPage - 1) * 10,
+    enrollmentPage * 10,
+  );
+  const displayedPendingTransactions = pendingEnrollments.slice(
+    (pendingEnrollmentPage - 1) * 10,
+    pendingEnrollmentPage * 10,
+  );
 
   useEffect(() => {
-    const activeRef = enrollmentSubTab === 'pending' ? pendingEnrollmentTabRef : processedEnrollmentTabRef;
+    const activeRef =
+      enrollmentSubTab === "pending"
+        ? pendingEnrollmentTabRef
+        : processedEnrollmentTabRef;
     if (activeRef.current) {
       setEnrollmentIndicatorStyle({
         left: activeRef.current.offsetLeft,
@@ -816,54 +873,251 @@ export default function AdminPortal({
   }, [enrollmentSubTab, pendingEnrollments.length]);
 
   const renderEnrollmentTable = (txs, emptyMessage) => (
-    <div className="glass-card" style={{ width: "100%", padding: "16px", borderRadius: "20px", overflow: "hidden" }}>
+    <div
+      className="glass-card"
+      style={{
+        width: "100%",
+        padding: "16px",
+        borderRadius: "20px",
+        overflow: "hidden",
+      }}
+    >
       <div style={{ overflowX: "auto" }}>
-        <table className="admin-table" style={{ width: "100%", minWidth: "750px", borderCollapse: "separate", borderSpacing: "0", textAlign: "left" }}>
+        <table
+          className="admin-table"
+          style={{
+            width: "100%",
+            minWidth: "750px",
+            borderCollapse: "separate",
+            borderSpacing: "0",
+            textAlign: "left",
+          }}
+        >
           <thead>
             <tr>
-              <th style={{ padding: "18px 24px 18px 32px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>DATE</th>
-              <th style={{ padding: "18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>STUDENT</th>
-              <th style={{ padding: "18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>COURSE</th>
-              <th style={{ padding: "18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>INSTRUCTOR</th>
-              <th style={{ padding: "18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", textAlign: "center", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>STATUS</th>
-              <th style={{ padding: "18px 32px 18px 24px", fontWeight: "600", color: "var(--c-sub)", fontSize: "0.8rem", letterSpacing: "0.05em", textAlign: "right", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))" }}>REVENUE</th>
+              <th
+                style={{
+                  padding: "18px 24px 18px 32px",
+                  fontWeight: "600",
+                  color: "var(--c-sub)",
+                  fontSize: "0.8rem",
+                  letterSpacing: "0.05em",
+                  borderBottom:
+                    "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))",
+                }}
+              >
+                DATE
+              </th>
+              <th
+                style={{
+                  padding: "18px 24px",
+                  fontWeight: "600",
+                  color: "var(--c-sub)",
+                  fontSize: "0.8rem",
+                  letterSpacing: "0.05em",
+                  borderBottom:
+                    "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))",
+                }}
+              >
+                STUDENT
+              </th>
+              <th
+                style={{
+                  padding: "18px 24px",
+                  fontWeight: "600",
+                  color: "var(--c-sub)",
+                  fontSize: "0.8rem",
+                  letterSpacing: "0.05em",
+                  borderBottom:
+                    "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))",
+                }}
+              >
+                COURSE
+              </th>
+              <th
+                style={{
+                  padding: "18px 24px",
+                  fontWeight: "600",
+                  color: "var(--c-sub)",
+                  fontSize: "0.8rem",
+                  letterSpacing: "0.05em",
+                  borderBottom:
+                    "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))",
+                }}
+              >
+                INSTRUCTOR
+              </th>
+              <th
+                style={{
+                  padding: "18px 24px",
+                  fontWeight: "600",
+                  color: "var(--c-sub)",
+                  fontSize: "0.8rem",
+                  letterSpacing: "0.05em",
+                  textAlign: "center",
+                  borderBottom:
+                    "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))",
+                }}
+              >
+                STATUS
+              </th>
+              <th
+                style={{
+                  padding: "18px 32px 18px 24px",
+                  fontWeight: "600",
+                  color: "var(--c-sub)",
+                  fontSize: "0.8rem",
+                  letterSpacing: "0.05em",
+                  textAlign: "right",
+                  borderBottom:
+                    "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))",
+                }}
+              >
+                REVENUE
+              </th>
             </tr>
           </thead>
           <tbody>
             {txs.length === 0 ? (
               <tr>
-                <td colSpan="6" style={{ padding: "32px", textAlign: "center", color: "var(--c-sub)" }}>{emptyMessage}</td>
+                <td
+                  colSpan="6"
+                  style={{
+                    padding: "32px",
+                    textAlign: "center",
+                    color: "var(--c-sub)",
+                  }}
+                >
+                  {emptyMessage}
+                </td>
               </tr>
             ) : (
               txs.map((t) => {
-                const norm = (t.status || 'pending').toLowerCase().replace(/\s+/g, '_');
+                const norm = (t.status || "pending")
+                  .toLowerCase()
+                  .replace(/\s+/g, "_");
                 const statusConfig = {
-                  pending: { label: 'Pending', bg: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b' },
-                  under_review: { label: 'Under Review', bg: 'rgba(59, 130, 246, 0.12)', color: '#60a5fa' },
-                  approved: { label: 'Approved', bg: 'rgba(16, 185, 129, 0.12)', color: '#34d399' },
-                  rejected: { label: 'Rejected', bg: 'rgba(239, 68, 68, 0.12)', color: '#fca5a5' },
-                  refunded: { label: 'Refunded', bg: 'rgba(168, 85, 247, 0.12)', color: '#c084fc' },
+                  pending: {
+                    label: "Pending",
+                    bg: "rgba(245, 158, 11, 0.12)",
+                    color: "#f59e0b",
+                  },
+                  under_review: {
+                    label: "Under Review",
+                    bg: "rgba(59, 130, 246, 0.12)",
+                    color: "#60a5fa",
+                  },
+                  approved: {
+                    label: "Approved",
+                    bg: "rgba(16, 185, 129, 0.12)",
+                    color: "#34d399",
+                  },
+                  rejected: {
+                    label: "Rejected",
+                    bg: "rgba(239, 68, 68, 0.12)",
+                    color: "#fca5a5",
+                  },
+                  refunded: {
+                    label: "Refunded",
+                    bg: "rgba(168, 85, 247, 0.12)",
+                    color: "#c084fc",
+                  },
                 };
                 const st = statusConfig[norm] || statusConfig.pending;
 
                 return (
-                  <tr 
-                    key={t._id} 
-                    style={{ cursor: "pointer", transition: "background 0.2s", borderBottom: "1px solid var(--c-border-subtle, rgba(255,255,255,0.05))" }}
-                    className="hover-row"
+                  <tr
+                    key={t._id}
+                    style={{
+                      cursor: "pointer",
+                      transition: "background 0.2s",
+                      borderBottom:
+                        "1px solid var(--c-border-subtle, rgba(255,255,255,0.05))",
+                    }}
+                    className="analytics-row"
                     onClick={() => setSelectedEnrollment(t)}
                   >
-                    <td style={{ padding: "18px 24px 18px 32px", verticalAlign: "middle" }}>{new Date(t.createdAt).toLocaleDateString()}</td>
-                    <td style={{ padding: "18px 24px", verticalAlign: "middle" }}><div style={{ color: "var(--text-h)", fontWeight: "500" }}>{t.student?.name || "Unknown Student"}</div></td>
-                    <td style={{ padding: "18px 24px", verticalAlign: "middle" }}><div style={{ color: "var(--text-h)", fontWeight: "500" }}>{t.course?.title || "Unknown Course"}</div></td>
-                    <td style={{ padding: "18px 24px", verticalAlign: "middle", color: "var(--c-sub)" }}>{t.course?.instructor?.name || "Unknown Instructor"}</td>
-                    <td style={{ padding: "18px 24px", textAlign: "center", verticalAlign: "middle" }}>
-                      <span style={{ padding: "6px 14px", borderRadius: "20px", fontSize: "0.85rem", fontWeight: "600", background: st.bg, color: st.color, border: "none", boxShadow: "var(--inner-shadow, inset 0 2px 4px 0 rgba(0,0,0,0.06))", display: "inline-flex", alignItems: "center", gap: "6px", textTransform: "capitalize" }}>
-                        <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: st.color }} />
+                    <td
+                      style={{
+                        padding: "18px 24px 18px 32px",
+                        verticalAlign: "middle",
+                      }}
+                    >
+                      {new Date(t.createdAt).toLocaleDateString()}
+                    </td>
+                    <td
+                      style={{ padding: "18px 24px", verticalAlign: "middle" }}
+                    >
+                      <div
+                        style={{ color: "var(--text-h)", fontWeight: "500" }}
+                      >
+                        {t.student?.name || "Unknown Student"}
+                      </div>
+                    </td>
+                    <td
+                      style={{ padding: "18px 24px", verticalAlign: "middle" }}
+                    >
+                      <div
+                        style={{ color: "var(--text-h)", fontWeight: "500" }}
+                      >
+                        {t.course?.title || "Unknown Course"}
+                      </div>
+                    </td>
+                    <td
+                      style={{
+                        padding: "18px 24px",
+                        verticalAlign: "middle",
+                        color: "var(--c-sub)",
+                      }}
+                    >
+                      {t.course?.instructor?.name || "Unknown Instructor"}
+                    </td>
+                    <td
+                      style={{
+                        padding: "18px 24px",
+                        textAlign: "center",
+                        verticalAlign: "middle",
+                      }}
+                    >
+                      <span
+                        style={{
+                          padding: "6px 14px",
+                          borderRadius: "20px",
+                          fontSize: "0.85rem",
+                          fontWeight: "600",
+                          background: st.bg,
+                          color: st.color,
+                          border: "none",
+                          boxShadow:
+                            "var(--inner-shadow, inset 0 2px 4px 0 rgba(0,0,0,0.06))",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          textTransform: "capitalize",
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: "6px",
+                            height: "6px",
+                            borderRadius: "50%",
+                            backgroundColor: st.color,
+                          }}
+                        />
                         {st.label}
                       </span>
                     </td>
-                    <td style={{ padding: "18px 32px 18px 24px", textAlign: "right", verticalAlign: "middle", color: "#10B981", fontWeight: "600" }}>EGP {t.amountPaid}</td>
+                    <td
+                      style={{
+                        padding: "18px 32px 18px 24px",
+                        textAlign: "right",
+                        verticalAlign: "middle",
+                        color: "#10B981",
+                        fontWeight: "600",
+                      }}
+                    >
+                      EGP {t.amountPaid}
+                    </td>
                   </tr>
                 );
               })
@@ -886,7 +1140,20 @@ export default function AdminPortal({
         minHeight: "100vh",
       }}
     >
-      <header className="student-header student-topnav-header" style={{ position: "relative", zIndex: 1000, display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 24px", height: "70px", backgroundColor: "var(--bg-surface)", borderBottom: isLightMode ? "1px solid rgba(0,0,0,0.1)" : "none" }}>
+      <header
+        className="student-header student-topnav-header"
+        style={{
+          position: "relative",
+          zIndex: 1000,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "0 24px",
+          height: "70px",
+          backgroundColor: "var(--bg-surface)",
+          borderBottom: "none",
+        }}
+      >
         <div className="topnav-left">
           <Link to="/student" className="topnav-logo">
             <img
@@ -896,227 +1163,454 @@ export default function AdminPortal({
             />
           </Link>
         </div>
-        
+
         {/* Desktop Navigation Links */}
-        <div className="topnav-center" style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-          <nav className="topnav-links" style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'center' }}>
+        <div
+          className="topnav-center"
+          style={{ flex: 1, display: "flex", justifyContent: "center" }}
+        >
+          <nav
+            className="topnav-links"
+            style={{
+              display: "flex",
+              gap: "4px",
+              flexWrap: "wrap",
+              justifyContent: "center",
+            }}
+          >
             {menuGroups.map((group, idx) => {
               const hasDropdown = group.items.length > 1;
               return (
-              <div 
-                key={idx} 
-                style={{ position: 'relative' }} 
-                onMouseEnter={() => hasDropdown && setActiveDropdown(group.title)}
-                onMouseLeave={() => hasDropdown && setActiveDropdown(null)}
-              >
-                <button 
-                  className={`topnav-link ${group.items.some(t => isSidebarTabActive(t.id, activeTab)) ? "active" : ""}`}
-                  style={{ display: "flex", alignItems: "center", gap: "4px", padding: '8px 12px', fontSize: '0.9rem' }}
-                  onClick={() => {
-                    if (hasDropdown) {
-                      setActiveDropdown(activeDropdown === group.title ? null : group.title);
-                    } else {
-                      handleSidebarTabClick(group.items[0].id, group.title);
-                      setActiveDropdown(null);
-                    }
-                  }}
+                <div
+                  key={idx}
+                  style={{ position: "relative" }}
+                  onMouseEnter={() =>
+                    hasDropdown && setActiveDropdown(group.title)
+                  }
+                  onMouseLeave={() => hasDropdown && setActiveDropdown(null)}
                 >
-                  {group.title}
-                  {hasDropdown && (
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    style={{ 
-                      transform: activeDropdown === group.title ? "rotate(180deg)" : "rotate(0deg)", 
-                      transition: "transform 0.2s" 
+                  <button
+                    className={`topnav-link ${group.items.some((t) => isSidebarTabActive(t.id, activeTab)) ? "active" : ""}`}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      padding: "8px 12px",
+                      fontSize: "0.9rem",
+                    }}
+                    onClick={() => {
+                      if (hasDropdown) {
+                        setActiveDropdown(
+                          activeDropdown === group.title ? null : group.title,
+                        );
+                      } else {
+                        handleSidebarTabClick(group.items[0].id, group.title);
+                        setActiveDropdown(null);
+                      }
                     }}
                   >
-                    <path d="M6 9l6 6 6-6" />
-                  </svg>
-                  )}
-                </button>
-                {hasDropdown && (
-                  <div 
-                    className="profile-dropdown"
-                    style={{ 
-                      position: 'absolute', 
-                      top: '100%', 
-                      left: '50%', 
-                      transformOrigin: 'top center',
-                      transform: activeDropdown === group.title ? 'translateX(-50%) scaleY(1)' : 'translateX(-50%) scaleY(0)',
-                      opacity: activeDropdown === group.title ? 1 : 0,
-                      visibility: activeDropdown === group.title ? 'visible' : 'hidden',
-                      transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease, visibility 0.4s',
-                      width: 'max-content',
-                      minWidth: '200px',
-                      padding: '8px 0', 
-                      marginTop: '4px',
-                      display: 'flex', 
-                      flexDirection: 'column', 
-                      zIndex: 1000 
-                    }}
-                  >
-                    {group.items.map((tab) => (
-                      <button
-                        key={tab.id}
-                        onClick={() => {
-                          handleSidebarTabClick(tab.id, group.title);
-                          setActiveDropdown(null);
-                        }}
+                    {group.title}
+                    {hasDropdown && (
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
                         style={{
-                          padding: '10px 16px',
-                          background: 'transparent',
-                          border: 'none',
-                          textAlign: 'left',
-                          color: isSidebarTabActive(tab.id, activeTab) ? 'var(--color-accent)' : 'var(--text-main)',
-                          fontWeight: isSidebarTabActive(tab.id, activeTab) ? '600' : '400',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center'
+                          transform:
+                            activeDropdown === group.title
+                              ? "rotate(180deg)"
+                              : "rotate(0deg)",
+                          transition: "transform 0.2s",
                         }}
-                        className="hover-bg"
                       >
-                        {tab.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )})}
+                        <path d="M6 9l6 6 6-6" />
+                      </svg>
+                    )}
+                  </button>
+                  {hasDropdown && (
+                    <div
+                      className="profile-dropdown"
+                      style={{
+                        position: "absolute",
+                        top: "100%",
+                        left: "50%",
+                        transformOrigin: "top center",
+                        transform:
+                          activeDropdown === group.title
+                            ? "translateX(-50%) scaleY(1)"
+                            : "translateX(-50%) scaleY(0)",
+                        opacity: activeDropdown === group.title ? 1 : 0,
+                        visibility:
+                          activeDropdown === group.title ? "visible" : "hidden",
+                        transition:
+                          "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease, visibility 0.4s",
+                        width: "max-content",
+                        minWidth: "200px",
+                        padding: "8px 0",
+                        marginTop: "4px",
+                        display: "flex",
+                        flexDirection: "column",
+                        zIndex: 1000,
+                      }}
+                    >
+                      {group.items.map((tab) => (
+                        <button
+                          key={tab.id}
+                          onClick={() => {
+                            handleSidebarTabClick(tab.id, group.title);
+                            setActiveDropdown(null);
+                          }}
+                          style={{
+                            padding: "10px 16px",
+                            background: "transparent",
+                            border: "none",
+                            textAlign: "left",
+                            color: isSidebarTabActive(tab.id, activeTab)
+                              ? "var(--color-accent)"
+                              : "var(--text-main)",
+                            fontWeight: isSidebarTabActive(tab.id, activeTab)
+                              ? "600"
+                              : "400",
+                            cursor: "pointer",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                          }}
+                          className="hover-bg"
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </nav>
         </div>
 
-        <div className="topnav-right header-right" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            {/* Hamburger Toggle (Mobile) */}
+        <div
+          className="topnav-right header-right"
+          style={{ display: "flex", alignItems: "center", gap: "8px" }}
+        >
+          {/* Hamburger Toggle (Mobile) */}
+          <button
+            className={`topnav-hamburger ${mobileNavOpen ? "active" : ""}`}
+            onClick={() => setMobileNavOpen(!mobileNavOpen)}
+            aria-label={t("admin.nav.toggle_navigation", "Toggle navigation")}
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "var(--text-h)",
+              cursor: "pointer",
+            }}
+          >
+            {mobileNavOpen ? (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
+            )}
+          </button>
+
+          {/* Notifications Bell & Popover */}
+          <div
+            className="profile-wrapper"
+            ref={notificationsRef}
+            style={{ position: "relative" }}
+          >
             <button
-              className={`topnav-hamburger ${mobileNavOpen ? "active" : ""}`}
-              onClick={() => setMobileNavOpen(!mobileNavOpen)}
-              aria-label={t('admin.nav.toggle_navigation', 'Toggle navigation')}
-              style={{ background: 'transparent', border: 'none', color: 'var(--text-h)', cursor: 'pointer' }}
+              type="button"
+              className="nav-icon-btn"
+              onClick={() => setShowNotifications(!showNotifications)}
+              style={{ position: "relative" }}
+              aria-label="Notifications"
             >
-              {mobileNavOpen ? (
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              {notifications && notifications.some((n) => !n.read) ? (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M12 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 005 14h14a1 1 0 00.707-1.707L19 11.586V8a6 6 0 00-6-6zM10 18a2 2 0 004 0h-4z" />
                 </svg>
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                  ></path>
                 </svg>
               )}
+              {notifications && notifications.some((n) => !n.read) && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: "4px",
+                    right: "4px",
+                    width: "8px",
+                    height: "8px",
+                    backgroundColor: "#ef4444",
+                    borderRadius: "50%",
+                    boxShadow: "0 0 0 2px var(--bg-main)",
+                  }}
+                ></span>
+              )}
             </button>
-
-            {/* Notifications Bell & Popover */}
-            <div className="profile-wrapper" ref={notificationsRef} style={{ position: 'relative' }}>
-              <button 
-                type="button"
-                className="nav-icon-btn"
-                onClick={() => setShowNotifications(!showNotifications)}
-                style={{ position: 'relative' }}
-                aria-label="Notifications"
+            {showNotifications && (
+              <div
+                className="profile-dropdown"
+                style={{
+                  width: "360px",
+                  right: isRTL ? "auto" : 0,
+                  left: isRTL ? 0 : "auto",
+                  padding: 0,
+                  borderRadius: "12px",
+                  overflow: "hidden",
+                }}
               >
-                {notifications && notifications.some(n => !n.read) ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 005 14h14a1 1 0 00.707-1.707L19 11.586V8a6 6 0 00-6-6zM10 18a2 2 0 004 0h-4z" />
-                  </svg>
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                  </svg>
-                )}
-                {notifications && notifications.some(n => !n.read) && (
-                  <span style={{
-                    position: 'absolute', top: '4px', right: '4px',
-                    width: '8px', height: '8px', backgroundColor: '#ef4444',
-                    borderRadius: '50%', boxShadow: '0 0 0 2px var(--bg-main)'
-                  }}></span>
-                )}
-              </button>
-              {showNotifications && (
-                <div className="profile-dropdown" style={{ width: '360px', right: isRTL ? 'auto' : 0, left: isRTL ? 0 : 'auto', padding: 0, borderRadius: '12px', overflow: 'hidden' }}>
-                  <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--c-border-subtle, rgba(255,255,255,0.08))', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-surface)', borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }}>
-                    <span style={{ color: 'var(--color-accent, #f97316)', fontSize: '1.05rem' }}>{t('nav.notifications', 'Notifications')}</span>
-                    {notifications.length > 0 && (
-                      <button 
-                        onClick={clearAllNotifications}
-                        style={{ background: 'none', border: 'none', color: 'var(--c-sub)', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
-                      >
-                        {t('nav.clear_all', 'Clear All')}
-                      </button>
-                    )}
-                  </div>
-                  <div style={{ maxHeight: '320px', overflowY: 'auto' }}>
-                    {notifications.length > 0 ? notifications.map(notif => (
-                      <div key={notif._id} style={{ 
-                        padding: '12px 16px', 
-                        borderBottom: '1px solid var(--c-border-subtle, rgba(255,255,255,0.05))',
-                        backgroundColor: notif.read ? 'transparent' : 'rgba(249, 115, 22, 0.08)',
-                        cursor: 'pointer',
-                        position: 'relative',
-                        transition: 'background 0.2s'
-                      }} onClick={async () => {
-                        if (!notif.read) {
-                          try {
-                            await api.patch(`/notifications/${notif._id}/read`);
-                            fetchNotifications();
-                          } catch (err) {
-                            console.error('Failed to mark notification as read', err);
+                <div
+                  style={{
+                    padding: "12px 16px",
+                    borderBottom:
+                      "1px solid var(--c-border-subtle, rgba(255,255,255,0.08))",
+                    fontWeight: "bold",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    backgroundColor: "var(--bg-surface)",
+                    borderTopLeftRadius: "12px",
+                    borderTopRightRadius: "12px",
+                  }}
+                >
+                  <span
+                    style={{
+                      color: "var(--color-accent, #f97316)",
+                      fontSize: "1.05rem",
+                    }}
+                  >
+                    {t("nav.notifications", "Notifications")}
+                  </span>
+                  {notifications.length > 0 && (
+                    <button
+                      onClick={clearAllNotifications}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "var(--c-sub)",
+                        fontSize: "0.8rem",
+                        cursor: "pointer",
+                        textDecoration: "underline",
+                      }}
+                    >
+                      {t("nav.clear_all", "Clear All")}
+                    </button>
+                  )}
+                </div>
+                <div style={{ maxHeight: "320px", overflowY: "auto" }}>
+                  {notifications.length > 0 ? (
+                    notifications.map((notif) => (
+                      <div
+                        key={notif._id}
+                        style={{
+                          padding: "12px 16px",
+                          borderBottom:
+                            "1px solid var(--c-border-subtle, rgba(255,255,255,0.05))",
+                          backgroundColor: notif.read
+                            ? "transparent"
+                            : "rgba(249, 115, 22, 0.08)",
+                          cursor: "pointer",
+                          position: "relative",
+                          transition: "background 0.2s",
+                        }}
+                        onClick={async () => {
+                          if (!notif.read) {
+                            try {
+                              await api.patch(
+                                `/notifications/${notif._id}/read`,
+                              );
+                              fetchNotifications();
+                            } catch (err) {
+                              console.error(
+                                "Failed to mark notification as read",
+                                err,
+                              );
+                            }
                           }
-                        }
-                        const title = (notif.title || '').toLowerCase();
-                        const msg = (notif.message || '').toLowerCase();
-                        if (title.includes('enroll') || msg.includes('enroll')) {
-                          setActiveTab('enrollment');
-                          setExpandedGroup('Financial Management');
-                        } else if (title.includes('course') || msg.includes('course')) {
-                          setActiveTab('courses');
-                          setExpandedGroup('Course Management');
-                        } else if (title.includes('payout') || msg.includes('payout')) {
-                          setActiveTab('financial_payouts');
-                          setExpandedGroup('Financial Management');
-                        }
-                        setShowNotifications(false);
-                      }}>
-                        <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-h)', marginBottom: '4px' }}>
-                          {formatNotificationTitle(notif.title || notif.text, t)}
+                          const title = (notif.title || "").toLowerCase();
+                          const msg = (notif.message || "").toLowerCase();
+                          if (
+                            title.includes("enroll") ||
+                            msg.includes("enroll")
+                          ) {
+                            setActiveTab("enrollment");
+                            setExpandedGroup("Financial Management");
+                          } else if (
+                            title.includes("course") ||
+                            msg.includes("course")
+                          ) {
+                            setActiveTab("courses");
+                            setExpandedGroup("Course Management");
+                          } else if (
+                            title.includes("payout") ||
+                            msg.includes("payout")
+                          ) {
+                            setActiveTab("financial_payouts");
+                            setExpandedGroup("Financial Management");
+                          }
+                          setShowNotifications(false);
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: "0.85rem",
+                            fontWeight: "600",
+                            color: "var(--text-h)",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          {formatNotificationTitle(
+                            notif.title || notif.text,
+                            t,
+                          )}
                         </div>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--c-sub)', lineHeight: '1.4' }}>
+                        <div
+                          style={{
+                            fontSize: "0.8rem",
+                            color: "var(--c-sub)",
+                            lineHeight: "1.4",
+                          }}
+                        >
                           {formatNotificationMessage(notif.message, t)}
                         </div>
-                        <div style={{ fontSize: '0.72rem', color: 'var(--c-sub)', marginTop: '6px', textAlign: 'right', opacity: 0.8 }}>
-                          {new Date(notif.createdAt).toLocaleString(undefined, { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        <div
+                          style={{
+                            fontSize: "0.72rem",
+                            color: "var(--c-sub)",
+                            marginTop: "6px",
+                            textAlign: "right",
+                            opacity: 0.8,
+                          }}
+                        >
+                          {new Date(notif.createdAt).toLocaleString(undefined, {
+                            year: "numeric",
+                            month: "numeric",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </div>
                       </div>
-                    )) : (
-                      <div style={{ padding: '24px', textAlign: 'center', color: 'var(--c-sub)', fontSize: '0.9rem' }}>
-                        {t('nav.no_notifications', 'No new notifications')}
-                      </div>
-                    )}
-                  </div>
+                    ))
+                  ) : (
+                    <div
+                      style={{
+                        padding: "24px",
+                        textAlign: "center",
+                        color: "var(--c-sub)",
+                        fontSize: "0.9rem",
+                      }}
+                    >
+                      {t("nav.no_notifications", "No new notifications")}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+          </div>
 
-            <button
-              className="nav-icon-btn"
-              onClick={toggleTheme}
-            >
-              {isLightMode ? (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                >
-                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-                </svg>
+          <button className="nav-icon-btn" onClick={toggleTheme}>
+            {isLightMode ? (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              >
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              >
+                <circle cx="12" cy="12" r="4"></circle>
+                <line x1="12" y1="2" x2="12" y2="4"></line>
+                <line x1="12" y1="20" x2="12" y2="22"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="2" y1="12" x2="4" y2="12"></line>
+                <line x1="20" y1="12" x2="22" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+            )}
+          </button>
+          <div
+            className="profile-wrapper hover-glow"
+            onClick={() => navigate("/student/settings")}
+            style={{ cursor: "pointer" }}
+          >
+            <div className="nav-avatar">
+              {user?.avatarUrl ? (
+                <img
+                  src={user.avatarUrl}
+                  alt={user?.name || "Profile"}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
+                />
               ) : (
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -1127,84 +1621,55 @@ export default function AdminPortal({
                   stroke="currentColor"
                   strokeWidth="1.8"
                 >
-                  <circle cx="12" cy="12" r="4"></circle>
-                  <line x1="12" y1="2" x2="12" y2="4"></line>
-                  <line x1="12" y1="20" x2="12" y2="22"></line>
-                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                  <line x1="2" y1="12" x2="4" y2="12"></line>
-                  <line x1="20" y1="12" x2="22" y2="12"></line>
-                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                  <circle cx="12" cy="8" r="4"></circle>
+                  <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"></path>
                 </svg>
               )}
-            </button>
-            <div 
-              className="profile-wrapper hover-glow" 
-              onClick={() => navigate('/student/settings')}
-              style={{ cursor: 'pointer' }}
-            >
-              <div className="nav-avatar">
-                {user?.avatarUrl ? (
-                  <img
-                    src={user.avatarUrl}
-                    alt={user?.name || "Profile"}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
-                  />
-                ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                  >
-                    <circle cx="12" cy="8" r="4"></circle>
-                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"></path>
-                  </svg>
-                )}
-              </div>
             </div>
           </div>
+        </div>
       </header>
 
       {/* Mobile Nav Dropdown */}
-      <nav className={`topnav-mobile-dropdown ${mobileNavOpen ? 'open' : 'closed'}`}>
-        <div className="topnav-mobile-dropdown-inner" style={{ padding: '16px', maxHeight: '70vh', overflowY: 'auto' }}>
+      <nav
+        className={`topnav-mobile-dropdown ${mobileNavOpen ? "open" : "closed"}`}
+      >
+        <div
+          className="topnav-mobile-dropdown-inner"
+          style={{ padding: "16px", maxHeight: "70vh", overflowY: "auto" }}
+        >
           {menuGroups.map((group, idx) => {
             // If the group only has one item, render it directly as a top-level button
             if (group.items.length === 1) {
               const tab = group.items[0];
               const isActive = isSidebarTabActive(tab.id, activeTab);
               return (
-                <div key={idx} style={{ marginBottom: '8px' }}>
+                <div key={idx} style={{ marginBottom: "2px" }}>
                   <button
                     onClick={() => {
                       handleSidebarTabClick(tab.id, group.title);
                       setMobileNavOpen(false);
                     }}
-                    style={{ 
-                      width: '100%', 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      alignItems: 'center', 
-                      fontSize: '0.85rem', 
-                      color: isActive ? 'var(--color-accent)' : 'var(--text-secondary)', 
-                      textTransform: 'uppercase', 
-                      padding: '12px 8px', 
-                      fontWeight: 'bold',
-                      cursor: 'pointer',
-                      borderRadius: '6px',
-                      border: 'none',
-                      background: isActive ? 'var(--color-accent-transparent, rgba(249,115,22,0.1))' : 'transparent',
-                      textAlign: 'left',
-                      transition: 'background 0.2s ease'
+                    style={{
+                      width: "fit-content",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      fontSize: "0.85rem",
+                      color: isActive
+                        ? "var(--color-accent)"
+                        : "var(--text-secondary)",
+                      textTransform: "uppercase",
+                      padding: "8px 8px",
+                      fontWeight: "bold",
+                      cursor: "pointer",
+                      borderRadius: "6px",
+                      border: "none",
+                      background: isActive
+                        ? "var(--color-accent-transparent, rgba(249,115,22,0.1))"
+                        : "transparent",
+                      textAlign: "left",
+                      transition: "background 0.2s ease",
                     }}
                   >
                     {group.title}
@@ -1215,438 +1680,585 @@ export default function AdminPortal({
 
             // Otherwise, render as a collapsible accordion
             return (
-              <div key={idx} style={{ marginBottom: '16px' }}>
-                <div 
-                  style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center', 
-                    fontSize: '0.85rem', 
-                    color: 'var(--text-secondary)', 
-                    textTransform: 'uppercase', 
-                    marginBottom: '8px', 
-                    padding: '12px 8px', 
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    borderRadius: '6px',
-                    background: expandedMobileGroup === group.title ? 'rgba(0,0,0,0.05)' : 'transparent',
-                    transition: 'background 0.2s ease'
+              <div key={idx} style={{ marginBottom: "2px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    fontSize: "0.85rem",
+                    color: "var(--text-secondary)",
+                    textTransform: "uppercase",
+                    marginBottom: "0px",
+                    padding: "8px 8px",
+                    fontWeight: "bold",
+                    cursor: "pointer",
+                    borderRadius: "6px",
+                    background:
+                      expandedMobileGroup === group.title
+                        ? "rgba(0,0,0,0.05)"
+                        : "transparent",
+                    transition: "background 0.2s ease",
                   }}
-                  onClick={() => setExpandedMobileGroup(prev => prev === group.title ? null : group.title)}
+                  onClick={() =>
+                    setExpandedMobileGroup((prev) =>
+                      prev === group.title ? null : group.title,
+                    )
+                  }
                 >
                   {group.title}
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    width="14" 
-                    height="14" 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    stroke="currentColor" 
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
                     strokeWidth="2"
                     style={{
-                      transform: expandedMobileGroup === group.title ? 'rotate(180deg)' : 'rotate(0deg)',
-                      transition: 'transform 0.2s ease'
+                      transform:
+                        expandedMobileGroup === group.title
+                          ? "rotate(180deg)"
+                          : "rotate(0deg)",
+                      transition: "transform 0.2s ease",
                     }}
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M19 9l-7 7-7-7"
+                    />
                   </svg>
                 </div>
-                
-                {expandedMobileGroup === group.title && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    {group.items.map(tab => (
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateRows: expandedMobileGroup === group.title ? "1fr" : "0fr",
+                    transition: "grid-template-rows 0.3s ease",
+                  }}
+                >
+                  <div
+                    style={{
+                      overflow: "hidden",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "4px",
+                      alignItems: "flex-start",
+                      opacity: expandedMobileGroup === group.title ? 1 : 0,
+                      transition: "opacity 0.3s ease",
+                    }}
+                  >
+                    {group.items.map((tab) => (
                       <button
                         key={tab.id}
-                        className={`topnav-mobile-link ${isSidebarTabActive(tab.id, activeTab) ? 'active' : ''}`}
+                        className={`topnav-mobile-link ${isSidebarTabActive(tab.id, activeTab) ? "active" : ""}`}
                         onClick={() => {
                           handleSidebarTabClick(tab.id, group.title);
                           setMobileNavOpen(false);
                         }}
-                        style={{ textAlign: 'left', padding: '10px 16px', borderRadius: '8px', border: 'none', background: isSidebarTabActive(tab.id, activeTab) ? 'var(--color-accent-transparent, rgba(249,115,22,0.1))' : 'transparent', color: isSidebarTabActive(tab.id, activeTab) ? 'var(--color-accent)' : 'var(--text-h)', cursor: 'pointer', fontSize: '0.95rem' }}
+                        style={{
+                          width: "100%",
+                          textAlign: "left",
+                          padding: "10px 16px",
+                          borderRadius: "8px",
+                          border: "none",
+                          background: isSidebarTabActive(tab.id, activeTab)
+                            ? "var(--color-accent-transparent, rgba(249,115,22,0.1))"
+                            : "transparent",
+                          color: isSidebarTabActive(tab.id, activeTab)
+                            ? "var(--color-accent)"
+                            : "var(--text-h)",
+                          cursor: "pointer",
+                          fontSize: "0.95rem",
+                        }}
                       >
                         {tab.label}
                       </button>
                     ))}
                   </div>
-                )}
+                </div>
               </div>
             );
           })}
         </div>
       </nav>
 
-        <GlobalAnnouncementBanner />
+      <GlobalAnnouncementBanner />
 
-        {/* Main Content Area */}
-        <div style={{ flex: 1, padding: "32px 48px", overflowY: "auto", minHeight: 0 }}>
+      {/* Main Content Area */}
+      <div
+        style={{
+          flex: 1,
+          padding: "32px 48px",
+          overflowY: "auto",
+          minHeight: 0,
+        }}
+      >
+        <div
+          className="admin-content-panel"
+          style={{
+            width: "100%",
+          }}
+        >
+          {visitedTabs.has("dashboard_overview") && stats && (
+            <div
+              style={{
+                display: activeTab === "dashboard_overview" ? "block" : "none",
+              }}
+            >
+              <AdminOverviewTab
+                stats={stats}
+                user={user}
+                setActiveTab={setActiveTab}
+              />
+            </div>
+          )}
+
           <div
-            className="admin-content-panel"
             style={{
-              width: "100%",
+              display: activeTab === "dashboard_activity" ? "block" : "none",
             }}
           >
-            {visitedTabs.has("dashboard_overview") && stats && (
-              <div style={{ display: activeTab === "dashboard_overview" ? "block" : "none" }}>
-                <AdminOverviewTab
-                  stats={stats}
-                  user={user}
-                  setActiveTab={setActiveTab}
-                />
-              </div>
-            )}
-
-            <div style={{ display: activeTab === "dashboard_activity" ? "block" : "none" }}>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "24px",
-                }}>
-
-                <div
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "24px",
+              }}
+            >
+              <div>
+                <h2
                   style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
+                    fontSize: "1.8rem",
+                    margin: "0 0 8px 0",
+                    color: "var(--text-h)",
                   }}
                 >
-                  <h2 style={{ fontSize: "1.8rem", margin: 0 }}>
-                    Recent Activity
-                  </h2>
-                  {/* Segmented Control for Activity Filters */}
-                  <SegmentedControl
-                    tabs={[
-                      { id: "All", label: "All" },
-                      { id: "Approved", label: "Approved" },
-                      { id: "Submitted", label: "Submitted" },
-                      { id: "Enrolled", label: "Enrolled" },
-                      { id: "Admin", label: "Admin/Super Admin" },
-                    ]}
-                    activeTab={activityFilter}
-                    onChange={setActivityFilter}
-                  />
-                </div>
-
-                <div className="glass-card" style={{ padding: "24px" }}>
-                  {activityLoading ? (
-                    <p style={{ color: "var(--c-sub)" }}>Loading activity...</p>
-                  ) : activity.length === 0 ? (
-                    <p style={{ color: "var(--c-sub)" }}>
-                      No recent activity to display.
-                    </p>
-                  ) : (
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "14px",
-                      }}
-                    >
-                      {(() => {
-                        const filtered = activity.filter((item) => {
-                          if (activityFilter === "All") return true;
-                          if (activityFilter === "Approved")
-                            return item.title === "Course Approved";
-                          if (activityFilter === "Submitted")
-                            return item.title === "Course Submitted";
-                          if (activityFilter === "Enrolled")
-                            return item.title === "New Student Enrollment";
-                          if (activityFilter === "Admin")
-                            return item.title.includes("Admin");
-                          return true;
-                        });
-
-                        if (filtered.length === 0) {
-                          return (
-                            <p
-                              style={{
-                                color: "var(--c-sub)",
-                                textAlign: "center",
-                                padding: "16px 0",
-                              }}
-                            >
-                              No activity found for this category.
-                            </p>
-                          );
-                        }
-
-                        return filtered.map((item) => (
-                          <div
-                            key={item.id}
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "baseline",
-                              gap: "16px",
-                              padding: "12px",
-                              background: "var(--bg-main)",
-                              boxShadow: isLightMode
-                                ? "var(--inner-shadow)"
-                                : "var(--inner-shadow)",
-                              borderRadius: "8px",
-                            }}
-                          >
-                            <div>
-                              <div style={{ fontWeight: 600 }}>
-                                {item.title}
-                              </div>
-                              <div
-                                style={{
-                                  color: "var(--c-sub)",
-                                  fontSize: "0.88rem",
-                                  marginTop: "2px",
-                                }}
-                              >
-                                {item.description}
-                              </div>
-                            </div>
-                            <div
-                              style={{
-                                color: "var(--c-sub)",
-                                fontSize: "0.8rem",
-                                whiteSpace: "nowrap",
-                                flexShrink: 0,
-                              }}
-                            >
-                              {new Date(item.date).toLocaleString("en-US", {
-                                month: "short",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </div>
-                          </div>
-                        ));
-                      })()}
-                    </div>
+                  {t("admin.recent_activity", "Recent Activity")}
+                </h2>
+                <div style={{ fontSize: "0.95rem", color: "var(--c-sub)" }}>
+                  {t(
+                    "admin.recent_activity_desc",
+                    "Monitor recent enrollments, submissions, and administrative events.",
                   )}
                 </div>
               </div>
+
+              {/* Segmented Control for Activity Filters */}
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <SegmentedControl
+                  tabs={[
+                    { id: "All", label: t("admin.all", "All") },
+                    { id: "Approved", label: t("admin.approved", "Approved") },
+                    { id: "Submitted", label: t("admin.submitted", "Submitted") },
+                    { id: "Enrolled", label: t("admin.enrolled", "Enrolled") },
+                    {
+                      id: "Admin",
+                      label: t("admin.admin_super_admin", "Admin/Super Admin"),
+                    },
+                  ]}
+                  activeTab={activityFilter}
+                  onChange={setActivityFilter}
+                />
+              </div>
+
+              <div className="glass-card" style={{ padding: "24px" }}>
+                {activityLoading ? (
+                  <p style={{ color: "var(--c-sub)" }}>Loading activity...</p>
+                ) : activity.length === 0 ? (
+                  <p style={{ color: "var(--c-sub)" }}>
+                    No recent activity to display.
+                  </p>
+                ) : (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "14px",
+                    }}
+                  >
+                    {(() => {
+                      const filtered = activity.filter((item) => {
+                        if (activityFilter === "All") return true;
+                        if (activityFilter === "Approved")
+                          return item.title === "Course Approved";
+                        if (activityFilter === "Submitted")
+                          return item.title === "Course Submitted";
+                        if (activityFilter === "Enrolled")
+                          return item.title === "New Student Enrollment";
+                        if (activityFilter === "Admin")
+                          return item.title.includes("Admin");
+                        return true;
+                      });
+
+                      if (filtered.length === 0) {
+                        return (
+                          <p
+                            style={{
+                              color: "var(--c-sub)",
+                              textAlign: "center",
+                              padding: "16px 0",
+                            }}
+                          >
+                            No activity found for this category.
+                          </p>
+                        );
+                      }
+
+                      return filtered.map((item) => (
+                        <div
+                          key={item.id}
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "baseline",
+                            gap: "16px",
+                            padding: "12px",
+                            background: "var(--bg-main)",
+                            boxShadow: isLightMode
+                              ? "var(--inner-shadow)"
+                              : "var(--inner-shadow)",
+                            borderRadius: "8px",
+                          }}
+                        >
+                          <div>
+                            <div style={{ fontWeight: 600 }}>{item.title}</div>
+                            <div
+                              style={{
+                                color: "var(--c-sub)",
+                                fontSize: "0.88rem",
+                                marginTop: "2px",
+                              }}
+                            >
+                              {item.description}
+                            </div>
+                          </div>
+                          <div
+                            style={{
+                              color: "var(--c-sub)",
+                              fontSize: "0.8rem",
+                              whiteSpace: "nowrap",
+                              flexShrink: 0,
+                            }}
+                          >
+                            {new Date(item.date).toLocaleString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </div>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                )}
+              </div>
             </div>
+          </div>
 
-            {visitedTabs.has("dashboard_analytics") && (
-              <div style={{ display: activeTab === "dashboard_analytics" ? "block" : "none" }}>
-                <AdminAnalyticsTab
-                  stats={stats}
-                  revenueAnalytics={revenueAnalytics}
-                  revenueAnalyticsLoading={revenueAnalyticsLoading}
-                />
-              </div>
-            )}
+          {visitedTabs.has("dashboard_analytics") && (
+            <div
+              style={{
+                display: activeTab === "dashboard_analytics" ? "block" : "none",
+              }}
+            >
+              <AdminAnalyticsTab
+                stats={stats}
+                revenueAnalytics={revenueAnalytics}
+                revenueAnalyticsLoading={revenueAnalyticsLoading}
+              />
+            </div>
+          )}
 
-            {visitedTabs.has("users") || [...visitedTabs].some(t => t.startsWith("users")) ? (
-              <div style={{ display: activeTab.startsWith("users") ? "block" : "none" }}>
-                <AdminUserManagementTab
-                  users={users}
-                  searchQuery={searchQuery}
-                  setSearchQuery={setSearchQuery}
-                  fetchUsers={fetchUsers}
-                  currentUser={user}
-                />
-              </div>
-            ) : null}
+          {visitedTabs.has("users") ||
+          [...visitedTabs].some((t) => t.startsWith("users")) ? (
+            <div
+              style={{
+                display: activeTab.startsWith("users") ? "block" : "none",
+              }}
+            >
+              <AdminUserManagementTab
+                users={users}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                fetchUsers={fetchUsers}
+                currentUser={user}
+              />
+            </div>
+          ) : null}
 
-            <div style={{ display: activeTab === "enrollment" ? "block" : "none" }}>
+          <div
+            style={{ display: activeTab === "enrollment" ? "block" : "none" }}
+          >
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "24px",
+              }}
+            >
+              <h2 style={{ fontSize: "1.8rem", margin: 0 }}>
+                Enrollment Requests
+              </h2>
+
               <div
                 style={{
+                  position: "relative",
                   display: "flex",
-                  flexDirection: "column",
-                  gap: "24px",
+                  gap: "12px",
+                  borderBottom: "1px solid var(--border)",
+                  paddingBottom: "12px",
                 }}
               >
-                <h2 style={{ fontSize: "1.8rem", margin: 0 }}>
-                  Enrollment Requests
-                </h2>
-                
-                <div style={{ position: 'relative', display: 'flex', gap: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
-                  <button
-                    ref={pendingEnrollmentTabRef}
-                    onClick={() => setEnrollmentSubTab('pending')}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      padding: '8px 16px',
-                      fontSize: '1rem',
-                      fontWeight: 600,
-                      color: enrollmentSubTab === 'pending' ? 'var(--text-h)' : 'var(--c-sub)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    Pending ({pendingEnrollments.length})
-                  </button>
-                  <button
-                    ref={processedEnrollmentTabRef}
-                    onClick={() => setEnrollmentSubTab('processed')}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      padding: '8px 16px',
-                      fontSize: '1rem',
-                      fontWeight: 600,
-                      color: enrollmentSubTab === 'processed' ? 'var(--text-h)' : 'var(--c-sub)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    Processed
-                  </button>
-                  <div style={{
-                    position: 'absolute',
+                <button
+                  ref={pendingEnrollmentTabRef}
+                  onClick={() => setEnrollmentSubTab("pending")}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    padding: "8px 16px",
+                    fontSize: "1rem",
+                    fontWeight: 600,
+                    color:
+                      enrollmentSubTab === "pending"
+                        ? "var(--text-h)"
+                        : "var(--c-sub)",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  Pending ({pendingEnrollments.length})
+                </button>
+                <button
+                  ref={processedEnrollmentTabRef}
+                  onClick={() => setEnrollmentSubTab("processed")}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    padding: "8px 16px",
+                    fontSize: "1rem",
+                    fontWeight: 600,
+                    color:
+                      enrollmentSubTab === "processed"
+                        ? "var(--text-h)"
+                        : "var(--c-sub)",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  Processed
+                </button>
+                <div
+                  style={{
+                    position: "absolute",
                     bottom: 0,
-                    height: '2px',
-                    background: 'linear-gradient(to right, #f97316, #eab308)',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    ...enrollmentIndicatorStyle
-                  }} />
+                    height: "2px",
+                    background: "linear-gradient(to right, #f97316, #eab308)",
+                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                    ...enrollmentIndicatorStyle,
+                  }}
+                />
+              </div>
+
+              {enrollmentSubTab === "pending" && (
+                <div>
+                  {renderEnrollmentTable(
+                    displayedPendingTransactions,
+                    "No pending enrollment requests.",
+                  )}
+                  <Pagination 
+                    currentPage={pendingEnrollmentPage} 
+                    totalPages={Math.ceil(pendingEnrollments.length / 10)} 
+                    onPageChange={setPendingEnrollmentPage} 
+                    totalItems={pendingEnrollments.length} 
+                    itemsPerPage={10} 
+                    label="requests" 
+                  />
                 </div>
-                
-                {enrollmentSubTab === 'pending' && (
-                  <div>
-                    {renderEnrollmentTable(displayedPendingTransactions, "No pending enrollment requests.")}
-                    {pendingEnrollments.length > 10 && (
-                      <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', margin: '20px 0 12px 0', alignItems: 'center' }}>
-                        <button 
-                          disabled={pendingEnrollmentPage === 1} 
-                          onClick={() => setPendingEnrollmentPage(prev => prev - 1)}
-                          className="glass-btn hover-glow"
-                          style={{ padding: '8px 20px', fontSize: '0.85rem', cursor: pendingEnrollmentPage === 1 ? 'not-allowed' : 'pointer', opacity: pendingEnrollmentPage === 1 ? 0.5 : 1 }}
-                        >
-                          Previous
-                        </button>
-                        <span style={{ color: 'var(--c-sub)', fontSize: '0.9rem', fontWeight: '500' }}>
-                          Page {pendingEnrollmentPage} of {Math.ceil(pendingEnrollments.length / 10)}
-                        </span>
-                        <button 
-                          disabled={pendingEnrollmentPage >= Math.ceil(pendingEnrollments.length / 10)} 
-                          onClick={() => setPendingEnrollmentPage(prev => prev + 1)}
-                          className="glass-btn hover-glow"
-                          style={{ padding: '8px 20px', fontSize: '0.85rem', cursor: pendingEnrollmentPage >= Math.ceil(pendingEnrollments.length / 10) ? 'not-allowed' : 'pointer', opacity: pendingEnrollmentPage >= Math.ceil(pendingEnrollments.length / 10) ? 0.5 : 1 }}
-                        >
-                          Next
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
+              )}
 
-                {enrollmentSubTab === 'processed' && (
-                  <div>
-                    {renderEnrollmentTable(displayedProcessedTransactions, "No processed requests found.")}
-                      
-                    {processedEnrollments.length > 10 && (
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', margin: '20px 0 12px 0', alignItems: 'center' }}>
-                    <button 
-                      disabled={enrollmentPage === 1} 
-                      onClick={() => setEnrollmentPage(prev => prev - 1)}
-                      className="glass-btn hover-glow"
-                      style={{ padding: '8px 20px', fontSize: '0.85rem', cursor: enrollmentPage === 1 ? 'not-allowed' : 'pointer', opacity: enrollmentPage === 1 ? 0.5 : 1 }}
-                    >
-                      Previous
-                    </button>
-                    <span style={{ color: 'var(--c-sub)', fontSize: '0.9rem', fontWeight: '500' }}>
-                      Page {enrollmentPage} of {Math.ceil(processedEnrollments.length / 10)}
-                    </span>
-                    <button 
-                      disabled={enrollmentPage >= Math.ceil(processedEnrollments.length / 10)} 
-                      onClick={() => setEnrollmentPage(prev => prev + 1)}
-                      className="glass-btn hover-glow"
-                      style={{ padding: '8px 20px', fontSize: '0.85rem', cursor: enrollmentPage >= Math.ceil(processedEnrollments.length / 10) ? 'not-allowed' : 'pointer', opacity: enrollmentPage >= Math.ceil(processedEnrollments.length / 10) ? 0.5 : 1 }}
-                    >
-                      Next
-                    </button>
-                  </div>
-                )}
-                  </div>
-                )}
-              </div>
+              {enrollmentSubTab === "processed" && (
+                <div>
+                  {renderEnrollmentTable(
+                    displayedProcessedTransactions,
+                    "No processed requests found.",
+                  )}
+
+                  <Pagination 
+                    currentPage={enrollmentPage} 
+                    totalPages={Math.ceil(processedEnrollments.length / 10)} 
+                    onPageChange={setEnrollmentPage} 
+                    totalItems={processedEnrollments.length} 
+                    itemsPerPage={10} 
+                    label="requests" 
+                  />
+                </div>
+              )}
             </div>
-
-            {visitedTabs.has("courses") && (
-              <div style={{ display: activeTab === "courses" ? "block" : "none" }}>
-                <AdminCourseManagementTab currentUser={user} onDashboardUpdate={fetchDashboardData} />
-              </div>
-            )}
-
-            {visitedTabs.has("financial_payouts") && (
-              <div style={{ display: activeTab === "financial_payouts" ? "block" : "none" }}>
-                <AdminPayoutsTab />
-              </div>
-            )}
-
-            {visitedTabs.has("web_landing_cms") && (
-              <div style={{ display: activeTab === "web_landing_cms" ? "block" : "none" }}>
-                <AdminLandingPageTab />
-              </div>
-            )}
-
-            {visitedTabs.has("web_home") && (
-              <div style={{ display: activeTab === "web_home" ? "block" : "none" }}>
-                <WebsiteManagement user={user} subTab="home" />
-              </div>
-            )}
-            {visitedTabs.has("web_about") && (
-              <div style={{ display: activeTab === "web_about" ? "block" : "none" }}>
-                <WebsiteManagement user={user} subTab="about" />
-              </div>
-            )}
-            {visitedTabs.has("web_faq") && (
-              <div style={{ display: activeTab === "web_faq" ? "block" : "none" }}>
-                <WebsiteManagement user={user} subTab="faq" />
-              </div>
-            )}
-            {visitedTabs.has("web_contact") && (
-              <div style={{ display: activeTab === "web_contact" ? "block" : "none" }}>
-                <WebsiteManagement user={user} subTab="contact" />
-              </div>
-            )}
-            {visitedTabs.has("web_testimonials") && (
-              <div style={{ display: activeTab === "web_testimonials" ? "block" : "none" }}>
-                <WebsiteManagement user={user} subTab="testimonials" />
-              </div>
-            )}
-            {visitedTabs.has("announcements") && (
-              <div style={{ display: activeTab === "announcements" ? "block" : "none" }}>
-                <WebsiteManagement user={user} subTab="announcements" />
-              </div>
-            )}
-
-            {visitedTabs.has("settings") && (
-              <div style={{ display: activeTab === "settings" ? "block" : "none" }}>
-                <SystemManagement user={user} />
-              </div>
-            )}
-
-            {/* Reports sub-tabs */}
-            {visitedTabs.has("reports_financial") && (
-              <div style={{ display: activeTab === "reports_financial" ? "block" : "none" }}>
-                <AdminReportsTab user={user} subTab="financial" />
-              </div>
-            )}
-            {visitedTabs.has("reports_students") && (
-              <div style={{ display: activeTab === "reports_students" ? "block" : "none" }}>
-                <AdminReportsTab user={user} subTab="students" />
-              </div>
-            )}
-            {visitedTabs.has("reports_instructors") && (
-              <div style={{ display: activeTab === "reports_instructors" ? "block" : "none" }}>
-                <AdminReportsTab user={user} subTab="instructors" />
-              </div>
-            )}
-            {visitedTabs.has("reports_export") && (
-              <div style={{ display: activeTab === "reports_export" ? "block" : "none" }}>
-                <AdminReportsTab user={user} subTab="export" />
-              </div>
-            )}
-
-            {/* Permissions tab (superadmin only) */}
-            {visitedTabs.has("roles_permissions") && (
-              <div style={{ display: activeTab === "roles_permissions" ? "block" : "none" }}>
-                <AdminRolePermissionsTab user={user} />
-              </div>
-            )}
           </div>
+
+          {visitedTabs.has("courses") && (
+            <div
+              style={{ display: activeTab === "courses" ? "block" : "none" }}
+            >
+              <AdminCourseManagementTab
+                currentUser={user}
+                onDashboardUpdate={fetchDashboardData}
+              />
+            </div>
+          )}
+
+          {visitedTabs.has("financial_payouts") && (
+            <div
+              style={{
+                display: activeTab === "financial_payouts" ? "block" : "none",
+              }}
+            >
+              <AdminPayoutsTab />
+            </div>
+          )}
+
+          {visitedTabs.has("web_landing_cms") && (
+            <div
+              style={{
+                display: activeTab === "web_landing_cms" ? "block" : "none",
+              }}
+            >
+              <AdminLandingPageTab />
+            </div>
+          )}
+
+          {visitedTabs.has("web_home") && (
+            <div
+              style={{ display: activeTab === "web_home" ? "block" : "none" }}
+            >
+              <WebsiteManagement user={user} subTab="home" />
+            </div>
+          )}
+          {visitedTabs.has("web_about") && (
+            <div
+              style={{ display: activeTab === "web_about" ? "block" : "none" }}
+            >
+              <WebsiteManagement user={user} subTab="about" />
+            </div>
+          )}
+          {visitedTabs.has("web_faq") && (
+            <div
+              style={{ display: activeTab === "web_faq" ? "block" : "none" }}
+            >
+              <WebsiteManagement user={user} subTab="faq" />
+            </div>
+          )}
+          {visitedTabs.has("web_contact") && (
+            <div
+              style={{
+                display: activeTab === "web_contact" ? "block" : "none",
+              }}
+            >
+              <WebsiteManagement user={user} subTab="contact" />
+            </div>
+          )}
+          {visitedTabs.has("web_testimonials") && (
+            <div
+              style={{
+                display: activeTab === "web_testimonials" ? "block" : "none",
+              }}
+            >
+              <WebsiteManagement user={user} subTab="testimonials" />
+            </div>
+          )}
+          {visitedTabs.has("announcements") && (
+            <div
+              style={{
+                display: activeTab === "announcements" ? "block" : "none",
+              }}
+            >
+              <WebsiteManagement user={user} subTab="announcements" />
+            </div>
+          )}
+
+          {visitedTabs.has("settings") && (
+            <div
+              style={{ display: activeTab === "settings" ? "block" : "none" }}
+            >
+              <SystemManagement user={user} />
+            </div>
+          )}
+
+          {/* Reports sub-tabs */}
+          {visitedTabs.has("reports_financial") && (
+            <div
+              style={{
+                display: activeTab === "reports_financial" ? "block" : "none",
+              }}
+            >
+              <AdminReportsTab user={user} subTab="financial" />
+            </div>
+          )}
+          {visitedTabs.has("reports_students") && (
+            <div
+              style={{
+                display: activeTab === "reports_students" ? "block" : "none",
+              }}
+            >
+              <AdminReportsTab user={user} subTab="students" />
+            </div>
+          )}
+          {visitedTabs.has("reports_instructors") && (
+            <div
+              style={{
+                display: activeTab === "reports_instructors" ? "block" : "none",
+              }}
+            >
+              <AdminReportsTab user={user} subTab="instructors" />
+            </div>
+          )}
+          {visitedTabs.has("reports_export") && (
+            <div
+              style={{
+                display: activeTab === "reports_export" ? "block" : "none",
+              }}
+            >
+              <AdminReportsTab user={user} subTab="export" />
+            </div>
+          )}
+
+          {/* Permissions tab (superadmin only) */}
+          {visitedTabs.has("roles_permissions") && (
+            <div
+              style={{
+                display: activeTab === "roles_permissions" ? "block" : "none",
+              }}
+            >
+              <AdminRolePermissionsTab user={user} />
+            </div>
+          )}
+
+          {/* Role management tab */}
+          {visitedTabs.has("roles_manage") && (
+            <div
+              style={{
+                display: activeTab === "roles_manage" ? "block" : "none",
+              }}
+            >
+              <AdminRoleManageTab />
+            </div>
+          )}
+
+          {/* Role assignments tab */}
+          {visitedTabs.has("roles_assignments") && (
+            <div
+              style={{
+                display: activeTab === "roles_assignments" ? "block" : "none",
+              }}
+            >
+              <AdminRoleAssignmentsTab user={user} />
+            </div>
+          )}
         </div>
+      </div>
 
       {/* Change Role confirmation modal */}
       {pendingRoleChange && (
@@ -1822,72 +2434,216 @@ export default function AdminPortal({
             className="glass-card animate-entrance"
             style={{ width: "100%", maxWidth: "500px", padding: "32px" }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h2 style={{ margin: "0", fontSize: "1.3rem", textTransform: 'uppercase', letterSpacing: '1px' }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "24px",
+              }}
+            >
+              <h2
+                style={{
+                  margin: "0",
+                  fontSize: "1.3rem",
+                  textTransform: "uppercase",
+                  letterSpacing: "1px",
+                }}
+              >
                 Enrollment Request Details
               </h2>
-              <button 
-                onClick={() => setSelectedEnrollment(null)} 
-                style={{ background: 'none', border: 'none', color: 'var(--c-sub)', fontSize: '1.5rem', cursor: 'pointer' }}
-              >×</button>
+              <button
+                onClick={() => setSelectedEnrollment(null)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--c-sub)",
+                  fontSize: "1.5rem",
+                  cursor: "pointer",
+                }}
+              >
+                ×
+              </button>
             </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
-                <span style={{ color: 'var(--c-sub)' }}>Course Name:</span>
-                <span style={{ fontWeight: '600', color: 'var(--text-h)' }}>{selectedEnrollment.course?.title || 'N/A'}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
-                <span style={{ color: 'var(--c-sub)' }}>Instructor Name:</span>
-                <span style={{ fontWeight: '600', color: 'var(--text-h)' }}>{selectedEnrollment.course?.instructor?.name || 'N/A'}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
-                <span style={{ color: 'var(--c-sub)' }}>Course Price:</span>
-                <span style={{ fontWeight: '600', color: '#10B981' }}>{selectedEnrollment.amountPaid || selectedEnrollment.course?.price || 0} EGP</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
-                <span style={{ color: 'var(--c-sub)' }}>Fees (1%):</span>
-                <span style={{ fontWeight: '600', color: 'var(--text-h)' }}>
-                  {(((selectedEnrollment.amountPaid || selectedEnrollment.course?.price || 0) * 0.01)).toFixed(2)} EGP
+
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "16px",
+                marginBottom: "24px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  borderBottom: "1px solid rgba(255,255,255,0.05)",
+                  paddingBottom: "8px",
+                }}
+              >
+                <span style={{ color: "var(--c-sub)" }}>Course Name:</span>
+                <span style={{ fontWeight: "600", color: "var(--text-h)" }}>
+                  {selectedEnrollment.course?.title || "N/A"}
                 </span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
-                <span style={{ color: 'var(--c-sub)' }}>Phone Number Used:</span>
-                <span style={{ fontWeight: '600', color: 'var(--text-h)' }}>{selectedEnrollment.paymentAccount || 'N/A'}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
-                <span style={{ color: 'var(--c-sub)' }}>Transaction ID:</span>
-                <span style={{ fontWeight: '600', color: 'var(--text-h)' }}>{selectedEnrollment.transactionId || 'N/A'}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
-                <span style={{ color: 'var(--c-sub)' }}>Invoice ID:</span>
-                <span style={{ fontWeight: '600', color: 'var(--text-h)', fontSize: '0.85rem' }}>{selectedEnrollment.invoiceId || 'N/A'}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
-                <span style={{ color: 'var(--c-sub)' }}>Payment Method:</span>
-                <span style={{ fontWeight: '600', color: 'var(--text-h)' }}>{selectedEnrollment.paymentMethod || 'N/A'}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
-                <span style={{ color: 'var(--c-sub)' }}>Transaction Date & Time:</span>
-                <span style={{ fontWeight: '600', color: 'var(--text-h)' }}>
-                  {selectedEnrollment.createdAt ? new Date(selectedEnrollment.createdAt).toLocaleString() : 'N/A'}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  borderBottom: "1px solid rgba(255,255,255,0.05)",
+                  paddingBottom: "8px",
+                }}
+              >
+                <span style={{ color: "var(--c-sub)" }}>Instructor Name:</span>
+                <span style={{ fontWeight: "600", color: "var(--text-h)" }}>
+                  {selectedEnrollment.course?.instructor?.name || "N/A"}
                 </span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
-                <span style={{ color: 'var(--c-sub)' }}>Status:</span>
-                <span style={{ fontWeight: '700', textTransform: 'uppercase', color: selectedEnrollment.status === 'approved' ? '#34d399' : selectedEnrollment.status === 'rejected' ? '#fca5a5' : '#f59e0b' }}>
-                  {selectedEnrollment.status || 'pending'}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  borderBottom: "1px solid rgba(255,255,255,0.05)",
+                  paddingBottom: "8px",
+                }}
+              >
+                <span style={{ color: "var(--c-sub)" }}>Course Price:</span>
+                <span style={{ fontWeight: "600", color: "#10B981" }}>
+                  {selectedEnrollment.amountPaid ||
+                    selectedEnrollment.course?.price ||
+                    0}{" "}
+                  EGP
+                </span>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  borderBottom: "1px solid rgba(255,255,255,0.05)",
+                  paddingBottom: "8px",
+                }}
+              >
+                <span style={{ color: "var(--c-sub)" }}>Fees (1%):</span>
+                <span style={{ fontWeight: "600", color: "var(--text-h)" }}>
+                  {(
+                    (selectedEnrollment.amountPaid ||
+                      selectedEnrollment.course?.price ||
+                      0) * 0.01
+                  ).toFixed(2)}{" "}
+                  EGP
+                </span>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  borderBottom: "1px solid rgba(255,255,255,0.05)",
+                  paddingBottom: "8px",
+                }}
+              >
+                <span style={{ color: "var(--c-sub)" }}>
+                  Phone Number Used:
+                </span>
+                <span style={{ fontWeight: "600", color: "var(--text-h)" }}>
+                  {selectedEnrollment.paymentAccount || "N/A"}
+                </span>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  borderBottom: "1px solid rgba(255,255,255,0.05)",
+                  paddingBottom: "8px",
+                }}
+              >
+                <span style={{ color: "var(--c-sub)" }}>Transaction ID:</span>
+                <span style={{ fontWeight: "600", color: "var(--text-h)" }}>
+                  {selectedEnrollment.transactionId || "N/A"}
+                </span>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  borderBottom: "1px solid rgba(255,255,255,0.05)",
+                  paddingBottom: "8px",
+                }}
+              >
+                <span style={{ color: "var(--c-sub)" }}>Invoice ID:</span>
+                <span
+                  style={{
+                    fontWeight: "600",
+                    color: "var(--text-h)",
+                    fontSize: "0.85rem",
+                  }}
+                >
+                  {selectedEnrollment.invoiceId || "N/A"}
+                </span>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  borderBottom: "1px solid rgba(255,255,255,0.05)",
+                  paddingBottom: "8px",
+                }}
+              >
+                <span style={{ color: "var(--c-sub)" }}>Payment Method:</span>
+                <span style={{ fontWeight: "600", color: "var(--text-h)" }}>
+                  {selectedEnrollment.paymentMethod || "N/A"}
+                </span>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  borderBottom: "1px solid rgba(255,255,255,0.05)",
+                  paddingBottom: "8px",
+                }}
+              >
+                <span style={{ color: "var(--c-sub)" }}>
+                  Transaction Date & Time:
+                </span>
+                <span style={{ fontWeight: "600", color: "var(--text-h)" }}>
+                  {selectedEnrollment.createdAt
+                    ? new Date(selectedEnrollment.createdAt).toLocaleString()
+                    : "N/A"}
+                </span>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  borderBottom: "1px solid rgba(255,255,255,0.05)",
+                  paddingBottom: "8px",
+                }}
+              >
+                <span style={{ color: "var(--c-sub)" }}>Status:</span>
+                <span
+                  style={{
+                    fontWeight: "700",
+                    textTransform: "uppercase",
+                    color:
+                      selectedEnrollment.status === "approved"
+                        ? "#34d399"
+                        : selectedEnrollment.status === "rejected"
+                          ? "#fca5a5"
+                          : "#f59e0b",
+                  }}
+                >
+                  {selectedEnrollment.status || "pending"}
                 </span>
               </div>
             </div>
 
             {selectedEnrollment.screenshot && (
-              <div style={{ marginBottom: '24px' }}>
+              <div style={{ marginBottom: "24px" }}>
                 <button
                   type="button"
                   onClick={() => setShowScreenshotModal(true)}
                   className="glass-btn hover-glow"
-                  style={{ width: '100%', padding: '10px', fontSize: '0.9rem' }}
+                  style={{ width: "100%", padding: "10px", fontSize: "0.9rem" }}
                 >
                   View Payment Screenshot
                 </button>
@@ -1895,39 +2651,46 @@ export default function AdminPortal({
             )}
 
             <div style={{ display: "flex", gap: "16px" }}>
-              {selectedEnrollment.status === 'pending' || !selectedEnrollment.status ? (
+              {selectedEnrollment.status === "pending" ||
+              !selectedEnrollment.status ? (
                 <>
                   <button
                     type="button"
-                    onClick={() => setPendingEnrollmentReject(selectedEnrollment)}
+                    onClick={() =>
+                      setPendingEnrollmentReject(selectedEnrollment)
+                    }
                     disabled={processingEnrollmentAction !== null}
                     className="glass-btn auth-submit-btn"
-                    style={{ 
-                      flex: 1, 
-                      background: 'var(--bg-main)', 
-                      color: '#ef4444', 
-                      border: '1px solid var(--border)',
-                      boxShadow: 'var(--inner-shadow)',
-                      marginTop: '0px'
+                    style={{
+                      flex: 1,
+                      background: "var(--bg-main)",
+                      color: "#ef4444",
+                      border: "1px solid var(--border)",
+                      boxShadow: "var(--inner-shadow)",
+                      marginTop: "0px",
                     }}
                   >
                     Reject
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleApproveEnrollment(selectedEnrollment._id)}
+                    onClick={() =>
+                      handleApproveEnrollment(selectedEnrollment._id)
+                    }
                     disabled={processingEnrollmentAction !== null}
                     className="glass-btn auth-submit-btn"
-                    style={{ 
-                      flex: 1, 
-                      background: 'var(--bg-main)', 
-                      color: '#10b981', 
-                      border: '1px solid var(--border)',
-                      boxShadow: 'var(--inner-shadow)',
-                      marginTop: '0px' 
+                    style={{
+                      flex: 1,
+                      background: "var(--bg-main)",
+                      color: "#10b981",
+                      border: "1px solid var(--border)",
+                      boxShadow: "var(--inner-shadow)",
+                      marginTop: "0px",
                     }}
                   >
-                    {processingEnrollmentAction === 'approving' ? "Approving..." : "Approve"}
+                    {processingEnrollmentAction === "approving"
+                      ? "Approving..."
+                      : "Approve"}
                   </button>
                 </>
               ) : (
@@ -1961,33 +2724,44 @@ export default function AdminPortal({
           onClick={() => setShowScreenshotModal(false)}
         >
           <div
-            style={{ position: 'relative', maxWidth: '90%', maxHeight: '90%' }}
+            style={{ position: "relative", maxWidth: "90%", maxHeight: "90%" }}
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={() => setShowScreenshotModal(false)}
               style={{
-                position: 'absolute',
-                top: '-40px',
-                right: '0',
-                background: 'none',
-                border: 'none',
-                color: '#fff',
-                fontSize: '2rem',
-                cursor: 'pointer'
+                position: "absolute",
+                top: "-40px",
+                right: "0",
+                background: "none",
+                border: "none",
+                color: "#fff",
+                fontSize: "2rem",
+                cursor: "pointer",
               }}
-            >×</button>
+            >
+              ×
+            </button>
             <img
               src={selectedEnrollment.screenshot}
               alt="Payment Screenshot"
-              style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain', borderRadius: '8px' }}
+              style={{
+                maxWidth: "100%",
+                maxHeight: "80vh",
+                objectFit: "contain",
+                borderRadius: "8px",
+              }}
             />
-            <div style={{ textAlign: 'center', marginTop: '12px' }}>
-              <a 
-                href={selectedEnrollment.screenshot} 
-                target="_blank" 
-                rel="noreferrer" 
-                style={{ color: 'var(--color-accent)', textDecoration: 'underline', fontSize: '0.9rem' }}
+            <div style={{ textAlign: "center", marginTop: "12px" }}>
+              <a
+                href={selectedEnrollment.screenshot}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  color: "var(--color-accent)",
+                  textDecoration: "underline",
+                  fontSize: "0.9rem",
+                }}
               >
                 Open image in new tab
               </a>
@@ -2014,14 +2788,29 @@ export default function AdminPortal({
             className="glass-card animate-entrance"
             style={{ width: "100%", maxWidth: "500px", padding: "32px" }}
           >
-            <h2 style={{ margin: "0 0 24px 0", fontSize: "1.3rem", textTransform: "uppercase", letterSpacing: "1px" }}>
+            <h2
+              style={{
+                margin: "0 0 24px 0",
+                fontSize: "1.3rem",
+                textTransform: "uppercase",
+                letterSpacing: "1px",
+              }}
+            >
               Enrollment Rejection Reason
             </h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+            >
               <label style={{ color: "var(--c-sub)", fontSize: "0.85rem" }}>
                 Course: {pendingEnrollmentReject.course?.title}
               </label>
-              <label style={{ color: "var(--c-sub)", fontSize: "0.85rem", marginBottom: '12px' }}>
+              <label
+                style={{
+                  color: "var(--c-sub)",
+                  fontSize: "0.85rem",
+                  marginBottom: "12px",
+                }}
+              >
                 Student: {pendingEnrollmentReject.student?.name}
               </label>
               <textarea
@@ -2040,7 +2829,8 @@ export default function AdminPortal({
                   fontSize: "0.95rem",
                   boxSizing: "border-box",
                   resize: "vertical",
-                  boxShadow: "var(--inner-shadow, inset 0 2px 4px rgba(0, 0, 0, 0.4))",
+                  boxShadow:
+                    "var(--inner-shadow, inset 0 2px 4px rgba(0, 0, 0, 0.4))",
                 }}
               />
             </div>
@@ -2063,27 +2853,27 @@ export default function AdminPortal({
                   setEnrollmentRejectReason("");
                   setEnrollmentRejectReasonError("");
                 }}
-                disabled={processingEnrollmentAction === 'rejecting'}
+                disabled={processingEnrollmentAction === "rejecting"}
                 className="glass-btn auth-submit-btn"
-                style={{ flex: 1, marginTop: '0px' }}
+                style={{ flex: 1, marginTop: "0px" }}
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={confirmEnrollmentReject}
-                disabled={processingEnrollmentAction === 'rejecting'}
+                disabled={processingEnrollmentAction === "rejecting"}
                 className="glass-btn auth-submit-btn"
-                style={{ 
-                  flex: 1, 
-                  background: 'var(--bg-main)', 
-                  color: '#ef4444', 
-                  border: '1px solid var(--border)',
-                  boxShadow: 'var(--inner-shadow)',
-                  marginTop: '0px'
+                style={{
+                  flex: 1,
+                  background: "var(--bg-main)",
+                  color: "#ef4444",
+                  border: "1px solid var(--border)",
+                  boxShadow: "var(--inner-shadow)",
+                  marginTop: "0px",
                 }}
               >
-                {processingEnrollmentAction === 'rejecting'
+                {processingEnrollmentAction === "rejecting"
                   ? "Rejecting..."
                   : "Reject Request"}
               </button>

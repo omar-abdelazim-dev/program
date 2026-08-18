@@ -89,7 +89,7 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
     paddingRight: '24px',
     background: 'var(--bg-surface)',
     border: '1px solid var(--border)',
-    borderRadius: '50px',
+    borderRadius: '12px',
     color: 'var(--text-primary)',
     boxShadow: 'var(--inner-shadow)',
     outline: 'none',
@@ -246,7 +246,7 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
                   <div style={{
                     background: 'linear-gradient(90deg, var(--c-orange, #f59e0b), var(--c-yellow, #fef08a))',
                     color: '#fff',
-                    borderRadius: '50px',
+                    borderRadius: '12px',
                     padding: '6px 16px',
                     marginInlineEnd: '12px',
                     fontWeight: '600',
@@ -267,7 +267,7 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
             <button
               type="button"
               onClick={onCancel}
-              style={{ flex: 1, padding: '14px', borderRadius: '50px', border: '1px solid var(--border)', background: 'var(--bg-main)', boxShadow: 'var(--inner-shadow)', color: 'var(--text-primary)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', cursor: 'pointer', transition: 'all 0.2s' }}
+              style={{ flex: 1, padding: '14px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-main)', boxShadow: 'var(--inner-shadow)', color: 'var(--text-primary)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', cursor: 'pointer', transition: 'all 0.2s' }}
               onMouseEnter={(e) => e.target.style.background = 'var(--bg-surface)'}
               onMouseLeave={(e) => e.target.style.background = 'var(--bg-main)'}
             >
@@ -277,7 +277,7 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
               type="submit"
               disabled={isEnrolling || isUploading}
               className="solid-btn"
-              style={{ flex: 1, padding: '14px', borderRadius: '50px', textTransform: 'uppercase', letterSpacing: '1px', cursor: (isEnrolling || isUploading) ? 'not-allowed' : 'pointer', opacity: (isEnrolling || isUploading) ? 0.7 : 1 }}
+              style={{ flex: 1, padding: '14px', borderRadius: '12px', textTransform: 'uppercase', letterSpacing: '1px', cursor: (isEnrolling || isUploading) ? 'not-allowed' : 'pointer', opacity: (isEnrolling || isUploading) ? 0.7 : 1 }}
             >
               {(isEnrolling || isUploading) ? t('course_page.payment.submitting', 'Submitting...') : t('course_page.payment.submit_payment', 'Submit Payment')}
             </button>

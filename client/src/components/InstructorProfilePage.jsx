@@ -59,7 +59,7 @@ export default function InstructorProfilePage({ isLightMode }) {
             <span style={{
               display: 'inline-block',
               padding: '4px 14px',
-              borderRadius: '50px',
+              borderRadius: '12px',
               background: 'rgba(249, 115, 22, 0.12)',
               color: 'var(--color-accent)',
               fontSize: '0.78rem',
@@ -75,7 +75,7 @@ export default function InstructorProfilePage({ isLightMode }) {
               <span style={{
                 background: 'var(--bg-main)',
                 padding: '4px 12px',
-                borderRadius: '50px',
+                borderRadius: '12px',
                 margin: '0 8px',
                 boxShadow: 'var(--inner-shadow)',
                 display: 'inline-flex',
