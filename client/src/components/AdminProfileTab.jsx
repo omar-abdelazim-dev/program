@@ -140,9 +140,36 @@ export default function AdminProfileTab({ user, setUser, onLogout }) {
   return (
     <div className="admin-tab-content animate-entrance" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 400px), 1fr))", gap: "24px", maxWidth: "1200px", alignItems: "stretch", margin: "0 auto" }}>
       <div className="glass-card" style={{ padding: "24px", display: "flex", flexDirection: "column" }}>
-        <h2 style={{ fontSize: "1.4rem", fontWeight: "700", marginBottom: "20px", color: "var(--c-light)" }}>
-          {t("settings.profile.title", "My Profile")}
-        </h2>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+          <h2 style={{ fontSize: "1.4rem", fontWeight: "700", margin: 0, color: "var(--c-light)" }}>
+            {t("settings.profile.title", "My Profile")}
+          </h2>
+          <button 
+            type="button"
+            onClick={onLogout}
+            className="hover-opacity"
+            style={{
+              background: "var(--bg-main)",
+              color: "#ef4444",
+              border: "none",
+              boxShadow: "var(--inner-shadow)",
+              padding: "6px 16px",
+              borderRadius: "6px",
+              fontSize: "0.85rem",
+              fontWeight: "600",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              transition: "all 0.2s"
+            }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            {t("nav.logout", "Log Out")}
+          </button>
+        </div>
         
         <form onSubmit={handleSaveProfile} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
