@@ -402,11 +402,15 @@ export const getCourseById = async (req, res) => {
         .json({ message: "This course is not yet available." });
     }
 
-    // deliberately excludes videoUrl and quiz content (question text/correct
-    // answers) — see getLessonContent for the gated endpoint that returns those
+    // Deliberately excludes videoUrl and quiz content for unauthenticated/non-enrolled public,
+    // but includes full lesson metadata for the course owner and administrators.
+    const lessonFields = (isOwner || isAdmin)
+      ? "title order module status lessonType videoUrl attachmentUrl attachmentTitle quiz type duration"
+      : "title order module status lessonType";
+
     const grouped = await getModulesWithLessons(
       course._id,
-      "title order module status lessonType",
+      lessonFields,
     );
     const modules = grouped.map(({ module, lessons }) => ({
       _id: module._id,

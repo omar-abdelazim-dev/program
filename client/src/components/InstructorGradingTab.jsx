@@ -108,8 +108,8 @@ export default function InstructorGradingTab({ onAction }) {
       )}
 
       {selected && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '20px' }}>
-          <div className="solid-card animate-entrance" style={{ width: '100%', maxWidth: '720px', maxHeight: '88vh', overflowY: 'auto', padding: '32px', position: 'relative', background: 'var(--bg-surface)', borderRadius: '24px', boxShadow: 'var(--outer-shadow)', border: '1px solid var(--border)' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '20px' }}>
+          <div className="solid-card animate-entrance" style={{ width: '100%', maxWidth: '720px', maxHeight: '88vh', overflowY: 'auto', padding: '32px', position: 'relative', background: 'var(--bg-surface)', borderRadius: '12px', boxShadow: 'var(--outer-shadow)', border: '1px solid var(--border)' }}>
             <button 
               onClick={() => setSelected(null)}
               className="nav-icon-btn"

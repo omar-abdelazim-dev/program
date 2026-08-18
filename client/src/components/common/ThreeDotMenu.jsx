@@ -2,13 +2,21 @@ import React, { useState, useEffect, useRef, useCallback, useLayoutEffect } from
 import { createPortal } from 'react-dom';
 
 const ThreeDotMenu = ({
-  options = [],
+  options: optionsProp,
+  items: itemsProp,
   className = "",
   menuClassName = "",
   placement = "bottom-end",
   width = "180px",
   disabled = false
 }) => {
+  const rawOptions = optionsProp || itemsProp || [];
+  const options = rawOptions.map(opt => ({
+    ...opt,
+    action: opt.action || opt.onClick || (() => {}),
+    danger: Boolean(opt.danger || opt.intent === 'danger')
+  }));
+
   const [isOpen, setIsOpen] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
   const [coords, setCoords] = useState({ top: -9999, left: -9999 }); // Render off-screen initially

@@ -191,7 +191,7 @@ export default function InstructorFinancialsTab({ user }) {
                 <tr>
                   <td colSpan="4" style={{ padding: '24px', textAlign: 'center', color: 'var(--c-sub)' }}>
                     {/* Translated No History */}
-                    {loading ? <Spinner size="small" label="Loading..." /> : t('instructor.financials.no_history')}
+                    {loading ? <Spinner size="small" label={t('common.loading', 'Loading...')} /> : t('instructor.financials.no_history')}
                   </td>
                 </tr>
               ) : (
@@ -260,7 +260,11 @@ export default function InstructorFinancialsTab({ user }) {
         {visibleTransactions.length > itemsPerPage && (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', padding: '0 8px', flexWrap: 'wrap', gap: '12px' }}>
             <div style={{ fontSize: '0.85rem', color: 'var(--c-sub)' }}>
-              Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, visibleTransactions.length)} of {visibleTransactions.length} transactions
+              {t('instructor.financials.showing_txs', 'Showing {{start}} to {{end}} of {{total}} transactions', {
+                start: ((currentPage - 1) * itemsPerPage) + 1,
+                end: Math.min(currentPage * itemsPerPage, visibleTransactions.length),
+                total: visibleTransactions.length
+              })}
             </div>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <button
@@ -275,10 +279,10 @@ export default function InstructorFinancialsTab({ user }) {
                   cursor: currentPage === 1 ? 'not-allowed' : 'pointer' 
                 }}
               >
-                Previous
+                {t('common.previous', 'Previous')}
               </button>
               <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-h)', padding: '0 8px' }}>
-                Page {currentPage} of {totalPages}
+                {t('common.page_of', 'Page {{current}} of {{total}}', { current: currentPage, total: totalPages })}
               </span>
               <button
                 type="button"
@@ -292,7 +296,7 @@ export default function InstructorFinancialsTab({ user }) {
                   cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' 
                 }}
               >
-                Next
+                {t('common.next', 'Next')}
               </button>
             </div>
           </div>
