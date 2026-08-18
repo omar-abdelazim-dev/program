@@ -30,9 +30,7 @@ import WebsiteManagement from "./WebsiteManagement/WebsiteManagement";
 import SystemManagement from "./SystemManagement";
 import AdminLandingPageTab from "./AdminLandingPageTab";
 import AdminReportsTab from "./AdminReportsTab";
-import AdminRolePermissionsTab from "./AdminRolePermissionsTab";
-import AdminRoleManageTab from "./AdminRoleManageTab";
-import AdminRoleAssignmentsTab from "./AdminRoleAssignmentsTab";
+
 import FullPageLoader from "./FullPageLoader";
 import Pagination from "./common/Pagination";
 import { useTranslation } from "react-i18next";
@@ -790,14 +788,6 @@ export default function AdminPortal({
               { id: "reports_students", label: "Student Progress" },
               { id: "reports_instructors", label: "Instructor Performance" },
               { id: "reports_export", label: "Export Data" },
-            ],
-          },
-          {
-            title: "Roles & Permissions",
-            items: [
-              { id: "roles_manage", label: "Manage Roles" },
-              { id: "roles_assignments", label: "Role Assignments" },
-              { id: "roles_permissions", label: "Permissions" },
             ],
           },
           {
@@ -2225,38 +2215,6 @@ export default function AdminPortal({
             </div>
           )}
 
-          {/* Permissions tab (superadmin only) */}
-          {visitedTabs.has("roles_permissions") && (
-            <div
-              style={{
-                display: activeTab === "roles_permissions" ? "block" : "none",
-              }}
-            >
-              <AdminRolePermissionsTab user={user} />
-            </div>
-          )}
-
-          {/* Role management tab */}
-          {visitedTabs.has("roles_manage") && (
-            <div
-              style={{
-                display: activeTab === "roles_manage" ? "block" : "none",
-              }}
-            >
-              <AdminRoleManageTab />
-            </div>
-          )}
-
-          {/* Role assignments tab */}
-          {visitedTabs.has("roles_assignments") && (
-            <div
-              style={{
-                display: activeTab === "roles_assignments" ? "block" : "none",
-              }}
-            >
-              <AdminRoleAssignmentsTab user={user} />
-            </div>
-          )}
         </div>
       </div>
 
