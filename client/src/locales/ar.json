@@ -419,6 +419,8 @@
       "total_payout": "إجمالي المبلغ المستلم:",
       "payment_method": "وسيلة الدفع",
       "select_payment_method": "اختر وسيلة الدفع...",
+      "mobile_wallets": "المحافظ الإلكترونية",
+      "mobile_wallet_num": "رقم المحفظة الإلكترونية",
       "vodafone_cash_num": "رقم فودافون كاش",
       "orange_cash_num": "رقم أورنج كاش",
       "etisalat_cash_num": "رقم اتصالات كاش",

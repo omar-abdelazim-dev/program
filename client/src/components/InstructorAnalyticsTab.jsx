@@ -119,8 +119,8 @@ export default function InstructorAnalyticsTab({ courses = [], stats = [], timeS
                     <td style={{ padding: '16px', borderBottom: '1px solid var(--border)' }}>{course.enrolled}</td>
                     <td style={{ padding: '16px', borderBottom: '1px solid var(--border)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ flex: 1, maxWidth: '120px', height: '6px', background: 'var(--border)', borderRadius: '4px', overflow: 'hidden' }}>
-                          <div style={{ width: course.completionRate, height: '100%', backgroundImage: 'linear-gradient(135deg, #f97316 0%, #fbbf24 100%)' }}></div>
+                        <div style={{ flex: 1, maxWidth: '120px', height: '8px', background: 'var(--bg-main)', boxShadow: 'var(--inner-shadow)', borderRadius: '4px', overflow: 'hidden' }}>
+                          <div style={{ width: course.completionRate, height: '100%', backgroundImage: 'linear-gradient(135deg, #f97316 0%, #fbbf24 100%)', borderRadius: '4px' }}></div>
                         </div>
                         <span style={{ fontSize: '0.85rem', fontWeight: '500', width: '40px' }}>{course.completionRate}</span>
                       </div>

@@ -68,7 +68,7 @@ export default function InstructorFinancialsTab({ user }) {
     fetchFinancials();
   }, []);
 
-  const isWalletMethod = ['vodafone_cash', 'orange_cash', 'etisalat_cash', 'we_cash'].includes(paymentMethod);
+  const isWalletMethod = ['vodafone_cash', 'orange_cash', 'etisalat_cash', 'we_cash', 'mobile_wallet'].includes(paymentMethod);
 
   const handleRequestPayout = async (e) => {
     e.preventDefault();
@@ -87,24 +87,22 @@ export default function InstructorFinancialsTab({ user }) {
       return;
     }
     
-    const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,63}$/;
-    const cleanEmail = payoutEmail.trim().toLowerCase();
-    if (!cleanEmail || !EMAIL_REGEX.test(cleanEmail)) {
-      notyf.error('Please enter a valid email address');
-      return;
-    }
-
     setIsSubmitting(true);
     try {
-      const res = await api.post('/financials/payout', {
+      const res = await api.post('/financial/payout-request', {
+        amount: availableBalance,
         method: paymentMethod,
         payoutDetails: isWalletMethod ? walletNumber : instapayAccount,
-        payoutEmail,
-        referenceId: invoiceCode
+        email: payoutEmail
       });
-      setCreatedPayoutId(res.data.transaction._id);
-      setPayoutRequestedAmount(availableBalance);
-      notyf.success('Payout initiated. Please verify your email.');
+
+      notyf.success(res.data.message || t('instructor.notyf.payout_requested', 'Payout requested successfully'));
+      setShowPayoutModal(false);
+      setPaymentMethod('');
+      setWalletNumber('');
+      setInstapayAccount('');
+      setPayoutEmail('');
+      fetchFinancials();
     } catch (err) {
       console.error(err);
       notyf.error(err.response?.data?.message || t('instructor.notyf.payout_failed', 'Failed to request payout'));
@@ -114,10 +112,7 @@ export default function InstructorFinancialsTab({ user }) {
   };
 
   const paymentOptions = [
-    { value: 'vodafone_cash', label: 'Vodafone Cash' },
-    { value: 'orange_cash', label: 'Orange Cash' },
-    { value: 'etisalat_cash', label: 'Etisalat Cash' },
-    { value: 'we_cash', label: 'WE Cash' },
+    { value: 'mobile_wallet', label: t('instructor.financials.mobile_wallets', 'Mobile Wallets') },
     { value: 'instapay', label: 'InstaPay' }
   ];
 
@@ -319,17 +314,17 @@ export default function InstructorFinancialsTab({ user }) {
           zIndex: 9999
         }}>
           <div className="animate-entrance" style={{
-            padding: '32px',
-            maxWidth: '540px',
+            padding: '24px',
+            maxWidth: '440px',
             width: '90%',
             position: 'relative',
             background: 'var(--bg-surface)',
-            borderRadius: '24px',
+            borderRadius: '20px',
             boxShadow: 'var(--outer-shadow, 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4))',
             border: '1px solid var(--border)'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', gap: '16px' }}>
-              <h2 style={{ margin: 0, fontSize: '1.5rem', color: 'var(--text-h)' }}>{t('instructor.financials.request_payout')}</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', gap: '16px' }}>
+              <h2 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--text-h)' }}>{t('instructor.financials.request_payout')}</h2>
               <button 
                 onClick={() => {
                   setShowPayoutModal(false);
@@ -341,8 +336,8 @@ export default function InstructorFinancialsTab({ user }) {
                   boxShadow: 'var(--inner-shadow, inset 0 2px 4px rgba(0, 0, 0, 0.5))',
                   border: '1px solid var(--border)',
                   borderRadius: '50%',
-                  width: '36px',
-                  height: '36px',
+                  width: '32px',
+                  height: '32px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -377,14 +372,14 @@ export default function InstructorFinancialsTab({ user }) {
                 onBack={() => setCreatedPayoutId(null)}
               />
             ) : (
-              <form onSubmit={handleRequestPayout} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <form onSubmit={handleRequestPayout} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 {/* Fixed Read-only Payout Amount Input */}
                 <div className="input-group">
-                  <label style={{ color: 'var(--c-sub)', marginBottom: '8px', display: 'block', textTransform: 'uppercase', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.05em' }}>{t('instructor.financials.payout_amount')}</label>
+                  <label style={{ color: 'var(--c-sub)', marginBottom: '6px', display: 'block', textTransform: 'uppercase', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.05em' }}>{t('instructor.financials.payout_amount')}</label>
                 <input 
                   type="text" 
                   className="auth-input"
-                  style={{ width: '100%', opacity: 0.85, cursor: 'not-allowed', background: 'rgba(255,255,255,0.05)', fontWeight: 700 }}
+                  style={{ width: '100%', opacity: 0.85, cursor: 'not-allowed', background: 'rgba(255,255,255,0.05)', fontWeight: 700, padding: '10px 14px' }}
                   value={availableBalance ? availableBalance.toFixed(2) : '0.00'}
                   disabled
                   readOnly
@@ -392,29 +387,29 @@ export default function InstructorFinancialsTab({ user }) {
               </div>
 
               {/* Financial Breakdown (2% Fee) */}
-              <div style={{ padding: '20px', borderRadius: '24px', background: 'var(--bg-main)', boxShadow: 'var(--inner-shadow, inset 0 2px 6px rgba(0, 0, 0, 0.5))', border: '1px solid var(--border)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <div style={{ padding: '14px 16px', borderRadius: '16px', background: 'var(--bg-main)', boxShadow: 'var(--inner-shadow, inset 0 2px 6px rgba(0, 0, 0, 0.5))', border: '1px solid var(--border)', fontSize: '0.88rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                   <span style={{ color: 'var(--c-sub)' }}>{t('instructor.financials.invoice_code')}</span>
                   <strong style={{ color: '#3b82f6', letterSpacing: '0.5px', fontFamily: 'monospace' }}>{invoiceCode}</strong>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                   <span style={{ color: 'var(--c-sub)' }}>{t('instructor.financials.available_cash')}</span>
                   <strong style={{ color: 'var(--text-h)' }}>EGP {availableBalance.toFixed(2)}</strong>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: '#ef4444' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', color: '#ef4444' }}>
                   <span>{t('instructor.financials.platform_fee')}</span>
                   <span>- EGP {(availableBalance * 0.02).toFixed(2)}</span>
                 </div>
-                <div style={{ borderTop: '1px dashed var(--border)', paddingTop: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                <div style={{ borderTop: '1px dashed var(--border)', paddingTop: '6px', display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ fontWeight: 700, color: 'var(--text-h)' }}>{t('instructor.financials.total_payout')}</span>
-                  <strong style={{ fontWeight: 800, color: '#10b981', fontSize: '1.1rem' }}>EGP {(availableBalance * 0.98).toFixed(2)}</strong>
+                  <strong style={{ fontWeight: 800, color: '#10b981', fontSize: '1rem' }}>EGP {(availableBalance * 0.98).toFixed(2)}</strong>
                 </div>
               </div>
 
               {/* Payment Method & Number Inputs on Same Row */}
-              <div style={{ display: 'grid', gridTemplateColumns: (isWalletMethod || paymentMethod === 'instapay') ? 'repeat(2, 1fr)' : '1fr', gap: '16px', alignItems: 'start' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: (isWalletMethod || paymentMethod === 'instapay') ? 'repeat(2, 1fr)' : '1fr', gap: '12px', alignItems: 'start' }}>
                 <div className="input-group" style={{ zIndex: 10 }}>
-                  <label style={{ color: 'var(--c-sub)', marginBottom: '8px', display: 'block', textTransform: 'uppercase', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.05em' }}>{t('instructor.financials.payment_method')}</label>
+                  <label style={{ color: 'var(--c-sub)', marginBottom: '6px', display: 'block', textTransform: 'uppercase', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.05em' }}>{t('instructor.financials.payment_method')}</label>
                   <CustomSelect 
                     options={paymentOptions}
                     value={paymentMethod}
@@ -425,8 +420,9 @@ export default function InstructorFinancialsTab({ user }) {
 
                 {isWalletMethod && (
                   <div className="input-group animate-entrance">
-                    <label style={{ color: 'var(--c-sub)', marginBottom: '8px', display: 'block', textTransform: 'uppercase', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.05em' }}>
-                      {paymentMethod === 'vodafone_cash' ? t('instructor.financials.vodafone_cash_num') :
+                    <label style={{ color: 'var(--c-sub)', marginBottom: '6px', display: 'block', textTransform: 'uppercase', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.05em' }}>
+                      {paymentMethod === 'mobile_wallet' ? t('instructor.financials.mobile_wallet_num') :
+                       paymentMethod === 'vodafone_cash' ? t('instructor.financials.vodafone_cash_num') :
                        paymentMethod === 'orange_cash' ? t('instructor.financials.orange_cash_num') :
                        paymentMethod === 'etisalat_cash' ? t('instructor.financials.etisalat_cash_num') :
                        t('instructor.financials.we_cash_num')}
@@ -441,6 +437,7 @@ export default function InstructorFinancialsTab({ user }) {
                       onBlur={() => setIsWalletFocused(false)}
                       style={{ 
                         width: '100%',
+                        padding: '10px 14px',
                         border: isWalletFocused ? '1px solid #f97316' : undefined,
                         boxShadow: isWalletFocused ? '0 0 0 2px rgba(249, 115, 22, 0.3)' : undefined
                       }}
@@ -454,11 +451,11 @@ export default function InstructorFinancialsTab({ user }) {
 
                 {paymentMethod === 'instapay' && (
                   <div className="input-group animate-entrance">
-                    <label style={{ color: 'var(--c-sub)', marginBottom: '8px', display: 'block', textTransform: 'uppercase', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.05em' }}>{t('instructor.financials.instapay_address')}</label>
+                    <label style={{ color: 'var(--c-sub)', marginBottom: '6px', display: 'block', textTransform: 'uppercase', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.05em' }}>{t('instructor.financials.instapay_address')}</label>
                     <input 
                       type="text" 
                       className="auth-input"
-                      style={{ width: '100%' }}
+                      style={{ width: '100%', padding: '10px 14px' }}
                       placeholder="e.g. username@instapay"
                       value={instapayAccount}
                       onChange={(e) => setInstapayAccount(e.target.value)}
@@ -469,20 +466,20 @@ export default function InstructorFinancialsTab({ user }) {
               </div>
 
               {isWalletMethod && (
-                <small style={{ color: 'var(--c-sub)', marginTop: '-8px', display: 'block', fontSize: '0.8rem' }}>
+                <small style={{ color: 'var(--c-sub)', marginTop: '-4px', display: 'block', fontSize: '0.75rem' }}>
                   {t('instructor.financials.phone_help')}
                 </small>
               )}
 
               {paymentMethod === 'instapay' && (
-                <small style={{ color: 'var(--c-sub)', marginTop: '-8px', display: 'block', fontSize: '0.8rem' }}>
+                <small style={{ color: 'var(--c-sub)', marginTop: '-4px', display: 'block', fontSize: '0.75rem' }}>
                   {t('instructor.financials.security_notice')}
                 </small>
               )}
 
               {/* Payout Email input field */}
               <div className="input-group">
-                <label style={{ color: 'var(--c-sub)', marginBottom: '8px', display: 'block', textTransform: 'uppercase', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.05em' }}>{t('instructor.financials.payout_email_label', 'Payout Email (For Verification OTP)')}</label>
+                <label style={{ color: 'var(--c-sub)', marginBottom: '6px', display: 'block', textTransform: 'uppercase', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.05em' }}>{t('instructor.financials.payout_email_label', 'Payout Email (For Verification OTP)')}</label>
                 <input 
                   type="email" 
                   className="auth-input"
@@ -490,6 +487,7 @@ export default function InstructorFinancialsTab({ user }) {
                   onBlur={() => setIsPayoutEmailFocused(false)}
                   style={{ 
                     width: '100%',
+                    padding: '10px 14px',
                     border: isPayoutEmailFocused ? '1px solid #f97316' : undefined,
                     boxShadow: isPayoutEmailFocused ? '0 0 0 2px rgba(249, 115, 22, 0.3)' : undefined
                   }}
@@ -498,19 +496,19 @@ export default function InstructorFinancialsTab({ user }) {
                   onChange={(e) => setPayoutEmail(e.target.value.replace(/[^a-zA-Z0-9._%+@-]/g, ''))}
                   required
                 />
-                <small style={{ color: 'var(--c-sub)', marginTop: '4px', display: 'block', fontSize: '0.75rem' }}>
+                <small style={{ color: 'var(--c-sub)', marginTop: '4px', display: 'block', fontSize: '0.72rem' }}>
                   {t('instructor.financials.otp_help_text', 'The 6-digit security code will be sent to this email address.')}
                 </small>
               </div>
 
               <button 
-                type="submit"
+                type="submit" 
                 className="glass-btn" 
                 disabled={availableBalance < 100 || !paymentMethod || isSubmitting}
                 style={{ 
-                  padding: '12px 24px', 
+                  padding: '10px 20px', 
                   fontWeight: 700, 
-                  marginTop: '16px',
+                  marginTop: '8px',
                   width: '100%',
                   opacity: isSubmitting || availableBalance < 100 || !paymentMethod ? 0.6 : 1,
                   cursor: isSubmitting || availableBalance < 100 || !paymentMethod ? 'not-allowed' : 'pointer',
@@ -540,7 +538,7 @@ export default function InstructorFinancialsTab({ user }) {
           zIndex: 1000,
           backdropFilter: 'blur(8px)'
         }}>
-          <div className="glass-card animate-entrance" style={{
+          <div className="animate-entrance" style={{
             padding: '32px',
             maxWidth: '500px',
             width: '90%',

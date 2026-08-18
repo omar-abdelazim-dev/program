@@ -343,7 +343,7 @@ export default function AdminPayoutsTab() {
 
       {showReviewModal && selectedPayout && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, backdropFilter: 'blur(4px)' }}>
-          <div className="glass-card animate-entrance" style={{ width: '100%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto', padding: '32px', position: 'relative' }}>
+          <div className="animate-entrance" style={{ width: '100%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto', padding: '32px', position: 'relative', background: 'var(--bg-surface)', borderRadius: '24px', boxShadow: 'var(--outer-shadow)', border: '1px solid var(--border)' }}>
             <button 
               onClick={() => { setShowReviewModal(false); setSelectedPayout(null); }}
               style={{ position: 'absolute', top: '24px', right: '24px', background: 'none', border: 'none', color: 'var(--c-sub)', cursor: 'pointer', fontSize: '1.2rem' }}

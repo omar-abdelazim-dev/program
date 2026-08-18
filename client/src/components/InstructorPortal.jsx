@@ -505,16 +505,19 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
       {/* MAIN CONTENT AREA */}
       <main className="student-main-area">
         {/* INSTRUCTOR TOP HEADER */}
-        <header className="student-header student-topnav-header" style={{ position: 'relative', zIndex: 1000, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 24px', height: '70px', backgroundColor: 'var(--bg-surface)', borderBottom: 'none' }}>
-          {/* Very Left: Logo */}
-          <div className="topnav-left">
-            <Link to="/instructor" className="topnav-logo">
+        <header className="student-header student-topnav-header" style={{ position: 'relative', zIndex: 1000, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 24px', height: '70px', backgroundColor: 'var(--bg-surface)', borderBottom: 'none', boxShadow: mobileNavOpen ? 'none' : undefined, transition: 'box-shadow 0.2s ease' }}>
+          {/* Very Left: Logo + Program Badge */}
+          <div className="topnav-left" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Link to="/instructor" className="topnav-logo" style={{ display: 'flex', alignItems: 'center' }}>
               <img
                 src={isLightMode ? logoLight : logoDark}
                 alt="Program Logo"
-                style={{ height: '32px', width: 'auto', objectFit: 'contain' }}
+                style={{ height: '24px', width: 'auto', objectFit: 'contain' }}
               />
             </Link>
+            {user?.isProgramInstructor && (
+              <span className="program-badge-text" style={{ fontSize: '0.5rem', padding: '2px 6px', letterSpacing: '0.08em' }}>{t('instructor.header.program_badge', 'PROGRAM')}</span>
+            )}
           </div>
 
           {/* Center: Tabs */}
@@ -553,16 +556,8 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
             </nav>
           </div>
 
-          {/* Very Right: Title + Utility Icons */}
+          {/* Very Right: Utility Icons */}
           <div className="topnav-right header-right">
-            {/* Translated the Instructor Portal title with optional Program badge */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '1.2rem', color: 'var(--text-h)', fontWeight: 'bold' }}>{t('instructor.header.title')}</span>
-              {user?.isProgramInstructor && (
-                <span className="program-badge-text" style={{ fontSize: '0.55rem', padding: '2px 8px' }}>{t('instructor.header.program_badge', 'PROGRAM')}</span>
-              )}
-            </div>
-
             {/* Hamburger Toggle (Mobile) */}
             <button
               className={`topnav-hamburger ${mobileNavOpen ? "active" : ""}`}
@@ -585,7 +580,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
             {activeTab !== 'settings' && (
               <div className="profile-wrapper" ref={notificationsRef}>
                 <button 
-                  className="utility-icon-btn" 
+                  className="utility-icon-btn nav-icon-btn" 
                   onClick={() => setShowNotifications(!showNotifications)}
                   style={{ position: 'relative' }}
                 >
@@ -630,7 +625,16 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                   )}
                 </button>
                 {showNotifications && (
-                  <div className="profile-dropdown" style={{ width: '350px' }}>
+                  <div
+                    className="profile-dropdown"
+                    style={{
+                      width: '350px',
+                      top: 'calc(100% + 24px)',
+                      padding: 0,
+                      borderRadius: '12px',
+                      overflow: 'hidden'
+                    }}
+                  >
                     <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-surface-hover)' }}>
                       <span style={{ color: 'var(--color-accent)', fontSize: '1.1rem' }}>{t('nav.notifications', 'Notifications')}</span>
                       {notifications.length > 0 && (
