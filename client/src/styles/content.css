@@ -3485,7 +3485,7 @@ body .no-border {
 
 /* Admin Portal Top Nav Elements */
 .nav-icon-btn {
-    background: var(--bg-surface);
+    background: transparent;
     border: none;
     color: var(--text-primary);
     cursor: pointer;
@@ -3495,22 +3495,28 @@ body .no-border {
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    transition: opacity 0.2s ease;
+    transition: all 0.2s ease;
     padding: 0;
-    box-shadow: var(--outer-shadow);
+    box-shadow: none;
 }
 
 body.light-mode .nav-icon-btn {
     border: none;
-    box-shadow: var(--outer-shadow);
+    box-shadow: none;
 }
 
-.nav-icon-btn:hover {
-    opacity: 0.8;
+.nav-icon-btn:hover,
+.nav-icon-btn:active {
+    opacity: 1;
+    background: var(--bg-main);
+    box-shadow: var(--inner-shadow) !important;
 }
 
-body.light-mode .nav-icon-btn:hover {
-    opacity: 0.8;
+body.light-mode .nav-icon-btn:hover,
+body.light-mode .nav-icon-btn:active {
+    opacity: 1;
+    background: #f1f5f9;
+    box-shadow: var(--inner-shadow) !important;
 }
 
 .nav-avatar {
@@ -3531,8 +3537,34 @@ body.light-mode .nav-icon-btn:hover {
     transition: all 0.2s ease;
 }
 
-.profile-wrapper:hover .nav-avatar {
+.nav-avatar::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    pointer-events: none;
     box-shadow: none;
+    transition: box-shadow 0.2s;
+}
+
+.profile-wrapper:hover .nav-avatar,
+.profile-wrapper:active .nav-avatar {
+    background: var(--bg-main);
+}
+
+.profile-wrapper:hover .nav-avatar::after,
+.profile-wrapper:active .nav-avatar::after {
+    box-shadow: var(--inner-shadow) !important;
+}
+
+body.light-mode .profile-wrapper:hover .nav-avatar,
+body.light-mode .profile-wrapper:active .nav-avatar {
+    background: #f1f5f9;
+}
+
+body.light-mode .profile-wrapper:hover .nav-avatar::after,
+body.light-mode .profile-wrapper:active .nav-avatar::after {
+    box-shadow: var(--inner-shadow) !important;
 }
 
 body.light-mode .solid-input {

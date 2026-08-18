@@ -902,9 +902,10 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
 }
 
 .topnav-link.active {
-  background: transparent !important;
-  color: var(--color-accent, #f97316) !important;
-  -webkit-text-fill-color: var(--color-accent, #f97316) !important;
+  background: linear-gradient(to right, #f97316, #eab308) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
   font-weight: 600;
   box-shadow: none !important;
 }

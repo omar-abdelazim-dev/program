@@ -18,6 +18,7 @@ import logoLight from "../assets/logo-light.png";
 import AdminPayoutsTab from "./AdminPayoutsTab";
 import AdminAnalyticsTab from "./AdminAnalyticsTab";
 import AdminOverviewTab from "./AdminOverviewTab";
+import AdminProfileTab from "./AdminProfileTab";
 import SegmentedControl from "./common/SegmentedControl";
 import {
   formatNotificationTitle,
@@ -234,6 +235,7 @@ const GrowthBadge = ({ growth }) => {
 
 export default function AdminPortal({
   user,
+  setUser,
   onLogout,
   toggleTheme,
   isLightMode,
@@ -1142,6 +1144,8 @@ export default function AdminPortal({
           height: "70px",
           backgroundColor: "var(--bg-surface)",
           borderBottom: "none",
+          boxShadow: mobileNavOpen ? "none" : undefined,
+          transition: "box-shadow 0.2s ease",
         }}
       >
         <div className="topnav-left">
@@ -1586,7 +1590,7 @@ export default function AdminPortal({
           </button>
           <div
             className="profile-wrapper hover-glow"
-            onClick={() => navigate("/student/settings")}
+            onClick={() => setActiveTab("profile")}
             style={{ cursor: "pointer" }}
           >
             <div className="nav-avatar">
@@ -1645,23 +1649,26 @@ export default function AdminPortal({
                       justifyContent: "space-between",
                       alignItems: "center",
                       fontSize: "0.85rem",
-                      color: isActive
-                        ? "var(--color-accent)"
-                        : "var(--text-secondary)",
+                      background: "transparent",
                       textTransform: "uppercase",
                       padding: "8px 8px",
                       fontWeight: "bold",
                       cursor: "pointer",
                       borderRadius: "6px",
                       border: "none",
-                      background: isActive
-                        ? "var(--color-accent-transparent, rgba(249,115,22,0.1))"
-                        : "transparent",
                       textAlign: "left",
-                      transition: "background 0.2s ease",
+                      transition: "opacity 0.2s ease",
                     }}
                   >
-                    {group.title}
+                    <span style={{
+                        background: isActive ? "linear-gradient(to right, #f97316, #eab308)" : "none",
+                        WebkitBackgroundClip: isActive ? "text" : "border-box",
+                        WebkitTextFillColor: isActive ? "transparent" : "inherit",
+                        color: isActive ? "transparent" : "var(--text-secondary)",
+                        display: "inline-block"
+                    }}>
+                        {group.title}
+                    </span>
                   </button>
                 </div>
               );
@@ -2173,6 +2180,14 @@ export default function AdminPortal({
               style={{ display: activeTab === "settings" ? "block" : "none" }}
             >
               <SystemManagement user={user} />
+            </div>
+          )}
+
+          {visitedTabs.has("profile") && (
+            <div
+              style={{ display: activeTab === "profile" ? "block" : "none" }}
+            >
+              <AdminProfileTab user={user} setUser={setUser} onLogout={onLogout} />
             </div>
           )}
 
