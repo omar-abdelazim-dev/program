@@ -416,6 +416,8 @@
       "total_payout": "Total Payout You Receive:",
       "payment_method": "Payment Method",
       "select_payment_method": "Select payment method...",
+      "mobile_wallets": "Mobile Wallets",
+      "mobile_wallet_num": "Mobile Wallet Number",
       "vodafone_cash_num": "Vodafone Cash Number",
       "orange_cash_num": "Orange Cash Number",
       "etisalat_cash_num": "Etisalat Cash Number",

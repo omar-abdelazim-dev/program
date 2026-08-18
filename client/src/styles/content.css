@@ -3051,8 +3051,13 @@ body.light-mode .avatar-btn,
 body.light-mode .utility-icon-btn,
 body.light-mode .nav-avatar {
     color: #4b5563 !important;
-    background-color: transparent !important;
-    box-shadow: none !important;
+}
+
+body.light-mode .utility-icon-btn:hover,
+body.light-mode .utility-icon-btn:active {
+    opacity: 1;
+    background: var(--bg-main) !important;
+    box-shadow: var(--inner-shadow) !important;
 }
 
 body.light-mode .admin-sidebar-group-icon {
@@ -3429,7 +3434,16 @@ body .no-border {
 
 .analytics-row:hover {
     background-color: var(--bg-main) !important;
-    box-shadow: none !important;
+    box-shadow: var(--inner-shadow) !important;
+}
+
+body.light-mode .analytics-row:hover {
+    background-color: var(--bg-main) !important;
+    box-shadow: var(--inner-shadow) !important;
+}
+
+.analytics-row:hover td {
+    border-bottom-color: transparent !important;
 }
 
 .analytics-row:hover td:first-child {
@@ -3515,7 +3529,7 @@ body.light-mode .nav-icon-btn {
 body.light-mode .nav-icon-btn:hover,
 body.light-mode .nav-icon-btn:active {
     opacity: 1;
-    background: #f1f5f9;
+    background: var(--bg-main);
     box-shadow: var(--inner-shadow) !important;
 }
 
@@ -3559,7 +3573,7 @@ body.light-mode .nav-icon-btn:active {
 
 body.light-mode .profile-wrapper:hover .nav-avatar,
 body.light-mode .profile-wrapper:active .nav-avatar {
-    background: #f1f5f9;
+    background: var(--bg-main);
 }
 
 body.light-mode .profile-wrapper:hover .nav-avatar::after,

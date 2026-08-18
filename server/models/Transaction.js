@@ -41,7 +41,7 @@ const transactionSchema = new mongoose.Schema(
     },
     payoutMethod: {
       type: String,
-      enum: ['vodafone_cash', 'orange_cash', 'etisalat_cash', 'we_cash', 'instapay'],
+      enum: ['vodafone_cash', 'orange_cash', 'etisalat_cash', 'we_cash', 'instapay', 'mobile_wallet'],
     },
     payoutDetails: {
       type: String,

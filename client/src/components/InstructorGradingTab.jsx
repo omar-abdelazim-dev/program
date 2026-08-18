@@ -108,9 +108,30 @@ export default function InstructorGradingTab({ onAction }) {
       )}
 
       {selected && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '20px' }}>
-          <div className="solid-card animate-entrance" style={{ width: '100%', maxWidth: '720px', maxHeight: '88vh', overflowY: 'auto', padding: '32px' }}>
-            <h2 style={{ margin: '0 0 4px 0' }}>{selected.lesson?.title}</h2>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '20px' }}>
+          <div className="solid-card animate-entrance" style={{ width: '100%', maxWidth: '720px', maxHeight: '88vh', overflowY: 'auto', padding: '32px', position: 'relative', background: 'var(--bg-surface)', borderRadius: '24px', boxShadow: 'var(--outer-shadow)', border: '1px solid var(--border)' }}>
+            <button 
+              onClick={() => setSelected(null)}
+              className="nav-icon-btn"
+              style={{ 
+                position: 'absolute',
+                top: '24px',
+                right: '24px',
+                background: 'var(--bg-main)',
+                boxShadow: 'var(--inner-shadow)',
+                border: '1px solid var(--border)',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer'
+              }}
+            >
+              ✕
+            </button>
+            <h2 style={{ margin: '0 0 4px 0', paddingRight: '40px', fontSize: '1.4rem', color: 'var(--text-h)' }}>{selected.lesson?.title}</h2>
             <p style={{ margin: '0 0 24px 0', color: 'var(--c-sub)' }}>
               {t('instructor.grading.by_student', 'Submitted by {{name}}', { name: selected.student?.name || t('instructor.grading.unknown_student', 'Unknown student') })}
             </p>
@@ -133,7 +154,7 @@ export default function InstructorGradingTab({ onAction }) {
                       </div>
                     ) : (
                       <>
-                        <div style={{ padding: '12px', borderRadius: '10px', background: 'var(--bg-surface)', marginBottom: '12px', whiteSpace: 'pre-wrap' }}>
+                        <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'var(--bg-surface)', boxShadow: 'var(--outer-shadow)', marginBottom: '12px', whiteSpace: 'pre-wrap' }}>
                           {answer?.textAnswer || t('instructor.grading.no_answer', '(no answer submitted)')}
                         </div>
                         {selected.status === 'graded' ? (

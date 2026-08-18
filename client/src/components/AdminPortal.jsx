@@ -1159,10 +1159,7 @@ export default function AdminPortal({
         </div>
 
         {/* Desktop Navigation Links */}
-        <div
-          className="topnav-center"
-          style={{ flex: 1, display: "flex", justifyContent: "center" }}
-        >
+        <div className="topnav-center">
           <nav
             className="topnav-links"
             style={{
@@ -1396,6 +1393,7 @@ export default function AdminPortal({
                 className="profile-dropdown"
                 style={{
                   width: "360px",
+                  top: "calc(100% + 24px)",
                   right: isRTL ? "auto" : 0,
                   left: isRTL ? 0 : "auto",
                   padding: 0,
