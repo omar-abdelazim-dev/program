@@ -483,6 +483,46 @@ export default function StudentLayout({
                 </div>
               </div>
             </div>
+
+            {/* Avatar Logo / Profile */}
+            <div
+              className="profile-wrapper hover-glow"
+              onClick={() => navigate("/student/settings")}
+              style={{ cursor: "pointer" }}
+              title={t("settings.nav.profile", "Profile")}
+            >
+              <div
+                className="nav-avatar"
+                style={{
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "50%",
+                  backgroundColor: "var(--bg-surface)",
+                  border: "1px solid var(--border)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  overflow: "hidden",
+                  boxShadow: "var(--inner-shadow)"
+                }}
+              >
+                {user?.avatarUrl ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt={user?.name || "Profile"}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover"
+                    }}
+                  />
+                ) : (
+                  <span style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--color-accent, #f97316)" }}>
+                    {user?.name?.[0]?.toUpperCase() || "S"}
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
         </header>
 

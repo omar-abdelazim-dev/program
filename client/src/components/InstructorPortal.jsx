@@ -550,9 +550,6 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
               <button className={`topnav-link ${activeTab === 'financials' ? 'active' : ''}`} onClick={() => setActiveTab('financials')}>
                 {t('instructor.nav.financials', 'Financials')}
               </button>
-              <button className={`topnav-link ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
-                {t('instructor.nav.settings', 'Settings')}
-              </button>
             </nav>
           </div>
 
@@ -840,6 +837,46 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                 )}
               </div>
             )}
+
+            {/* Avatar Logo / User Profile */}
+            <div
+              className="profile-wrapper hover-glow"
+              onClick={() => setActiveTab("settings")}
+              style={{ cursor: "pointer" }}
+              title={t("settings.nav.profile", "Profile")}
+            >
+              <div
+                className="nav-avatar"
+                style={{
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "50%",
+                  backgroundColor: "var(--bg-surface)",
+                  border: "1px solid var(--border)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  overflow: "hidden",
+                  boxShadow: "var(--inner-shadow)"
+                }}
+              >
+                {user?.avatarUrl ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt={user?.name || "Profile"}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover"
+                    }}
+                  />
+                ) : (
+                  <span style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--color-accent, #f97316)" }}>
+                    {user?.name?.[0]?.toUpperCase() || "I"}
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
         </header>
 
@@ -1083,7 +1120,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
             })()}
               
               {/* Dashboard Quick Navigation & Course Overview */}
-              <div className="solid-card animate-entrance" style={{ padding: '28px', marginTop: '32px', borderRadius: '24px', background: 'var(--bg-surface)', boxShadow: 'var(--outer-shadow)', border: '1px solid var(--border)' }}>
+              <div className="solid-card animate-entrance" style={{ padding: '28px', marginTop: '32px', borderRadius: '12px', background: 'var(--bg-surface)', boxShadow: 'var(--outer-shadow)', border: '1px solid var(--border)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
                   <div>
                     <h3 style={{ fontSize: '1.4rem', margin: 0, color: 'var(--text-h)' }}>{t('instructor.dashboard.my_courses')}</h3>
@@ -1104,7 +1141,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                         background: 'var(--bg-main)',
                         boxShadow: 'var(--inner-shadow)',
                         border: '1px solid var(--border)',
-                        borderRadius: '24px',
+                        borderRadius: '12px',
                         padding: '10px 20px',
                         fontSize: '0.9rem',
                         fontWeight: 600,
@@ -1124,7 +1161,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                 </div>
 
                 {courses.length === 0 ? (
-                  <div style={{ padding: '32px', textAlign: 'center', color: 'var(--c-sub)', border: '1px dashed var(--border)', borderRadius: '16px' }}>
+                  <div style={{ padding: '32px', textAlign: 'center', color: 'var(--c-sub)', border: '1px dashed var(--border)', borderRadius: '12px' }}>
                     <p style={{ margin: 0, fontSize: '0.95rem' }}>
                       {t('instructor.no_courses', "You haven't created any courses yet. Start sharing your knowledge with the world!")}
                     </p>
@@ -1147,7 +1184,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                             justifyContent: 'space-between',
                             alignItems: 'center',
                             padding: '16px 20px',
-                            borderRadius: '16px',
+                            borderRadius: '12px',
                             background: 'var(--bg-main)',
                             boxShadow: 'var(--inner-shadow)',
                             cursor: 'pointer',

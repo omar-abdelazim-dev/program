@@ -277,7 +277,101 @@ function ProfileSection({ user, setUser }) {
         </div>
       )}
 
+      {/* Avatar Upload */}
+      <div style={{ display: "flex", alignItems: "center", gap: "24px", marginBottom: "8px" }}>
+        <div style={{ position: "relative" }}>
+          <div
+            style={{
+              width: "90px",
+              height: "90px",
+              borderRadius: "50%",
+              backgroundColor: "var(--bg-main)",
+              border: "2px dashed var(--border)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              overflow: "hidden",
+              backgroundImage: avatarPreview ? `url(${avatarPreview})` : "none",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              boxShadow: "var(--inner-shadow)"
+            }}
+          >
+            {!avatarPreview && (
+              <span style={{ fontSize: "2rem", color: "var(--c-sub)", opacity: 0.6, fontWeight: 700 }}>
+                {name?.[0]?.toUpperCase() || user?.name?.[0]?.toUpperCase() || "U"}
+              </span>
+            )}
+          </div>
+          <label
+            style={{
+              position: "absolute",
+              bottom: "0",
+              [isRTL ? "left" : "right"]: "-4px",
+              background: "var(--bg-surface)",
+              color: "var(--text-primary)",
+              border: "1px solid var(--border)",
+              width: "32px",
+              height: "32px",
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              boxShadow: "var(--outer-shadow)",
+              zIndex: 10,
+              transition: "transform 0.2s"
+            }}
+            onMouseOver={(e) => { e.currentTarget.style.transform = "scale(1.1)"; }}
+            onMouseOut={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
+            title={t("settings.profile.change_picture", "Change profile photo")}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+              <circle cx="12" cy="13" r="4"></circle>
+            </svg>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              style={{ display: "none" }}
+            />
+          </label>
+        </div>
 
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          <div style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text-primary)" }}>
+            {t("settings.profile.avatar_title", "Profile Photo")}
+          </div>
+          <div style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+            {t("settings.profile.avatar_hint", "Upload a square image (JPG, PNG). Max 5MB.")}
+          </div>
+          {avatarPreview && avatarFile && (
+            <button
+              type="button"
+              onClick={() => {
+                setAvatarFile(null);
+                setAvatarPreview(avatarUrl);
+                if (fileInputRef.current) fileInputRef.current.value = "";
+              }}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#ef4444",
+                fontSize: "0.8rem",
+                padding: 0,
+                cursor: "pointer",
+                textAlign: isRTL ? "right" : "left",
+                marginTop: "2px",
+                textDecoration: "underline"
+              }}
+            >
+              {t("settings.profile.remove_photo", "Cancel selection")}
+            </button>
+          )}
+        </div>
+      </div>
 
       <div className="settings-two-column-row">
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>

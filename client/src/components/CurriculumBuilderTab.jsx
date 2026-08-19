@@ -25,7 +25,7 @@ export default function CurriculumBuilderTab({
   onAction, 
   onOpenStandaloneLessons 
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [internalSelectedCourseId, setInternalSelectedCourseId] = useState(controlledSelectedCourseId || null);
   const selectedCourseId = controlledSelectedCourseId !== undefined ? controlledSelectedCourseId : internalSelectedCourseId;
   const setSelectedCourseId = (id) => {
@@ -311,7 +311,7 @@ export default function CurriculumBuilderTab({
               onClick={onCreateCourse}
               style={{
                 width: 'auto',
-                borderRadius: '24px',
+                borderRadius: '12px',
                 padding: '10px 24px',
                 fontWeight: 700,
                 background: 'rgba(16, 185, 129, 0.1)',
@@ -358,7 +358,7 @@ export default function CurriculumBuilderTab({
                     flexDirection: 'column',
                     gap: '16px',
                     cursor: 'pointer',
-                    borderRadius: '24px',
+                    borderRadius: '12px',
                     boxShadow: 'var(--outer-shadow)',
                     border: '1px solid var(--border)',
                     background: 'var(--bg-surface)'
@@ -611,7 +611,7 @@ export default function CurriculumBuilderTab({
               background: 'var(--bg-surface)',
               boxShadow: 'var(--outer-shadow)',
               border: '1px solid var(--border)',
-              borderRadius: '24px',
+              borderRadius: '12px',
               padding: '8px 18px',
               fontSize: '0.9rem',
               fontWeight: 600,
@@ -652,7 +652,7 @@ export default function CurriculumBuilderTab({
           {selectedCourse?.courseType === 'ongoing' && onConvertCourse && (
             <button
               onClick={() => onConvertCourse(selectedCourse)}
-              style={{ width: 'auto', borderRadius: '24px', padding: '10px 20px', fontWeight: 600, background: 'rgba(249, 115, 22, 0.1)', color: '#f97316', border: 'none', boxShadow: 'var(--inner-shadow)', cursor: 'pointer', transition: 'all 0.2s' }}
+              style={{ width: 'auto', borderRadius: '12px', padding: '10px 20px', fontWeight: 600, background: 'rgba(249, 115, 22, 0.1)', color: '#f97316', border: 'none', boxShadow: 'var(--inner-shadow)', cursor: 'pointer', transition: 'all 0.2s' }}
               onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(249, 115, 22, 0.2)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
               onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(249, 115, 22, 0.1)'; e.currentTarget.style.filter = 'none'; }}
             >
@@ -661,7 +661,7 @@ export default function CurriculumBuilderTab({
           )}
           <button
             onClick={() => onEditCourse && onEditCourse(selectedCourse)}
-            style={{ width: 'auto', borderRadius: '24px', padding: '10px 20px', fontWeight: 600, background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: 'none', boxShadow: 'var(--inner-shadow)', cursor: 'pointer', transition: 'all 0.2s' }}
+            style={{ width: 'auto', borderRadius: '12px', padding: '10px 20px', fontWeight: 600, background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: 'none', boxShadow: 'var(--inner-shadow)', cursor: 'pointer', transition: 'all 0.2s' }}
             onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
             onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'; e.currentTarget.style.filter = 'none'; }}
           >
@@ -669,7 +669,7 @@ export default function CurriculumBuilderTab({
           </button>
           <button
             onClick={() => setShowDeleteModal(true)}
-            style={{ width: 'auto', borderRadius: '24px', padding: '10px 20px', fontWeight: 600, background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', boxShadow: 'var(--inner-shadow)', cursor: 'pointer', transition: 'all 0.2s' }}
+            style={{ width: 'auto', borderRadius: '12px', padding: '10px 20px', fontWeight: 600, background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', boxShadow: 'var(--inner-shadow)', cursor: 'pointer', transition: 'all 0.2s' }}
             onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
             onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; e.currentTarget.style.filter = 'none'; }}
           >
@@ -678,7 +678,7 @@ export default function CurriculumBuilderTab({
           {!isLocked && (
             <button
               onClick={() => setAddingModule(true)}
-              style={{ width: 'auto', borderRadius: '24px', padding: '10px 20px', fontWeight: 700, background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: 'none', boxShadow: 'var(--inner-shadow)', cursor: 'pointer', transition: 'all 0.2s' }}
+              style={{ width: 'auto', borderRadius: '12px', padding: '10px 20px', fontWeight: 700, background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: 'none', boxShadow: 'var(--inner-shadow)', cursor: 'pointer', transition: 'all 0.2s' }}
               onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
               onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'; e.currentTarget.style.filter = 'none'; }}
             >
@@ -724,7 +724,7 @@ export default function CurriculumBuilderTab({
               padding: '10px 20px',
               background: 'var(--bg-main)',
               boxShadow: 'var(--inner-shadow)',
-              borderRadius: '24px',
+              borderRadius: '12px',
               border: 'none',
               color: 'var(--text-h)',
               fontWeight: 600,
@@ -742,7 +742,7 @@ export default function CurriculumBuilderTab({
       {/* Modules & Lessons List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         {localModules.length === 0 ? (
-          <div className="solid-card" style={{ padding: '40px', textAlign: 'center', borderRadius: '24px', color: 'var(--c-sub)', boxShadow: 'var(--outer-shadow)' }}>
+          <div className="solid-card" style={{ padding: '40px', textAlign: 'center', borderRadius: '12px', color: 'var(--c-sub)', boxShadow: 'var(--outer-shadow)' }}>
             {t('instructor.curriculum.no_modules', 'No modules yet. Add a module to start organizing lessons.')}
           </div>
         ) : (
@@ -750,7 +750,7 @@ export default function CurriculumBuilderTab({
             const isCollapsed = collapsedModules[module._id] !== false;
             const lessons = module.lessons || [];
             return (
-              <div key={module._id} className="glass-card no-border" style={{ padding: 0, overflow: 'hidden', background: 'var(--bg-surface)', borderRadius: '20px', boxShadow: 'var(--outer-shadow)' }}>
+              <div key={module._id} className="glass-card no-border" style={{ padding: 0, overflow: 'hidden', background: 'var(--bg-surface)', borderRadius: '12px', boxShadow: 'var(--outer-shadow)' }}>
                 {/* Module header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 20px', gap: '12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: 0 }}>
@@ -839,7 +839,7 @@ export default function CurriculumBuilderTab({
                           onClick={() => onOpenAddLesson(selectedCourseId, module._id)}
                           style={{
                             width: 'auto',
-                            borderRadius: '20px',
+                            borderRadius: '12px',
                             padding: '8px 16px',
                             fontWeight: 600,
                             fontSize: '0.85rem',
@@ -859,7 +859,7 @@ export default function CurriculumBuilderTab({
                           onClick={() => onOpenAddQuiz(selectedCourseId, module._id)}
                           style={{
                             width: 'auto',
-                            borderRadius: '20px',
+                            borderRadius: '12px',
                             padding: '8px 16px',
                             fontWeight: 600,
                             fontSize: '0.85rem',
@@ -1030,7 +1030,7 @@ export default function CurriculumBuilderTab({
 
       {/* Standalone Lessons Banner for Full Courses */}
       {selectedCourse?.courseType === 'full' && onOpenStandaloneLessons && (
-        <div className="solid-card" style={{ marginTop: '32px', padding: '24px', borderRadius: '20px', boxShadow: 'var(--outer-shadow)', background: 'var(--bg-surface)' }}>
+        <div className="solid-card" style={{ marginTop: '32px', padding: '24px', borderRadius: '12px', boxShadow: 'var(--outer-shadow)', background: 'var(--bg-surface)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <h4 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-h)' }}>{t('instructor.curriculum.standalone.title', 'Standalone Lessons')}</h4>
@@ -1041,7 +1041,7 @@ export default function CurriculumBuilderTab({
             <button
               type="button"
               onClick={() => onOpenStandaloneLessons(selectedCourse)}
-              style={{ width: 'auto', borderRadius: '24px', padding: '8px 18px', fontWeight: 600, background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: 'none', boxShadow: 'var(--inner-shadow)', cursor: 'pointer' }}
+              style={{ width: 'auto', borderRadius: '12px', padding: '8px 18px', fontWeight: 600, background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: 'none', boxShadow: 'var(--inner-shadow)', cursor: 'pointer' }}
             >
               {t('instructor.curriculum.standalone.manage', 'Manage Standalone Lessons')}
             </button>
@@ -1088,7 +1088,7 @@ export default function CurriculumBuilderTab({
                 <button
                   type="button"
                   onClick={() => window.open(previewLesson.attachmentUrl, '_blank', 'noopener,noreferrer')}
-                  style={{ width: 'auto', padding: '6px 16px', borderRadius: '20px', background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', border: 'none', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}
+                  style={{ width: 'auto', padding: '6px 16px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', border: 'none', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}
                 >
                   {t('instructor.curriculum.review_pdf', 'Open PDF / File')} {i18n.language === 'ar' ? '←' : '→'}
                 </button>
@@ -1126,7 +1126,7 @@ export default function CurriculumBuilderTab({
                 </div>
               ) : (
                 (previewQuiz.questions || []).map((q, qIndex) => (
-                  <div key={qIndex} style={{ background: 'var(--bg-main)', padding: '16px 20px', borderRadius: '16px', boxShadow: 'var(--inner-shadow)' }}>
+                  <div key={qIndex} style={{ background: 'var(--bg-main)', padding: '16px 20px', borderRadius: '12px', boxShadow: 'var(--inner-shadow)' }}>
                     <h5 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', color: 'var(--text-h)', fontWeight: 600 }}>
                       {qIndex + 1}. {q.prompt || q.question || q.text}
                     </h5>
