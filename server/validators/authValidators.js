@@ -14,6 +14,19 @@
 import { body, validationResult } from 'express-validator';
 import { validatePasswordStrength } from '../utils/passwordRules.js';
 
+export const INSTRUCTOR_STATUSES = [
+  'student', 'graduate', 'employed', 'unemployed', 'teacher', 'doctor', 'teaching_assistant',
+];
+export const MAX_PROVIDED_COURSES = 20;
+export const MAX_COURSE_NAME_LENGTH = 120;
+
+const isValidProvidedCourses = (value) => {
+  const courses = Array.isArray(value) ? value : typeof value === 'string' ? value.split(',') : null;
+  return courses !== null
+    && courses.length <= MAX_PROVIDED_COURSES
+    && courses.every((course) => typeof course === 'string' && course.trim().length > 0 && course.trim().length <= MAX_COURSE_NAME_LENGTH);
+};
+
 // ─── Shared helper ───────────────────────────────────────────────────────────
 
 /**
@@ -61,6 +74,20 @@ export const validateRegister = [
     .normalizeEmail({ gmail_remove_dots: false }),
 
   passwordValidator,
+
+  body('role')
+    .optional()
+    .isString().withMessage('Role must be a string')
+    .isIn(['student', 'instructor']).withMessage('Role must be student or instructor'),
+
+  body('instructorStatus')
+    .if(body('role').equals('instructor'))
+    .isString().withMessage('Instructor status is required')
+    .isIn(INSTRUCTOR_STATUSES).withMessage('Invalid instructor status'),
+
+  body('providedCourses')
+    .if(body('role').equals('instructor'))
+    .custom(isValidProvidedCourses).withMessage('Provide between 1 and 20 course names of up to 120 characters each'),
 
   handleValidationErrors,
 ];
@@ -110,6 +137,15 @@ export const validateUpdateProfile = [
   body('avatarUrl')
     .optional()
     .isString().withMessage('Avatar URL must be a string'),
+
+  body('instructorStatus')
+    .optional()
+    .isString().withMessage('Instructor status must be a string')
+    .isIn(INSTRUCTOR_STATUSES).withMessage('Invalid instructor status'),
+
+  body('providedCourses')
+    .optional()
+    .custom(isValidProvidedCourses).withMessage('Provide between 1 and 20 course names of up to 120 characters each'),
 
   handleValidationErrors,
 ];

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import logoDark from '../assets/logo-dark.png';
 import logoLight from '../assets/logo-light.png';
@@ -34,7 +34,6 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
   const [college, setCollege] = useState('');
   const [year, setYear] = useState('');
   const [major, setMajor] = useState('');
-  const [providedCourses, setProvidedCourses] = useState('');
   const [providedCoursesList, setProvidedCoursesList] = useState([]);
   const [courseInput, setCourseInput] = useState('');
   const [instructorStatus, setInstructorStatus] = useState('');
@@ -193,7 +192,7 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
   const handleAddCourse = (e) => {
     if (e) e.preventDefault();
     const trimmed = courseInput.trim();
-    if (trimmed && !providedCoursesList.includes(trimmed)) {
+    if (trimmed && !providedCoursesList.some(course => course.toLocaleLowerCase() === trimmed.toLocaleLowerCase())) {
       setProvidedCoursesList(prev => [...prev, trimmed]);
       setCourseInput('');
     }
@@ -578,8 +577,9 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
                                   type="text" 
                                   placeholder={t('auth.courses_provided_placeholder')} 
                                   value={courseInput} 
-                                  onChange={(e) => { if (/^[a-zA-Z\u0600-\u06FF\s,\.\-0-9#+]*$/.test(e.target.value)) setCourseInput(e.target.value); }}
+                                  onChange={(e) => { if (/^[a-zA-Z\u0600-\u06FF\s,.-0-9#+]*$/.test(e.target.value)) setCourseInput(e.target.value); }}
                                   onKeyDown={handleCourseKeyDown}
+                                  maxLength={120}
                                 />
                               </div>
                               <button 
