@@ -42,6 +42,11 @@ const AdminOverviewTab = ({ stats, user, setActiveTab, loading }) => {
   const { t } = useTranslation();
   const [time, setTime] = useState(new Date());
 
+  useEffect(() => {
+    // Keep the refresh timestamp stable for the lifetime of this mount.
+    setTime(new Date());
+  }, []);
+
   if (loading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -50,11 +55,6 @@ const AdminOverviewTab = ({ stats, user, setActiveTab, loading }) => {
       </div>
     );
   }
-
-  useEffect(() => {
-    // Just a static time for "Last refreshed" to avoid constant re-renders
-    setTime(new Date());
-  }, []);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -381,4 +381,3 @@ const AdminOverviewTab = ({ stats, user, setActiveTab, loading }) => {
 };
 
 export default AdminOverviewTab;
-

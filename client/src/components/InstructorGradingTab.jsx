@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../api/axios';
 import notyf from '../utils/notyf';
@@ -16,7 +16,7 @@ export default function InstructorGradingTab({ onAction }) {
   const [grades, setGrades] = useState({}); // { [questionIndex]: { pointsAwarded, feedback } }
   const [submitting, setSubmitting] = useState(false);
 
-  const fetchSubmissions = async () => {
+  const fetchSubmissions = useCallback(async () => {
     try {
       setIsLoading(true);
       const res = await api.get(`/quiz-submissions?status=${statusFilter}`);
@@ -27,9 +27,9 @@ export default function InstructorGradingTab({ onAction }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [statusFilter, t]);
 
-  useEffect(() => { fetchSubmissions(); }, [statusFilter]);
+  useEffect(() => { fetchSubmissions(); }, [fetchSubmissions]);
 
   const openSubmission = (submission) => {
     setSelected(submission);

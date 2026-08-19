@@ -7,7 +7,12 @@
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "test": "node test-integration.js"
+    "test": "npm run test:env && npm run test:integration && npm run test:auth-security && npm run test:upload-security",
+    "test:env": "node test-env-validation.js",
+    "test:integration": "node test-integration.js",
+    "test:auth-security": "node test-auth-security.js",
+    "test:upload-security": "node test-upload-security.js",
+    "test:financial:manual": "node test_financials.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

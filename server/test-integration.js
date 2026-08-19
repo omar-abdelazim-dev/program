@@ -316,8 +316,19 @@ const run = async () => {
   assert(res.status === 403, 'Student should be blocked from lesson content before enrolling');
   console.log('✓ Un-enrolled student correctly blocked from lesson video (403)');
 
-  // 13. Student enrolls in a paid course -> lands as 'pending', not immediate access
+  // 13. Paid enrollment requires complete manual-payment proof.
   res = await agentStudent.post(`/api/enrollments/${courseId}`).set('X-CSRF-Token', studentCsrf);
+  assert(res.status === 400, `Paid enrollment without proof should be rejected: ${JSON.stringify(res.body)}`);
+  console.log('✓ Paid enrollment without payment proof correctly rejected (400)');
+
+  // Complete proof creates a pending request, not immediate access.
+  res = await agentStudent.post(`/api/enrollments/${courseId}`).set('X-CSRF-Token', studentCsrf).send({
+    transactionId: 'TXN-COURSE-1',
+    paymentAccount: '+201000000000',
+    paymentMethod: 'mobile_wallet',
+    screenshot: 'https://res.cloudinary.com/demo/image/upload/payment-course-1.jpg',
+    invoiceId: 'INV-COURSE-1',
+  });
   assert(res.status === 201, `Enroll failed: ${JSON.stringify(res.body)}`);
   assert(res.body.enrollment.status === 'pending', `Paid enrollment should start pending: ${JSON.stringify(res.body)}`);
   const enrollmentId = res.body.enrollment._id;
@@ -695,7 +706,8 @@ const run = async () => {
   console.log('✓ Un-purchased student correctly blocked from standalone lesson video (403)');
 
   res = await agentStudent.post(`/api/standalone-lessons/${standaloneLessonId}/purchase`).set('X-CSRF-Token', studentCsrf).send({
-    transactionId: 'TXN-STANDALONE-1', paymentAccount: '01000000000', paymentMethod: 'vodafone_cash', invoiceId: 'INV-STANDALONE-1',
+    transactionId: 'TXN-STANDALONE-1', paymentAccount: '+201000000000', paymentMethod: 'mobile_wallet',
+    screenshot: 'https://res.cloudinary.com/demo/image/upload/payment-standalone-1.jpg', invoiceId: 'INV-STANDALONE-1',
   });
   assert(res.status === 201 && res.body.purchase.status === 'pending', `Standalone lesson purchase failed: ${JSON.stringify(res.body)}`);
   const standalonePurchaseId = res.body.purchase._id;

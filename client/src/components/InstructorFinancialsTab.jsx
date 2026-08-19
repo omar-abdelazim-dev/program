@@ -1,5 +1,5 @@
 import notyf from '../utils/notyf';
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import CustomSelect from './CustomSelect';
 import Spinner from './Spinner';
 import api from '../api/axios';
@@ -51,7 +51,7 @@ export default function InstructorFinancialsTab({ user }) {
   }, [showPayoutModal]);
 
 
-  const fetchFinancials = async () => {
+  const fetchFinancials = useCallback(async () => {
     try {
       const res = await api.get('/financials');
       setAvailableBalance(res.data.availableBalance || 0);
@@ -62,11 +62,11 @@ export default function InstructorFinancialsTab({ user }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
   useEffect(() => {
     fetchFinancials();
-  }, []);
+  }, [fetchFinancials]);
 
   const isWalletMethod = ['vodafone_cash', 'orange_cash', 'etisalat_cash', 'we_cash', 'mobile_wallet'].includes(paymentMethod);
 

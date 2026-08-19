@@ -90,4 +90,12 @@ async function runTests() {
   if (failed > 0) process.exit(1);
 }
 
-runTests();
+runTests().catch(async (error) => {
+  console.error('\nUPLOAD SECURITY TEST SUITE FAILED');
+  console.error(error);
+
+  await mongoose.disconnect().catch(() => {});
+  if (mongoServer) await mongoServer.stop().catch(() => {});
+
+  process.exit(1);
+});

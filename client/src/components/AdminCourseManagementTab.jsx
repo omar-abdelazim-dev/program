@@ -475,9 +475,7 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        if (courses.length === 0) {
-          setIsLoading(true);
-        }
+        setIsLoading(true);
         // Fetch published courses, pending courses, admin stats, and pending lessons
         const [publishedRes, pendingRes, statsRes, adminLessonsRes, pendingStandaloneRes] = await Promise.all([
           api.get("/courses").catch(() => ({ data: { courses: [] } })),
@@ -1948,4 +1946,3 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
     </div>
   );
 }
-

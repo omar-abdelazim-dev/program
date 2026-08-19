@@ -9,6 +9,7 @@ import * as emailService from '../utils/emailService.js';
 import Notification from '../models/Notification.js';
 import logger from '../utils/logger.js';
 import { getModulesWithLessons, computeModuleProgress } from '../utils/courseContent.js';
+import { validateManualPaymentProof } from '../utils/manualPayment.js';
 
 // @route   POST /api/enrollments/:courseId
 // @access  Private (student)
@@ -28,6 +29,15 @@ export const enroll = async (req, res) => {
     const existing = await Enrollment.findOne({ student: req.user.id, course: courseId });
     if (existing) {
       return res.status(409).json({ message: 'You are already enrolled in this course' });
+    }
+
+    let paymentProof = {};
+    if (course.price > 0) {
+      const validation = validateManualPaymentProof(req.body);
+      if (validation.error) {
+        return res.status(400).json({ message: validation.error });
+      }
+      paymentProof = validation.proof;
     }
 
     // Calculate financial distribution
@@ -71,11 +81,7 @@ export const enroll = async (req, res) => {
       platformCommission,
       instructorShare,
       status,
-      transactionId: req.body.transactionId,
-      paymentAccount: req.body.paymentAccount,
-      paymentMethod: req.body.paymentMethod,
-      screenshot: req.body.screenshot,
-      invoiceId: req.body.invoiceId,
+      ...paymentProof,
     });
 
     if (status === 'pending') {
@@ -87,7 +93,7 @@ export const enroll = async (req, res) => {
         const notifications = admins.map(admin => ({
           user: admin._id,
           title: 'New Enrollment Request',
-          message: `${studentName} has requested to enroll in "${course.title}". Invoice ID: ${req.body.invoiceId || 'N/A'}.`,
+          message: `${studentName} has requested to enroll in "${course.title}". Invoice ID: ${paymentProof.invoiceId}.`,
           type: 'system',
           link: '/admin',
           refId: enrollment._id,

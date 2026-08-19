@@ -14,6 +14,8 @@ export default function CoursePage({ cart = [], setCart, user }) {
   const navigate = useNavigate();
   const location = useLocation();
   const fromDashboard = location.state?.from === "dashboard";
+  const userId = user?._id || user?.id;
+  const userRole = user?.role;
   const [activeTab, setActiveTab] = useState("syllabus");
 
   const [course, setCourse] = useState(null);
@@ -78,10 +80,9 @@ export default function CoursePage({ cart = [], setCart, user }) {
           if (reviewsRes.data && reviewsRes.data.reviews) {
             setReviews(reviewsRes.data.reviews);
             if (
-              user &&
+              userId &&
               reviewsRes.data.reviews.some(
-                (r) =>
-                  r.student?._id === user._id || r.student?._id === user.id,
+                (r) => r.student?._id === userId,
               )
             ) {
               setHasReviewed(true);
@@ -101,7 +102,7 @@ export default function CoursePage({ cart = [], setCart, user }) {
           // Ignore — standalone lessons are supplementary, not core to the page
         }
 
-        if (user?.role === "student") {
+        if (userRole === "student") {
           try {
             const purchasedRes = await api.get(
               "/standalone-lessons/mine-purchased",
@@ -124,7 +125,7 @@ export default function CoursePage({ cart = [], setCart, user }) {
     };
     fetchData();
     return () => controller.abort();
-  }, [id]);
+  }, [id, t, userId, userRole]);
 
   useEffect(() => {
     if (isEnrolled && enrollStatus === "pending") {

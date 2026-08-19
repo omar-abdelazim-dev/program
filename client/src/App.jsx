@@ -1,29 +1,35 @@
-import { useState, useEffect } from 'react';
+import { lazy, Suspense, useState, useEffect } from 'react';
 import api from './api/axios';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import TopNav from './components/TopNav';
-import ExploreTab from './components/ExploreTab';
-import DiscoverTab from './components/DiscoverTab';
-import InstructorProfilePage from './components/InstructorProfilePage';
-import DashboardTab from './components/DashboardTab';
-import AuthPage from './components/AuthPage';
-import AdminAuthPage from './components/AdminAuthPage';
-import CoursePage from './components/CoursePage';
-import LearningPortal from './components/LearningPortal';
-import CheckoutPage from './components/CheckoutPage';
-import InstructorPortal from './components/InstructorPortal';
-import AdminPortal from './components/AdminPortal';
-import SettingsPage from './components/SettingsPage';
-import StudentLayout from './components/StudentLayout';
-import AboutPage from './components/AboutPage';
-import ContactPage from './components/ContactPage';
-import HelpPage from './components/HelpPage';
-import PrivacyPage from './components/PrivacyPage';
-import MobileAppPage from './components/MobileAppPage';
-import TermsPage from './components/TermsPage';
 import FullPageLoader from './components/FullPageLoader';
-import LandingPage from './components/LandingPage';
-import StudentProfilePage from './components/StudentProfilePage';
+
+const LandingPage = lazy(() => import('./components/LandingPage'));
+const AuthPage = lazy(() => import('./components/AuthPage'));
+const AdminAuthPage = lazy(() => import('./components/AdminAuthPage'));
+const ExploreTab = lazy(() => import('./components/ExploreTab'));
+const StudentLayout = lazy(() => import('./components/StudentLayout'));
+const DiscoverTab = lazy(() => import('./components/DiscoverTab'));
+const InstructorProfilePage = lazy(() => import('./components/InstructorProfilePage'));
+const DashboardTab = lazy(() => import('./components/DashboardTab'));
+const CoursePage = lazy(() => import('./components/CoursePage'));
+const LearningPortal = lazy(() => import('./components/LearningPortal'));
+const CheckoutPage = lazy(() => import('./components/CheckoutPage'));
+const InstructorPortal = lazy(() => import('./components/InstructorPortal'));
+const AdminPortal = lazy(() => import('./components/AdminPortal'));
+const SettingsPage = lazy(() => import('./components/SettingsPage'));
+const AboutPage = lazy(() => import('./components/AboutPage'));
+const ContactPage = lazy(() => import('./components/ContactPage'));
+const HelpPage = lazy(() => import('./components/HelpPage'));
+const PrivacyPage = lazy(() => import('./components/PrivacyPage'));
+const MobileAppPage = lazy(() => import('./components/MobileAppPage'));
+const TermsPage = lazy(() => import('./components/TermsPage'));
+const StudentProfilePage = lazy(() => import('./components/StudentProfilePage'));
+
+const RouteFallback = () => (
+  <div style={{ backgroundColor: 'var(--bg-main)', minHeight: '100vh' }}>
+    <FullPageLoader message="Loading" />
+  </div>
+);
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -38,7 +44,7 @@ export default function App() {
         const response = await api.get('/auth/me');
         setUser(response.data.user);
         setIsAuthenticated(true);
-      } catch (err) {
+      } catch {
         setIsAuthenticated(false);
         setUser(null);
       } finally {
@@ -189,7 +195,8 @@ export default function App() {
 
   if (!isAuthenticated) {
     return (
-      <Routes>
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route
           path="/auth/admin"
@@ -207,13 +214,10 @@ export default function App() {
             </main>
           )}
         />
-      </Routes>
+        </Routes>
+      </Suspense>
     );
   }
-
-  // Derive activeTab for the TopNav indicator based on the URL
-  let activeTab = 'explore';
-  if (location.pathname.includes('/dashboard')) activeTab = 'dashboard';
 
   // The Learning Portal and Checkout Page have their own fullscreen layouts
   if (location.pathname.startsWith('/learn/') || location.pathname.startsWith('/checkout/') || location.pathname === '/instructor' || location.pathname === '/admin') {
@@ -229,12 +233,14 @@ export default function App() {
     }
 
     return (
-      <Routes>
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
         <Route path="/learn/:id" element={<LearningPortal user={user} />} />
         <Route path="/checkout/cart" element={<CheckoutPage cart={cart} setCart={setCart} setNotifications={setNotifications} isCartCheckout={true} />} />
         <Route path="/instructor" element={<InstructorPortal user={user} setUser={setUser} onLogout={handleLogout} toggleTheme={toggleTheme} isLightMode={isLightMode} />} />
         <Route path="/admin" element={<AdminPortal user={user} setUser={setUser} onLogout={handleLogout} toggleTheme={toggleTheme} isLightMode={isLightMode} />} />
-      </Routes>
+        </Routes>
+      </Suspense>
     );
   }
 
@@ -258,20 +264,21 @@ export default function App() {
   }
 
   return (
-    <StudentLayout 
-      user={user} 
-      onLogout={handleLogout} 
-      cartCount={cart.length}
-      notifications={notifications}
-      setNotifications={setNotifications}
-      isLightMode={isLightMode}
-      toggleTheme={toggleTheme}
-      searchQuery={searchQuery}
-      onSearchChange={setSearchQuery}
-      exploreCollege={exploreCollege}
-      onCollegeChange={setExploreCollege}
-    >
-      <Routes>
+    <Suspense fallback={<RouteFallback />}>
+      <StudentLayout
+        user={user}
+        onLogout={handleLogout}
+        cartCount={cart.length}
+        notifications={notifications}
+        setNotifications={setNotifications}
+        isLightMode={isLightMode}
+        toggleTheme={toggleTheme}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        exploreCollege={exploreCollege}
+        onCollegeChange={setExploreCollege}
+      >
+        <Routes>
         <Route path="/" element={<Navigate to="/student" replace />} />
         <Route path="/student" element={<ExploreTab user={user} searchQuery={searchQuery} isLightMode={isLightMode} />} />
         <Route path="/student/dashboard" element={<DashboardTab user={user} />} />
@@ -286,7 +293,8 @@ export default function App() {
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/mobile-app" element={<MobileAppPage />} />
-      </Routes>
-    </StudentLayout>
+        </Routes>
+      </StudentLayout>
+    </Suspense>
   );
 }

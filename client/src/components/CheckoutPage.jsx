@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { currentUser } from "../data";
 import api from "../api/axios";
+import PaymentModal from "./PaymentModal";
 
 // isCartCheckout is always true now
 export default function CheckoutPage({
@@ -12,8 +12,8 @@ export default function CheckoutPage({
 }) {
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [selectedItem, setSelectedItem] = useState(null);
 
   const checkoutItems = cart || [];
 
@@ -31,72 +31,52 @@ export default function CheckoutPage({
   const totalPrice = (cart || []).reduce((s, it) => s + getPriceNumber(it), 0);
   const formattedTotal = `${totalPrice.toLocaleString()} EGP`;
 
-  // Enrollment handler
-  const handleCheckout = async () => {
+  const removeFromCart = (item) => {
+    const courseId = item._id || item.id;
+    setCart?.((items) => items.filter((entry) => (entry._id || entry.id) !== courseId));
+  };
+
+  const handleEnrollment = async (item, paymentDetails = {}) => {
     setErrorMessage("");
     setIsProcessing(true);
 
     try {
-      const successes = [];
-      const failures = [];
+      const courseId = item._id || item.id;
+      if (!courseId) throw new Error("Invalid course id");
 
-      for (const item of cart || []) {
-        const courseId = item._id || item.id;
-        if (!courseId) {
-          failures.push({ item, error: "Invalid course id" });
-          continue;
-        }
+      const response = await api.post(`/enrollments/${courseId}`, paymentDetails);
+      removeFromCart(item);
+      setSelectedItem(null);
 
-        try {
-          await api.post(`/enrollments/${courseId}`);
-          successes.push(courseId);
-        } catch (err) {
-          if (err.response?.status === 409) {
-            successes.push(courseId);
-          } else {
-            failures.push({
-              item,
-              error: err.response?.data?.message || "Enrollment failed",
-            });
-          }
-        }
-      }
-
-      // Remove successful items from cart
-      if (setCart && successes.length > 0) {
-        const remaining = (cart || []).filter((i) => {
-          const cid = i._id || i.id;
-          return !successes.includes(cid);
-        });
-        setCart(remaining);
-      }
-
-      // Notifications and navigation
-      if (setNotifications && successes.length > 0) {
-        const successfulTitles = (cart || [])
-          .filter((i) => successes.includes(i._id || i.id))
-          .map((i) => i.title || i.name || "Course");
-        const text =
-          successfulTitles.length === 1
-            ? `Enrolled in: ${successfulTitles[0]}`
-            : `Enrolled in: ${successfulTitles.join(", ")}`;
+      if (setNotifications) {
+        const pending = response.data.enrollment?.status === "pending";
+        const text = pending
+          ? `Payment proof submitted for ${item.title}. Awaiting admin review.`
+          : `Enrolled in: ${item.title}`;
         setNotifications((prev) => [
           ...prev,
           { id: Date.now(), text, timestamp: Date.now() },
         ]);
       }
-
-      if (failures.length === 0) {
-        // All succeeded
-        navigate("/student/dashboard");
+    } catch (err) {
+      if (err.response?.status === 409) {
+        removeFromCart(item);
+        setSelectedItem(null);
       } else {
-        // Some failed
         setErrorMessage(
-          `Failed to enroll in ${failures.length} course(s). Please try again.`,
+          err.response?.data?.message || err.message || "Enrollment failed",
         );
       }
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const startEnrollment = (item) => {
+    if (getPriceNumber(item) > 0) {
+      setSelectedItem(item);
+    } else {
+      handleEnrollment(item);
     }
   };
 
@@ -299,37 +279,8 @@ export default function CheckoutPage({
                     }}
                   >
                     <button
-                      onClick={async () => {
-                        try {
-                          const cid = item._id || item.id;
-                          await api.post(`/enrollments/${cid}`);
-                          setCart(cart.filter((c) => (c._id || c.id) !== cid));
-                          if (setNotifications) {
-                            setNotifications((prev) => [
-                              ...prev,
-                              {
-                                id: Date.now(),
-                                text: `Enrolled in: ${item.title}`,
-                                timestamp: Date.now(),
-                              },
-                            ]);
-                          }
-                        } catch (err) {
-                          if (err.response?.status === 409) {
-                            setCart(
-                              cart.filter(
-                                (c) =>
-                                  (c._id || c.id) !== (item._id || item.id),
-                              ),
-                            );
-                          } else {
-                            setErrorMessage(
-                              err.response?.data?.message ||
-                                "Enrollment failed",
-                            );
-                          }
-                        }
-                      }}
+                      onClick={() => startEnrollment(item)}
+                      disabled={isProcessing}
                       style={{
                         background: "rgba(16, 185, 129, 0.1)",
                         border: "none",
@@ -358,7 +309,7 @@ export default function CheckoutPage({
                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                         <polyline points="22 4 12 14.01 9 11.01"></polyline>
                       </svg>
-                      Enroll
+                      {getPriceNumber(item) > 0 ? "Submit Proof" : "Enroll Free"}
                     </button>
                     <button
                       onClick={() =>
@@ -474,7 +425,7 @@ export default function CheckoutPage({
           )}
 
           <button
-            onClick={handleCheckout}
+            onClick={() => startEnrollment(checkoutItems[0])}
             disabled={isProcessing}
             className="solid-btn"
             style={{
@@ -513,7 +464,9 @@ export default function CheckoutPage({
                 Processing...
               </>
             ) : (
-              "Enroll Now"
+              getPriceNumber(checkoutItems[0]) > 0
+                ? "Submit Payment for Next Course"
+                : "Enroll in Next Course"
             )}
           </button>
 
@@ -525,11 +478,21 @@ export default function CheckoutPage({
               lineHeight: "1.6",
             }}
           >
-            By enrolling, you agree to our Terms of Service. Secure enrollment
-            powered by Program.
+            Paid courses are submitted one at a time because each manual
+            transfer receipt is reviewed separately. Access remains locked
+            until an admin approves the proof.
           </div>
         </div>
       </div>
+
+      {selectedItem && (
+        <PaymentModal
+          course={selectedItem}
+          isEnrolling={isProcessing}
+          onConfirm={(paymentDetails) => handleEnrollment(selectedItem, paymentDetails)}
+          onCancel={() => setSelectedItem(null)}
+        />
+      )}
     </div>
   );
 }

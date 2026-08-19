@@ -101,6 +101,14 @@ export const getPublicConfig = async (req, res) => {
         studentRegistration: config.registration?.studentRegistration ?? true,
         instructorRegistration: config.registration?.instructorRegistration ?? true
       },
+      payment: {
+        currency: config.financial?.currency || 'EGP',
+        instaPayEnabled: config.financial?.instaPayEnabled ?? true,
+        mobileWalletEnabled: config.financial?.mobileWalletEnabled ?? true,
+        instaPayAccount: config.financial?.instaPayAccount || '',
+        mobileWalletNumber: config.financial?.mobileWalletNumber || '',
+        manualPaymentInstructions: config.financial?.manualPaymentInstructions || '',
+      },
       landingPage: config.landingPage
     });
   } catch (err) {
@@ -383,4 +391,3 @@ export const sendTestEmail = async (req, res) => {
     res.status(500).json({ message: 'Failed to send test email. Please check server logs and SMTP configuration.' });
   }
 };
-

@@ -57,7 +57,7 @@ export default function StudentLayout({
     if (savedLang && i18n.language !== savedLang) {
       i18n.changeLanguage(savedLang);
     }
-  }, []);
+  }, [i18n, i18n.language]);
   
   const showSearch = location.pathname === '/student/explore';
 
@@ -596,6 +596,5 @@ export default function StudentLayout({
     </div>
   );
 }
-
 
 

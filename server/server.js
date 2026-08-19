@@ -1,6 +1,7 @@
 import "dotenv/config";
 import cron from "node-cron";
 import connectDB from "./config/db.js";
+import { validateEnvironment } from "./config/env.js";
 import app from "./app.js";
 import logger from "./utils/logger.js";
 import {
@@ -8,8 +9,11 @@ import {
   runDraftExpirationCheck,
 } from "./jobs/courseLifecycleJobs.js";
 
-if (!process.env.JWT_SECRET) {
-  console.error("FATAL: JWT_SECRET environment variable is not set.");
+let runtimeConfig;
+try {
+  runtimeConfig = validateEnvironment();
+} catch (error) {
+  console.error(`FATAL: ${error.message}`);
   process.exit(1);
 }
 
@@ -17,7 +21,7 @@ const startServer = async () => {
   // Wait for the database connection before starting the HTTP server
   await connectDB();
 
-  const PORT = process.env.PORT || 5000;
+  const PORT = runtimeConfig.port;
   app.listen(PORT, () =>
     console.log(`Server running on http://localhost:${PORT}`),
   );

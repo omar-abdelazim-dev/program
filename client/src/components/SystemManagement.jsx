@@ -368,14 +368,16 @@ const FinancialPanel = ({ state, handleChange, isSuperAdmin }) => (
           { value: 30, label: '30%' }
         ]}
       />
-      <InputField label="Tax Percentage (%)" type="number" value={state.tax} onChange={e => handleChange('financial', 'tax', e.target.value)} disabled={isFieldRestricted('financial', 'tax', isSuperAdmin)} />
       <SelectField label="Currency" value={state.currency} onChange={e => handleChange('financial', 'currency', e.target.value)} disabled={isFieldRestricted('financial', 'currency', isSuperAdmin)} options={[{ value: 'USD', label: 'USD ($)' }, { value: 'EUR', label: 'EUR (€)' }, { value: 'GBP', label: 'GBP (£)' }, { value: 'EGP', label: 'EGP (E£)' }]} />
       <InputField label="Refund Window (Days)" type="number" value={state.refundWindow} onChange={e => handleChange('financial', 'refundWindow', e.target.value)} disabled={isFieldRestricted('financial', 'refundWindow', isSuperAdmin)} />
       <InputField label="Minimum Withdrawal Amount" type="number" value={state.minWithdrawal} onChange={e => handleChange('financial', 'minWithdrawal', e.target.value)} disabled={isFieldRestricted('financial', 'minWithdrawal', isSuperAdmin)} />
+      <InputField label="Mobile Wallet Recipient Number" value={state.mobileWalletNumber || ''} onChange={e => handleChange('financial', 'mobileWalletNumber', e.target.value)} disabled={isFieldRestricted('financial', 'mobileWalletNumber', isSuperAdmin)} placeholder="+201012345678" />
+      <InputField label="InstaPay Recipient Account" value={state.instaPayAccount || ''} onChange={e => handleChange('financial', 'instaPayAccount', e.target.value)} disabled={isFieldRestricted('financial', 'instaPayAccount', isSuperAdmin)} placeholder="username@instapay or phone number" />
     </div>
     <div style={{ marginTop: '16px' }}>
-      <ToggleSwitch label="Stripe Payments Integration" checked={state.stripeEnabled} onChange={e => handleChange('financial', 'stripeEnabled', e.target.checked)} disabled={isFieldRestricted('financial', 'stripeEnabled', isSuperAdmin)} />
-      <ToggleSwitch label="PayPal Integration" checked={state.paypalEnabled} onChange={e => handleChange('financial', 'paypalEnabled', e.target.checked)} disabled={isFieldRestricted('financial', 'paypalEnabled', isSuperAdmin)} />
+      <ToggleSwitch label="Accept Mobile Wallet Proofs" checked={state.mobileWalletEnabled ?? true} onChange={e => handleChange('financial', 'mobileWalletEnabled', e.target.checked)} disabled={isFieldRestricted('financial', 'mobileWalletEnabled', isSuperAdmin)} />
+      <ToggleSwitch label="Accept InstaPay Proofs" checked={state.instaPayEnabled ?? true} onChange={e => handleChange('financial', 'instaPayEnabled', e.target.checked)} disabled={isFieldRestricted('financial', 'instaPayEnabled', isSuperAdmin)} />
+      <TextareaField label="Manual Payment Instructions" value={state.manualPaymentInstructions || ''} onChange={e => handleChange('financial', 'manualPaymentInstructions', e.target.value)} disabled={isFieldRestricted('financial', 'manualPaymentInstructions', isSuperAdmin)} placeholder="Optional transfer instructions shown during checkout" />
     </div>
   </div>
 );
@@ -387,7 +389,7 @@ export default function SystemManagement({ user }) {
   // Fallback default state while loading
   const defaultSettings = {
     general: { platformName: '', contactEmail: '', supportEmail: '', homepageAnnouncement: '' },
-    financial: { commission: 15, tax: 0, currency: 'USD', refundWindow: 14, minWithdrawal: 50, stripeEnabled: true, paypalEnabled: false },
+    financial: { commission: 15, currency: 'EGP', refundWindow: 14, minWithdrawal: 50, instaPayEnabled: true, mobileWalletEnabled: true, instaPayAccount: '', mobileWalletNumber: '', manualPaymentInstructions: '' },
     registration: { studentRegistration: true, instructorRegistration: true, eduEmailOnly: false, emailVerification: true, phoneVerification: false, inviteOnly: false, autoApproveInstructors: false },
     security: { passwordPolicy: 'strong', sessionTimeout: 60, maxLoginAttempts: 5, twoFactorAuth: false, jwtExpiration: 7, allowedDomains: '', maintenanceLock: false },
     storage: { provider: 'AWS S3', maxUploadSizeMb: 50, allowedFileTypes: '.mp4,.pdf,.zip,.jpg,.png', autoCompressImages: true, directUploads: false, bucketName: 'program-lms-media-storage', cdnDomain: 'https://cdn.program-lms.com' },

@@ -35,7 +35,7 @@ export default function StudentProfilePage({ isLightMode, user }) {
         }
       })
       .finally(() => setIsLoading(false));
-  }, [id]);
+  }, [id, navigate]);
 
   if (isLoading) {
     return (

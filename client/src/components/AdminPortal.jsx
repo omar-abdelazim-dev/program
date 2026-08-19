@@ -177,12 +177,14 @@ const RoleMenu = ({ anchorEl, onClose, children }) => {
 
 const AnimatedNumber = ({ value }) => {
   const [displayValue, setDisplayValue] = useState(0);
+  const displayValueRef = useRef(0);
 
   useEffect(() => {
     let startTimestamp = null;
+    let animationFrameId;
     const duration = 1500;
     const endValue = parseInt(value, 10) || 0;
-    const startValue = displayValue;
+    const startValue = displayValueRef.current;
 
     if (startValue === endValue) return;
 
@@ -191,17 +193,19 @@ const AnimatedNumber = ({ value }) => {
       const progress = Math.min((timestamp - startTimestamp) / duration, 1);
       // easeOutExpo
       const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
-      setDisplayValue(
-        Math.floor(startValue + (endValue - startValue) * easeProgress),
-      );
+      const nextValue = Math.floor(startValue + (endValue - startValue) * easeProgress);
+      displayValueRef.current = nextValue;
+      setDisplayValue(nextValue);
 
       if (progress < 1) {
-        window.requestAnimationFrame(step);
+        animationFrameId = window.requestAnimationFrame(step);
       } else {
+        displayValueRef.current = endValue;
         setDisplayValue(endValue);
       }
     };
-    window.requestAnimationFrame(step);
+    animationFrameId = window.requestAnimationFrame(step);
+    return () => window.cancelAnimationFrame(animationFrameId);
   }, [value]);
 
   return <span>{displayValue}</span>;
@@ -270,7 +274,7 @@ export default function AdminPortal({
     if (savedLang && i18n.language !== savedLang) {
       i18n.changeLanguage(savedLang);
     }
-  }, []);
+  }, [i18n, i18n.language]);
 
   // Data States
   const [stats, setStats] = useState(null);
@@ -526,7 +530,7 @@ export default function AdminPortal({
 
   // Fetch users once on mount
   useEffect(() => {
-    fetchUsers(searchQuery);
+    fetchUsers("");
   }, []);
 
   // Fetch transactions & payouts once on mount
@@ -552,7 +556,7 @@ export default function AdminPortal({
       fetchUsers(searchQuery);
     }, 400);
     return () => clearTimeout(delay);
-  }, [searchQuery, showDeletedUsers]);
+  }, [activeTab, searchQuery, showDeletedUsers]);
 
   // No longer needed: visibleUsers is handled by AdminUserManagementTab
   const visibleUsers = users;
@@ -712,6 +716,27 @@ export default function AdminPortal({
     return true;
   };
 
+  const pendingEnrollmentCount = transactions.reduce(
+    (count, transaction) =>
+      transaction.status === "pending" || transaction.status === "under_review"
+        ? count + 1
+        : count,
+    0,
+  );
+
+  useEffect(() => {
+    const activeRef =
+      enrollmentSubTab === "pending"
+        ? pendingEnrollmentTabRef
+        : processedEnrollmentTabRef;
+    if (activeRef.current) {
+      setEnrollmentIndicatorStyle({
+        left: activeRef.current.offsetLeft,
+        width: activeRef.current.offsetWidth,
+      });
+    }
+  }, [enrollmentSubTab, pendingEnrollmentCount]);
+
   // Guard the real UI render, not just the redirect effect above — otherwise
   // a wrong-role user briefly sees the full portal before the effect fires.
   if (user?.role !== "admin" && user?.role !== "superadmin") {
@@ -850,19 +875,6 @@ export default function AdminPortal({
     (pendingEnrollmentPage - 1) * 10,
     pendingEnrollmentPage * 10,
   );
-
-  useEffect(() => {
-    const activeRef =
-      enrollmentSubTab === "pending"
-        ? pendingEnrollmentTabRef
-        : processedEnrollmentTabRef;
-    if (activeRef.current) {
-      setEnrollmentIndicatorStyle({
-        left: activeRef.current.offsetLeft,
-        width: activeRef.current.offsetWidth,
-      });
-    }
-  }, [enrollmentSubTab, pendingEnrollments.length]);
 
   const renderEnrollmentTable = (txs, emptyMessage) => (
     <div
@@ -2483,24 +2495,6 @@ export default function AdminPortal({
                   {selectedEnrollment.amountPaid ||
                     selectedEnrollment.course?.price ||
                     0}{" "}
-                  EGP
-                </span>
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  borderBottom: "1px solid rgba(255,255,255,0.05)",
-                  paddingBottom: "8px",
-                }}
-              >
-                <span style={{ color: "var(--c-sub)" }}>Fees (1%):</span>
-                <span style={{ fontWeight: "600", color: "var(--text-h)" }}>
-                  {(
-                    (selectedEnrollment.amountPaid ||
-                      selectedEnrollment.course?.price ||
-                      0) * 0.01
-                  ).toFixed(2)}{" "}
                   EGP
                 </span>
               </div>
