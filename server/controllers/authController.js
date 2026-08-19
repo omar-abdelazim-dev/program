@@ -121,6 +121,7 @@ export const register = async (req, res) => {
       year,
       track,
       providedCourses,
+      instructorStatus,
       linkedinUrl,
       socialUrl,
       goalsText,
@@ -192,6 +193,10 @@ export const register = async (req, res) => {
       });
     }
 
+    const normalizedCourses = Array.isArray(providedCourses)
+      ? providedCourses.filter(Boolean).join(", ")
+      : (providedCourses || "");
+
     const user = await User.create({
       name,
       email,
@@ -203,7 +208,8 @@ export const register = async (req, res) => {
       college,
       year,
       track,
-      providedCourses,
+      providedCourses: normalizedCourses,
+      instructorStatus: instructorStatus || "",
       linkedinUrl,
       socialUrl,
       goalsText,
@@ -474,6 +480,7 @@ export const updateProfile = async (req, res) => {
       college,
       major,
       providedCourses,
+      instructorStatus,
       linkedinUrl,
       socialUrl,
       phone,
@@ -509,7 +516,12 @@ export const updateProfile = async (req, res) => {
 
     if (college !== undefined) user.college = college;
     if (major !== undefined) user.major = major;
-    if (providedCourses !== undefined) user.providedCourses = providedCourses;
+    if (providedCourses !== undefined) {
+      user.providedCourses = Array.isArray(providedCourses)
+        ? providedCourses.filter(Boolean).join(", ")
+        : providedCourses;
+    }
+    if (instructorStatus !== undefined) user.instructorStatus = instructorStatus;
     if (linkedinUrl !== undefined) user.linkedinUrl = linkedinUrl;
     if (socialUrl !== undefined) user.socialUrl = socialUrl;
     if (lastName !== undefined) user.lastName = lastName.trim();
@@ -530,6 +542,7 @@ export const updateProfile = async (req, res) => {
         college: user.college,
         major: user.major,
         providedCourses: user.providedCourses,
+        instructorStatus: user.instructorStatus,
         linkedinUrl: user.linkedinUrl,
         socialUrl: user.socialUrl,
         phone: user.phone,

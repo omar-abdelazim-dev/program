@@ -79,6 +79,7 @@ const userSchema = new mongoose.Schema(
     year: { type: String, default: '' },
     track: { type: String, default: '' },
     providedCourses: { type: String, default: '' },
+    instructorStatus: { type: String, default: '' },
     linkedinUrl: { type: String, default: '' },
     socialUrl: { type: String, default: '' },
     goalsText: { type: String, default: '' },
