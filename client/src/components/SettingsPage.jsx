@@ -80,12 +80,9 @@ const SECTIONS = [
 export default function SettingsPage({
   user,
   setUser,
-  isLightMode,
-  toggleTheme,
   onLogout,
 }) {
   const { t, i18n } = useTranslation();
-  const isRTL = i18n.dir() === "rtl";
   const [activeSection, setActiveSection] = useState("profile");
   const tabBarRef = useRef(null);
   const tabRefs = useRef({});
@@ -152,11 +149,7 @@ export default function SettingsPage({
               <ProfileSection user={user} setUser={setUser} />
             )}
             {activeSection === "appearance" && (
-              <AppearanceSection
-                user={user}
-                isLightMode={isLightMode}
-                toggleTheme={toggleTheme}
-              />
+              <AppearanceSection user={user} />
             )}
             {activeSection === "account" && (
               <AccountSection
@@ -536,6 +529,12 @@ function AccountSection({ user, setUser, onLogout }) {
     return t(msg, msg);
   };
 
+  const handleDeleteAccount = () => {
+    if (window.confirm(t("settings.account.delete_confirm", "Are you sure you want to delete your account? Please contact support to finalize account deletion."))) {
+      alert(t("settings.account.delete_support_notice", "To delete your account and all associated data, please contact support at support@program.edu"));
+    }
+  };
+
   const handleResendPasswordOtp = async () => {
     if (passwordResendCooldown > 0 || savingPassword) return;
     setPasswordError("");
@@ -685,7 +684,7 @@ function AccountSection({ user, setUser, onLogout }) {
           gridTemplateColumns:
             "repeat(auto-fit, minmax(min(100%, max(300px, calc(50% - 16px))), 1fr))",
           gap: "32px",
-          alignItems: "start",
+          alignItems: "stretch",
         }}
       >
         <form
@@ -1133,39 +1132,43 @@ function AccountSection({ user, setUser, onLogout }) {
             </button>
           </div>
         </form>
-
         <div
           className="solid-card"
           style={{
             padding: "24px",
             display: "flex",
             flexDirection: "column",
+            justifyContent: "space-between",
             gap: "16px",
+            height: "100%",
+            boxSizing: "border-box",
           }}
         >
-          <h3
-            style={{
-              fontSize: "1.1rem",
-              fontWeight: "700",
-              margin: 0,
-              color: "var(--text-primary)",
-            }}
-          >
-            {t("settings.account.sessions_title", "Device Sessions")}
-          </h3>
-          <p
-            style={{
-              fontSize: "0.9rem",
-              color: "var(--text-secondary)",
-              margin: 0,
-              lineHeight: "1.5",
-            }}
-          >
-            {t(
-              "settings.account.sessions_desc",
-              "Sign out of Program on this device. You will need to log back in to access your dashboard.",
-            )}
-          </p>
+          <div>
+            <h3
+              style={{
+                fontSize: "1.1rem",
+                fontWeight: "700",
+                margin: 0,
+                color: "var(--text-primary)",
+              }}
+            >
+              {t("settings.account.sessions_title", "Device Sessions")}
+            </h3>
+            <p
+              style={{
+                fontSize: "0.9rem",
+                color: "var(--text-secondary)",
+                margin: "12px 0 0 0",
+                lineHeight: "1.5",
+              }}
+            >
+              {t(
+                "settings.account.sessions_desc",
+                "Sign out of Program on this device. You will need to log back in to access your dashboard.",
+              )}
+            </p>
+          </div>
           <button
             type="button"
             className="solid-btn"
@@ -1198,34 +1201,40 @@ function AccountSection({ user, setUser, onLogout }) {
           className="solid-card"
           style={{
             background: "rgba(239, 68, 68, 0.05)",
+            padding: "24px",
             display: "flex",
             flexDirection: "column",
+            justifyContent: "space-between",
             gap: "16px",
+            height: "100%",
+            boxSizing: "border-box",
           }}
         >
-          <h3
-            style={{
-              fontSize: "1.1rem",
-              fontWeight: "700",
-              margin: 0,
-              color: "#ef4444",
-            }}
-          >
-            {t("settings.account.danger_title", "Danger Zone")}
-          </h3>
-          <p
-            style={{
-              fontSize: "0.9rem",
-              color: "var(--text-secondary)",
-              margin: 0,
-              lineHeight: "1.5",
-            }}
-          >
-            {t(
-              "settings.account.danger_desc",
-              "Permanently delete your account and all of your data. This action cannot be undone.",
-            )}
-          </p>
+          <div>
+            <h3
+              style={{
+                fontSize: "1.1rem",
+                fontWeight: "700",
+                margin: 0,
+                color: "#ef4444",
+              }}
+            >
+              {t("settings.account.danger_title", "Danger Zone")}
+            </h3>
+            <p
+              style={{
+                fontSize: "0.9rem",
+                color: "var(--text-secondary)",
+                margin: "12px 0 0 0",
+                lineHeight: "1.5",
+              }}
+            >
+              {t(
+                "settings.account.danger_desc",
+                "Permanently delete your account and all of your data. This action cannot be undone.",
+              )}
+            </p>
+          </div>
           <button
             type="button"
             className="solid-btn"
@@ -1248,6 +1257,7 @@ function AccountSection({ user, setUser, onLogout }) {
             onMouseLeave={(e) => {
               e.target.style.background = "#ef4444";
             }}
+            onClick={handleDeleteAccount}
           >
             {t("settings.account.delete", "Delete Account")}
           </button>
@@ -1257,9 +1267,8 @@ function AccountSection({ user, setUser, onLogout }) {
   );
 }
 
-function AppearanceSection({ user, isLightMode, toggleTheme }) {
+function AppearanceSection({ user }) {
   const { t, i18n } = useTranslation();
-  const isRTL = i18n.dir() === "rtl";
   return (
     <div
       className="settings-section solid-card"
@@ -1285,135 +1294,8 @@ function AppearanceSection({ user, isLightMode, toggleTheme }) {
         )}
       </p>
 
-      {/* Theme Section */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-        <h3 style={{ fontSize: "1.1rem", fontWeight: "700", color: "var(--text-primary)", margin: 0 }}>
-          {t("settings.appearance.theme", "Theme")}
-        </h3>
-
-      <div
-        className="appearance-options"
-        style={{
-          display: "flex",
-          gap: "4px",
-          position: "relative",
-          background: "var(--bg-main)",
-          padding: "6px",
-          borderRadius: "12px",
-          boxShadow: "var(--inner-shadow)"
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            top: "6px",
-            bottom: "6px",
-            insetInlineStart: "6px",
-            width: "calc(50% - 8px)",
-            background: "var(--bg-surface)",
-            borderRadius: "12px",
-            boxShadow: "var(--outer-shadow)",
-            transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-            transform: isLightMode
-              ? isRTL
-                ? "translateX(calc(-100% - 4px))"
-                : "translateX(calc(100% + 4px))"
-              : "translateX(0)",
-            pointerEvents: "none",
-            zIndex: 0,
-          }}
-        />
-        <button
-          type="button"
-          style={{
-            position: "relative",
-            zIndex: 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "8px",
-            flex: 1,
-            padding: "12px",
-            borderRadius: "12px",
-            border: "none",
-            background: "transparent",
-            color: !isLightMode
-              ? "var(--text-primary)"
-              : "var(--text-secondary)",
-            fontWeight: "600",
-            cursor: "pointer",
-            transition: "all 0.3s ease",
-            boxShadow: "none",
-          }}
-          onClick={() => {
-            if (isLightMode) toggleTheme();
-          }}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth="1.8"
-          >
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-          </svg>
-          {t("settings.appearance.dark", "Dark")}
-        </button>
-        <button
-          type="button"
-          style={{
-            position: "relative",
-            zIndex: 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "8px",
-            flex: 1,
-            padding: "12px",
-            borderRadius: "12px",
-            border: "none",
-            background: "transparent",
-            color: isLightMode
-              ? "var(--text-primary)"
-              : "var(--text-secondary)",
-            fontWeight: "600",
-            cursor: "pointer",
-            transition: "all 0.3s ease",
-            boxShadow: "none",
-          }}
-          onClick={() => {
-            if (!isLightMode) toggleTheme();
-          }}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth="1.8"
-          >
-            <circle cx="12" cy="12" r="4"></circle>
-            <line x1="12" y1="2" x2="12" y2="4"></line>
-            <line x1="12" y1="20" x2="12" y2="22"></line>
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-            <line x1="2" y1="12" x2="4" y2="12"></line>
-            <line x1="20" y1="12" x2="22" y2="12"></line>
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-          </svg>
-          {t("settings.appearance.light", "Light")}
-        </button>
-      </div>
-      </div>
-
       {/* Language Section */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "8px" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
         <h3 style={{ fontSize: "1.1rem", fontWeight: "700", color: "var(--text-primary)", margin: 0 }}>
           {t("settings.appearance.language", "Language")}
         </h3>
