@@ -5,6 +5,7 @@ import User from '../models/User.js';
 import Notification from '../models/Notification.js';
 import { getInternalConfig } from '../utils/configFetcher.js';
 import logger from '../utils/logger.js';
+import { validateManualPaymentProof } from '../utils/manualPayment.js';
 
 // @route   POST /api/standalone-lessons
 // @access  Private (instructor)
@@ -213,6 +214,15 @@ export const purchaseStandaloneLesson = async (req, res) => {
       return res.status(409).json({ message: 'You have already purchased this lesson' });
     }
 
+    let paymentProof = {};
+    if (lesson.price > 0) {
+      const validation = validateManualPaymentProof(req.body);
+      if (validation.error) {
+        return res.status(400).json({ message: validation.error });
+      }
+      paymentProof = validation.proof;
+    }
+
     const instructor = await User.findById(lesson.instructor);
     let platformCommission = 0;
     let instructorShare = 0;
@@ -234,11 +244,7 @@ export const purchaseStandaloneLesson = async (req, res) => {
       platformCommission,
       instructorShare,
       status,
-      transactionId: req.body.transactionId,
-      paymentAccount: req.body.paymentAccount,
-      paymentMethod: req.body.paymentMethod,
-      screenshot: req.body.screenshot,
-      invoiceId: req.body.invoiceId,
+      ...paymentProof,
     });
 
     if (status === 'pending') {
@@ -248,7 +254,7 @@ export const purchaseStandaloneLesson = async (req, res) => {
         const notifications = admins.map((admin) => ({
           user: admin._id,
           title: 'New Standalone Lesson Purchase Request',
-          message: `${student ? student.name : 'A student'} has requested to purchase "${lesson.title}". Invoice ID: ${req.body.invoiceId || 'N/A'}.`,
+          message: `${student ? student.name : 'A student'} has requested to purchase "${lesson.title}". Invoice ID: ${paymentProof.invoiceId}.`,
           type: 'system',
           link: '/admin',
           refId: purchase._id,

@@ -1,5 +1,5 @@
 import notyf from '../utils/notyf';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ConfirmModal from './ConfirmModal';
 import CustomSelect from './CustomSelect';
@@ -31,10 +31,6 @@ export default function InstructorEngagementTab({ courses = [], onAction }) {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    fetchQuestions();
-  }, []);
-
   const isRTL = i18n.language === 'ar';
 
   useEffect(() => {
@@ -55,9 +51,9 @@ export default function InstructorEngagementTab({ courses = [], onAction }) {
       }
     }, 50);
     return () => clearTimeout(timer);
-  }, [activeTab, i18n.language]);
+  }, [activeTab, isRTL]);
 
-  const fetchQuestions = async () => {
+  const fetchQuestions = useCallback(async () => {
     try {
       const res = await api.get('/engagement/questions');
       setQuestions(res.data.questions || []);
@@ -67,7 +63,11 @@ export default function InstructorEngagementTab({ courses = [], onAction }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
+
+  useEffect(() => {
+    fetchQuestions();
+  }, [fetchQuestions]);
 
   const handleReplySubmit = async (id) => {
     if (!replyText.trim()) return;

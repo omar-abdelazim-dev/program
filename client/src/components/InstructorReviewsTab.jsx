@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import notyf from '../utils/notyf';
 import api from '../api/axios';
@@ -50,7 +50,7 @@ export default function InstructorReviewsTab() {
   const [totalReviews, setTotalReviews] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const fetchReviews = async () => {
+  const fetchReviews = useCallback(async () => {
     try {
       const res = await api.get('/reviews/instructor');
       setReviews(res.data.reviews || []);
@@ -62,11 +62,11 @@ export default function InstructorReviewsTab() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
   useEffect(() => {
     fetchReviews();
-  }, []);
+  }, [fetchReviews]);
 
   const handleReport = async (reviewId) => {
     try {

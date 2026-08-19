@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import api from '../api/axios';
 import FullPageLoader from './FullPageLoader';
@@ -69,6 +69,25 @@ export default function LearningPortal({ user }) {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 5;
 
+  const userId = user?._id || user?.id;
+  const userRole = user?.role;
+
+  const handleSelectLesson = useCallback(async (lessonId, lessonTitle) => {
+    setActiveLesson({ _id: lessonId, title: lessonTitle });
+    setVideoLoading(true);
+    setActiveVideoUrl('');
+    setVideoError(false);
+    try {
+      const { data } = await api.get(`/courses/${id}/lessons/${lessonId}`);
+      setActiveVideoUrl(data.lesson?.videoUrl || '');
+      if (data.lesson) setActiveLesson(data.lesson);
+    } catch(err) {
+      console.error('Failed to load video URL', err);
+    } finally {
+      setVideoLoading(false);
+    }
+  }, [id]);
+
   useEffect(() => {
     const controller = new AbortController();
     const fetchPortalData = async () => {
@@ -82,10 +101,10 @@ export default function LearningPortal({ user }) {
         try {
           const enrollRes = await api.get(`/enrollments/${id}`, { signal: controller.signal });
           
-          const isStaff = user && (
-            user.role === 'admin' || 
-            user.role === 'superadmin' || 
-            (courseRes.data.course.instructor?._id || courseRes.data.course.instructor) === (user._id || user.id)
+          const isStaff = userId && (
+            userRole === 'admin' ||
+            userRole === 'superadmin' ||
+            (courseRes.data.course.instructor?._id || courseRes.data.course.instructor) === userId
           );
 
           if (!isStaff && (!enrollRes.data?.enrolled || enrollRes.data?.status !== 'approved')) {
@@ -99,10 +118,10 @@ export default function LearningPortal({ user }) {
             setModuleProgress(enrollRes.data.moduleProgress || []);
           }
         } catch(e) {
-          const isStaff = user && (
-            user.role === 'admin' || 
-            user.role === 'superadmin' || 
-            (courseRes.data.course.instructor?._id || courseRes.data.course.instructor) === (user._id || user.id)
+          const isStaff = userId && (
+            userRole === 'admin' ||
+            userRole === 'superadmin' ||
+            (courseRes.data.course.instructor?._id || courseRes.data.course.instructor) === userId
           );
           if (!isStaff) {
             navigate(`/course/${id}`, { replace: true });
@@ -123,23 +142,7 @@ export default function LearningPortal({ user }) {
     };
     fetchPortalData();
     return () => controller.abort();
-  }, [id]);
-
-  const handleSelectLesson = async (lessonId, lessonTitle) => {
-    setActiveLesson({ _id: lessonId, title: lessonTitle });
-    setVideoLoading(true);
-    setActiveVideoUrl('');
-    setVideoError(false);
-    try {
-      const { data } = await api.get(`/courses/${id}/lessons/${lessonId}`);
-      setActiveVideoUrl(data.lesson?.videoUrl || '');
-      if (data.lesson) setActiveLesson(data.lesson);
-    } catch(err) {
-      console.error('Failed to load video URL', err);
-    } finally {
-      setVideoLoading(false);
-    }
-  };
+  }, [handleSelectLesson, id, navigate, userId, userRole]);
 
   const toggleComplete = async (lessonId) => {
     try {
@@ -153,7 +156,7 @@ export default function LearningPortal({ user }) {
     }
   };
 
-  const fetchQuestions = async () => {
+  const fetchQuestions = useCallback(async () => {
     try {
       setQuestionsLoading(true);
       const res = await api.get(`/engagement/course/${id}/questions`);
@@ -163,13 +166,13 @@ export default function LearningPortal({ user }) {
     } finally {
       setQuestionsLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     if (activeTab === 'qa') {
       fetchQuestions();
     }
-  }, [activeTab, id]);
+  }, [activeTab, fetchQuestions]);
 
   const submitQuestion = async (e) => {
     e.preventDefault();

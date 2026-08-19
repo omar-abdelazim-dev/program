@@ -15,9 +15,8 @@ const courseSchema = new mongoose.Schema(
       type: Number,
       required: [true, 'Price is required'],
       min: 0,
-      // MVP scope: this is a display-only number. No payment processing —
-      // see project scope boundaries. Do not wire this to Stripe without
-      // being explicitly asked.
+      // Paid access uses the manual transfer-proof review flow. There is no
+      // card processor or automated gateway settlement.
     },
     // INS-03: de-required in favor of College-based tagging — kept (rather
     // than dropped) so existing courses and category-based analytics/filters

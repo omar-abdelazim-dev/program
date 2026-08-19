@@ -3,9 +3,11 @@ import { useTranslation } from 'react-i18next';
 import api from '../api/axios';
 import CustomSelect from './CustomSelect';
 import notyf from '../utils/notyf';
+import { useConfig } from '../context/ConfigContext';
 
 export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling }) {
   const { t, i18n } = useTranslation();
+  const { config } = useConfig();
   const isRTL = i18n.language === 'ar';
 
   const [transactionId, setTransactionId] = useState('');
@@ -20,7 +22,31 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
     setInvoiceId(`INV-${Math.floor(Math.random() * 1000000)}`);
   }, []);
 
-  const handlePhoneChange = (e) => {
+  const paymentConfig = config?.payment || {};
+  const paymentOptions = [
+    ...(paymentConfig.mobileWalletEnabled !== false
+      ? [{ value: 'mobile_wallet', label: t('course_page.payment.mobile_wallet', 'Mobile Wallet') }]
+      : []),
+    ...(paymentConfig.instaPayEnabled !== false
+      ? [{ value: 'instapay', label: 'InstaPay' }]
+      : []),
+  ];
+  const recipientAccount = paymentMethod === 'mobile_wallet'
+    ? paymentConfig.mobileWalletNumber
+    : paymentMethod === 'instapay'
+      ? paymentConfig.instaPayAccount
+      : '';
+
+  const handlePaymentMethodChange = (method) => {
+    setPaymentMethod(method);
+    setPaymentAccount(method === 'mobile_wallet' ? '+20' : '');
+  };
+
+  const handleAccountChange = (e) => {
+    if (paymentMethod !== 'mobile_wallet') {
+      setPaymentAccount(e.target.value.slice(0, 120));
+      return;
+    }
     let val = e.target.value;
     if (!val.startsWith('+20')) {
       val = '+20';
@@ -42,7 +68,7 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
       return;
     }
 
-    if (!/^\+20\d{10}$/.test(paymentAccount)) {
+    if (paymentMethod === 'mobile_wallet' && !/^\+20\d{10}$/.test(paymentAccount)) {
       const msg = t('course_page.payment.invalid_phone', 'Phone number must have exactly 10 digits after the +20 code.');
       setError(msg);
       notyf.error(msg);
@@ -51,7 +77,6 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
 
     setIsUploading(true);
     let screenshotUrl = '';
-    notyf.success(t('course_page.payment.uploading_screenshot', 'Uploading screenshot...'));
     try {
       const formData = new FormData();
       formData.append('image', screenshotFile);
@@ -68,14 +93,17 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
       return;
     }
 
-    notyf.success('Submitting to backend...');
-    onConfirm({
-      transactionId,
-      paymentAccount,
-      paymentMethod,
-      screenshot: screenshotUrl,
-      invoiceId,
-    });
+    try {
+      await onConfirm({
+        transactionId,
+        paymentAccount,
+        paymentMethod,
+        screenshot: screenshotUrl,
+        invoiceId,
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   if (!course) return null;
@@ -150,9 +178,11 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
         )}
 
         {(() => {
-          const expectedFees = (course.price * 0.01).toFixed(2);
-          const totalAmount = (course.price * 1.01).toFixed(2);
-          const curr = t('currency', 'EGP');
+          const numericPrice = typeof course.price === 'number'
+            ? course.price
+            : Number.parseFloat(String(course.price || '').replace(/[^0-9.]/g, '')) || 0;
+          const totalAmount = numericPrice.toFixed(2);
+          const curr = paymentConfig.currency || t('currency', 'EGP');
           return (
             <div style={{ background: 'var(--bg-surface)', padding: '20px', borderRadius: '12px', marginBottom: '28px', fontSize: '0.95rem', direction: isRTL ? 'rtl' : 'ltr' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
@@ -169,11 +199,7 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>{t('course_page.payment.price', 'Price')}:</span>
-                <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{course.price} {curr}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>{t('course_page.payment.fees', 'Fees (1%)')}:</span>
-                <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{expectedFees} {curr}</span>
+                <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{numericPrice.toFixed(2)} {curr}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '12px', borderTop: '1px solid var(--border)', marginTop: '12px' }}>
                 <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{t('course_page.payment.total', 'Total')}:</span>
@@ -182,6 +208,11 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
             </div>
           );
         })()}
+
+        <div style={{ padding: '14px 16px', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.25)', borderRadius: '10px', marginBottom: '24px', color: 'var(--text-primary)', lineHeight: 1.5, fontSize: '0.9rem', direction: isRTL ? 'rtl' : 'ltr' }}>
+          {t('course_page.payment.manual_review_notice', 'Transfer the exact total outside the platform, then submit the receipt below. Access is granted only after an admin verifies the payment.')}
+          {paymentConfig.manualPaymentInstructions && <div style={{ marginTop: '8px', fontWeight: 600 }}>{paymentConfig.manualPaymentInstructions}</div>}
+        </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px', direction: isRTL ? 'rtl' : 'ltr' }}>
           <div style={{
@@ -194,28 +225,32 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
                 {t('course_page.payment.payment_method', 'Payment Method')} <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <CustomSelect
-                options={[
-                  { value: 'Vodafone Cash', label: 'Vodafone Cash' },
-                  { value: 'InstaPay', label: 'InstaPay' },
-                  { value: 'PayPal', label: 'PayPal' },
-                  { value: 'Bank Transfer', label: 'Bank Transfer' }
-                ]}
+                options={paymentOptions}
                 value={paymentMethod}
-                onChange={setPaymentMethod}
+                onChange={handlePaymentMethodChange}
                 placeholder={t('course_page.payment.select_payment_method', 'Select a payment method')}
                 triggerStyle={inputStyle}
               />
             </div>
+            {paymentMethod && (
+              <div style={{ gridColumn: '1 / -1', padding: '12px 16px', borderRadius: '10px', background: recipientAccount ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: recipientAccount ? '#10b981' : '#ef4444', fontWeight: 600 }}>
+                {recipientAccount
+                  ? `${t('course_page.payment.transfer_to', 'Transfer to')}: ${recipientAccount}`
+                  : t('course_page.payment.destination_missing', 'This payment destination is not configured. Please contact support before transferring funds.')}
+              </div>
+            )}
             <div>
               <label style={{ display: 'block', marginBottom: '8px', fontWeight: '700', fontSize: '0.85rem', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '1px', textAlign: isRTL ? 'right' : 'left' }}>
-                {t('course_page.payment.phone_number_used', 'Phone Number Used')} <span style={{ color: '#ef4444' }}>*</span>
+                {paymentMethod === 'instapay'
+                  ? t('course_page.payment.sender_account', 'Sender account or IPA')
+                  : t('course_page.payment.phone_number_used', 'Phone Number Used')} <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <input
                 type="tel"
-                placeholder="+201012345678"
-                maxLength={13}
+                placeholder={paymentMethod === 'instapay' ? 'name@instapay' : '+201012345678'}
+                maxLength={paymentMethod === 'instapay' ? 120 : 13}
                 value={paymentAccount}
-                onChange={handlePhoneChange}
+                onChange={handleAccountChange}
                 style={inputStyle}
               />
             </div>
@@ -275,11 +310,11 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
             </button>
             <button
               type="submit"
-              disabled={isEnrolling || isUploading}
+              disabled={isEnrolling || isUploading || !recipientAccount}
               className="solid-btn"
-              style={{ flex: 1, padding: '14px', borderRadius: '12px', textTransform: 'uppercase', letterSpacing: '1px', cursor: (isEnrolling || isUploading) ? 'not-allowed' : 'pointer', opacity: (isEnrolling || isUploading) ? 0.7 : 1 }}
+              style={{ flex: 1, padding: '14px', borderRadius: '12px', textTransform: 'uppercase', letterSpacing: '1px', cursor: (isEnrolling || isUploading || !recipientAccount) ? 'not-allowed' : 'pointer', opacity: (isEnrolling || isUploading || !recipientAccount) ? 0.7 : 1 }}
             >
-              {(isEnrolling || isUploading) ? t('course_page.payment.submitting', 'Submitting...') : t('course_page.payment.submit_payment', 'Submit Payment')}
+              {(isEnrolling || isUploading) ? t('course_page.payment.submitting', 'Submitting...') : t('course_page.payment.submit_payment', 'Submit Proof for Review')}
             </button>
           </div>
         </form>

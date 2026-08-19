@@ -14,14 +14,17 @@ const systemConfigSchema = new mongoose.Schema(
     
     financial: {
       commission: { type: Number, default: 15, min: 0, max: 100 },
-      currency: { type: String, default: 'USD' },
+      currency: { type: String, default: 'EGP' },
       refundWindow: { type: Number, default: 14 },
       minWithdrawal: { type: Number, default: 50 },
-      // ADM-15: Stripe/PayPal/tax removed — payments are display-only in this
-      // MVP (see project scope boundaries) and payouts go through mobile
-      // wallets, not a card processor.
+      // Students transfer funds outside the platform and submit proof for
+      // admin review. These recipient details are deliberately exposed by the
+      // public config endpoint so the checkout can show where to transfer.
       instaPayEnabled: { type: Boolean, default: true },
       mobileWalletEnabled: { type: Boolean, default: true },
+      instaPayAccount: { type: String, default: '', maxlength: 120 },
+      mobileWalletNumber: { type: String, default: '', maxlength: 30 },
+      manualPaymentInstructions: { type: String, default: '', maxlength: 500 },
     },
 
     registration: {

@@ -247,4 +247,12 @@ const runTests = async () => {
   process.exit(0);
 };
 
-runTests().catch(console.error);
+runTests().catch(async (error) => {
+  console.error('\nAUTH SECURITY TEST SUITE FAILED');
+  console.error(error);
+
+  await mongoose.disconnect().catch(() => {});
+  if (mongoServer) await mongoServer.stop().catch(() => {});
+
+  process.exit(1);
+});

@@ -231,7 +231,7 @@ export default function DashboardTab() {
       }
     }, 50);
     return () => clearTimeout(timer);
-  }, [activeSubTab, loading, enrollments, i18n.language]);
+  }, [activeSubTab, loading, enrollments, isRTL]);
 
   if (loading) return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
@@ -406,4 +406,3 @@ export default function DashboardTab() {
     </>
   );
 }
-

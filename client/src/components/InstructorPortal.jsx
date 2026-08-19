@@ -44,7 +44,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
     if (savedLang && i18n.language !== savedLang) {
       i18n.changeLanguage(savedLang);
     }
-  }, []);
+  }, [i18n, i18n.language]);
 
   // Modals
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -1633,6 +1633,5 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
     </div>
   );
 }
-
 
 

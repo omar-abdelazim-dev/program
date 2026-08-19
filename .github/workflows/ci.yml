@@ -19,9 +19,9 @@ jobs:
       - name: Install server dependencies
         working-directory: server
         run: npm ci
-      - name: Run integration test
+      - name: Run server test suites
         working-directory: server
-        run: node test-integration.js
+        run: npm test
 
   client-build:
     name: Client lint + build

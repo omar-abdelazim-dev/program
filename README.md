@@ -32,10 +32,10 @@ The system uses a strict hierarchy for access control.
 - **Course Catalog (Explore Tab)**: Displays all `Approved` courses with thumbnails, titles, prices, and instructor names.
 - **Search Functionality**: Real-time searching of courses by title or category.
 - **Course Detail View**: See course description, total duration, number of lessons, and instructor details.
-- **Checkout Flow**: 
-  - Simulated payment gateway.
-  - Generates secure `Enrollment` database entries linking the Student and Course.
-  - Odometer animation when payment is successful.
+- **Checkout Flow**:
+  - Manual Mobile Wallet/InstaPay transfer with transaction details and receipt upload.
+  - Paid requests remain pending until an admin verifies the transfer; free items are approved immediately.
+  - No integrated card processor or simulated payment gateway. See [Manual payment and enrollment model](docs/manual-payments.md).
 - **Dashboard Tab**: 
   - Shows the student's actively enrolled courses.
   - Tracks total amount spent by the student.
@@ -104,7 +104,7 @@ The system uses a strict hierarchy for access control.
 - `PATCH /:id/reject`: (Admin) Rejects a course.
 
 ### Enrollments (`/api/enrollments`)
-- `POST /`: Creates a transaction and enrolls the user.
+- `POST /:courseId`: Creates an enrollment. Paid courses require manual-payment proof and start in `pending`; free courses are approved immediately.
 - `GET /mine`: Returns courses the current student has purchased.
 
 ### Admin (`/api/admin`)

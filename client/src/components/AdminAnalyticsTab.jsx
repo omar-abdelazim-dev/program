@@ -40,7 +40,10 @@ const AdminAnalyticsTab = ({ stats, revenueAnalytics, revenueAnalyticsLoading })
   const tooltipBorder = 'none';
 
   // ── Data ────────────────────────────────────────────────────────────────────
-  const rawSeries = revenueAnalytics?.series || [];
+  const rawSeries = useMemo(
+    () => revenueAnalytics?.series || [],
+    [revenueAnalytics?.series],
+  );
 
   const fullSeries = useMemo(() => {
     return rawSeries.map((item, index) => {
@@ -386,4 +389,3 @@ const AdminAnalyticsTab = ({ stats, revenueAnalytics, revenueAnalyticsLoading })
 };
 
 export default AdminAnalyticsTab;
-
