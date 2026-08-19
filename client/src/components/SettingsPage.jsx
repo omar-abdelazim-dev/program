@@ -80,12 +80,9 @@ const SECTIONS = [
 export default function SettingsPage({
   user,
   setUser,
-  isLightMode,
-  toggleTheme,
   onLogout,
 }) {
   const { t, i18n } = useTranslation();
-  const isRTL = i18n.dir() === "rtl";
   const [activeSection, setActiveSection] = useState("profile");
   const tabBarRef = useRef(null);
   const tabRefs = useRef({});
@@ -152,11 +149,7 @@ export default function SettingsPage({
               <ProfileSection user={user} setUser={setUser} />
             )}
             {activeSection === "appearance" && (
-              <AppearanceSection
-                user={user}
-                isLightMode={isLightMode}
-                toggleTheme={toggleTheme}
-              />
+              <AppearanceSection user={user} />
             )}
             {activeSection === "account" && (
               <AccountSection
@@ -1274,9 +1267,8 @@ function AccountSection({ user, setUser, onLogout }) {
   );
 }
 
-function AppearanceSection({ user, isLightMode, toggleTheme }) {
+function AppearanceSection({ user }) {
   const { t, i18n } = useTranslation();
-  const isRTL = i18n.dir() === "rtl";
   return (
     <div
       className="settings-section solid-card"
