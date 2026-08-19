@@ -9,6 +9,8 @@ import './styles/content.css'
 import './styles/dashboard.css'
 import './styles/settings.css'
 import './styles/loading.css'
+import './styles/student-layout.css'
+import './styles/landing-page.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

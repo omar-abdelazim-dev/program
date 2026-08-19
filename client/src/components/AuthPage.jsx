@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import logoDark from '../assets/logo-dark.png';
 import logoLight from '../assets/logo-light.png';
@@ -34,7 +34,9 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
   const [college, setCollege] = useState('');
   const [year, setYear] = useState('');
   const [major, setMajor] = useState('');
-  const [providedCourses, setProvidedCourses] = useState('');
+  const [providedCoursesList, setProvidedCoursesList] = useState([]);
+  const [courseInput, setCourseInput] = useState('');
+  const [instructorStatus, setInstructorStatus] = useState('');
   const [linkedinUrl, setLinkedinUrl] = useState('');
   const [socialUrl, setSocialUrl] = useState('');
   
@@ -177,6 +179,36 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
     }
   };
 
+  const INSTRUCTOR_STATUS_OPTIONS = [
+    { value: 'student', label: t('auth.instructor_status_student', 'Student') },
+    { value: 'graduate', label: t('auth.instructor_status_graduate', 'Graduated') },
+    { value: 'employed', label: t('auth.instructor_status_employed', 'Employed / Working') },
+    { value: 'unemployed', label: t('auth.instructor_status_unemployed', 'Not Working / Job Seeker') },
+    { value: 'teacher', label: t('auth.instructor_status_teacher', 'Teacher / Educator') },
+    { value: 'doctor', label: t('auth.instructor_status_doctor', 'Academic Doctor / Professor') },
+    { value: 'teaching_assistant', label: t('auth.instructor_status_teaching_assistant', 'Teaching Assistant (TA)') },
+  ];
+
+  const handleAddCourse = (e) => {
+    if (e) e.preventDefault();
+    const trimmed = courseInput.trim();
+    if (trimmed && !providedCoursesList.some(course => course.toLocaleLowerCase() === trimmed.toLocaleLowerCase())) {
+      setProvidedCoursesList(prev => [...prev, trimmed]);
+      setCourseInput('');
+    }
+  };
+
+  const handleRemoveCourse = (courseToRemove) => {
+    setProvidedCoursesList(prev => prev.filter(c => c !== courseToRemove));
+  };
+
+  const handleCourseKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      handleAddCourse();
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setAuthError('');
@@ -291,6 +323,22 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
           setRegisterStep(registerStep + 1);
         }
       } else {
+        let finalCourses = [...providedCoursesList];
+        if (courseInput.trim() && !finalCourses.includes(courseInput.trim())) {
+          finalCourses.push(courseInput.trim());
+        }
+
+        if (role === 'instructor') {
+          if (!instructorStatus) {
+            setAuthError(t('auth.instructor_status_required', 'Please select your current status / profession'));
+            return;
+          }
+          if (finalCourses.length === 0) {
+            setAuthError(t('auth.no_courses_added', 'Please add at least one course'));
+            return;
+          }
+        }
+
         setIsCreatingAccount(true);
         try {
           const payload = {
@@ -298,7 +346,8 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
             year,
             college,
             major,
-            providedCourses,
+            providedCourses: finalCourses.join(', '),
+            instructorStatus,
             linkedinUrl,
             socialUrl,
             goalsText,
@@ -502,12 +551,105 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
                       ) : (
                         <>
                           <div className="input-group">
-                            <label>{t('auth.courses_provided')}</label>
-                            <div className="icon-input-wrapper">
-                              <svg className="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-                              <input type="text" placeholder={t('auth.courses_provided_placeholder')} required value={providedCourses} onChange={(e) => { if (/^[a-zA-Z\u0600-\u06FF\s,\.\-]*$/.test(e.target.value)) setProvidedCourses(e.target.value); }} />
-                            </div>
+                            <label>{t('auth.instructor_status')} *</label>
+                            <CustomSelect
+                              options={INSTRUCTOR_STATUS_OPTIONS}
+                              value={instructorStatus}
+                              onChange={setInstructorStatus}
+                              placeholder={t('auth.instructor_status_placeholder')}
+                              icon={<svg className="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>}
+                            />
                           </div>
+
+                          <div className="input-group">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <label>{t('auth.courses_provided')}</label>
+                              {providedCoursesList.length > 0 && (
+                                <span style={{ fontSize: '0.78rem', color: 'var(--c-orange, #f97316)', fontWeight: '600' }}>
+                                  {providedCoursesList.length} {t('auth.courses_count')}
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                              <div className="icon-input-wrapper" style={{ flex: 1 }}>
+                                <svg className="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                                <input 
+                                  type="text" 
+                                  placeholder={t('auth.courses_provided_placeholder')} 
+                                  value={courseInput} 
+                                  onChange={(e) => { if (/^[a-zA-Z\u0600-\u06FF\s,.-0-9#+]*$/.test(e.target.value)) setCourseInput(e.target.value); }}
+                                  onKeyDown={handleCourseKeyDown}
+                                  maxLength={120}
+                                />
+                              </div>
+                              <button 
+                                type="button" 
+                                className="solid-btn"
+                                onClick={handleAddCourse}
+                                style={{
+                                  padding: '0 18px',
+                                  borderRadius: '12px',
+                                  fontSize: '0.9rem',
+                                  height: '46px',
+                                  whiteSpace: 'nowrap',
+                                  flexShrink: 0,
+                                  gap: '6px'
+                                }}
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                <span>{t('auth.add_course')}</span>
+                              </button>
+                            </div>
+
+                            {providedCoursesList.length > 0 && (
+                              <div className="courses-tag-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '6px' }}>
+                                {providedCoursesList.map((course, idx) => (
+                                  <div 
+                                    key={idx} 
+                                    className="course-chip animate-entrance"
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '6px',
+                                      padding: '6px 12px',
+                                      borderRadius: '10px',
+                                      background: 'var(--bg-main)',
+                                      color: 'var(--text-primary)',
+                                      fontSize: '0.85rem',
+                                      fontWeight: '600',
+                                      border: '1px solid rgba(249, 115, 22, 0.35)',
+                                      boxShadow: 'var(--inner-shadow)'
+                                    }}
+                                  >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent, #f97316)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                                    <span>{course}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveCourse(course)}
+                                      style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        color: 'var(--text-secondary)',
+                                        cursor: 'pointer',
+                                        padding: '0 2px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        transition: 'color 0.2s',
+                                        marginLeft: '2px'
+                                      }}
+                                      onMouseEnter={(e) => e.currentTarget.style.color = '#ef4444'}
+                                      onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
+                                      title={t('auth.remove_course')}
+                                    >
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
                           <div className="input-row">
                             <div className="input-group">
                               <label>{t('auth.linkedin')}</label>
@@ -604,21 +746,21 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
                     </div>
                     
                     <div className="input-group">
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '22px' }}>
-                        <label>{t('auth.password')}</label>
-                        {!isLogin && (
-                          <div className="password-strength-container" style={{ margin: 0, gap: '8px' }}>
-                            <div className="strength-bars" style={{ width: '60px', flex: 'none' }}>
-                              <div className={`strength-bar ${passStrength >= 1 ? 'weak' : ''}`}></div>
-                              <div className={`strength-bar ${passStrength >= 2 ? 'medium' : ''}`}></div>
-                              <div className={`strength-bar ${passStrength >= 3 ? 'strong' : ''}`}></div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: '22px', flexWrap: 'wrap', gap: '4px' }}>
+                          <label style={{ whiteSpace: 'nowrap' }}>{t('auth.password')}</label>
+                          {!isLogin && (
+                            <div className="password-strength-container" style={{ margin: 0, gap: '8px' }}>
+                              <div className="strength-bars" style={{ width: '60px', flex: 'none' }}>
+                                <div className={`strength-bar ${passStrength >= 1 ? 'weak' : ''}`}></div>
+                                <div className={`strength-bar ${passStrength >= 2 ? 'medium' : ''}`}></div>
+                                <div className={`strength-bar ${passStrength >= 3 ? 'strong' : ''}`}></div>
+                              </div>
+                              <span className="strength-text" style={{ fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                                {passStrength === 0 ? t('auth.password_strength') : passStrength === 1 ? t('auth.strength_weak') : passStrength === 2 ? t('auth.strength_medium') : t('auth.strength_strong')}
+                              </span>
                             </div>
-                            <span className="strength-text" style={{ fontSize: '0.75rem' }}>
-                              {passStrength === 0 ? t('auth.password_strength') : passStrength === 1 ? t('auth.strength_weak') : passStrength === 2 ? t('auth.strength_medium') : t('auth.strength_strong')}
-                            </span>
-                          </div>
-                        )}
-                      </div>
+                          )}
+                        </div>
                       <div className="password-input-wrapper">
                         <input 
                           type={showPassword ? "text" : "password"} 

@@ -17,7 +17,7 @@ process.env.NODE_ENV = 'development';
 // -> register) — see authController.js. There's no API to read a raw OTP
 // back, only the DB-stored hash, so this captures it the same way a human
 // tester would in dev: from the console debug line otpService prints.
-const registerViaOtpFlow = async (agent, { name, email, password, role }) => {
+const registerViaOtpFlow = async (agent, { name, email, password, role, ...profile }) => {
   let capturedOtp = null;
   const originalLog = console.log;
   console.log = (...args) => {
@@ -36,7 +36,7 @@ const registerViaOtpFlow = async (agent, { name, email, password, role }) => {
   const verifyRes = await agent.post('/api/auth/verify-registration-otp').send({ email, otp: capturedOtp });
   if (verifyRes.status !== 200) throw new Error(`verify-registration-otp failed: ${JSON.stringify(verifyRes.body)}`);
 
-  return agent.post('/api/auth/register').send({ name, email, password, role });
+  return agent.post('/api/auth/register').send({ name, email, password, role, ...profile });
 };
 
 const run = async () => {
@@ -59,6 +59,8 @@ const run = async () => {
     email: 'nora@example.com',
     password: 'Password123!',
     role: 'instructor',
+    instructorStatus: 'teacher',
+    providedCourses: ['Intro to Algorithms'],
   });
   assert(res.status === 201, `Instructor register failed: ${JSON.stringify(res.body)}`);
   const instructorCsrf = getCsrfToken(res);

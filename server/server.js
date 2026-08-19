@@ -52,6 +52,14 @@ const startServer = async () => {
       });
     }
   });
+
+  process.on("unhandledRejection", (err) => {
+    logger.error("Unhandled Rejection", { error: err.message, stack: err.stack });
+  });
+
+  process.on("uncaughtException", (err) => {
+    logger.error("Uncaught Exception", { error: err.message, stack: err.stack });
+  });
 };
 
 startServer();

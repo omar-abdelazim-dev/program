@@ -1713,26 +1713,29 @@ body.light-mode .progress-bar-container {
 .step:not(:last-child)::after {
     content: '';
     position: absolute;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15) 15%, rgba(255, 255, 255, 0.15) 85%, transparent);
-    top: 20px;
+    background: var(--bg-main);
+    box-shadow: var(--inner-shadow);
+    border-radius: 4px;
+    top: 17px;
     inset-inline-start: calc(50% + 24px);
     width: calc(100% - 48px);
-    height: 2px;
+    height: 6px;
     z-index: 0;
 }
 
 body.light-mode .step:not(:last-child)::after {
-    background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.15) 15%, rgba(0, 0, 0, 0.15) 85%, transparent);
+    background: var(--bg-main);
 }
 
 .step:not(:last-child)::before {
     content: '';
     position: absolute;
-    top: 20px;
+    top: 17px;
     inset-inline-start: calc(50% + 24px);
     width: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, #4ade80 15%, #4ade80 85%, transparent);
+    height: 6px;
+    border-radius: 4px;
+    background: #4ade80;
     z-index: 1;
     transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -1753,6 +1756,8 @@ body.light-mode .step:not(:last-child)::after {
     font-size: 1rem;
     transition: all 0.3s;
     box-shadow: var(--inner-shadow);
+    position: relative;
+    z-index: 2;
 }
 
 .step.completed .step-icon {
@@ -1806,15 +1811,19 @@ body.light-mode .step:not(:last-child)::after {
     display: grid;
     grid-template-rows: 0fr;
     opacity: 0;
-    transition: grid-template-rows 0.5s ease-in-out, opacity 0.4s ease-in-out;
+    visibility: hidden;
+    transition: grid-template-rows 0.4s ease-in-out, opacity 0.3s ease-in-out, visibility 0s 0.4s;
 }
 
 .expandable-section.expanded {
     grid-template-rows: 1fr;
     opacity: 1;
+    visibility: visible;
+    transition: grid-template-rows 0.4s ease-in-out, opacity 0.3s ease-in-out, visibility 0s;
 }
 
 .expandable-content {
+    min-height: 0;
     overflow: visible;
     display: flex;
     flex-direction: column;
@@ -2368,6 +2377,7 @@ body.light-mode .custom-select-value.placeholder {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
+    align-items: flex-end;
 }
 
 .input-group {
@@ -3004,8 +3014,7 @@ body.light-mode .instructor-card,
 body.light-mode .side-card,
 body.light-mode .path-card,
 body.light-mode .continue-card,
-body.light-mode .cc-card,
-body.light-mode .role-card {
+body.light-mode .cc-card {
     background-color: rgba(255, 255, 255, 0.7) !important;
     border: 1px solid transparent !important;
     box-shadow: var(--outer-shadow) !important;

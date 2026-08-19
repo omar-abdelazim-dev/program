@@ -12,8 +12,27 @@ import {
   POST_VERIFY_GRACE_MINUTES,
 } from "../utils/otpService.js";
 import { validatePasswordStrength } from "../utils/passwordRules.js";
-import { NAME_PATTERN } from "../validators/authValidators.js";
+import {
+  INSTRUCTOR_STATUSES,
+  MAX_COURSE_NAME_LENGTH,
+  MAX_PROVIDED_COURSES,
+  NAME_PATTERN,
+} from "../validators/authValidators.js";
 import { BCRYPT_ROUNDS } from "../config/security.js";
+
+const normalizeProvidedCourses = (providedCourses) => {
+  const courses = Array.isArray(providedCourses)
+    ? providedCourses
+    : typeof providedCourses === "string" ? providedCourses.split(",") : null;
+  if (courses === null || courses.length > MAX_PROVIDED_COURSES || courses.some(
+    (course) => typeof course !== "string" || !course.trim() || course.trim().length > MAX_COURSE_NAME_LENGTH,
+  )) return null;
+
+  return [...new Map(courses.map((course) => {
+    const trimmed = course.trim();
+    return [trimmed.toLocaleLowerCase(), trimmed];
+  })).values()].join(", ");
+};
 
 // @route   POST /api/auth/check-email
 // @access  Public
@@ -121,6 +140,7 @@ export const register = async (req, res) => {
       year,
       track,
       providedCourses,
+      instructorStatus,
       linkedinUrl,
       socialUrl,
       goalsText,
@@ -192,6 +212,14 @@ export const register = async (req, res) => {
       });
     }
 
+    const normalizedCourses = normalizeProvidedCourses(providedCourses || "");
+    if (safeRole === "instructor" && !normalizedCourses) {
+      return res.status(400).json({ message: "Please add at least one course" });
+    }
+    if (safeRole === "instructor" && !INSTRUCTOR_STATUSES.includes(instructorStatus)) {
+      return res.status(400).json({ message: "Invalid instructor status" });
+    }
+
     const user = await User.create({
       name,
       email,
@@ -203,7 +231,8 @@ export const register = async (req, res) => {
       college,
       year,
       track,
-      providedCourses,
+      providedCourses: normalizedCourses || "",
+      instructorStatus: safeRole === "instructor" ? instructorStatus : "",
       linkedinUrl,
       socialUrl,
       goalsText,
@@ -223,6 +252,7 @@ export const register = async (req, res) => {
         email: user.email,
         role: user.role,
         avatarUrl: user.avatarUrl,
+        instructorStatus: user.instructorStatus,
       },
     });
   } catch (error) {
@@ -474,6 +504,7 @@ export const updateProfile = async (req, res) => {
       college,
       major,
       providedCourses,
+      instructorStatus,
       linkedinUrl,
       socialUrl,
       phone,
@@ -509,7 +540,19 @@ export const updateProfile = async (req, res) => {
 
     if (college !== undefined) user.college = college;
     if (major !== undefined) user.major = major;
-    if (providedCourses !== undefined) user.providedCourses = providedCourses;
+    if (providedCourses !== undefined) {
+      const normalizedCourses = normalizeProvidedCourses(providedCourses);
+      if (normalizedCourses === null) {
+        return res.status(400).json({ message: "Provide between 1 and 20 course names of up to 120 characters each" });
+      }
+      user.providedCourses = normalizedCourses;
+    }
+    if (instructorStatus !== undefined) {
+      if (user.role !== "instructor" || !INSTRUCTOR_STATUSES.includes(instructorStatus)) {
+        return res.status(400).json({ message: "Invalid instructor status" });
+      }
+      user.instructorStatus = instructorStatus;
+    }
     if (linkedinUrl !== undefined) user.linkedinUrl = linkedinUrl;
     if (socialUrl !== undefined) user.socialUrl = socialUrl;
     if (lastName !== undefined) user.lastName = lastName.trim();
@@ -530,6 +573,7 @@ export const updateProfile = async (req, res) => {
         college: user.college,
         major: user.major,
         providedCourses: user.providedCourses,
+        instructorStatus: user.instructorStatus,
         linkedinUrl: user.linkedinUrl,
         socialUrl: user.socialUrl,
         phone: user.phone,
