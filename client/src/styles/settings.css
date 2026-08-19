@@ -150,6 +150,11 @@
     border-radius: 12px;
 }
 
+.settings-section .solid-btn,
+.settings-page .solid-btn {
+    border-radius: 12px;
+}
+
 .settings-section-desc {
     color: var(--c-sub);
     font-size: 0.9rem;
