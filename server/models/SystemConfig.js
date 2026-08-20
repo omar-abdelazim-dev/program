@@ -70,6 +70,26 @@ const systemConfigSchema = new mongoose.Schema(
         instructorCtaText: { type: String, default: 'Start Teaching' },
         instructorCtaLink: { type: String, default: '/auth?mode=register&role=instructor' }
       },
+      social: {
+        email: { type: String, default: 'hello@program.com' },
+        instagram: { type: String, default: 'https://instagram.com/' },
+        facebook: { type: String, default: 'https://facebook.com/' },
+        tiktok: { type: String, default: 'https://tiktok.com/' },
+      },
+      stats: {
+        type: [{
+          label: { type: String },
+          value: { type: Number },
+          suffix: { type: String },
+          isFloat: { type: Boolean, default: false }
+        }],
+        default: [
+          { label: 'Active Learners', value: 10000, suffix: '+', isFloat: false },
+          { label: 'Expert Instructors', value: 500, suffix: '+', isFloat: false },
+          { label: 'Average Rating', value: 4.9, suffix: '/5', isFloat: true },
+          { label: 'Courses Completed', value: 25000, suffix: '+', isFloat: false }
+        ]
+      },
       story: {
         eyebrowLeft: { type: String, default: 'Who we are' },
         titleLeft: { type: String, default: 'Learning should open doors for everyone.' },

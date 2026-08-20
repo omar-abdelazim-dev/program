@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
 import { useConfig } from '../context/ConfigContext';
-import logoDark from '../assets/logo-dark.png';
+import logo from '../assets/logo.png'; // Assuming logo.png is for light mode, if not we can adjust
 import GlobalAnnouncementBanner from './GlobalAnnouncementBanner';
 import '../styles/landing-page.css';
+import { useState, useEffect, useRef } from 'react';
 
 function ArrowIcon() {
   return (
@@ -61,6 +62,42 @@ function CheckIcon() {
   );
 }
 
+function EmailIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect width="20" height="16" x="2" y="4" rx="2" />
+      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+    </svg>
+  );
+}
+
+function InstagramIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+    </svg>
+  );
+}
+
+function FacebookIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+    </svg>
+  );
+}
+
+function TiktokIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+    </svg>
+  );
+}
+
+
 const studentBenefits = [
   {
     title: 'Learn by doing',
@@ -97,6 +134,48 @@ const instructorBenefits = [
   },
 ];
 
+function CountUp({ end, decimals = 0, suffix = '', duration = 2000 }) {
+  const [count, setCount] = useState(0);
+  const [hasAnimated, setHasAnimated] = useState(false);
+  const elementRef = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !hasAnimated) {
+        setHasAnimated(true);
+        let startTimestamp = null;
+        const step = (timestamp) => {
+          if (!startTimestamp) startTimestamp = timestamp;
+          const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+          // easeOutQuart
+          const easeProgress = 1 - Math.pow(1 - progress, 4);
+          setCount(easeProgress * end);
+          if (progress < 1) {
+            window.requestAnimationFrame(step);
+          }
+        };
+        window.requestAnimationFrame(step);
+      }
+    }, { threshold: 0.1 });
+
+    const currentElement = elementRef.current;
+    if (currentElement) {
+      observer.observe(currentElement);
+    }
+    return () => {
+      if (currentElement) observer.disconnect();
+    };
+  }, [end, duration, hasAnimated]);
+
+  const formattedNumber = decimals > 0 
+    ? count.toFixed(decimals) 
+    : Math.floor(count).toLocaleString();
+
+  return <span ref={elementRef}>{formattedNumber}{suffix}</span>;
+}
+
+
+
 function BenefitList({ benefits, variant }) {
   return (
     <ul className="landing-path-card__benefits">
@@ -128,14 +207,6 @@ export default function LandingPage() {
       instructorCtaText: 'Start Teaching',
       instructorCtaLink: '/auth?mode=register&role=instructor'
     },
-    story: {
-      eyebrowLeft: 'Who we are',
-      titleLeft: 'Learning should open doors for everyone.',
-      copyLeft: 'Program began with a simple belief: exceptional education should feel close, practical, and personal. We bring curious learners together with people who have the experience to guide them.',
-      eyebrowRight: 'Our vision',
-      titleRight: 'A global learning community powered by real expertise.',
-      copyRight: 'We are building a place where knowledge travels farther, instructors are rewarded for what they know, and every learner can turn a next step into lasting progress.'
-    },
     paths: {
       eyebrow: 'One community, two ways forward',
       title: 'Choose the path that moves you.',
@@ -150,12 +221,34 @@ export default function LandingPage() {
       instructorCtaLink: '/auth?mode=register&role=instructor'
     },
     colors: {
-      primaryText: '#18181b',
+      primaryText: '#18181b', // light mode text
       secondaryText: '#71717a',
       accentStudent: '#3b82f6',
       accentInstructor: '#f59e0b'
     }
   };
+
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('active');
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+    );
+
+    const revealElements = document.querySelectorAll('.reveal, .reveal-left, .reveal-right');
+    revealElements.forEach((el) => observer.observe(el));
+
+    return () => {
+      revealElements.forEach((el) => observer.unobserve(el));
+    };
+  }, []);
 
   return (
     <div className="landing-page" dir="ltr" style={{
@@ -164,76 +257,115 @@ export default function LandingPage() {
       '--landing-accent-student': c.colors.accentStudent,
       '--landing-accent-instructor': c.colors.accentInstructor
     }}>
-      <header className="landing-hero">
-        <div className="landing-hero__shapes" aria-hidden="true">
-          <span className="landing-shape landing-shape--square" />
-          <span className="landing-shape landing-shape--circle" />
-          <span className="landing-shape landing-shape--triangle" />
-          <span className="landing-shape landing-shape--bar" />
-        </div>
-
-        <nav className="landing-nav landing-shell" aria-label="Primary navigation">
+      <header className="landing-header">
+        <nav className="landing-nav" aria-label="Primary navigation">
           <Link className="landing-brand" to="/" aria-label="Program home">
-            <img src={logoDark} alt="Program Logo" className="landing-brand__img" style={{ height: '32px', width: 'auto' }} />
+            <div className="landing-brand__icon">
+              <img src={logo} alt="Program Logo" className="landing-brand__img" style={{ height: '28px', width: 'auto', scale: 2.5, }} />
+            </div>
           </Link>
 
           <div className="landing-nav__links">
-            <a href="#our-story">Our story</a>
+            <a href="#features">Features</a>
             <a href="#your-path">Your path</a>
-            <Link to="/auth">Sign in</Link>
           </div>
+
+          <Link to="/auth" className="landing-nav__cta">Sign in</Link>
         </nav>
-
-        <GlobalAnnouncementBanner />
-
-        <div className="landing-hero__content landing-shell">
-          <p className="landing-eyebrow">{c.hero.eyebrow}</p>
-          <h1>{c.hero.titlePart1} <span>{c.hero.titlePart2}</span></h1>
-          <p className="landing-hero__copy">
-            {c.hero.copy}
-          </p>
-          <div className="landing-hero__actions">
-            <Link className="landing-button landing-button--student" to={c.hero.studentCtaLink}>
-              {c.hero.studentCtaText} <ArrowIcon />
-            </Link>
-            <Link className="landing-button landing-button--instructor" to={c.hero.instructorCtaLink}>
-              {c.hero.instructorCtaText} <ArrowIcon />
-            </Link>
-          </div>
-        </div>
       </header>
+      
+      <GlobalAnnouncementBanner />
 
       <main>
-        <section className="landing-story" id="our-story" aria-labelledby="story-title">
-          <div className="landing-story__grid landing-shell">
-            <article className="landing-story__column">
-              <p className="landing-eyebrow landing-eyebrow--student">{c.story.eyebrowLeft}</p>
-              <h2 id="story-title">{c.story.titleLeft}</h2>
-              <p>
-                {c.story.copyLeft}
-              </p>
-            </article>
-
-            <article className="landing-story__column landing-story__column--vision">
-              <p className="landing-eyebrow landing-eyebrow--instructor">{c.story.eyebrowRight}</p>
-              <h2>{c.story.titleRight}</h2>
-              <p>
-                {c.story.copyRight}
-              </p>
-            </article>
+        {/* HERO SECTION */}
+        <section className="landing-hero landing-shell">
+          <div className="landing-hero__text reveal-left">
+            <p className="landing-eyebrow">{c.hero.eyebrow}</p>
+            <h1>{c.hero.titlePart1} <span>{c.hero.titlePart2}</span></h1>
+            <p className="landing-hero__copy">
+              {c.hero.copy}
+            </p>
+            <div className="landing-hero__actions">
+              <Link className="landing-button landing-button--student" to={c.hero.studentCtaLink}>
+                {c.hero.studentCtaText} <ArrowIcon />
+              </Link>
+              <Link className="landing-button landing-button--instructor" to={c.hero.instructorCtaLink}>
+                {c.hero.instructorCtaText} <ArrowIcon />
+              </Link>
+            </div>
+          </div>
+          <div className="landing-hero__visual reveal-right delay-200">
+            <div className="hero-3d-placeholder">
+              <div className="hero-3d-placeholder-inner">
+                <div className="hero-3d-circle"></div>
+                <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" className="hero-illustration">
+                  <path d="M120 70L80 130H150L120 70Z" fill="url(#paint1_linear)"/>
+                  <rect x="50" y="80" width="40" height="40" rx="8" fill="url(#paint2_linear)" />
+                  <defs>
+                    <linearGradient id="paint1_linear" x1="80" y1="70" x2="150" y2="130" gradientUnits="userSpaceOnUse">
+                      <stop stopColor="#f59e0b"/>
+                      <stop offset="1" stopColor="#ef4444"/>
+                    </linearGradient>
+                    <linearGradient id="paint2_linear" x1="50" y1="80" x2="90" y2="120" gradientUnits="userSpaceOnUse">
+                      <stop stopColor="#3b82f6"/>
+                      <stop offset="1" stopColor="#10b981"/>
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </div>
+            </div>
           </div>
         </section>
 
+        {/* STATS SECTION */}
+        <section className="landing-stats landing-shell">
+          <div className="stats-grid reveal">
+            {(c.stats || []).map((stat, idx) => (
+              <div key={idx} className={`stat-card delay-${idx * 100}`}>
+                <h3><CountUp end={stat.value} suffix={stat.suffix || ''} decimals={stat.isFloat ? 1 : 0} /></h3>
+                <p>{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* FEATURES SHOWCASE */}
+        <section id="features" className="landing-features landing-shell">
+          <div className="landing-section-heading text-center mx-auto reveal">
+            <p className="landing-eyebrow">How it works</p>
+            <h2>Everything you need to succeed</h2>
+            <p>From interactive assignments to comprehensive analytics, we provide the tools to elevate your learning and teaching experience.</p>
+          </div>
+          <div className="features-grid">
+             <div className="feature-block reveal delay-100">
+                <div className="feature-icon"><BookIcon /></div>
+                <h4>Interactive Lessons</h4>
+                <p>Engage with hands-on material that transforms passive reading into active skill-building.</p>
+             </div>
+             <div className="feature-block reveal delay-200">
+                <div className="feature-icon"><ChartIcon /></div>
+                <h4>Actionable Analytics</h4>
+                <p>Track your progress or your students' performance with clear, insightful dashboards.</p>
+             </div>
+             <div className="feature-block reveal delay-300">
+                <div className="feature-icon"><SparkIcon /></div>
+                <h4>Community Driven</h4>
+                <p>Connect with peers, share knowledge, and grow together in a supportive environment.</p>
+             </div>
+          </div>
+        </section>
+
+        {/* YOUR PATH SECTION */}
         <section className="landing-paths" id="your-path" aria-labelledby="paths-title">
           <div className="landing-shell">
-            <div className="landing-section-heading">
+            <div className="landing-section-heading text-center mx-auto reveal">
               <p className="landing-eyebrow">{c.paths.eyebrow}</p>
               <h2 id="paths-title">{c.paths.title}</h2>
               <p>{c.paths.copy}</p>
             </div>
 
             <div className="landing-paths__grid">
-              <article className="landing-path-card landing-path-card--student">
+              <article className="landing-path-card landing-path-card--student reveal-left">
                 <div className="landing-path-card__topline">
                   <span className="landing-path-card__badge landing-path-card__badge--student">For students</span>
                   <span className="landing-path-card__symbol landing-path-card__symbol--student" aria-hidden="true"><BookIcon /></span>
@@ -246,7 +378,7 @@ export default function LandingPage() {
                 </Link>
               </article>
 
-              <article className="landing-path-card landing-path-card--instructor">
+              <article className="landing-path-card landing-path-card--instructor reveal-right">
                 <div className="landing-path-card__topline">
                   <span className="landing-path-card__badge landing-path-card__badge--instructor">For instructors</span>
                   <span className="landing-path-card__symbol landing-path-card__symbol--instructor" aria-hidden="true"><SparkIcon /></span>
@@ -261,6 +393,10 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
+
+        {/* TESTIMONIALS SECTION */}
+
+
       </main>
 
       <footer className="landing-footer">
@@ -271,7 +407,31 @@ export default function LandingPage() {
           <Link className="landing-button landing-button--community" to="/auth?mode=register">
             Join Program <CheckIcon />
           </Link>
-          <small>© {new Date().getFullYear()} Program. Bulilt by Students. Powered by Purpose.</small>
+
+          <div className="landing-social-badges">
+            {c.social?.email?.trim() && (
+              <a href={`mailto:${c.social.email.trim()}`} aria-label="Email Us">
+                <EmailIcon />
+              </a>
+            )}
+            {c.social?.instagram?.trim() && (
+              <a href={c.social.instagram.trim()} aria-label="Instagram">
+                <InstagramIcon />
+              </a>
+            )}
+            {c.social?.facebook?.trim() && (
+              <a href={c.social.facebook.trim()} aria-label="Facebook">
+                <FacebookIcon />
+              </a>
+            )}
+            {c.social?.tiktok?.trim() && (
+              <a href={c.social.tiktok.trim()} aria-label="TikTok">
+                <TiktokIcon />
+              </a>
+            )}
+          </div>
+
+          <small>© {new Date().getFullYear()} Program. Built by Students. Powered by Purpose.</small>
         </div>
       </footer>
     </div>

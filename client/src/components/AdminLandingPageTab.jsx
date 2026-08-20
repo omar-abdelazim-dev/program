@@ -60,6 +60,18 @@ export default function AdminLandingPageTab() {
             secondaryText: '#71717a',
             accentStudent: '#3b82f6',
             accentInstructor: '#f59e0b'
+          },
+          stats: [
+            { label: 'Active Learners', value: 10000, suffix: '+', isFloat: false },
+            { label: 'Expert Instructors', value: 500, suffix: '+', isFloat: false },
+            { label: 'Average Rating', value: 4.9, suffix: '/5', isFloat: true },
+            { label: 'Courses Completed', value: 25000, suffix: '+', isFloat: false }
+          ],
+          social: {
+            email: 'hello@program.com',
+            instagram: 'https://instagram.com/',
+            facebook: 'https://facebook.com/',
+            tiktok: 'https://tiktok.com/'
           }
         });
       }
@@ -99,6 +111,14 @@ export default function AdminLandingPageTab() {
     }));
   };
 
+  const handleStatChange = (index, field, value) => {
+    setConfig(prev => {
+      const newStats = [...(prev.stats || [])];
+      newStats[index] = { ...newStats[index], [field]: value };
+      return { ...prev, stats: newStats };
+    });
+  };
+
   if (isLoading || !config) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
@@ -112,9 +132,9 @@ export default function AdminLandingPageTab() {
     padding: '12px 16px',
     background: 'var(--bg-main)',
     border: '1px solid transparent',
-    color: 'var(--c-light)',
+    color: 'inherit',
     borderRadius: '10px',
-    boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5)',
+    boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.06), inset 0 4px 12px rgba(0, 0, 0, 0.03)',
     marginBottom: '16px',
     fontFamily: 'inherit',
     fontSize: '0.95rem',
@@ -135,7 +155,7 @@ export default function AdminLandingPageTab() {
           onClick={handleSave} 
           disabled={isSaving}
           style={{
-            background: 'var(--c-orange)', border: 'none', boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5)',
+            background: 'var(--c-orange)', border: 'none', boxShadow: 'var(--shadow-subtle)',
             color: '#fff', padding: '12px 24px', borderRadius: '10px', cursor: isSaving ? "not-allowed" : "pointer", fontSize: "0.95rem",
             fontWeight: "600", transition: "all 0.2s", opacity: isSaving ? 0.7 : 1
           }}
@@ -186,37 +206,46 @@ export default function AdminLandingPageTab() {
           </div>
         </div>
 
-        {/* COLORS SECTION */}
+        {/* STATS SECTION */}
         <div className="glass-card" style={{ padding: '24px' }}>
-          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.1rem', color: 'var(--text-h)' }}>Colors</h3>
+          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.1rem', color: 'var(--text-h)' }}>Stats Section</h3>
+          {(config.stats || []).map((stat, index) => (
+            <div key={index} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '16px', marginBottom: '16px', alignItems: 'end' }}>
+              <div>
+                <label style={labelStyle}>Label {index + 1}</label>
+                <input type="text" style={{...inputStyle, marginBottom: 0}} value={stat.label} onChange={(e) => handleStatChange(index, 'label', e.target.value)} />
+              </div>
+              <div>
+                <label style={labelStyle}>Value</label>
+                <input type="number" step={stat.isFloat ? "0.1" : "1"} style={{...inputStyle, marginBottom: 0}} value={stat.value} onChange={(e) => handleStatChange(index, 'value', Number(e.target.value))} />
+              </div>
+              <div>
+                <label style={labelStyle}>Suffix</label>
+                <input type="text" style={{...inputStyle, marginBottom: 0}} value={stat.suffix} onChange={(e) => handleStatChange(index, 'suffix', e.target.value)} />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* SOCIAL SECTION */}
+        <div className="glass-card" style={{ padding: '24px' }}>
+          <h3 style={{ margin: '0 0 20px 0', fontSize: '1.1rem', color: 'var(--text-h)' }}>Social Links (Footer)</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <div>
-              <label style={labelStyle}>Primary Text Color</label>
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <input type="color" value={config.colors.primaryText} onChange={(e) => handleChange('colors', 'primaryText', e.target.value)} style={{ width: '48px', height: '48px', padding: 0, border: 'none', background: 'transparent' }} />
-                <input type="text" style={inputStyle} value={config.colors.primaryText} onChange={(e) => handleChange('colors', 'primaryText', e.target.value)} />
-              </div>
+              <label style={labelStyle}>Email Address</label>
+              <input type="text" style={inputStyle} value={config.social?.email || ''} onChange={(e) => handleChange('social', 'email', e.target.value)} />
             </div>
             <div>
-              <label style={labelStyle}>Secondary Text Color</label>
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <input type="color" value={config.colors.secondaryText} onChange={(e) => handleChange('colors', 'secondaryText', e.target.value)} style={{ width: '48px', height: '48px', padding: 0, border: 'none', background: 'transparent' }} />
-                <input type="text" style={inputStyle} value={config.colors.secondaryText} onChange={(e) => handleChange('colors', 'secondaryText', e.target.value)} />
-              </div>
+              <label style={labelStyle}>Instagram URL</label>
+              <input type="text" style={inputStyle} value={config.social?.instagram || ''} onChange={(e) => handleChange('social', 'instagram', e.target.value)} />
             </div>
             <div>
-              <label style={labelStyle}>Student Accent Color</label>
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <input type="color" value={config.colors.accentStudent} onChange={(e) => handleChange('colors', 'accentStudent', e.target.value)} style={{ width: '48px', height: '48px', padding: 0, border: 'none', background: 'transparent' }} />
-                <input type="text" style={inputStyle} value={config.colors.accentStudent} onChange={(e) => handleChange('colors', 'accentStudent', e.target.value)} />
-              </div>
+              <label style={labelStyle}>Facebook URL</label>
+              <input type="text" style={inputStyle} value={config.social?.facebook || ''} onChange={(e) => handleChange('social', 'facebook', e.target.value)} />
             </div>
             <div>
-              <label style={labelStyle}>Instructor Accent Color</label>
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <input type="color" value={config.colors.accentInstructor} onChange={(e) => handleChange('colors', 'accentInstructor', e.target.value)} style={{ width: '48px', height: '48px', padding: 0, border: 'none', background: 'transparent' }} />
-                <input type="text" style={inputStyle} value={config.colors.accentInstructor} onChange={(e) => handleChange('colors', 'accentInstructor', e.target.value)} />
-              </div>
+              <label style={labelStyle}>TikTok URL</label>
+              <input type="text" style={inputStyle} value={config.social?.tiktok || ''} onChange={(e) => handleChange('social', 'tiktok', e.target.value)} />
             </div>
           </div>
         </div>
