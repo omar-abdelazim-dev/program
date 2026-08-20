@@ -9,6 +9,7 @@ import User from '../models/User.js';
 import { getInternalConfig, clearConfigCache } from '../utils/configFetcher.js';
 import logger from '../utils/logger.js';
 import * as emailService from '../utils/emailService.js';
+import { normalizeLandingPageSocial } from '../utils/socialUrlValidation.js';
 
 // Helper to get or create the global config
 const getGlobalConfig = async () => {
@@ -124,11 +125,6 @@ export const updateConfigSection = async (req, res) => {
     const { section } = req.params;
     const updates = req.body;
     
-    // RBAC validation
-    const isSuperAdmin = req.user.role === 'admin' && req.user.isSuperAdmin; // Assuming isSuperAdmin is a boolean on the User model, or we can just mock it as if role === 'admin' and they pass a header. Wait, in this app, there is only 'admin' role. The prompt asked to enforce permissions through backend authorization.
-    // Since we don't have isSuperAdmin on User model yet, we'll assume req.user.isSuperAdmin exists, or we check if they are trying to update restricted sections.
-    // For MVP, we will allow 'admin' to update 'general', 'appearance', 'notifications' without being super admin.
-    
     const restrictedSections = ['financial', 'security', 'registration', 'api', 'features', 'ai', 'audit', 'maintenance', 'backup', 'landingPage'];
 
     // Enforce superadmin role for restricted sections
@@ -154,11 +150,20 @@ export const updateConfigSection = async (req, res) => {
     const oldValues = { ...(sectionData.toObject ? sectionData.toObject() : sectionData) };
     
     // Apply updates
-    // For nested schema structures like 'landingPage' which contain multiple nested objects
-    // (hero, story, paths, colors), we need to do a shallow merge of the top-level keys
-    // to ensure Mongoose accurately registers the paths as modified using config.set()
+    // For nested schema structures like 'landingPage' which contain multiple nested objects,
+    // use config.set() so Mongoose registers the top-level paths as modified.
     if (section === 'landingPage') {
-      config.set(section, { ...oldValues, ...updates });
+      const landingPageUpdates = { ...updates };
+
+      if (updates.social !== undefined) {
+        const normalizedSocial = normalizeLandingPageSocial(updates.social);
+        if (!normalizedSocial) {
+          return res.status(400).json({ message: 'Social links must use valid HTTPS URLs.' });
+        }
+        landingPageUpdates.social = { ...oldValues.social, ...normalizedSocial };
+      }
+
+      config.set(section, { ...oldValues, ...landingPageUpdates });
     } else {
       for (const key in updates) {
         if (typeof updates[key] !== 'undefined') {
