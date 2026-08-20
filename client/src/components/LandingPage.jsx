@@ -98,6 +98,17 @@ function TiktokIcon() {
 }
 
 
+const getSafeExternalUrl = (value) => {
+  if (typeof value !== 'string' || !value.trim()) return '';
+
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === 'https:' ? url.href : '';
+  } catch {
+    return '';
+  }
+};
+
 const studentBenefits = [
   {
     title: 'Learn by doing',
@@ -219,15 +230,16 @@ export default function LandingPage() {
       instructorCopy: 'Create a course experience that reflects your expertise and reaches learners ready for it.',
       instructorCtaText: 'Start teaching',
       instructorCtaLink: '/auth?mode=register&role=instructor'
-    },
-    colors: {
-      primaryText: '#18181b', // light mode text
-      secondaryText: '#71717a',
-      accentStudent: '#3b82f6',
-      accentInstructor: '#f59e0b'
     }
   };
 
+  const social = c.social || {};
+  const socialLinks = {
+    email: typeof social.email === 'string' ? social.email.trim() : '',
+    instagram: getSafeExternalUrl(social.instagram),
+    facebook: getSafeExternalUrl(social.facebook),
+    tiktok: getSafeExternalUrl(social.tiktok),
+  };
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -251,12 +263,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="landing-page" dir="ltr" style={{
-      '--landing-primary-text': c.colors.primaryText,
-      '--landing-secondary-text': c.colors.secondaryText,
-      '--landing-accent-student': c.colors.accentStudent,
-      '--landing-accent-instructor': c.colors.accentInstructor
-    }}>
+    <div className="landing-page" dir="ltr">
       <header className="landing-header">
         <nav className="landing-nav" aria-label="Primary navigation">
           <Link className="landing-brand" to="/" aria-label="Program home">
@@ -409,23 +416,23 @@ export default function LandingPage() {
           </Link>
 
           <div className="landing-social-badges">
-            {c.social?.email?.trim() && (
-              <a href={`mailto:${c.social.email.trim()}`} aria-label="Email Us">
+            {socialLinks.email && (
+              <a href={`mailto:${socialLinks.email}`} aria-label="Email Us">
                 <EmailIcon />
               </a>
             )}
-            {c.social?.instagram?.trim() && (
-              <a href={c.social.instagram.trim()} aria-label="Instagram">
+            {socialLinks.instagram && (
+              <a href={socialLinks.instagram} aria-label="Instagram">
                 <InstagramIcon />
               </a>
             )}
-            {c.social?.facebook?.trim() && (
-              <a href={c.social.facebook.trim()} aria-label="Facebook">
+            {socialLinks.facebook && (
+              <a href={socialLinks.facebook} aria-label="Facebook">
                 <FacebookIcon />
               </a>
             )}
-            {c.social?.tiktok?.trim() && (
-              <a href={c.social.tiktok.trim()} aria-label="TikTok">
+            {socialLinks.tiktok && (
+              <a href={socialLinks.tiktok} aria-label="TikTok">
                 <TiktokIcon />
               </a>
             )}

@@ -55,12 +55,6 @@ export default function AdminLandingPageTab() {
             instructorCtaText: 'Start teaching',
             instructorCtaLink: '/auth?mode=register&role=instructor'
           },
-          colors: {
-            primaryText: '#18181b',
-            secondaryText: '#71717a',
-            accentStudent: '#3b82f6',
-            accentInstructor: '#f59e0b'
-          },
           stats: [
             { label: 'Active Learners', value: 10000, suffix: '+', isFloat: false },
             { label: 'Expert Instructors', value: 500, suffix: '+', isFloat: false },

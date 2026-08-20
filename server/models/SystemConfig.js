@@ -111,12 +111,6 @@ const systemConfigSchema = new mongoose.Schema(
         instructorCtaText: { type: String, default: 'Start teaching' },
         instructorCtaLink: { type: String, default: '/auth?mode=register&role=instructor' }
       },
-      colors: {
-        primaryText: { type: String, default: '#18181b' },
-        secondaryText: { type: String, default: '#71717a' },
-        accentStudent: { type: String, default: '#3b82f6' },
-        accentInstructor: { type: String, default: '#f59e0b' }
-      }
     },
 
     maintenance: {
