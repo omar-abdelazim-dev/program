@@ -58,6 +58,8 @@ export const protect = async (req, res, next) => {
       avatarUrl: user.avatarUrl,
       college: user.college,
       major: user.major,
+      academicType: user.academicType,
+      academicGroup: user.academicGroup,
       providedCourses: user.providedCourses,
       instructorStatus: user.instructorStatus,
       linkedinUrl: user.linkedinUrl,

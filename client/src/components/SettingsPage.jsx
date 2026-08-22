@@ -4,6 +4,7 @@ import CustomSelect from "./CustomSelect";
 import { useTranslation } from "react-i18next";
 import { MAJORS } from "../data/majors";
 import { COLLEGES } from "../data/colleges";
+import { ACADEMIC_TYPES, SCHOOL_LEVELS } from "../data/academicGroups";
 
 const SECTIONS = [
   {
@@ -491,6 +492,8 @@ function AccountSection({ user, setUser, onLogout }) {
   const [email, setEmail] = useState(user?.email || "");
   const [college, setCollege] = useState(user?.college || "");
   const [major, setMajor] = useState(user?.major || "");
+  const [academicType, setAcademicType] = useState(user?.academicType || "college");
+  const [academicGroup, setAcademicGroup] = useState(user?.academicGroup || user?.college || "");
   const [providedCourses, setProvidedCourses] = useState(
     user?.providedCourses || "",
   );
@@ -567,6 +570,8 @@ function AccountSection({ user, setUser, onLogout }) {
         email,
         college,
         major,
+        academicType,
+        academicGroup: academicType === "school" ? academicGroup : college,
         providedCourses,
         linkedinUrl,
         socialUrl,
@@ -776,20 +781,24 @@ function AccountSection({ user, setUser, onLogout }) {
                       letterSpacing: "1px",
                     }}
                   >
-                    {t("auth.college", "College")}
+                    Academic path
                   </label>
                   <CustomSelect
-                    options={COLLEGES.map((c) => ({
-                      value: c.id,
-                      label: t(c.key, c.id),
-                    }))}
-                    value={college}
-                    onChange={setCollege}
-                    placeholder={t(
-                      "auth.college_placeholder",
-                      "Select your college",
-                    )}
+                    options={ACADEMIC_TYPES}
+                    value={academicType}
+                    onChange={(value) => { setAcademicType(value); setAcademicGroup(""); }}
+                    placeholder="Choose College / Major or School"
                   />
+                </div>
+                {academicType === "school" ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <label style={{ fontSize: "0.85rem", fontWeight: "600", color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "1px" }}>School level</label>
+                    <CustomSelect options={SCHOOL_LEVELS} value={academicGroup} onChange={setAcademicGroup} placeholder="Select school level" />
+                  </div>
+                ) : <>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <label style={{ fontSize: "0.85rem", fontWeight: "600", color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "1px" }}>{t("auth.college", "College")}</label>
+                  <CustomSelect options={COLLEGES.map((c) => ({ value: c.id, label: t(c.key, c.id) }))} value={college} onChange={setCollege} placeholder={t("auth.college_placeholder", "Select your college")} />
                 </div>
                 <div
                   style={{
@@ -822,6 +831,7 @@ function AccountSection({ user, setUser, onLogout }) {
                     )}
                   />
                 </div>
+                </>}
               </>
             )}
             {user?.role === "instructor" && (

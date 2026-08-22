@@ -7,7 +7,7 @@ import ThreeDotMenu from "./common/ThreeDotMenu";
 import notyf from "../utils/notyf";
 import PaymentModal from "./PaymentModal";
 
-export default function CoursePage({ cart = [], setCart, user }) {
+export default function CoursePage({ user }) {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.dir() === "rtl";
   const { id } = useParams();
@@ -149,11 +149,7 @@ export default function CoursePage({ cart = [], setCart, user }) {
   }, [isEnrolled, enrollStatus, id]);
 
   const handleEnrollClick = () => {
-    if (course.price > 0) {
-      setShowPaymentModal(true);
-    } else {
-      handleEnroll();
-    }
+    setShowPaymentModal(true);
   };
 
   const handleEnroll = async (paymentDetails = {}) => {
@@ -165,7 +161,7 @@ export default function CoursePage({ cart = [], setCart, user }) {
       setIsEnrolled(true);
       setEnrollStatus(
         res.data.enrollment?.status ||
-          (course.price > 0 ? "pending" : "approved"),
+          "pending",
       );
     } catch (err) {
       if (err.response?.status === 409) {
@@ -1351,46 +1347,6 @@ export default function CoursePage({ cart = [], setCart, user }) {
               </button>
             )}
 
-            {!isEnrolled && (
-              <button
-                onClick={() => {
-                  if (setCart && !cart.find((c) => c._id === course._id)) {
-                    setCart([...cart, course]);
-                  }
-                }}
-                disabled={cart.find((c) => c._id === course._id)}
-                style={{
-                  width: "100%",
-                  height: "54px",
-                  background: "var(--bg-main)",
-                  boxShadow: "var(--inner-shadow)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "12px",
-                  color: "var(--text-primary)",
-                  fontWeight: "700",
-                  fontSize: "1.05rem",
-                  cursor: cart.find((c) => c._id === course._id)
-                    ? "default"
-                    : "pointer",
-                  transition: "all 0.2s ease",
-                  opacity: cart.find((c) => c._id === course._id) ? 0.5 : 1,
-                }}
-                onMouseEnter={(e) => {
-                  if (!cart.find((c) => c._id === course._id)) {
-                    e.currentTarget.style.background = "var(--bg-surface)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!cart.find((c) => c._id === course._id)) {
-                    e.currentTarget.style.background = "var(--bg-main)";
-                  }
-                }}
-              >
-                {cart.find((c) => c._id === course._id)
-                  ? t("course_page.added_to_cart")
-                  : t("course_page.add_to_cart")}
-              </button>
-            )}
           </div>
         </div>
       </div>

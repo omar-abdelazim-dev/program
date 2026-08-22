@@ -39,7 +39,7 @@ export default function CourseCard({ course, idx = 0, isLightMode = false }) {
     );
   };
 
-  const avatarSrc = instructor?.avatar;
+  const avatarSrc = instructor?.avatarUrl || instructor?.avatar;
   const avatarFallback = instructor?.name?.[0]?.toUpperCase() ?? 'I';
   const logo = isLightMode ? logoLight : logoDark;
 
@@ -78,15 +78,9 @@ export default function CourseCard({ course, idx = 0, isLightMode = false }) {
         {/* 3. Instructor row */}
         <div className="cc-instructor-row">
           <div className="cc-avatar">
-            {avatarSrc ? (
-              <img src={avatarSrc} alt={instructor?.name} loading="lazy" decoding="async" />
-            ) : (
-              <span className="cc-avatar-initials">{avatarFallback}</span>
-            )}
+            {avatarSrc ? <img src={avatarSrc} alt={instructor?.name} loading="lazy" decoding="async" /> : <span className="cc-avatar-initials">{avatarFallback}</span>}
           </div>
-          <span className="cc-instructor-name">
-            {instructor?.name ?? 'Instructor'}
-          </span>
+          <span className="cc-instructor-name">{instructor?.name ?? 'Instructor'}</span>
         </div>
 
         {/* 4. Reviews */}
@@ -99,15 +93,13 @@ export default function CourseCard({ course, idx = 0, isLightMode = false }) {
                 ({reviewsCount.toLocaleString()} {t('common.reviews', 'Reviews')})
               </span>
             </>
-          ) : (
-            <span className="cc-no-reviews">{t('common.no_reviews_yet', 'No reviews yet')}</span>
-          )}
+          ) : <span className="cc-no-reviews">{t('common.no_reviews_yet', 'No reviews yet')}</span>}
         </div>
 
         {/* 5. Price */}
         <div className="cc-price-row">
           <span className="cc-price-current">
-            EGP {Number(displayPrice ?? 0).toLocaleString()}
+            {displayPrice == null || Number(displayPrice) === 0 ? t('common.free', 'Free') : `EGP ${Number(displayPrice).toLocaleString()}`}
           </span>
           {hasDiscount && (
             <span className="cc-price-original">

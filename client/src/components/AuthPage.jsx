@@ -7,6 +7,7 @@ import api from '../api/axios';
 import CustomSelect from './CustomSelect';
 import { COLLEGES } from '../data/colleges';
 import { MAJORS } from '../data/majors';
+import { ACADEMIC_TYPES, SCHOOL_LEVELS } from '../data/academicGroups';
 
 export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
   const { t, i18n } = useTranslation();
@@ -34,6 +35,8 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
   const [college, setCollege] = useState('');
   const [year, setYear] = useState('');
   const [major, setMajor] = useState('');
+  const [academicType, setAcademicType] = useState('college');
+  const [academicGroup, setAcademicGroup] = useState('');
   const [providedCoursesList, setProvidedCoursesList] = useState([]);
   const [courseInput, setCourseInput] = useState('');
   const [instructorStatus, setInstructorStatus] = useState('');
@@ -346,6 +349,8 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
             year,
             college,
             major,
+            academicType,
+            academicGroup: academicType === 'school' ? academicGroup : college,
             providedCourses: finalCourses.join(', '),
             instructorStatus,
             linkedinUrl,
@@ -383,17 +388,6 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
     <div className="auth-wrapper animate-entrance">
       {/* Utility Actions */}
       <div style={{ position: 'fixed', top: '24px', right: '24px', zIndex: 100, display: 'flex', gap: '12px' }} dir="ltr">
-        <button 
-          onClick={toggleTheme} 
-          className="nav-icon-btn-auth"
-        >
-          {isLightMode ? (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-          ) : (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-          )}
-        </button>
-
         <button 
           onClick={() => i18n.changeLanguage(i18n.language === "en" ? "ar" : "en")} 
           className="nav-icon-btn-auth"
@@ -509,6 +503,11 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
                         <>
                           <div className="input-row">
                             <div className="input-group">
+                              <label>Academic path</label>
+                              <CustomSelect options={ACADEMIC_TYPES} value={academicType} onChange={(value) => { setAcademicType(value); setAcademicGroup(''); }} placeholder="Choose College / Major or School" />
+                            </div>
+                            {academicType === 'college' ? <>
+                            <div className="input-group">
                               <label>{t('auth.college')}</label>
                               <CustomSelect 
                                 options={COLLEGES.map(c => ({ value: c.id, label: t(c.key, c.id) }))}
@@ -535,8 +534,6 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
                                 icon={<svg className="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>}
                               />
                             </div>
-                          </div>
-
                           <div className="input-group">
                             <label>{t('auth.major')} *</label>
                             <CustomSelect
@@ -546,8 +543,15 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
                               placeholder={t('auth.major_placeholder')}
                               icon={<svg className="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>}
                             />
+                            </div>
+                            </> : <>
+                            <div className="input-group">
+                              <label>School level *</label>
+                              <CustomSelect options={SCHOOL_LEVELS} value={academicGroup} onChange={setAcademicGroup} placeholder="Select school level" />
+                            </div>
+                            </>}
                           </div>
-                        </>
+                          </>
                       ) : (
                         <>
                           <div className="input-group">

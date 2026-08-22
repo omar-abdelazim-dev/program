@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -120,9 +121,27 @@ app.use((req, res, next) => {
 app.use(maintenanceMiddleware);
 
 // ── 7. Health check (unchanged, bypasses rate limit) ─────────────────────────
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'ok' });
-});
+export const healthHandler = (req, res) => {
+  res.status(200).json({ status: 'ok', uptimeSeconds: Math.floor(process.uptime()) });
+};
+app.get('/api/health', healthHandler);
+
+// Readiness is intentionally stricter than liveness: a running process that
+// cannot reach MongoDB must not receive traffic from the load balancer.
+export const readinessHandler = async (req, res) => {
+  if (mongoose.connection.readyState !== 1 || !mongoose.connection.db) {
+    return res.status(503).json({ status: 'not_ready', database: 'disconnected' });
+  }
+
+  try {
+    await mongoose.connection.db.admin().ping();
+    return res.status(200).json({ status: 'ready', database: 'connected' });
+  } catch (error) {
+    logger.warn('Readiness database ping failed', { error: error.message });
+    return res.status(503).json({ status: 'not_ready', database: 'unavailable' });
+  }
+};
+app.get('/api/ready', readinessHandler);
 
 // ── 8. Global rate limiter ────────────────────────────────────────────────────
 // Applied as a catch-all backstop — individual routes have their own tighter
@@ -155,4 +174,3 @@ app.use('/api/standalone-lessons', standaloneLessonRoutes);
 app.use(errorHandler);
 
 export default app;
-

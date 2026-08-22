@@ -25,6 +25,10 @@ const enrollmentSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    originalPrice: { type: Number },
+    discountCode: { type: String, default: '' },
+    discountPercentage: { type: Number, default: 0 },
+    discountAmount: { type: Number, default: 0 },
     platformCommission: {
       type: Number,
       default: 0,

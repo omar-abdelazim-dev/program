@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import CardSkeleton from './common/CardSkeleton';
+import DiscountCodesPanel from './DiscountCodesPanel';
 
 const AnimatedNumber = ({ value }) => {
   return <span>{value.toLocaleString()}</span>;
@@ -94,6 +95,8 @@ const AdminOverviewTab = ({ stats, user, setActiveTab, loading }) => {
           </div>
         </div>
       </div>
+
+      {user?.role === 'superadmin' && <DiscountCodesPanel />}
 
       <style>{`
         .overview-stat-green:hover { border-color: #10B981 !important; box-shadow: 0 0 20px rgba(16, 185, 129, 0.4) !important; }

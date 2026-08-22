@@ -43,6 +43,10 @@ const courseSchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
+    // Generalized target audience. `college` is retained for legacy courses;
+    // school courses store their level in academicGroup.
+    academicType: { type: String, enum: ['college', 'school'], default: 'college' },
+    academicGroup: { type: String, default: '', trim: true },
     instructor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

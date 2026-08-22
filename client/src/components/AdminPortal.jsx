@@ -1,5 +1,5 @@
 import notyf from "../utils/notyf";
-import { useState, useEffect, useRef } from "react";
+import { lazy, Suspense, useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, Link } from "react-router-dom";
 import {
@@ -15,22 +15,21 @@ import api from "../api/axios";
 import logoDark from "../assets/logo-dark.png";
 import logoLight from "../assets/logo-light.png";
 
-import AdminPayoutsTab from "./AdminPayoutsTab";
-import AdminAnalyticsTab from "./AdminAnalyticsTab";
-import AdminOverviewTab from "./AdminOverviewTab";
-import AdminProfileTab from "./AdminProfileTab";
+const AdminPayoutsTab = lazy(() => import("./AdminPayoutsTab"));
+const AdminAnalyticsTab = lazy(() => import("./AdminAnalyticsTab"));
+const AdminOverviewTab = lazy(() => import("./AdminOverviewTab"));
+const AdminProfileTab = lazy(() => import("./AdminProfileTab"));
 import SegmentedControl from "./common/SegmentedControl";
 import {
   formatNotificationTitle,
   formatNotificationMessage,
 } from "../utils/notificationFormatter";
-import AdminUserManagementTab from "./AdminUserManagementTab";
-import AdminCourseManagementTab from "./AdminCourseManagementTab";
-import GlobalAnnouncementBanner from "./GlobalAnnouncementBanner";
-import WebsiteManagement from "./WebsiteManagement/WebsiteManagement";
-import SystemManagement from "./SystemManagement";
-import AdminLandingPageTab from "./AdminLandingPageTab";
-import AdminReportsTab from "./AdminReportsTab";
+const AdminUserManagementTab = lazy(() => import("./AdminUserManagementTab"));
+const AdminCourseManagementTab = lazy(() => import("./AdminCourseManagementTab"));
+const WebsiteManagement = lazy(() => import("./WebsiteManagement/WebsiteManagement"));
+const SystemManagement = lazy(() => import("./SystemManagement"));
+const AdminLandingPageTab = lazy(() => import("./AdminLandingPageTab"));
+const AdminReportsTab = lazy(() => import("./AdminReportsTab"));
 
 import FullPageLoader from "./FullPageLoader";
 import Pagination from "./common/Pagination";
@@ -1563,41 +1562,6 @@ export default function AdminPortal({
             )}
           </div>
 
-          <button className="nav-icon-btn" onClick={toggleTheme}>
-            {isLightMode ? (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="1.8"
-              >
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-              </svg>
-            ) : (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="1.8"
-              >
-                <circle cx="12" cy="12" r="4"></circle>
-                <line x1="12" y1="2" x2="12" y2="4"></line>
-                <line x1="12" y1="20" x2="12" y2="22"></line>
-                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                <line x1="2" y1="12" x2="4" y2="12"></line>
-                <line x1="20" y1="12" x2="22" y2="12"></line>
-                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-              </svg>
-            )}
-          </button>
           <div
             className="profile-wrapper hover-glow"
             onClick={() => setActiveTab("profile")}
@@ -1790,8 +1754,6 @@ export default function AdminPortal({
         </div>
       </nav>
 
-      <GlobalAnnouncementBanner />
-
       {/* Main Content Area */}
       <div
         style={{
@@ -1801,6 +1763,7 @@ export default function AdminPortal({
           minHeight: 0,
         }}
       >
+        <Suspense fallback={<FullPageLoader />}>
         <div
           className="admin-content-panel"
           style={{
@@ -2240,6 +2203,7 @@ export default function AdminPortal({
           )}
 
         </div>
+        </Suspense>
       </div>
 
       {/* Change Role confirmation modal */}

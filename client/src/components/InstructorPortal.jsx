@@ -19,8 +19,8 @@ import { notyf } from './WebsiteManagement/SharedUI';
 import { EXPLORE_CATEGORIES } from '../data/exploreCategories';
 import { MAJORS, getMajor } from '../data/majors';
 import { COLLEGES } from '../data/colleges';
+import { ACADEMIC_TYPES, SCHOOL_LEVELS } from '../data/academicGroups';
 import { useTranslation } from 'react-i18next';
-import GlobalAnnouncementBanner from './GlobalAnnouncementBanner';
 
 export default function InstructorPortal({ user, setUser, onLogout, toggleTheme, isLightMode }) {
   const navigate = useNavigate();
@@ -72,7 +72,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
 
   // Form states
   // INS-03: Replaced category/major with college
-  const [formData, setFormData] = useState({ title: '', description: '', price: '', college: '', semester: '', courseType: '' });
+  const [formData, setFormData] = useState({ title: '', description: '', price: '', college: '', academicType: 'college', academicGroup: '', semester: '', courseType: '' });
   const [thumbnailFile, setThumbnailFile] = useState(null);
 
   const [editingLessonId, setEditingLessonId] = useState(null);
@@ -213,12 +213,20 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
       return;
     }
     // INS-05: Price is only settable during creation, skip validation if editing
-    if (!editingCourse && (formData.price === '' || formData.price < 0)) {
-      setError(t('instructor.create_course.form.price_required', 'A valid price is required.'));
+    if (!editingCourse) {
+      const price = Number(formData.price);
+      const limits = formData.courseType === 'ongoing' ? [50, 500] : [250, 5000];
+      if (!Number.isFinite(price) || price < limits[0] || price > limits[1]) {
+        setError(formData.courseType === 'ongoing' ? 'Ongoing course price must be between 50 EGP and 500 EGP.' : 'Full course price must be between 250 EGP and 5000 EGP.');
+        return;
+      }
+    }
+    if (formData.academicType === 'college' && !formData.college) {
+      setError('College is required for College / Major courses.');
       return;
     }
-    if (!formData.college) {
-      setError(t('instructor.create_course.form.college_required', 'College is required.'));
+    if (formData.academicType === 'school' && !formData.academicGroup) {
+      setError('School level is required for School courses.');
       return;
     }
     if (!formData.semester) {
@@ -267,7 +275,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
       setShowCreateModal(false);
       setEditingCourse(null);
       // INS-03: Resetting formData correctly without category/major
-      setFormData({ title: '', description: '', price: '', college: '', semester: '', courseType: '' });
+      setFormData({ title: '', description: '', price: '', college: '', academicType: 'college', academicGroup: '', semester: '', courseType: '' });
       setThumbnailFile(null);
       fetchMyCourses();
     } catch (err) {
@@ -912,9 +920,6 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
           </div>
         </nav>
 
-        <GlobalAnnouncementBanner />
-
-
         {/* INSTRUCTOR CONTENT */}
         <div style={{ flex: 1, minHeight: 0, padding: '24px 40px 40px 40px', overflowY: 'auto', width: '100%', WebkitOverflowScrolling: 'touch' }}>
           <div style={{ maxWidth: activeTab === 'settings' ? '100%' : '1000px', width: '100%', margin: '0 auto' }}>
@@ -927,7 +932,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                 selectedCourseId={selectedCourseId}
                 onSelectCourse={setSelectedCourseId}
                 onAction={fetchMyCourses}
-                onCreateCourse={() => { setError(''); setEditingCourse(null); setFormData({ title: '', description: '', price: '', college: '', semester: '', courseType: '' }); setShowCourseTypeModal(true); }}
+                onCreateCourse={() => { setError(''); setEditingCourse(null); setFormData({ title: '', description: '', price: '', college: '', academicType: 'college', academicGroup: '', semester: '', courseType: '' }); setShowCourseTypeModal(true); }}
                 onTogglePublish={handleTogglePublish}
                 onRepublish={handleRepublish}
                 onRequestPriceChange={(course) => { setPriceChangeCourseId(course._id); setPriceChangeValue(String(course.price || '')); }}
@@ -964,6 +969,8 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                     description: course.description,
                     price: course.price,
                     college: course.college || '', // INS-03: Initialize college from course data
+                    academicType: course.academicType || 'college',
+                    academicGroup: course.academicGroup || '',
                     semester: course.semester || ''
                   });
                   setThumbnailFile(null);
@@ -1475,14 +1482,24 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                 <div className="input-row" style={{ marginBottom: '-10px' }}>
                   <div className="input-group">
                     <label>{t('instructor.create_course.form.price')} (EGP) <span style={{ color: '#ef4444' }}>*</span></label>
-                    <input required type="number" min="0" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className={error && formData.price === '' ? 'input-error' : ''} />
+                    <input required type="number" min={formData.courseType === 'ongoing' ? 50 : 250} max={formData.courseType === 'ongoing' ? 500 : 5000} value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className={error && formData.price === '' ? 'input-error' : ''} />
+                    <div className="input-hint">{formData.courseType === 'ongoing' ? 'Minimum 50 EGP — Maximum 500 EGP' : 'Minimum 250 EGP — Maximum 5000 EGP'}</div>
                   </div>
                   <div className="input-group" style={{ visibility: 'hidden' }}></div>
                 </div>
               )}
               
               <div className="input-row">
-                {/* INS-03: Replace category/major with college */}
+                <div className="input-group">
+                  <label>Academic Type <span style={{ color: '#ef4444' }}>*</span></label>
+                  <CustomSelect
+                    value={formData.academicType}
+                    onChange={val => setFormData(current => ({ ...current, academicType: val, academicGroup: '', college: val === 'school' ? '' : current.college }))}
+                    placeholder="Select academic type"
+                    options={ACADEMIC_TYPES.map(({ id, label }) => ({ value: id, label }))}
+                  />
+                </div>
+                {formData.academicType === 'college' ? <div className="input-row">
                 <div className="input-group">
                   <label>{t('instructor.create_course.form.college', 'College')} <span style={{ color: '#ef4444' }}>*</span></label>
                   <CustomSelect
@@ -1494,6 +1511,20 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                 </div>
                 <div className="input-group">
                   <label>{t('instructor.create_course.form.semester', 'Semester')} <span style={{ color: '#ef4444' }}>*</span></label>
+                  <CustomSelect value={formData.semester ? String(formData.semester) : ''} onChange={val => setFormData({...formData, semester: val})} placeholder={t('instructor.create_course.form.semester_placeholder', 'Select a semester')} options={Array.from({ length: 12 }, (_, i) => i + 1).map(n => ({ value: String(n), label: `Semester ${n}` }))} />
+                </div>
+                </div> : <div className="input-row">
+                <div className="input-group">
+                  <label>School Level <span style={{ color: '#ef4444' }}>*</span></label>
+                  <CustomSelect
+                    value={formData.academicGroup}
+                    onChange={val => setFormData(current => ({ ...current, academicGroup: val }))}
+                    placeholder="Select school level"
+                    options={SCHOOL_LEVELS.map(({ id, label }) => ({ value: id, label }))}
+                  />
+                </div>
+                <div className="input-group">
+                  <label>{t('instructor.create_course.form.semester', 'Semester')} <span style={{ color: '#ef4444' }}>*</span></label>
                   <CustomSelect
                     value={formData.semester ? String(formData.semester) : ''}
                     onChange={val => setFormData({...formData, semester: val})}
@@ -1501,6 +1532,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                     options={Array.from({ length: 12 }, (_, i) => i + 1).map(n => ({ value: String(n), label: t('instructor.create_course.form.semester_n', 'Semester {{n}}', { n }) }))}
                   />
                 </div>
+                </div>}
               </div>
               <div className="input-group">
                 <label>{t('instructor.create_course.form.thumbnail')} <span style={{ color: '#ef4444' }}>*</span></label>
@@ -1633,5 +1665,3 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
     </div>
   );
 }
-
-

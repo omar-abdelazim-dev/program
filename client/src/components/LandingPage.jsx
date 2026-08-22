@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useConfig } from '../context/ConfigContext';
 import logo from '../assets/logo.png'; // Assuming logo.png is for light mode, if not we can adjust
-import GlobalAnnouncementBanner from './GlobalAnnouncementBanner';
 import '../styles/landing-page.css';
 import { useState, useEffect, useRef } from 'react';
 
@@ -281,8 +280,6 @@ export default function LandingPage() {
         </nav>
       </header>
       
-      <GlobalAnnouncementBanner />
-
       <main>
         {/* HERO SECTION */}
         <section className="landing-hero landing-shell">

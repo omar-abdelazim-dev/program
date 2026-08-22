@@ -17,7 +17,7 @@ export const getUserProfile = async (req, res) => {
     }
 
     const user = await User.findOne({ _id: id, isDeleted: false }).select(
-      'name lastName avatarUrl role college major university goalsText'
+      'name lastName avatarUrl role college major academicType academicGroup university goalsText'
     );
 
     if (!user) {
@@ -33,6 +33,8 @@ export const getUserProfile = async (req, res) => {
         role: user.role,
         college: user.college,
         major: user.major,
+        academicType: user.academicType,
+        academicGroup: user.academicGroup,
         university: user.university,
         bio: user.goalsText,
       },

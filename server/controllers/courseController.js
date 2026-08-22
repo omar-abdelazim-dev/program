@@ -55,6 +55,8 @@ export const createCourse = async (req, res) => {
       major,
       semester,
       college,
+      academicType,
+      academicGroup,
       thumbnailUrl,
       courseType,
     } = req.body;
@@ -68,6 +70,8 @@ export const createCourse = async (req, res) => {
       semester:
         semester !== undefined && semester !== "" ? semester : undefined,
       college: college || "",
+      academicType: academicType || 'college',
+      academicGroup: academicGroup || (academicType === 'college' ? college || '' : ''),
       thumbnailUrl: thumbnailUrl || "",
       instructor: req.user.id, // taken from the verified JWT, never trust a client-sent instructor ID
       status: "pending", // every new course starts pending — never trust the client to set this either
@@ -302,7 +306,7 @@ export const getInstructorStats = async (req, res) => {
 // courses; pending/rejected courses must never leak here.
 export const getApprovedCourses = async (req, res) => {
   try {
-    const { search, category, major, semester, college, page, limit } =
+    const { search, category, major, semester, college, academicType, academicGroup, page, limit } =
       req.query;
 
     const filter = { status: "approved" };
@@ -310,10 +314,13 @@ export const getApprovedCourses = async (req, res) => {
     if (major) filter.major = major;
     if (semester) filter.semester = parseInt(semester, 10);
     if (college) filter.college = college;
+    if (academicType) filter.academicType = academicType;
+    if (academicGroup) filter.academicGroup = academicGroup;
 
     if (search) {
-      // Match either the course title or the instructor's name — lets the
-      // Explore search bar cover both course and instructor lookups.
+      // Search course content and its assigned academic audience, as well as
+      // instructor names. This lets a student search a major (for example,
+      // "Computer Science") and see every course assigned to that major.
       const regex = { $regex: escapeRegex(search), $options: "i" };
       const matchingInstructors = await mongoose
         .model("User")
@@ -321,6 +328,11 @@ export const getApprovedCourses = async (req, res) => {
         .select("_id");
       filter.$or = [
         { title: regex },
+        { description: regex },
+        { major: regex },
+        { college: regex },
+        { academicGroup: regex },
+        { category: regex },
         { instructor: { $in: matchingInstructors.map((u) => u._id) } },
       ];
     }
@@ -625,11 +637,11 @@ export const convertOngoingToFull = async (req, res) => {
       price === undefined ||
       price === "" ||
       Number.isNaN(Number(price)) ||
-      Number(price) < 0
+      Number(price) < 250 || Number(price) > 5000
     ) {
       return res
         .status(400)
-        .json({ message: "A valid full-course price is required to convert" });
+      .json({ message: "Full course price must be between 250 EGP and 5000 EGP." });
     }
 
     course.courseType = "full";
@@ -688,19 +700,23 @@ export const requestPriceChange = async (req, res) => {
         message: "Price-change requests are only available for Full Courses",
       });
     }
+    const requested = Number(requestedPrice);
+    if (!Number.isFinite(requested) || requested < 250 || requested > 5000) {
+      return res.status(400).json({ message: "Full course price must be between 250 EGP and 5000 EGP." });
+    }
     if (course.pendingPriceChange?.status === "pending") {
       return res.status(409).json({
         message: "A price-change request is already pending admin approval",
       });
     }
-    if (Number(requestedPrice) === course.price) {
+    if (requested === course.price) {
       return res.status(400).json({
         message: "Requested price must be different from the current price",
       });
     }
 
     course.pendingPriceChange = {
-      requestedPrice: Number(requestedPrice),
+      requestedPrice: requested,
       status: "pending",
       requestedAt: new Date(),
     };
@@ -919,6 +935,8 @@ export const updateCourse = async (req, res) => {
       major,
       semester,
       college,
+      academicType,
+      academicGroup,
       thumbnailUrl,
     } = req.body;
 
@@ -931,6 +949,8 @@ export const updateCourse = async (req, res) => {
     if (semester !== undefined)
       course.semester = semester === "" ? undefined : semester;
     if (college !== undefined) course.college = college;
+    if (academicType !== undefined) course.academicType = academicType;
+    if (academicGroup !== undefined) course.academicGroup = academicGroup;
     if (thumbnailUrl !== undefined) {
       course.thumbnailUrl = thumbnailUrl;
     }

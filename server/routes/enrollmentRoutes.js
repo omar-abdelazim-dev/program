@@ -1,6 +1,7 @@
 import express from 'express';
 import {
   enroll,
+  validateDiscountCode,
   getMyEnrollments,
   getEnrollmentStatus,
   markLessonComplete,
@@ -14,6 +15,8 @@ const router = express.Router();
 // 'mine' must be registered before '/:courseId' so Express doesn't try to
 // treat the literal word "mine" as a courseId.
 router.get('/mine', protect, authorize('student'), getMyEnrollments);
+
+router.post('/:courseId/discount-code', protect, authorize('student'), validateObjectId('courseId'), validateDiscountCode);
 
 router.post('/:courseId', protect, authorize('student'), validateObjectId('courseId'), enroll);
 router.get('/:courseId', protect, validateObjectId('courseId'), getEnrollmentStatus);

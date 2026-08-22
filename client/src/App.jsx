@@ -8,12 +8,10 @@ const AuthPage = lazy(() => import('./components/AuthPage'));
 const AdminAuthPage = lazy(() => import('./components/AdminAuthPage'));
 const ExploreTab = lazy(() => import('./components/ExploreTab'));
 const StudentLayout = lazy(() => import('./components/StudentLayout'));
-const DiscoverTab = lazy(() => import('./components/DiscoverTab'));
 const InstructorProfilePage = lazy(() => import('./components/InstructorProfilePage'));
 const DashboardTab = lazy(() => import('./components/DashboardTab'));
 const CoursePage = lazy(() => import('./components/CoursePage'));
 const LearningPortal = lazy(() => import('./components/LearningPortal'));
-const CheckoutPage = lazy(() => import('./components/CheckoutPage'));
 const InstructorPortal = lazy(() => import('./components/InstructorPortal'));
 const AdminPortal = lazy(() => import('./components/AdminPortal'));
 const SettingsPage = lazy(() => import('./components/SettingsPage'));
@@ -53,19 +51,10 @@ export default function App() {
     };
     fetchSession();
   }, []);
-  const [isLightMode, setIsLightMode] = useState(() => {
-    const savedMode = localStorage.getItem('isLightMode');
-    return savedMode !== null ? savedMode === 'true' : true;
-  });
+  // Dark mode remains implemented, but is deliberately disabled until the
+  // post-launch theme review. Ignore any previously persisted preference.
+  const [isLightMode] = useState(true);
   
-  const [cart, setCart] = useState(() => {
-    try {
-      const saved = localStorage.getItem('cart');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
   
   const [notifications, setNotifications] = useState(() => {
     try {
@@ -83,7 +72,6 @@ export default function App() {
   });
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [exploreCollege, setExploreCollege] = useState('All');
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -127,23 +115,17 @@ export default function App() {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    localStorage.setItem('isLightMode', isLightMode);
+    localStorage.setItem('isLightMode', 'true');
   }, [isLightMode]);
 
-  useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cart));
-  }, [cart]);
+  useEffect(() => { localStorage.removeItem('cart'); }, []);
 
   useEffect(() => {
     localStorage.setItem('notifications', JSON.stringify(notifications));
   }, [notifications]);
 
   useEffect(() => {
-    if (isLightMode) {
-      document.body.classList.add('light-mode');
-    } else {
-      document.body.classList.remove('light-mode');
-    }
+    document.body.classList.add('light-mode');
   }, [isLightMode]);
 
   useEffect(() => {
@@ -154,9 +136,7 @@ export default function App() {
     }
   }, [user]);
 
-  const toggleTheme = () => {
-    setIsLightMode(!isLightMode);
-  };
+  const toggleTheme = () => {}; // Preserved API for future re-enablement.
 
   const handleLogin = (userData) => {
     setUser(userData);
@@ -219,8 +199,8 @@ export default function App() {
     );
   }
 
-  // The Learning Portal and Checkout Page have their own fullscreen layouts
-  if (location.pathname.startsWith('/learn/') || location.pathname.startsWith('/checkout/') || location.pathname === '/instructor' || location.pathname === '/admin') {
+  // The Learning Portal and staff portals have their own fullscreen layouts.
+  if (location.pathname.startsWith('/learn/') || location.pathname === '/instructor' || location.pathname === '/admin') {
     
     // Protect /admin route
     if (location.pathname === '/admin' && user?.role !== 'admin' && user?.role !== 'superadmin') {
@@ -236,7 +216,6 @@ export default function App() {
       <Suspense fallback={<RouteFallback />}>
         <Routes>
         <Route path="/learn/:id" element={<LearningPortal user={user} />} />
-        <Route path="/checkout/cart" element={<CheckoutPage cart={cart} setCart={setCart} setNotifications={setNotifications} isCartCheckout={true} />} />
         <Route path="/instructor" element={<InstructorPortal user={user} setUser={setUser} onLogout={handleLogout} toggleTheme={toggleTheme} isLightMode={isLightMode} />} />
         <Route path="/admin" element={<AdminPortal user={user} setUser={setUser} onLogout={handleLogout} toggleTheme={toggleTheme} isLightMode={isLightMode} />} />
         </Routes>
@@ -268,23 +247,21 @@ export default function App() {
       <StudentLayout
         user={user}
         onLogout={handleLogout}
-        cartCount={cart.length}
         notifications={notifications}
         setNotifications={setNotifications}
         isLightMode={isLightMode}
         toggleTheme={toggleTheme}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        exploreCollege={exploreCollege}
-        onCollegeChange={setExploreCollege}
       >
         <Routes>
         <Route path="/" element={<Navigate to="/student" replace />} />
         <Route path="/student" element={<ExploreTab user={user} searchQuery={searchQuery} isLightMode={isLightMode} />} />
         <Route path="/student/dashboard" element={<DashboardTab user={user} />} />
-        <Route path="/student/explore" element={<DiscoverTab searchQuery={searchQuery} activeCollege={exploreCollege} isLightMode={isLightMode} />} />
+        <Route path="/student/explore" element={<Navigate to="/student" replace />} />
         <Route path="/student/settings" element={<SettingsPage user={user} setUser={setUser} isLightMode={isLightMode} toggleTheme={toggleTheme} onLogout={handleLogout} />} />
-        <Route path="/course/:id" element={<CoursePage cart={cart} setCart={setCart} user={user} />} />
+        <Route path="/course/:id" element={<CoursePage user={user} />} />
+        <Route path="/checkout/cart" element={<Navigate to="/student" replace />} />
         <Route path="/instructor/:id" element={<InstructorProfilePage isLightMode={isLightMode} />} />
         <Route path="/student/:id" element={<StudentProfilePage isLightMode={isLightMode} user={user} />} />
         <Route path="/about" element={<AboutPage />} />

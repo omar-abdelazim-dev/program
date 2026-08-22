@@ -14,6 +14,7 @@
  */
 
 import logger from '../utils/logger.js';
+import * as Sentry from '@sentry/node';
 
 const isProd = process.env.NODE_ENV === 'production';
 
@@ -26,6 +27,16 @@ export const errorHandler = (err, req, res, next) => {
     ip: req.ip,
     userId: req.user?.id,
   });
+
+  if (process.env.SENTRY_DSN) {
+    Sentry.captureException(err, {
+      extra: {
+        method: req.method,
+        path: req.path,
+        userId: req.user?.id,
+      },
+    });
+  }
 
   // ── Mongoose Validation Error ─────────────────────────────────────────────
   if (err.name === 'ValidationError') {

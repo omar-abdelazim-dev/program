@@ -4,6 +4,7 @@ import User from '../models/User.js';
 import Lesson from '../models/Lesson.js';
 import Transaction from '../models/Transaction.js';
 import PromoCode from '../models/PromoCode.js';
+import DiscountCode from '../models/DiscountCode.js';
 import { getInternalConfig } from '../utils/configFetcher.js';
 import * as emailService from '../utils/emailService.js';
 import Notification from '../models/Notification.js';
@@ -11,12 +12,32 @@ import logger from '../utils/logger.js';
 import { getModulesWithLessons, computeModuleProgress } from '../utils/courseContent.js';
 import { validateManualPaymentProof } from '../utils/manualPayment.js';
 
+const roundMoney = (amount) => Math.round((amount + Number.EPSILON) * 100) / 100;
+const getDiscountQuote = async (course, rawCode) => {
+  const code = String(rawCode || '').trim().toUpperCase();
+  if (!code) return { originalPrice: course.price, discountPercentage: 0, discountAmount: 0, finalPrice: course.price, code: '' };
+  const discount = await DiscountCode.findOne({ code, isActive: true, expiresAt: { $gt: new Date() } });
+  if (!discount || discount.discountPercentage < 1 || discount.discountPercentage > 99) return null;
+  const discountAmount = roundMoney(course.price * discount.discountPercentage / 100);
+  return { originalPrice: course.price, discountPercentage: discount.discountPercentage, discountAmount, finalPrice: roundMoney(course.price - discountAmount), code: discount.code };
+};
+
+export const validateDiscountCode = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.courseId);
+    if (!course || course.status !== 'approved' || !Number.isFinite(course.price) || course.price <= 0) return res.status(400).json({ message: 'Code not valid' });
+    const quote = await getDiscountQuote(course, req.body.code);
+    if (!quote) return res.status(400).json({ message: 'Code not valid' });
+    res.json({ valid: true, ...quote });
+  } catch (error) { logger.error('Discount validation failed', { error: error.message }); res.status(400).json({ message: 'Code not valid' }); }
+};
+
 // @route   POST /api/enrollments/:courseId
 // @access  Private (student)
 export const enroll = async (req, res) => {
   try {
     const { courseId } = req.params;
-    const { promoCode } = req.body;
+    const { promoCode, discountCode } = req.body;
 
     const course = await Course.findById(courseId);
     if (!course) {
@@ -25,20 +46,18 @@ export const enroll = async (req, res) => {
     if (course.status !== 'approved') {
       return res.status(403).json({ message: 'This course is not open for enrollment yet' });
     }
+    if (!Number.isFinite(course.price) || course.price <= 0) return res.status(400).json({ message: 'This legacy course needs a valid paid price before enrollment' });
 
     const existing = await Enrollment.findOne({ student: req.user.id, course: courseId });
     if (existing) {
       return res.status(409).json({ message: 'You are already enrolled in this course' });
     }
 
-    let paymentProof = {};
-    if (course.price > 0) {
-      const validation = validateManualPaymentProof(req.body);
-      if (validation.error) {
-        return res.status(400).json({ message: validation.error });
-      }
-      paymentProof = validation.proof;
-    }
+    const validation = validateManualPaymentProof(req.body);
+    if (validation.error) return res.status(400).json({ message: validation.error });
+    const paymentProof = validation.proof;
+    const quote = await getDiscountQuote(course, discountCode);
+    if (!quote) return res.status(400).json({ message: 'Code not valid' });
 
     // Calculate financial distribution
     const instructor = await User.findById(course.instructor);
@@ -56,28 +75,32 @@ export const enroll = async (req, res) => {
       // Program instructors get a fixed 85% cut, platform keeps 15% —
       // deliberately not admin-configurable, this is the flat benefit of
       // program-instructor status.
-      instructorShare = course.price * 0.85;
-      platformCommission = course.price * 0.15;
+      instructorShare = quote.finalPrice * 0.85;
+      platformCommission = quote.finalPrice * 0.15;
       commissionRate = 15;
     } else if (appliedPromo) {
-      instructorShare = course.price * 0.85;
-      platformCommission = course.price * 0.15;
+      instructorShare = quote.finalPrice * 0.85;
+      platformCommission = quote.finalPrice * 0.15;
       commissionRate = 15;
     } else {
       // Everyone else keeps using the admin-configurable commission rate
       // (System Management > Commission Slider), same as before this PR.
       const config = await getInternalConfig();
       const commissionPercent = config?.financial?.commission ?? 15;
-      platformCommission = (course.price * commissionPercent) / 100;
-      instructorShare = course.price - platformCommission;
+      platformCommission = (quote.finalPrice * commissionPercent) / 100;
+      instructorShare = quote.finalPrice - platformCommission;
       commissionRate = commissionPercent;
     }
 
-    const status = course.price > 0 ? 'pending' : 'approved';
+    const status = 'pending';
     const enrollment = await Enrollment.create({
       student: req.user.id,
       course: courseId,
-      amountPaid: course.price,
+      amountPaid: quote.finalPrice,
+      originalPrice: quote.originalPrice,
+      discountCode: quote.code,
+      discountPercentage: quote.discountPercentage,
+      discountAmount: quote.discountAmount,
       platformCommission,
       instructorShare,
       status,

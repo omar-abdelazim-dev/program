@@ -40,3 +40,13 @@
   flex: 0 0 280px;
   scroll-snap-align: start;
 }
+
+/* Home cards use the shared responsive grid, with a more rectangular shell
+   and no clipping outside the thumbnail itself. */
+.dashboard-section .cc-card {
+  border-radius: 5px;
+  overflow: visible;
+  scale: 1;
+}
+.dashboard-section .cc-thumb-wrap { border-radius: 5px 5px 0 0; }
+.dashboard-section .cc-body { min-height: 0; }

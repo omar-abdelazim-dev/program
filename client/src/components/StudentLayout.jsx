@@ -6,12 +6,8 @@ import Footer from "./Footer";
 import "../styles/student-layout.css";
 import "../styles/static-pages.css";
 import { useTranslation } from 'react-i18next';
-import { INSTRUCTORS_TAB, ALL_TAB } from "../data/exploreCategories";
-import { COLLEGES } from "../data/colleges";
-import CustomSelect from "./CustomSelect";
 import { formatNotificationTitle, formatNotificationMessage } from "../utils/notificationFormatter";
 import api from "../api/axios";
-import GlobalAnnouncementBanner from "./GlobalAnnouncementBanner";
 
 export default function StudentLayout({
   user,
@@ -19,7 +15,6 @@ export default function StudentLayout({
   toggleTheme,
   isLightMode,
   onLogout,
-  cartCount,
   notifications,
   setNotifications,
   searchQuery,
@@ -59,11 +54,10 @@ export default function StudentLayout({
     }
   }, [i18n, i18n.language]);
   
-  const showSearch = location.pathname === '/student/explore';
+  const showSearch = false;
 
   // Derive active tab from pathname
   let activeTab = "home";
-  if (location.pathname === "/student/explore") activeTab = "explore";
   if (location.pathname.includes("/my-courses")) activeTab = "my-courses";
   if (location.pathname.includes("/dashboard")) activeTab = "dashboard";
   if (location.pathname.includes("/settings")) activeTab = "settings";
@@ -109,22 +103,6 @@ export default function StudentLayout({
                   >
                     {t("student.nav.dashboard", "Dashboard")}
                   </button>
-                  <button
-                    className={`topnav-link ${activeTab === "explore" ? "active" : ""}`}
-                    onClick={() => navigate("/student/explore")}
-                  >
-                    {t("student.nav.explore", "Explore")}
-                  </button>
-                  <button
-                    className={`topnav-link ${activeTab === "cart" || location.pathname === "/checkout/cart" ? "active" : ""}`}
-                    onClick={() => navigate("/checkout/cart")}
-                    style={{ position: "relative" }}
-                  >
-                    {t("student.nav.cart", "Cart")}
-                    {cartCount > 0 && (
-                      <span className="topnav-badge">{cartCount > 99 ? "99+" : cartCount}</span>
-                    )}
-                  </button>
                 </>
               )}
               <button
@@ -138,8 +116,8 @@ export default function StudentLayout({
 
           {/* Very Right: Search Bar + Utility Icons */}
           <div className="topnav-right header-right">
-            {location.pathname === "/student/explore" && (
-              <div className="merged-search-filter-group">
+            {location.pathname === "/student" && (
+              <div className="merged-search-filter-group home-course-search">
                 <div className={`merged-search-part ${searchQuery ? "has-value" : ""}`}>
                   <span className="search-pill-icon" aria-hidden="true">
                     <svg
@@ -190,49 +168,6 @@ export default function StudentLayout({
                   )}
                 </div>
 
-                <div className="merged-filter-divider" />
-
-                <div className="merged-select-part">
-                  <CustomSelect
-                    options={[ALL_TAB, ...COLLEGES.map((c) => c.id)].map(
-                      (cat) => {
-                        let label = cat;
-                        if (cat === ALL_TAB)
-                          label = t("student.explore.all", "All");
-                        else {
-                          const college = COLLEGES.find((c) => c.id === cat);
-                          label = college
-                            ? t(college.key, cat.replace(/^College of\s+/i, ""))
-                            : cat.replace(/^College of\s+/i, "");
-                        }
-                        return { label, value: cat };
-                      },
-                    )}
-                    value={exploreCollege || ALL_TAB}
-                    onChange={(val) => {
-                      onCollegeChange?.(val);
-                      if (location.pathname !== "/student/explore") {
-                        navigate("/student/explore");
-                      }
-                    }}
-                    placeholder={t(
-                      "student.explore.select_college",
-                      "Select College",
-                    )}
-                    triggerClassName="merged-custom-select-trigger"
-                    triggerStyle={{
-                      background: "transparent",
-                      boxShadow: "none",
-                      border: "none",
-                      height: "34px",
-                      minWidth: "60px",
-                      maxWidth: "150px",
-                      paddingInlineStart: "4px",
-                      paddingInlineEnd: "20px",
-                      margin: 0,
-                    }}
-                  />
-                </div>
               </div>
             )}
 
@@ -549,30 +484,6 @@ export default function StudentLayout({
                 >
                   {t("student.nav.dashboard", "Dashboard")}
                 </button>
-                <button
-                  className={`topnav-mobile-link ${activeTab === "explore" ? "active" : ""}`}
-                  onClick={() => {
-                    navigate("/student/explore");
-                    setMobileNavOpen(false);
-                  }}
-                >
-                  {t("student.nav.explore", "Explore")}
-                </button>
-                <button
-                  className={`topnav-mobile-link ${activeTab === "cart" || location.pathname === "/checkout/cart" ? "active" : ""}`}
-                  onClick={() => {
-                    navigate("/checkout/cart");
-                    setMobileNavOpen(false);
-                  }}
-                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
-                >
-                  <span>{t("student.nav.cart", "Cart")}</span>
-                  {cartCount > 0 && (
-                    <span className="topnav-badge" style={{ position: "static" }}>
-                      {cartCount > 99 ? "99+" : cartCount}
-                    </span>
-                  )}
-                </button>
               </>
             )}
             <button
@@ -596,5 +507,3 @@ export default function StudentLayout({
     </div>
   );
 }
-
-

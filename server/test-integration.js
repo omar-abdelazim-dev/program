@@ -70,8 +70,9 @@ const run = async () => {
   res = await agentInstructor.post('/api/courses').set('X-CSRF-Token', instructorCsrf).send({
     title: 'Intro to Algorithms',
     description: 'Learn the fundamentals of algorithmic thinking.',
-    price: 49,
+    price: 500,
     category: 'Computer Science',
+    major: 'Computer Science and Information Technology',
     college: 'College of Computer Science and Information Technology',
     semester: 1,
     courseType: 'full',
@@ -202,7 +203,13 @@ const run = async () => {
   assert(res.body.courses.length === 1, 'Published course should now appear in public catalog');
   console.log('✓ Published course now visible in public catalog');
 
-  // 9a. Content lock: a published Full Course cannot take new modules/lessons
+  // 9a. Major searches should return every approved course assigned to it.
+  res = await agentPublic.get('/api/courses').query({ search: 'Computer Science and Information Technology' });
+  assert(res.status === 200, `Major search failed: ${JSON.stringify(res.body)}`);
+  assert(res.body.courses.some((course) => course._id === courseId), 'Major search should return matching courses');
+  console.log('✓ Major search returns related approved courses');
+
+  // 9b. Content lock: a published Full Course cannot take new modules/lessons
   res = await agentInstructor.post(`/api/courses/${courseId}/modules`).set('X-CSRF-Token', instructorCsrf).send({
     title: 'Module Attempted After Publish',
   });
@@ -243,7 +250,7 @@ const run = async () => {
   assert(res.status === 400, `Price-change request on a non-full course should be rejected: ${JSON.stringify(res.body)}`);
   console.log('✓ Price-change request correctly rejected for a course with no courseType');
 
-  res = await agentInstructor.post(`/api/courses/${courseId}/request-price-change`).set('X-CSRF-Token', instructorCsrf).send({ requestedPrice: 199 });
+  res = await agentInstructor.post(`/api/courses/${courseId}/request-price-change`).set('X-CSRF-Token', instructorCsrf).send({ requestedPrice: 250 });
   assert(res.status === 200, `Price-change request failed: ${JSON.stringify(res.body)}`);
   assert(res.body.course.pendingPriceChange.status === 'pending', 'Price-change request should be pending');
   assert(res.body.course.price === priceBeforeRequest, 'Public price must NOT change just from requesting');
@@ -261,7 +268,7 @@ const run = async () => {
 
   res = await agentAdmin.patch(`/api/courses/${courseId}/price-change/approve`).set('X-CSRF-Token', adminCsrf);
   assert(res.status === 200, `Approving price change failed: ${JSON.stringify(res.body)}`);
-  assert(res.body.course.price === 199, `Approved price change should update the public price: ${JSON.stringify(res.body.course)}`);
+  assert(res.body.course.price === 250, `Approved price change should update the public price: ${JSON.stringify(res.body.course)}`);
   assert(!res.body.course.pendingPriceChange, 'pendingPriceChange should be cleared after approval');
   console.log('✓ Admin approved price change; public price updated to the requested value');
 
@@ -270,14 +277,14 @@ const run = async () => {
   assert(res.status === 200, `Second price-change request failed: ${JSON.stringify(res.body)}`);
   res = await agentAdmin.patch(`/api/courses/${courseId}/price-change/reject`).set('X-CSRF-Token', adminCsrf).send({ reason: 'Too high for this catalog category' });
   assert(res.status === 200, `Rejecting price change failed: ${JSON.stringify(res.body)}`);
-  assert(res.body.course.price === 199, `Rejected price change must leave the price unchanged: ${JSON.stringify(res.body.course)}`);
+  assert(res.body.course.price === 250, `Rejected price change must leave the price unchanged: ${JSON.stringify(res.body.course)}`);
   console.log('✓ Admin rejected a price change; price correctly left unchanged');
 
   // 9b. Publish gate: a course with zero lessons cannot be published live
   res = await agentInstructor.post('/api/courses').set('X-CSRF-Token', instructorCsrf).send({
     title: 'Empty Course',
     description: 'Has no modules or lessons yet.',
-    price: 0,
+    price: 250,
     college: 'College of Computer Science and Information Technology',
     semester: 1,
     courseType: 'full',
@@ -496,7 +503,7 @@ const run = async () => {
   res = await agentInstructor.post('/api/courses').set('X-CSRF-Token', instructorCsrf).send({
     title: 'Ongoing: Web Dev From Scratch',
     description: 'A progressively-built ongoing course for lifecycle testing.',
-    price: 0,
+    price: 50,
     college: 'College of Computer Science and Information Technology',
     semester: 1,
     courseType: 'ongoing',
@@ -586,7 +593,7 @@ const run = async () => {
   res = await agentInstructor.post('/api/courses').set('X-CSRF-Token', instructorCsrf).send({
     title: 'Ongoing: To Be Converted',
     description: 'An ongoing course specifically for testing the convert-to-full flow.',
-    price: 0,
+    price: 50,
     college: 'College of Computer Science and Information Technology',
     semester: 1,
     courseType: 'ongoing',
@@ -619,7 +626,7 @@ const run = async () => {
   res = await agentInstructor.post('/api/courses').set('X-CSRF-Token', instructorCsrf).send({
     title: 'Ongoing: Second Course',
     description: 'A second ongoing course to test violation escalation across courses.',
-    price: 0,
+    price: 50,
     college: 'College of Computer Science and Information Technology',
     semester: 1,
     courseType: 'ongoing',

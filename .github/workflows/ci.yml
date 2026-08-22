@@ -42,3 +42,11 @@ jobs:
       - name: Build
         working-directory: client
         run: npm run build
+
+  api-container:
+    name: API container build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build production API image
+        run: docker build --tag program-api:ci .

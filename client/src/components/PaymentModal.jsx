@@ -17,6 +17,9 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
   const [invoiceId, setInvoiceId] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState('');
+  const [discountCode, setDiscountCode] = useState('');
+  const [discountQuote, setDiscountQuote] = useState(null);
+  const [applyingDiscount, setApplyingDiscount] = useState(false);
 
   useEffect(() => {
     setInvoiceId(`INV-${Math.floor(Math.random() * 1000000)}`);
@@ -53,6 +56,20 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
     }
     const rest = val.slice(3).replace(/\D/g, '');
     setPaymentAccount('+20' + rest.slice(0, 10));
+  };
+
+  const applyDiscount = async () => {
+    const code = discountCode.trim();
+    setDiscountQuote(null);
+    if (!code) return;
+    setApplyingDiscount(true);
+    try {
+      const res = await api.post(`/enrollments/${course._id}/discount-code`, { code });
+      setDiscountQuote(res.data);
+      setError('');
+    } catch {
+      setError(t('course_page.payment.invalid_discount', 'Code not valid'));
+    } finally { setApplyingDiscount(false); }
   };
 
 
@@ -100,6 +117,7 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
         paymentMethod,
         screenshot: screenshotUrl,
         invoiceId,
+        discountCode: discountQuote?.code || '',
       });
     } finally {
       setIsUploading(false);
@@ -181,7 +199,7 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
           const numericPrice = typeof course.price === 'number'
             ? course.price
             : Number.parseFloat(String(course.price || '').replace(/[^0-9.]/g, '')) || 0;
-          const totalAmount = numericPrice.toFixed(2);
+          const totalAmount = (discountQuote?.finalPrice ?? numericPrice).toFixed(2);
           const curr = paymentConfig.currency || t('currency', 'EGP');
           return (
             <div style={{ background: 'var(--bg-surface)', padding: '20px', borderRadius: '12px', marginBottom: '28px', fontSize: '0.95rem', direction: isRTL ? 'rtl' : 'ltr' }}>
@@ -189,6 +207,17 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
                 <span style={{ color: 'var(--text-secondary)' }}>{t('course_page.payment.course', 'Course')}:</span>
                 <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{course.title}</span>
               </div>
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 700, color: 'var(--text-primary)' }}>Discount Code</label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input value={discountCode} onChange={(e) => { setDiscountCode(e.target.value.toUpperCase()); setDiscountQuote(null); }} placeholder="SUMMER20" style={{ ...inputStyle, padding: '10px 12px' }} />
+                  <button type="button" onClick={applyDiscount} disabled={applyingDiscount || !discountCode.trim()} className="solid-btn" style={{ padding: '0 16px', whiteSpace: 'nowrap', opacity: applyingDiscount || !discountCode.trim() ? .65 : 1 }}>{applyingDiscount ? 'Applying…' : 'Apply'}</button>
+                </div>
+              </div>
+              {discountQuote && <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: '#10b981' }}><span>Discount ({discountQuote.discountPercentage}%)</span><span>-{discountQuote.discountAmount.toFixed(2)} {curr}</span></div>
+                <div style={{ fontSize: '.82rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>Code {discountQuote.code} applied</div>
+              </>}
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>{t('course_page.payment.instructor', 'Instructor')}:</span>
                 <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{course.instructor?.name || t('course_page.payment.instructor', 'Instructor')}</span>

@@ -5,6 +5,7 @@ import Enrollment from "../models/Enrollment.js";
 import Lesson from "../models/Lesson.js";
 import StandaloneLesson from "../models/StandaloneLesson.js";
 import PromoCode from "../models/PromoCode.js";
+import DiscountCode from "../models/DiscountCode.js";
 import InstructorViolation from "../models/InstructorViolation.js";
 import { escapeRegex } from "../utils/escapeRegex.js";
 import { logAudit } from "../utils/auditLogger.js";
@@ -1070,6 +1071,30 @@ export const getPromoCodes = async (req, res) => {
     });
     res.status(500).json({ message: "Server error fetching promo codes" });
   }
+};
+
+// Customer-facing discounts are intentionally separate from affiliate promo
+// codes. Only superadmins may enumerate or issue them.
+export const createDiscountCode = async (req, res) => {
+  try {
+    const code = String(req.body.code || '').trim().toUpperCase();
+    const discountPercentage = Number(req.body.discountPercentage);
+    const expiresAt = new Date(req.body.expiresAt);
+    if (!/^[A-Z0-9_-]{3,40}$/.test(code)) return res.status(400).json({ message: 'Code must use 3-40 letters, numbers, hyphens, or underscores' });
+    if (!Number.isFinite(discountPercentage) || discountPercentage < 1 || discountPercentage > 99) return res.status(400).json({ message: 'Discount percentage must be between 1 and 99' });
+    if (Number.isNaN(expiresAt.getTime()) || expiresAt <= new Date()) return res.status(400).json({ message: 'Expiration date must be in the future' });
+    const discountCode = await DiscountCode.create({ code, discountPercentage, expiresAt, createdBy: req.user.id });
+    res.status(201).json({ discountCode });
+  } catch (error) {
+    if (error.code === 11000) return res.status(409).json({ message: 'A discount code with this name already exists.' });
+    logger.error('Error creating discount code', { error: error.message });
+    res.status(500).json({ message: 'Server error creating discount code' });
+  }
+};
+
+export const getDiscountCodes = async (req, res) => {
+  try { res.json({ discountCodes: await DiscountCode.find().sort({ createdAt: -1 }) }); }
+  catch (error) { logger.error('Error fetching discount codes', { error: error.message }); res.status(500).json({ message: 'Server error fetching discount codes' }); }
 };
 
 // @route   PATCH /api/admin/promo-codes/:id/toggle

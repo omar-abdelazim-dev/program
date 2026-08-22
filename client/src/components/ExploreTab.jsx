@@ -16,7 +16,10 @@ export default function ExploreTab({ user, searchQuery = "", isLightMode }) {
   const isRTL = i18n.dir() === 'rtl';
   const firstName = user?.name ? user.name.split(" ")[0] : "Student";
   
-  const userCollegeId = user?.college;
+  const userAcademicType = user?.academicType || 'college';
+  const userCollegeId = userAcademicType === 'college' ? user?.college : '';
+  const userSchoolLevel = userAcademicType === 'school' ? user?.academicGroup : '';
+  const userAcademicGroup = userSchoolLevel || userCollegeId;
   const collegeObj = COLLEGES.find((c) => c.id === userCollegeId);
   let collegeLabel = collegeObj ? t(collegeObj.key, collegeObj.id) : userCollegeId;
   
@@ -63,19 +66,21 @@ export default function ExploreTab({ user, searchQuery = "", isLightMode }) {
 
   // Personalized: request courses for the student's college.
   useEffect(() => {
-    if (debouncedSearch || !userCollegeId) return;
+    if (debouncedSearch || !userAcademicGroup) return;
     const controller = new AbortController();
     setCollegeLoading(true);
-    api.get("/courses", { params: { college: userCollegeId, limit: 12 }, signal: controller.signal })
+    api.get("/courses", { params: userAcademicType === 'school'
+      ? { academicType: 'school', academicGroup: userSchoolLevel, limit: 50 }
+      : { college: userCollegeId, limit: 50 }, signal: controller.signal })
       .then((res) => setCollegeCourses(res.data.courses || []))
       .catch((err) => { if (err.code !== "ERR_CANCELED") console.error(err); })
       .finally(() => { if (!controller.signal.aborted) setCollegeLoading(false); });
     return () => controller.abort();
-  }, [debouncedSearch, userCollegeId]);
+  }, [debouncedSearch, userAcademicGroup, userAcademicType, userCollegeId, userSchoolLevel]);
 
   // No college set yet: fall back to a single general "Recommended" grid.
   useEffect(() => {
-    if (debouncedSearch || userCollegeId) return;
+    if (debouncedSearch || userAcademicGroup) return;
     const controller = new AbortController();
     setFallbackLoading(true);
     api.get("/courses", { params: { limit: 12 }, signal: controller.signal })
@@ -83,7 +88,13 @@ export default function ExploreTab({ user, searchQuery = "", isLightMode }) {
       .catch((err) => { if (err.code !== "ERR_CANCELED") console.error(err); })
       .finally(() => { if (!controller.signal.aborted) setFallbackLoading(false); });
     return () => controller.abort();
-  }, [debouncedSearch, userCollegeId]);
+  }, [debouncedSearch, userAcademicGroup]);
+
+  const coursesBySemester = collegeCourses.reduce((groups, course) => {
+    const key = course.semester || 'Unassigned';
+    (groups[key] ||= []).push(course);
+    return groups;
+  }, {});
 
   const skeletonGrid = <CardSkeleton type="course" count={4} />;
 
@@ -128,7 +139,7 @@ export default function ExploreTab({ user, searchQuery = "", isLightMode }) {
                 ? websiteContent.homepage.hero.subtitleAr
                 : websiteContent?.homepage?.hero?.subtitle
                 ? websiteContent.homepage.hero.subtitle
-                : userCollegeId
+                : userAcademicGroup
                 ? t('student.home.subtitle_college', "Here's what's next in your {{college}} path.", { college: collegeLabel })
                 : t('student.home.subtitle_default', "Discover new skills, dive into hot topics, and learn from the industry's best instructors.")}
             </p>
@@ -159,7 +170,7 @@ export default function ExploreTab({ user, searchQuery = "", isLightMode }) {
         </div>
       )}
 
-      {!userCollegeId && !debouncedSearch && user?.role === 'student' && (
+      {!userAcademicGroup && !debouncedSearch && user?.role === 'student' && (
         <div className="home-major-prompt animate-entrance">
           <span>{t('student.home.set_college_prompt', 'Set your college in Settings to personalize your home feed with courses for your program.')}</span>
           <Link to="/student/settings">{t('student.home.set_college_link', 'Set your college →')}</Link>
@@ -174,29 +185,24 @@ export default function ExploreTab({ user, searchQuery = "", isLightMode }) {
                 {t('student.home.search_results_for', 'Search results for "{{query}}"', { query: debouncedSearch })}
               </h2>
               {searchLoading ? skeletonGrid : searchResults.length > 0 ? (
-                <div className="cc-grid">
-                  {searchResults.map((course, idx) => (
-                    <CourseCard key={course._id || idx} course={course} idx={idx} isLightMode={isLightMode} />
-                  ))}
-                </div>
+                <div className="cc-grid">{searchResults.map((course, idx) => <CourseCard key={course._id || idx} course={course} idx={idx} isLightMode={isLightMode} />)}</div>
               ) : (
                 <p style={{ color: "var(--text-secondary)", padding: "32px 0", textAlign: "center" }}>
                   {t('student.home.no_results_for', 'No courses found for "{{query}}".', { query: debouncedSearch })}
                 </p>
               )}
             </section>
-          ) : userCollegeId ? (
+          ) : userAcademicGroup ? (
             <section className="dashboard-section animate-entrance">
               <h2 style={{ color: "var(--text-primary)", margin: "0 0 20px 0", fontSize: "1.5rem" }}>
-                {t('student.home.courses_for_college', 'Courses for {{college}}', { college: collegeLabel })}
+                {userAcademicType === 'school' ? `${userSchoolLevel} courses` : t('student.home.courses_for_college', 'Courses for {{college}}', { college: collegeLabel })}
               </h2>
-              {collegeLoading ? skeletonGrid : collegeCourses.length > 0 ? (
-                <div className="cc-grid">
-                  {collegeCourses.map((course, idx) => (
-                    <CourseCard key={course._id || idx} course={course} idx={idx} isLightMode={isLightMode} />
-                  ))}
-                </div>
-              ) : (
+              {collegeLoading ? skeletonGrid : <>
+                {Object.entries(coursesBySemester).sort(([a], [b]) => Number(a) - Number(b)).map(([semester, courses]) => (
+                  <div key={semester} className="home-semester-section"><h2>{semester === 'Unassigned' ? t('student.home.courses', 'Courses') : `${userAcademicType === 'school' ? userSchoolLevel : collegeLabel} Semester ${semester}`}</h2><div className="cc-grid">{courses.map((course, idx) => <CourseCard key={course._id || idx} course={course} idx={idx} isLightMode={isLightMode} />)}</div></div>
+                ))}
+              </>}
+              {collegeCourses.length === 0 && !collegeLoading && (
                 <p style={{ color: "var(--text-secondary)", padding: "32px 0", textAlign: "center" }}>
                   {t('student.home.no_college_courses', 'No {{college}} courses are available yet. Check back soon.', { college: collegeLabel })}
                 </p>
@@ -205,14 +211,10 @@ export default function ExploreTab({ user, searchQuery = "", isLightMode }) {
           ) : (
             <section className="dashboard-section animate-entrance">
               <h2 style={{ color: "var(--text-primary)", margin: "0 0 20px 0", fontSize: "1.5rem" }}>
-                {t('student.recommended_for_you', 'Recommended for You')}
+                {t('student.home.all_courses', 'All Courses')}
               </h2>
               {fallbackLoading ? skeletonGrid : fallbackCourses.length > 0 ? (
-                <div className="cc-grid">
-                  {fallbackCourses.map((course, idx) => (
-                    <CourseCard key={course._id || idx} course={course} idx={idx} isLightMode={isLightMode} />
-                  ))}
-                </div>
+                <div className="cc-grid">{fallbackCourses.map((course, idx) => <CourseCard key={course._id || idx} course={course} idx={idx} isLightMode={isLightMode} />)}</div>
               ) : (
                 <p style={{ color: "var(--text-secondary)", padding: "32px 0", textAlign: "center" }}>
                   {t('student.home.no_courses_available', 'No courses available yet.')}
@@ -225,4 +227,3 @@ export default function ExploreTab({ user, searchQuery = "", isLightMode }) {
     </>
   );
 }
-

@@ -1,5 +1,6 @@
 import "dotenv/config";
 import cron from "node-cron";
+import mongoose from "mongoose";
 import connectDB from "./config/db.js";
 import { validateEnvironment } from "./config/env.js";
 import app from "./app.js";
@@ -8,6 +9,10 @@ import {
   runOngoingInactivityCheck,
   runDraftExpirationCheck,
 } from "./jobs/courseLifecycleJobs.js";
+
+let httpServer;
+let isShuttingDown = false;
+const scheduledTasks = [];
 
 let runtimeConfig;
 try {
@@ -22,8 +27,8 @@ const startServer = async () => {
   await connectDB();
 
   const PORT = runtimeConfig.port;
-  app.listen(PORT, () =>
-    console.log(`Server running on http://localhost:${PORT}`),
+  httpServer = app.listen(PORT, () =>
+    logger.info(`Server running on http://localhost:${PORT}`),
   );
 
   // Ongoing-course lifecycle: both jobs are idempotent (see
@@ -32,7 +37,7 @@ const startServer = async () => {
   // scaled, are safe. Once-daily is frequent enough for day-granularity
   // deadlines (14-day inactivity, 90-day expiration) without needing a
   // dedicated worker process yet.
-  cron.schedule("0 3 * * *", async () => {
+  scheduledTasks.push(cron.schedule("0 3 * * *", async () => {
     try {
       await runOngoingInactivityCheck();
     } catch (error) {
@@ -41,8 +46,8 @@ const startServer = async () => {
         stack: error.stack,
       });
     }
-  });
-  cron.schedule("15 3 * * *", async () => {
+  }));
+  scheduledTasks.push(cron.schedule("15 3 * * *", async () => {
     try {
       await runDraftExpirationCheck();
     } catch (error) {
@@ -51,15 +56,54 @@ const startServer = async () => {
         stack: error.stack,
       });
     }
-  });
-
-  process.on("unhandledRejection", (err) => {
-    logger.error("Unhandled Rejection", { error: err.message, stack: err.stack });
-  });
-
-  process.on("uncaughtException", (err) => {
-    logger.error("Uncaught Exception", { error: err.message, stack: err.stack });
-  });
+  }));
 };
 
-startServer();
+const shutdown = async (signal, error) => {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+  logger.info('Graceful shutdown started', { signal });
+
+  scheduledTasks.forEach((task) => task.stop());
+  const forcedExit = setTimeout(() => {
+    logger.error('Graceful shutdown timed out; forcing exit');
+    process.exit(1);
+  }, 25_000);
+  forcedExit.unref();
+
+  try {
+    if (httpServer) {
+      await new Promise((resolve, reject) => {
+        httpServer.close((closeError) => (closeError ? reject(closeError) : resolve()));
+      });
+    }
+    await mongoose.connection.close();
+    clearTimeout(forcedExit);
+    logger.info('Graceful shutdown complete', { signal });
+    process.exit(0);
+  } catch (shutdownError) {
+    clearTimeout(forcedExit);
+    logger.error('Graceful shutdown failed', {
+      signal,
+      error: shutdownError.message,
+      originalError: error?.message,
+    });
+    process.exit(1);
+  }
+};
+
+process.once('SIGTERM', () => shutdown('SIGTERM'));
+process.once('SIGINT', () => shutdown('SIGINT'));
+process.once('unhandledRejection', (error) => {
+  logger.error('Unhandled rejection', { error: error?.message, stack: error?.stack });
+  shutdown('unhandledRejection', error);
+});
+process.once('uncaughtException', (error) => {
+  logger.error('Uncaught exception', { error: error?.message, stack: error?.stack });
+  shutdown('uncaughtException', error);
+});
+
+startServer().catch((error) => {
+  logger.error('Server startup failed', { error: error.message, stack: error.stack });
+  process.exit(1);
+});

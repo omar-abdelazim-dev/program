@@ -76,6 +76,10 @@ const userSchema = new mongoose.Schema(
     major: { type: String, default: '' },
     university: { type: String, default: '' },
     college: { type: String, default: '' },
+    // Generalized audience selection. Existing college/major values remain
+    // intact for backwards compatibility; school users use academicGroup.
+    academicType: { type: String, enum: ['college', 'school'], default: 'college' },
+    academicGroup: { type: String, default: '' },
     year: { type: String, default: '' },
     track: { type: String, default: '' },
     providedCourses: { type: String, default: '' },
@@ -118,4 +122,3 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 const User = mongoose.model('User', userSchema);
 
 export default User;
-

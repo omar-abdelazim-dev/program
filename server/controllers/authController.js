@@ -137,6 +137,8 @@ export const register = async (req, res) => {
       major,
       university,
       college,
+      academicType,
+      academicGroup,
       year,
       track,
       providedCourses,
@@ -219,6 +221,9 @@ export const register = async (req, res) => {
     if (safeRole === "instructor" && !INSTRUCTOR_STATUSES.includes(instructorStatus)) {
       return res.status(400).json({ message: "Invalid instructor status" });
     }
+    if (academicType === 'school' && !['High School', 'Middle School', 'Elementary School'].includes(academicGroup)) {
+      return res.status(400).json({ message: 'School level must be High School, Middle School, or Elementary School' });
+    }
 
     const user = await User.create({
       name,
@@ -229,6 +234,8 @@ export const register = async (req, res) => {
       major,
       university,
       college,
+      academicType: academicType === 'school' ? 'school' : 'college',
+      academicGroup: academicGroup || (academicType === 'school' ? '' : college || ''),
       year,
       track,
       providedCourses: normalizedCourses || "",
@@ -503,6 +510,8 @@ export const updateProfile = async (req, res) => {
       avatarUrl,
       college,
       major,
+      academicType,
+      academicGroup,
       providedCourses,
       instructorStatus,
       linkedinUrl,
@@ -540,6 +549,11 @@ export const updateProfile = async (req, res) => {
 
     if (college !== undefined) user.college = college;
     if (major !== undefined) user.major = major;
+    if (academicType !== undefined) user.academicType = academicType;
+    if (academicGroup !== undefined) user.academicGroup = academicGroup;
+    if (user.academicType === 'school' && !['High School', 'Middle School', 'Elementary School'].includes(user.academicGroup)) {
+      return res.status(400).json({ message: 'School level must be High School, Middle School, or Elementary School' });
+    }
     if (providedCourses !== undefined) {
       const normalizedCourses = normalizeProvidedCourses(providedCourses);
       if (normalizedCourses === null) {
@@ -572,6 +586,8 @@ export const updateProfile = async (req, res) => {
         avatarUrl: user.avatarUrl,
         college: user.college,
         major: user.major,
+        academicType: user.academicType,
+        academicGroup: user.academicGroup,
         providedCourses: user.providedCourses,
         instructorStatus: user.instructorStatus,
         linkedinUrl: user.linkedinUrl,

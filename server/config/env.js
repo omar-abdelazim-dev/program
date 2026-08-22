@@ -97,6 +97,13 @@ export const validateEnvironment = (env = process.env) => {
   validatePositiveNumber(env, 'PAYOUT_APPROVAL_THRESHOLD', errors);
   validatePositiveNumber(env, 'PORT', errors, { integer: true });
 
+  if (env.SENTRY_TRACES_SAMPLE_RATE !== undefined && env.SENTRY_TRACES_SAMPLE_RATE !== '') {
+    const sampleRate = Number(env.SENTRY_TRACES_SAMPLE_RATE);
+    if (!Number.isFinite(sampleRate) || sampleRate < 0 || sampleRate > 1) {
+      errors.push('SENTRY_TRACES_SAMPLE_RATE must be a number between 0 and 1');
+    }
+  }
+
   const port = Number(env.PORT || 5000);
   if (Number.isFinite(port) && port > 65535) errors.push('PORT must be at most 65535');
 

@@ -1,13 +1,8 @@
 /**
  * Winston logger — structured application and security logging.
  *
- * Three outputs:
- *   combined.log  — all log levels (info, warn, error, security events)
- *   error.log     — only errors (easier to grep in prod)
- *   security.log  — security-specific events (auth failures, injection attempts, etc.)
- *
- * Console output is human-readable in development, silent in production
- * (log files are used instead so structured JSON isn't cluttering stdout).
+ * Production output is JSON on stdout so the hosting platform can collect,
+ * retain, search, and alert on it. Development output stays human-readable.
  *
  * IMPORTANT: This logger is for NEW security-related code only.
  * Existing console.error() calls in legacy controllers are NOT replaced —
@@ -15,15 +10,6 @@
  */
 
 import { createLogger, format, transports } from 'winston';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Logs directory: server/logs/
-const LOG_DIR = path.join(__dirname, '..', 'logs');
-
 // Shared format: timestamp + structured JSON in production, pretty in dev
 const isProd = process.env.NODE_ENV === 'production';
 
@@ -40,21 +26,7 @@ const sharedFormat = format.combine(
 const logger = createLogger({
   level: process.env.LOG_LEVEL || 'info',
   format: sharedFormat,
-  transports: [
-    new transports.File({
-      filename: path.join(LOG_DIR, 'error.log'),
-      level: 'error',
-      maxsize: 10 * 1024 * 1024, // 10 MB
-      maxFiles: 5,
-      tailable: true,
-    }),
-    new transports.File({
-      filename: path.join(LOG_DIR, 'combined.log'),
-      maxsize: 20 * 1024 * 1024, // 20 MB
-      maxFiles: 10,
-      tailable: true,
-    }),
-  ],
+  transports: isProd ? [new transports.Console()] : [],
 });
 
 // Add console transport in development for convenience
@@ -71,19 +43,13 @@ if (!isProd) {
 }
 
 // ─── Security-specific logger ───────────────────────────────────────────────
-// Separate file so security events can be shipped to a SIEM without
-// mixing in routine application logs.
+// The explicit stream property lets a log collector route these events to a
+// SIEM without relying on an ephemeral container filesystem.
 export const securityLogger = createLogger({
   level: 'info',
   format: sharedFormat,
-  transports: [
-    new transports.File({
-      filename: path.join(LOG_DIR, 'security.log'),
-      maxsize: 10 * 1024 * 1024,
-      maxFiles: 10,
-      tailable: true,
-    }),
-  ],
+  defaultMeta: { stream: 'security' },
+  transports: isProd ? [new transports.Console()] : [],
 });
 
 if (!isProd) {

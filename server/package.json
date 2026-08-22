@@ -6,9 +6,10 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon server.js",
-    "start": "node server.js",
-    "test": "npm run test:env && npm run test:integration && npm run test:social-url-validation && npm run test:auth-security && npm run test:upload-security",
+    "start": "node --import ./instrument.mjs server.js",
+    "test": "npm run test:env && npm run test:operational && npm run test:integration && npm run test:social-url-validation && npm run test:auth-security && npm run test:upload-security",
     "test:env": "node test-env-validation.js",
+    "test:operational": "node test-operational.js",
     "test:integration": "node test-integration.js",
     "test:social-url-validation": "node test-social-url-validation.js",
     "test:auth-security": "node test-auth-security.js",
@@ -16,6 +17,7 @@
     "test:financial:manual": "node test_financials.js"
   },
   "dependencies": {
+    "@sentry/node": "^10.70.0",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.10.0",
     "cookie-parser": "^1.4.6",

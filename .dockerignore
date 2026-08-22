@@ -1,0 +1,14 @@
+.git
+.github
+.agents
+.codex
+**/node_modules
+**/dist
+**/coverage
+**/logs
+**/.env
+**/.env.*
+!server/.env.example
+!client/.env.example
+AGENTS.md
+SYSTEM_DESIGN.md
