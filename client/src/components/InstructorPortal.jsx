@@ -513,52 +513,54 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
       {/* MAIN CONTENT AREA */}
       <main className="student-main-area">
         {/* INSTRUCTOR TOP HEADER */}
-        <header className="student-header student-topnav-header" style={{ position: 'relative', zIndex: 1000, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 24px', height: '70px', backgroundColor: 'var(--bg-surface)', borderBottom: 'none', boxShadow: mobileNavOpen ? 'none' : undefined, transition: 'box-shadow 0.2s ease' }}>
+        <header className="student-header student-topnav-header" style={{ position: 'relative', zIndex: 1000, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 36px', background: 'transparent', borderBottom: 'none', boxShadow: 'none' }}>
           {/* Very Left: Logo + Program Badge */}
           <div className="topnav-left" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Link to="/instructor" className="topnav-logo" style={{ display: 'flex', alignItems: 'center' }}>
               <img
                 src={isLightMode ? logoLight : logoDark}
                 alt="Program Logo"
-                style={{ height: '24px', width: 'auto', objectFit: 'contain' }}
+                style={{ height: '32px', width: 'auto', objectFit: 'contain' }}
               />
             </Link>
             {user?.isProgramInstructor && (
-              <span className="program-badge-text" style={{ fontSize: '0.5rem', padding: '2px 6px', letterSpacing: '0.08em' }}>{t('instructor.header.program_badge', 'PROGRAM')}</span>
+              <span className="program-badge-text" style={{ fontSize: '0.55rem', padding: '2px 6px', letterSpacing: '0.08em' }}>{t('instructor.header.program_badge', 'PROGRAM')}</span>
             )}
           </div>
 
-          {/* Center: Tabs */}
+          {/* Center: Tabs in Floating Pill Capsule */}
           <div className="topnav-center">
-            <nav className="topnav-links">
-              <button className={`topnav-link ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
-                {t('instructor.nav.dashboard', 'Dashboard')}
-              </button>
-              <button className={`topnav-link ${activeTab === 'curriculum' ? 'active' : ''}`} onClick={() => { setSelectedCourseId(null); setActiveTab('curriculum'); }}>
-                {t('instructor.nav.curriculum', 'Curriculum')}
-              </button>
-              <button className={`topnav-link ${activeTab === 'engagement' ? 'active' : ''}`} onClick={() => setActiveTab('engagement')} style={{ position: 'relative' }}>
-                {t('instructor.nav.engagement', 'Engagement')}
-                {unreadEngagementCount > 0 && (
-                  <span className="topnav-badge">{unreadEngagementCount > 99 ? '99+' : unreadEngagementCount}</span>
-                )}
-              </button>
-              <button className={`topnav-link ${activeTab === 'grading' ? 'active' : ''}`} onClick={() => setActiveTab('grading')} style={{ position: 'relative' }}>
-                {t('instructor.nav.grading', 'Grading')}
-                {pendingGradingCount > 0 && (
-                  <span className="topnav-badge">{pendingGradingCount > 99 ? '99+' : pendingGradingCount}</span>
-                )}
-              </button>
-              <button className={`topnav-link ${activeTab === 'reviews' ? 'active' : ''}`} onClick={() => setActiveTab('reviews')}>
-                {t('instructor.nav.reviews', 'Reviews')}
-              </button>
-              <button className={`topnav-link ${activeTab === 'analytics' ? 'active' : ''}`} onClick={() => setActiveTab('analytics')}>
-                {t('instructor.nav.analytics', 'Analytics')}
-              </button>
-              <button className={`topnav-link ${activeTab === 'financials' ? 'active' : ''}`} onClick={() => setActiveTab('financials')}>
-                {t('instructor.nav.financials', 'Financials')}
-              </button>
-            </nav>
+            <div className="topnav-pill-capsule">
+              <nav className="topnav-links">
+                <button className={`topnav-link ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
+                  {t('instructor.nav.dashboard', 'Dashboard')}
+                </button>
+                <button className={`topnav-link ${activeTab === 'curriculum' ? 'active' : ''}`} onClick={() => { setSelectedCourseId(null); setActiveTab('curriculum'); }}>
+                  {t('instructor.nav.curriculum', 'Curriculum')}
+                </button>
+                <button className={`topnav-link ${activeTab === 'engagement' ? 'active' : ''}`} onClick={() => setActiveTab('engagement')} style={{ position: 'relative' }}>
+                  {t('instructor.nav.engagement', 'Engagement')}
+                  {unreadEngagementCount > 0 && (
+                    <span className="topnav-badge">{unreadEngagementCount > 99 ? '99+' : unreadEngagementCount}</span>
+                  )}
+                </button>
+                <button className={`topnav-link ${activeTab === 'grading' ? 'active' : ''}`} onClick={() => setActiveTab('grading')} style={{ position: 'relative' }}>
+                  {t('instructor.nav.grading', 'Grading')}
+                  {pendingGradingCount > 0 && (
+                    <span className="topnav-badge">{pendingGradingCount > 99 ? '99+' : pendingGradingCount}</span>
+                  )}
+                </button>
+                <button className={`topnav-link ${activeTab === 'reviews' ? 'active' : ''}`} onClick={() => setActiveTab('reviews')}>
+                  {t('instructor.nav.reviews', 'Reviews')}
+                </button>
+                <button className={`topnav-link ${activeTab === 'analytics' ? 'active' : ''}`} onClick={() => setActiveTab('analytics')}>
+                  {t('instructor.nav.analytics', 'Analytics')}
+                </button>
+                <button className={`topnav-link ${activeTab === 'financials' ? 'active' : ''}`} onClick={() => setActiveTab('financials')}>
+                  {t('instructor.nav.financials', 'Financials')}
+                </button>
+              </nav>
+            </div>
           </div>
 
           {/* Very Right: Utility Icons */}

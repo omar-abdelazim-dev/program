@@ -24,6 +24,29 @@
   overflow: hidden;
 }
 
+.student-layout-wrapper::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: url('../assets/school-tools-pattern.svg');
+  background-repeat: repeat;
+  background-size: 340px 340px;
+  opacity: 0.12;
+}
+
+body.light-mode .student-layout-wrapper::before {
+  background-image: url('../assets/school-tools-pattern-dark.svg');
+  opacity: 0.10;
+}
+
+.student-sidebar-area,
+.student-main-area {
+  position: relative;
+  z-index: 1;
+}
+
 /* MAIN AREA */
 .student-main-area {
   flex: 1;
@@ -505,8 +528,9 @@ html[dir="rtl"] .merged-filter-divider {
 .utility-icon-btn:hover,
 .utility-icon-btn:active {
   opacity: 1;
-  background: var(--bg-main);
-  box-shadow: var(--inner-shadow) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--color-accent, #f97316) !important;
 }
 
 body.light-mode .student-topnav-header .utility-icon-btn,
@@ -519,8 +543,9 @@ body.light-mode .student-topnav-header .utility-icon-btn:active,
 body.light-mode .utility-icon-btn:hover,
 body.light-mode .utility-icon-btn:active {
   opacity: 1;
-  background: var(--bg-main) !important;
-  box-shadow: var(--inner-shadow) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--color-accent, #f97316) !important;
 }
 
 .notification-dot {
@@ -842,21 +867,23 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
   display: flex !important;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  padding: 14px 28px !important;
-  background-color: var(--bg-surface) !important;
+  gap: 24px;
+  padding: 20px 48px !important;
+  background-color: transparent !important;
   border-bottom: none !important;
-  box-shadow: var(--outer-shadow);
+  box-shadow: none !important;
   flex-shrink: 0;
   z-index: 100;
   flex-wrap: nowrap;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .topnav-left {
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  z-index: 2;
+  z-index: 10;
 }
 
 .topnav-center {
@@ -866,16 +893,76 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 1;
+  z-index: 5;
+  pointer-events: auto;
+}
+
+/* Floating Pill Capsule Header (matches design mockup) */
+.topnav-pill-capsule {
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg-surface, #1F1E2C);
+  border-radius: 9999px;
+  padding: 8px 18px;
+  min-height: 54px;
+  box-sizing: border-box;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  box-shadow: 0 6px 25px -2px rgba(0, 0, 0, 0.28), 0 3px 10px -1px rgba(0, 0, 0, 0.18);
+  transition: all 0.25s ease;
+}
+
+body.light-mode .topnav-pill-capsule {
+  background: #FFFFFF !important;
+  border: 1px solid rgba(0, 0, 0, 0.07) !important;
+  box-shadow: 0 6px 24px -2px rgba(0, 0, 0, 0.07), 0 2px 8px -1px rgba(0, 0, 0, 0.03) !important;
 }
 
 .student-topnav-header .header-right,
 .topnav-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   flex-shrink: 0;
-  z-index: 2;
+  z-index: 10;
+  margin-inline-start: auto;
+}
+
+/* Outside circular buttons for utilities and profile */
+.student-topnav-header .utility-icon-btn,
+.student-topnav-header .nav-avatar,
+.student-topnav-header .avatar-btn {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08)) !important;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2) !important;
+  width: 48px !important;
+  height: 48px !important;
+}
+
+body.light-mode .student-topnav-header .utility-icon-btn,
+body.light-mode .student-topnav-header .nav-avatar,
+body.light-mode .student-topnav-header .avatar-btn {
+  background: #FFFFFF !important;
+  border: 1px solid rgba(0, 0, 0, 0.07) !important;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06) !important;
+  color: #111827 !important;
+}
+
+.student-topnav-header .utility-icon-btn:hover,
+.student-topnav-header .nav-avatar:hover,
+.student-topnav-header .avatar-btn:hover,
+.student-topnav-header .profile-wrapper:hover .nav-avatar,
+.student-topnav-header .profile-wrapper:hover .avatar-btn,
+.student-topnav-header .profile-wrapper:hover .utility-icon-btn,
+body.light-mode .student-topnav-header .utility-icon-btn:hover,
+body.light-mode .student-topnav-header .nav-avatar:hover,
+body.light-mode .student-topnav-header .avatar-btn:hover,
+body.light-mode .student-topnav-header .profile-wrapper:hover .nav-avatar,
+body.light-mode .student-topnav-header .profile-wrapper:hover .avatar-btn,
+body.light-mode .student-topnav-header .profile-wrapper:hover .utility-icon-btn {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-color: var(--color-accent, #f97316) !important;
+  color: var(--color-accent, #f97316) !important;
 }
 
 /* Logo in the top nav */
@@ -887,15 +974,15 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
 }
 
 .topnav-logo img {
-  height: 32px;
+  height: 38px;
   object-fit: contain;
 }
 
-/* Horizontal text-based navigation links */
+/* Horizontal text-based navigation links inside capsule */
 .topnav-links {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
@@ -904,25 +991,29 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
   border: none;
   color: var(--text-secondary);
   cursor: pointer;
-  font-size: 0.88rem;
-  font-weight: 500;
-  padding: 6px 12px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
+  font-size: 1.02rem;
+  font-weight: 550;
+  padding: 9px 20px;
+  border-radius: 9999px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   white-space: nowrap;
   font-family: inherit;
 }
 
 .topnav-link:hover {
   color: var(--text-primary);
-  background-color: transparent;
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+body.light-mode .topnav-link:hover {
+  background-color: rgba(0, 0, 0, 0.04);
 }
 
 .topnav-link.active {
-  background: linear-gradient(to right, #f97316, #eab308) !important;
+  background: linear-gradient(135deg, #f97316 0%, #eab308 100%) !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
-  color: transparent !important;
+  color: #f97316 !important;
   font-weight: 600;
   box-shadow: none !important;
 }
