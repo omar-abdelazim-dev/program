@@ -86,32 +86,34 @@ export default function StudentLayout({
             </Link>
           </div>
 
-          {/* Center: Tabs */}
+          {/* Center: Tabs in Floating Pill Capsule */}
           <div className="topnav-center">
-            <nav className="topnav-links">
-              <button
-                className={`topnav-link ${activeTab === "home" ? "active" : ""}`}
-                onClick={() => navigate("/student")}
-              >
-                {t("student.nav.home", "Home")}
-              </button>
-              {user?.role === "student" && (
-                <>
-                  <button
-                    className={`topnav-link ${activeTab === "dashboard" ? "active" : ""}`}
-                    onClick={() => navigate("/student/dashboard")}
-                  >
-                    {t("student.nav.dashboard", "Dashboard")}
-                  </button>
-                </>
-              )}
-              <button
-                className={`topnav-link ${activeTab === "settings" ? "active" : ""}`}
-                onClick={() => navigate("/student/settings")}
-              >
-                {t("student.nav.settings", "Settings")}
-              </button>
-            </nav>
+            <div className="topnav-pill-capsule">
+              <nav className="topnav-links">
+                <button
+                  className={`topnav-link ${activeTab === "home" ? "active" : ""}`}
+                  onClick={() => navigate("/student")}
+                >
+                  {t("student.nav.home", "Home")}
+                </button>
+                {user?.role === "student" && (
+                  <>
+                    <button
+                      className={`topnav-link ${activeTab === "dashboard" ? "active" : ""}`}
+                      onClick={() => navigate("/student/dashboard")}
+                    >
+                      {t("student.nav.dashboard", "Dashboard")}
+                    </button>
+                  </>
+                )}
+                <button
+                  className={`topnav-link ${activeTab === "settings" ? "active" : ""}`}
+                  onClick={() => navigate("/student/settings")}
+                >
+                  {t("student.nav.settings", "Settings")}
+                </button>
+              </nav>
+            </div>
           </div>
 
           {/* Very Right: Search Bar + Utility Icons */}
