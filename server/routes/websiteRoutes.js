@@ -1,5 +1,5 @@
 import express from 'express';
-import { protect, authorize } from '../middleware/authMiddleware.js';
+import { protect, authorize, authorizeDoor } from '../middleware/authMiddleware.js';
 import {
   getWebsiteContent,
   updateWebsiteContent,
@@ -35,7 +35,7 @@ router.use('/public', publicRouter);
 // PROTECTED ADMIN ROUTES
 // =======================
 router.use(protect);
-router.use(authorize('admin', 'superadmin'));
+router.use(authorizeDoor('admin', 'superadmin'));
 
 // Content
 router.route('/content')

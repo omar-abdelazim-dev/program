@@ -6,6 +6,7 @@ import FullPageLoader from './components/FullPageLoader';
 const LandingPage = lazy(() => import('./components/LandingPage'));
 const AuthPage = lazy(() => import('./components/AuthPage'));
 const AdminAuthPage = lazy(() => import('./components/AdminAuthPage'));
+const SuperAdminAuthPage = lazy(() => import('./components/SuperAdminAuthPage'));
 const ExploreTab = lazy(() => import('./components/ExploreTab'));
 const StudentLayout = lazy(() => import('./components/StudentLayout'));
 const InstructorProfilePage = lazy(() => import('./components/InstructorProfilePage'));
@@ -141,7 +142,9 @@ export default function App() {
   const handleLogin = (userData) => {
     setUser(userData);
     setIsAuthenticated(true);
-    if (userData.role === 'superadmin' || userData.role === 'admin') {
+    if (userData.role === 'superadmin') {
+      navigate('/superadmin');
+    } else if (userData.role === 'admin') {
       navigate('/admin');
     } else if (userData.role === 'instructor') {
       navigate('/instructor');
@@ -179,13 +182,22 @@ export default function App() {
         <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route
-          path="/auth/admin"
+          path="/admin/login"
           element={(
             <main className="content" style={{ padding: '20px' }}>
-              <AdminAuthPage onLoginSuccess={(userData) => { setUser(userData); setIsAuthenticated(true); navigate('/admin'); }} isLightMode={isLightMode} toggleTheme={toggleTheme} />
+              <AdminAuthPage onLoginSuccess={handleLogin} isLightMode={isLightMode} toggleTheme={toggleTheme} />
             </main>
           )}
         />
+        <Route
+          path="/superadmin/login"
+          element={(
+            <main className="content" style={{ padding: '20px' }}>
+              <SuperAdminAuthPage onLoginSuccess={handleLogin} isLightMode={isLightMode} />
+            </main>
+          )}
+        />
+        <Route path="/auth/admin" element={<Navigate to="/admin/login" replace />} />
         <Route
           path="*"
           element={(
@@ -199,12 +211,30 @@ export default function App() {
     );
   }
 
+  // Staff users who reach a login URL while already authenticated should be
+  // returned to their own door instead of falling through to the student UI.
+  if (location.pathname === '/admin/login' || location.pathname === '/superadmin/login') {
+    if (user?.role === 'admin' && user?.doorScope === 'admin') return <Navigate to="/admin" replace />;
+    if (user?.role === 'superadmin' && user?.doorScope === 'superadmin') return <Navigate to="/superadmin" replace />;
+    return <Navigate to="/" replace />;
+  }
+
   // The Learning Portal and staff portals have their own fullscreen layouts.
-  if (location.pathname.startsWith('/learn/') || location.pathname === '/instructor' || location.pathname === '/admin') {
+  if (location.pathname.startsWith('/learn/') || location.pathname === '/instructor' || location.pathname === '/admin' || location.pathname === '/superadmin') {
     
     // Protect /admin route
-    if (location.pathname === '/admin' && user?.role !== 'admin' && user?.role !== 'superadmin') {
-      return <Navigate to="/" replace />;
+    if (location.pathname === '/admin' && user?.role === 'superadmin' && user?.doorScope === 'superadmin') {
+      return <Navigate to="/superadmin" replace />;
+    }
+    if (location.pathname === '/admin' && (user?.role !== 'admin' || user?.doorScope !== 'admin')) {
+      return <Navigate to="/admin/login" replace />;
+    }
+
+    if (location.pathname === '/superadmin' && user?.role === 'admin' && user?.doorScope === 'admin') {
+      return <Navigate to="/admin" replace />;
+    }
+    if (location.pathname === '/superadmin' && (user?.role !== 'superadmin' || user?.doorScope !== 'superadmin')) {
+      return <Navigate to="/superadmin/login" replace />;
     }
 
     // Protect /instructor route
@@ -218,6 +248,7 @@ export default function App() {
         <Route path="/learn/:id" element={<LearningPortal user={user} />} />
         <Route path="/instructor" element={<InstructorPortal user={user} setUser={setUser} onLogout={handleLogout} toggleTheme={toggleTheme} isLightMode={isLightMode} />} />
         <Route path="/admin" element={<AdminPortal user={user} setUser={setUser} onLogout={handleLogout} toggleTheme={toggleTheme} isLightMode={isLightMode} />} />
+        <Route path="/superadmin" element={<AdminPortal user={user} setUser={setUser} onLogout={handleLogout} toggleTheme={toggleTheme} isLightMode={isLightMode} />} />
         </Routes>
       </Suspense>
     );
@@ -225,7 +256,7 @@ export default function App() {
 
   // Admin/superadmin accounts don't have student features
   if ((user?.role === 'admin' || user?.role === 'superadmin') && (location.pathname.startsWith('/student') || location.pathname === '/')) {
-    return <Navigate to="/admin" replace />;
+    return <Navigate to={user?.role === 'superadmin' ? '/superadmin' : '/admin'} replace />;
   }
 
   // Instructors should not have access to the student portal either,
@@ -237,7 +268,8 @@ export default function App() {
 
   // Redirect authenticated users away from auth pages
   if (location.pathname.startsWith('/auth')) {
-    if (user?.role === 'admin' || user?.role === 'superadmin') return <Navigate to="/admin" replace />;
+    if (user?.role === 'admin') return <Navigate to="/admin" replace />;
+    if (user?.role === 'superadmin') return <Navigate to="/superadmin" replace />;
     if (user?.role === 'instructor') return <Navigate to="/instructor" replace />;
     return <Navigate to="/student" replace />;
   }

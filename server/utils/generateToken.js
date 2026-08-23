@@ -13,14 +13,14 @@ const parseDurationMs = (durationStr) => {
   return val * mult[unit];
 };
 
-const generateTokenAndSetCookie = async (res, userId, req = null) => {
+const generateTokenAndSetCookie = async (res, userId, req = null, doorScope = 'user') => {
   const { AUTH_CONFIG } = await import('../config/security.js');
 
   const accessTokenMs = parseDurationMs(AUTH_CONFIG.ACCESS_TOKEN_LIFETIME);
   const refreshTokenMs = parseDurationMs(AUTH_CONFIG.REFRESH_TOKEN_LIFETIME);
 
   // 1. Generate Access Token (30m)
-  const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
+  const token = jwt.sign({ userId, doorScope }, process.env.JWT_SECRET, {
     expiresIn: AUTH_CONFIG.ACCESS_TOKEN_LIFETIME,
   });
 
@@ -39,6 +39,7 @@ const generateTokenAndSetCookie = async (res, userId, req = null) => {
   // 4. Create New Session
   const session = await Session.create({
     userId,
+    doorScope,
     refreshTokenHash,
     expiresAt: new Date(Date.now() + refreshTokenMs),
     ipAddress: req?.ip || 'Unknown IP',

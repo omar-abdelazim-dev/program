@@ -1,6 +1,6 @@
 import express from 'express';
 import { getConfig, updateConfigSection, previewFinancials, getPublicConfig, sendTestEmail, getStorageStats } from '../controllers/systemConfigController.js';
-import { protect, authorize } from '../middleware/authMiddleware.js';
+import { protect, authorizeDoor } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -10,7 +10,7 @@ router.route('/public')
 
 // All subsequent routes require at least admin privileges
 router.use(protect);
-router.use(authorize('admin', 'superadmin'));
+router.use(authorizeDoor('admin', 'superadmin'));
 
 router.route('/')
   .get(getConfig);
