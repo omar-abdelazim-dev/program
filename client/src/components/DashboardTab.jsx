@@ -24,7 +24,7 @@ const InProgressCard = ({
       onClick={onViewCourse}
       style={{ cursor: "pointer" }}
     >
-      <div className="coursera-card-left">
+      <div className="coursera-info-col">
         <div className="provider-header">
           {course.thumbnailUrl ? (
             <img src={course.thumbnailUrl} className="provider-logo" alt={course.title} />
@@ -43,7 +43,7 @@ const InProgressCard = ({
           {t('student.completed', 'Completed')} &bull; {enrollment.progressPercent}%
         </div>
       </div>
-      <div className="coursera-card-right">
+      <div className="coursera-action-col">
         <div className="next-lesson-info">
           <h4 className="next-lesson-title">
             {enrollment.currentLesson?.title || t('student.learning.up_next', 'Course Introduction')}
@@ -109,7 +109,7 @@ const CompletedCard = ({
       onClick={onViewCourse}
       style={{ cursor: "pointer", borderColor: "var(--color-accent)" }}
     >
-      <div className="coursera-card-left">
+      <div className="coursera-info-col">
         <div className="provider-header">
           {course.thumbnailUrl ? (
             <img src={course.thumbnailUrl} className="provider-logo" alt={course.title} />
@@ -128,7 +128,7 @@ const CompletedCard = ({
           {t('student.completed', 'Completed')} &bull; 100% &bull; {t('student.learning.completed_on', 'Completed on')} {new Date(enrollment.updatedAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
         </div>
       </div>
-      <div className="coursera-card-right" style={{ justifyContent: 'flex-end' }}>
+      <div className="coursera-action-col" style={{ justifyContent: 'flex-end' }}>
         <button
           className="continue-btn"
           style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}

@@ -2377,7 +2377,7 @@ body.light-mode .custom-select-value.placeholder {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
-    align-items: flex-end;
+    align-items: flex-start;
 }
 
 .input-group {
@@ -3744,10 +3744,6 @@ body [data-role="admin"] .profile-dropdown,
 body [data-role="superadmin"] .profile-dropdown,
 body.light-mode [data-role="admin"] .profile-dropdown,
 body.light-mode [data-role="superadmin"] .profile-dropdown,
-body [data-role="admin"] .settings-section,
-body [data-role="superadmin"] .settings-section,
-body.light-mode [data-role="admin"] .settings-section,
-body.light-mode [data-role="superadmin"] .settings-section,
 body [data-role="admin"] .dash-header,
 body [data-role="superadmin"] .dash-header,
 body.light-mode [data-role="admin"] .dash-header,
@@ -3766,4 +3762,33 @@ body.light-mode [data-role="superadmin"] .header-search-input {
 [data-role="admin"],
 [data-role="superadmin"] {
     --radius-card: 12px;
+}
+
+/* Reorder Arrow Buttons in Curriculum Builder */
+.reorder-arrow-btn {
+    width: 24px;
+    height: 20px;
+    background: var(--bg-main) !important;
+    border: 1px solid transparent !important;
+    border-radius: 6px !important;
+    box-shadow: var(--inner-shadow) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: var(--c-sub) !important;
+    cursor: pointer;
+    padding: 0 !important;
+    transition: all 0.2s ease !important;
+}
+
+.reorder-arrow-btn:hover:not(:disabled) {
+    color: #f97316 !important;
+    filter: brightness(1.05);
+}
+
+.reorder-arrow-btn:disabled {
+    opacity: 0.25 !important;
+    cursor: default !important;
+    box-shadow: none !important;
+    pointer-events: none !important;
 }

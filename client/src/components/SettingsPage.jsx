@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { MAJORS } from "../data/majors";
 import { COLLEGES } from "../data/colleges";
 import { ACADEMIC_TYPES, SCHOOL_LEVELS } from "../data/academicGroups";
+import SegmentedControl from "./common/SegmentedControl";
 
 const SECTIONS = [
   {
@@ -334,7 +335,7 @@ function ProfileSection({ user, setUser }) {
           </label>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px", textAlign: isRTL ? "right" : "left" }}>
           <div style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text-primary)" }}>
             {t("settings.profile.avatar_title", "Profile Photo")}
           </div>
@@ -368,14 +369,14 @@ function ProfileSection({ user, setUser }) {
       </div>
 
       <div className="settings-two-column-row">
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", textAlign: isRTL ? "right" : "left" }}>
           <label
             style={{
               fontSize: "0.85rem",
               fontWeight: "600",
               color: "var(--text-secondary)",
               textTransform: "uppercase",
-              letterSpacing: "1px",
+              letterSpacing: isRTL ? "normal" : "1px",
             }}
           >
             {t("settings.profile.first_name", "First Name")}
@@ -389,17 +390,22 @@ function ProfileSection({ user, setUser }) {
               "settings.profile.first_name_placeholder",
               "e.g. John",
             )}
+            style={{
+              textAlign: isRTL ? "right" : "left",
+              direction: isRTL ? "rtl" : "ltr",
+              letterSpacing: "normal",
+            }}
             required
           />
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", textAlign: isRTL ? "right" : "left" }}>
           <label
             style={{
               fontSize: "0.85rem",
               fontWeight: "600",
               color: "var(--text-secondary)",
               textTransform: "uppercase",
-              letterSpacing: "1px",
+              letterSpacing: isRTL ? "normal" : "1px",
             }}
           >
             {t("settings.profile.last_name", "Last Name")}
@@ -413,16 +419,21 @@ function ProfileSection({ user, setUser }) {
               "settings.profile.last_name_placeholder",
               "e.g. Doe",
             )}
+            style={{
+              textAlign: isRTL ? "right" : "left",
+              direction: isRTL ? "rtl" : "ltr",
+              letterSpacing: "normal",
+            }}
           />
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", textAlign: isRTL ? "right" : "left" }}>
           <label
             style={{
               fontSize: "0.85rem",
               fontWeight: "600",
               color: "var(--text-secondary)",
               textTransform: "uppercase",
-              letterSpacing: "1px",
+              letterSpacing: isRTL ? "normal" : "1px",
             }}
           >
             {t("settings.profile.phone", "Phone Number")}
@@ -439,17 +450,18 @@ function ProfileSection({ user, setUser }) {
             style={{
               textAlign: isRTL ? "right" : "left",
               direction: isRTL ? "rtl" : "ltr",
+              letterSpacing: "normal",
             }}
           />
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", textAlign: isRTL ? "right" : "left" }}>
           <label
             style={{
               fontSize: "0.85rem",
               fontWeight: "600",
               color: "var(--text-secondary)",
               textTransform: "uppercase",
-              letterSpacing: "1px",
+              letterSpacing: isRTL ? "normal" : "1px",
             }}
           >
             {t("settings.profile.bio", "Bio / Goals")}
@@ -459,7 +471,13 @@ function ProfileSection({ user, setUser }) {
             value={goalsText}
             onChange={(e) => setGoalsText(e.target.value)}
             rows="1"
-            style={{ resize: "vertical", minHeight: "46px" }}
+            style={{
+              resize: "vertical",
+              minHeight: "46px",
+              textAlign: isRTL ? "right" : "left",
+              direction: isRTL ? "rtl" : "ltr",
+              letterSpacing: "normal",
+            }}
             placeholder={t(
               "settings.profile.bio_placeholder",
               "Write a short bio or your goals...",
@@ -470,7 +488,7 @@ function ProfileSection({ user, setUser }) {
 
       <button
         type="submit"
-        className="solid-btn"
+        className="sys-btn-primary"
         disabled={saving}
         style={{
           marginTop: "16px",
@@ -1283,7 +1301,7 @@ function AppearanceSection({ user }) {
     <div
       className="settings-section solid-card"
       style={{
-        padding: "40px",
+        padding: "32px",
         display: "flex",
         flexDirection: "column",
         gap: "24px",
@@ -1291,18 +1309,20 @@ function AppearanceSection({ user }) {
         maxWidth: "800px"
       }}
     >
-      <h2 style={{ fontSize: "1.8rem", fontWeight: "800", margin: 0 }}>
-        {t("settings.appearance.title", "Appearance")}
-      </h2>
-      <p
-        className="settings-section-desc"
-        style={{ color: "var(--text-secondary)" }}
-      >
-        {t(
-          "settings.appearance.desc",
-          "Choose how Program looks on this device.",
-        )}
-      </p>
+      <div>
+        <h2 style={{ fontSize: "1.8rem", fontWeight: "800", margin: "0 0 8px 0" }}>
+          {t("settings.appearance.title", "Appearance")}
+        </h2>
+        <p
+          className="settings-section-desc"
+          style={{ color: "var(--text-secondary)", margin: 0 }}
+        >
+          {t(
+            "settings.appearance.desc",
+            "Choose how Program looks on this device.",
+          )}
+        </p>
+      </div>
 
       {/* Language Section */}
       <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -1310,96 +1330,38 @@ function AppearanceSection({ user }) {
           {t("settings.appearance.language", "Language")}
         </h3>
         
-        <div
-          className="appearance-options"
-          dir="ltr"
-          style={{
+        <SegmentedControl
+          tabs={[
+            { id: "en", label: "English (EN)" },
+            { id: "ar", label: "العربية (AR)" },
+          ]}
+          activeTab={i18n.language.startsWith("ar") ? "ar" : "en"}
+          onChange={(lang) => {
+            i18n.changeLanguage(lang);
+            if (user?.role) localStorage.setItem(`${user.role}_lang`, lang);
+          }}
+          style={{ width: "100%", maxWidth: "340px", marginBottom: 0 }}
+          trackStyle={{
+            width: "100%",
+            maxWidth: "340px",
             display: "flex",
-            gap: "4px",
-            position: "relative",
             background: "var(--bg-main)",
-            padding: "6px",
+            padding: "4px",
             borderRadius: "12px",
             boxShadow: "var(--inner-shadow)"
           }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              top: "6px",
-              bottom: "6px",
-              left: "6px",
-              width: "calc(50% - 8px)",
-              background: "var(--bg-surface)",
-              borderRadius: "12px",
-              boxShadow: "var(--outer-shadow)",
-              transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-              transform: i18n.language !== "en"
-                ? "translateX(calc(100% + 4px))"
-                : "translateX(0)",
-              pointerEvents: "none",
-              zIndex: 0,
-            }}
-          />
-          <button
-            type="button"
-            style={{
-              position: "relative",
-              zIndex: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "8px",
-              flex: 1,
-              padding: "12px",
-              borderRadius: "12px",
-              border: "none",
-              background: "transparent",
-              color: i18n.language === "en"
-                ? "var(--text-primary)"
-                : "var(--text-secondary)",
-              fontWeight: "600",
-              cursor: "pointer",
-              transition: "all 0.3s ease",
-              boxShadow: "none",
-            }}
-            onClick={() => {
-              i18n.changeLanguage("en");
-              if (user?.role) localStorage.setItem(`${user.role}_lang`, "en");
-            }}
-          >
-            English (EN)
-          </button>
-          <button
-            type="button"
-            style={{
-              position: "relative",
-              zIndex: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "8px",
-              flex: 1,
-              padding: "12px",
-              borderRadius: "12px",
-              border: "none",
-              background: "transparent",
-              color: i18n.language !== "en"
-                ? "var(--text-primary)"
-                : "var(--text-secondary)",
-              fontWeight: "600",
-              cursor: "pointer",
-              transition: "all 0.3s ease",
-              boxShadow: "none",
-            }}
-            onClick={() => {
-              i18n.changeLanguage("ar");
-              if (user?.role) localStorage.setItem(`${user.role}_lang`, "ar");
-            }}
-          >
-            العربية (AR)
-          </button>
-        </div>
+          tabStyle={{
+            flex: 1,
+            textAlign: "center",
+            justifyContent: "center",
+            padding: "8px 16px"
+          }}
+          indicatorStyle={{
+            background: "var(--bg-surface)",
+            boxShadow: "var(--outer-shadow)",
+            borderRadius: "10px"
+          }}
+        />
       </div>
     </div>
   );

@@ -1,17 +1,17 @@
 import React, { useRef, useState, useEffect } from 'react';
 
-const SegmentedControl = ({ tabs, activeTab, onChange, style, trackStyle, indicatorStyle: customIndicatorStyle }) => {
+const SegmentedControl = ({ tabs, activeTab, onChange, style, trackStyle, tabStyle: customTabStyle, indicatorStyle: customIndicatorStyle }) => {
   const [indicatorStyle, setIndicatorStyle] = useState({ offset: 4, width: 0, opacity: 0 });
   const containerRef = useRef(null);
 
-  useEffect(() => {
+  const updateIndicator = () => {
     if (containerRef.current) {
       const activeBtn = containerRef.current.querySelector(`[data-id="${activeTab}"]`);
       if (activeBtn) {
         const containerRect = containerRef.current.getBoundingClientRect();
         const btnRect = activeBtn.getBoundingClientRect();
         
-        const isRTL = document.documentElement.dir === 'rtl';
+        const isRTL = document.documentElement.dir === 'rtl' || document.dir === 'rtl';
         const offset = isRTL 
           ? containerRect.right - btnRect.right
           : btnRect.left - containerRect.left;
@@ -22,6 +22,18 @@ const SegmentedControl = ({ tabs, activeTab, onChange, style, trackStyle, indica
           opacity: 1
         });
       }
+    }
+  };
+
+  useEffect(() => {
+    updateIndicator();
+
+    if (containerRef.current && window.ResizeObserver) {
+      const observer = new ResizeObserver(() => {
+        updateIndicator();
+      });
+      observer.observe(containerRef.current);
+      return () => observer.disconnect();
     }
   }, [activeTab, tabs]);
 
@@ -77,6 +89,10 @@ const SegmentedControl = ({ tabs, activeTab, onChange, style, trackStyle, indica
               transition: 'color 0.3s, font-weight 0.3s',
               fontSize: '0.9rem',
               whiteSpace: 'nowrap',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              ...customTabStyle
             }}
           >
             {tab.label}

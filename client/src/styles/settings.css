@@ -138,7 +138,19 @@
     }
 }
 
-/* ─── Section styles (preserved) ─── */
+/* ─── Section styles ─── */
+.settings-section {
+    width: 100%;
+}
+
+.settings-section.solid-card {
+    background: var(--bg-surface) !important;
+    border-radius: 16px !important;
+    box-shadow: var(--outer-shadow) !important;
+    padding: 32px !important;
+    box-sizing: border-box;
+}
+
 .settings-section h2 {
     margin: 0 0 4px;
 }
@@ -146,8 +158,9 @@
 .settings-section .solid-card,
 .settings-page .solid-card {
     min-width: 0;
-    overflow: hidden;
-    border-radius: 12px;
+    border-radius: 16px;
+    background: var(--bg-surface);
+    box-shadow: var(--outer-shadow);
 }
 
 .settings-section .solid-btn,

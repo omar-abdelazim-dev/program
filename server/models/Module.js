@@ -28,7 +28,12 @@ const moduleSchema = new mongoose.Schema(
       type: String,
       enum: ['draft', 'published', 'hidden', 'archived'],
       default: 'draft',
-    }
+    },
+    price: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
   },
   { timestamps: true }
 );

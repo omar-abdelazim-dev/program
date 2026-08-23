@@ -1096,8 +1096,8 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
                 {sidePanelCourse.thumbnailUrl ? (
                     <img src={sidePanelCourse.thumbnailUrl} alt="Cover" style={{ width: "120px", height: "80px", objectFit: "cover", borderRadius: "12px", flexShrink: 0 }} />
                 ) : (
-                    <div style={{ width: "120px", height: "80px", background: "rgba(255,255,255,0.05)", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--c-sub)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    <div style={{ width: "120px", height: "80px", background: "var(--bg-main)", boxShadow: "var(--inner-shadow)", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--c-sub)", flexShrink: 0 }}>
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
                     </div>
                 )}
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>

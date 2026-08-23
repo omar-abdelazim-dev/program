@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 
-const CustomSelect = ({ options, value, onChange, placeholder, icon, triggerClassName = "", triggerStyle = {} }) => {
+const CustomSelect = ({ options, value, onChange, placeholder, icon, triggerClassName = "", triggerStyle = {}, disabled = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef(null);
 
@@ -17,11 +17,11 @@ const CustomSelect = ({ options, value, onChange, placeholder, icon, triggerClas
   const selectedOption = options.find(o => o.value === value);
 
   return (
-    <div className="custom-select-wrapper" ref={wrapperRef} style={{ zIndex: isOpen ? 100 : 1 }}>
+    <div className={`custom-select-wrapper ${disabled ? 'disabled' : ''}`} ref={wrapperRef} style={{ zIndex: isOpen ? 100 : 1, opacity: disabled ? 0.6 : 1, pointerEvents: disabled ? 'none' : 'auto', cursor: disabled ? 'not-allowed' : 'pointer' }}>
       <div 
         className={`icon-input-wrapper custom-select-trigger ${isOpen ? 'focus' : ''} ${!icon ? 'no-icon' : ''} ${triggerClassName}`}
-        onClick={() => setIsOpen(!isOpen)}
-        style={{ ...(!icon ? { paddingInlineStart: '16px' } : {}), ...triggerStyle }}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        style={{ ...(!icon ? { paddingInlineStart: '16px' } : {}), cursor: disabled ? 'not-allowed' : 'pointer', ...triggerStyle }}
       >
         {icon}
         <div 
@@ -30,7 +30,7 @@ const CustomSelect = ({ options, value, onChange, placeholder, icon, triggerClas
         >
           {selectedOption ? selectedOption.label : placeholder}
         </div>
-        <svg className={`custom-select-chevron ${isOpen ? 'open' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        {!disabled && <svg className={`custom-select-chevron ${isOpen ? 'open' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>}
       </div>
       
       
