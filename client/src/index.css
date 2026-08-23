@@ -244,6 +244,26 @@ code {
 }
 
 /* RTL Fixes for Notyf using Logical Properties */
+html[dir="rtl"],
+html[dir="rtl"] *,
+[dir="rtl"],
+[dir="rtl"] *,
+body.rtl,
+body.rtl *,
+input[dir="rtl"],
+textarea[dir="rtl"],
+html[dir="rtl"] input,
+html[dir="rtl"] textarea {
+  letter-spacing: normal !important;
+}
+
+input,
+textarea,
+select,
+button {
+  font-family: inherit;
+}
+
 html[dir="rtl"] .notyf {
   align-items: flex-start !important; /* In RTL, flex-start is the physical right side */
 }

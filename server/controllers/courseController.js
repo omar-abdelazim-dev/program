@@ -61,10 +61,12 @@ export const createCourse = async (req, res) => {
       courseType,
     } = req.body;
 
+    const isOngoing = courseType === 'ongoing';
+
     const course = await Course.create({
       title,
       description,
-      price,
+      price: isOngoing ? 0 : Number(price),
       category: category || "",
       major: major || "",
       semester:
@@ -74,33 +76,9 @@ export const createCourse = async (req, res) => {
       academicGroup: academicGroup || (academicType === 'college' ? college || '' : ''),
       thumbnailUrl: thumbnailUrl || "",
       instructor: req.user.id, // taken from the verified JWT, never trust a client-sent instructor ID
-      status: "pending", // every new course starts pending — never trust the client to set this either
-      courseType, // validated to 'full' | 'ongoing' by validateCreateCourse; immutable after creation (see §9 Option 4 conversion flow, not yet implemented)
+      status: "draft", // All new courses start in draft until instructor builds content and submits for review
+      courseType, // validated to 'full' | 'ongoing' by validateCreateCourse; immutable after creation
     });
-
-    try {
-      const admins = await User.find({
-        role: { $in: ["admin", "superadmin"] },
-      }).select("email name");
-      const instructor = await User.findById(req.user.id).select("name");
-      await emailService.sendAdminNewRequestEmail({
-        adminEmails: admins,
-        request_id: course._id,
-        request_type_label: "New Course Submission",
-        request_type_tag: "COURSE",
-        submitted_date: new Date().toLocaleDateString(),
-        item_title: course.title,
-        requester_name: instructor?.name || "Instructor",
-        requester_role: "Instructor",
-        review_url: `${process.env.CLIENT_URL || "http://localhost:5173"}/admin/courses/${course._id}`,
-        queue_url: `${process.env.CLIENT_URL || "http://localhost:5173"}/admin/requests`,
-        settings_url: `${process.env.CLIENT_URL || "http://localhost:5173"}/admin/settings`,
-      });
-    } catch (err) {
-      logger.error("Failed to send admin notification for new course", {
-        err: err.message,
-      });
-    }
 
     res.status(201).json({ course });
   } catch (error) {
@@ -541,6 +519,80 @@ export const approveCourse = async (req, res) => {
   }
 };
 
+// @route   PATCH /api/courses/:id/submit-for-review
+// @access  Private (instructor only)
+export const submitCourseForReview = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+
+    if (course.instructor.toString() !== req.user.id.toString()) {
+      return res.status(403).json({ message: "Not authorized to submit this course" });
+    }
+
+    if (course.status !== "draft" && course.status !== "rejected") {
+      return res.status(400).json({ message: "Only courses in draft or rejected status can be submitted for review" });
+    }
+
+    // Must have at least 1 module and at least 1 lesson in that module
+    const modules = await Module.find({ course: course._id });
+    if (modules.length === 0) {
+      return res.status(400).json({
+        message: "Course must have at least one module with at least one lesson before submitting for admin review",
+      });
+    }
+
+    const lessons = await Lesson.find({ module: { $in: modules.map((m) => m._id) } });
+    const hasModuleWithLesson = modules.some((m) =>
+      lessons.some((l) => l.module.toString() === m._id.toString())
+    );
+
+    if (!hasModuleWithLesson || lessons.length === 0) {
+      return res.status(400).json({
+        message: "Course must have at least one module with at least one lesson before submitting for admin review",
+      });
+    }
+
+    course.status = "pending";
+    course.rejectionReason = "";
+    await course.save();
+
+    try {
+      const admins = await User.find({
+        role: { $in: ["admin", "superadmin"] },
+      }).select("email name");
+      const instructor = await User.findById(req.user.id).select("name");
+      await emailService.sendAdminNewRequestEmail({
+        adminEmails: admins,
+        request_id: course._id,
+        request_type_label: course.courseType === "ongoing" ? "Ongoing Course Submission" : "Full Course Submission",
+        request_type_tag: "COURSE",
+        submitted_date: new Date().toLocaleDateString(),
+        item_title: course.title,
+        requester_name: instructor?.name || "Instructor",
+        requester_role: "Instructor",
+        review_url: `${process.env.CLIENT_URL || "http://localhost:5173"}/admin/courses/${course._id}`,
+        queue_url: `${process.env.CLIENT_URL || "http://localhost:5173"}/admin/requests`,
+        settings_url: `${process.env.CLIENT_URL || "http://localhost:5173"}/admin/settings`,
+      });
+    } catch (err) {
+      logger.error("Failed to send admin notification for course submission", {
+        err: err.message,
+      });
+    }
+
+    res.status(200).json({ course, message: "Course submitted for admin review" });
+  } catch (error) {
+    logger.error("An error occurred submitting course for review", {
+      error: error.message,
+      stack: error.stack,
+    });
+    res.status(500).json({ message: "Server error submitting course for review" });
+  }
+};
+
 // @route   PATCH /api/courses/:id/publish
 // @access  Private (instructor only)
 export const publishCourse = async (req, res) => {
@@ -557,6 +609,13 @@ export const publishCourse = async (req, res) => {
     }
 
     if (course.status === "draft") {
+      // Courses must have been approved by an admin before going live
+      if (!course.approvedBy) {
+        return res.status(400).json({
+          message: "Course must be approved by an administrator before it can be published live",
+        });
+      }
+
       const lessonIds = await getLessonIdsForCourse(course._id);
       if (lessonIds.length === 0) {
         return res.status(400).json({
@@ -698,6 +757,11 @@ export const requestPriceChange = async (req, res) => {
     if (course.courseType !== "full") {
       return res.status(400).json({
         message: "Price-change requests are only available for Full Courses",
+      });
+    }
+    if (course.status !== "approved") {
+      return res.status(400).json({
+        message: "Price change requests are only available for live courses.",
       });
     }
     const requested = Number(requestedPrice);

@@ -8,7 +8,7 @@ import { isCourseContentLocked } from '../utils/courseContent.js';
 export const createModule = async (req, res) => {
   try {
     const { courseId } = req.params;
-    const { title, description } = req.body;
+    const { title, description, price } = req.body;
 
     if (!title) {
       return res.status(400).json({ message: 'Module title is required' });
@@ -22,6 +22,14 @@ export const createModule = async (req, res) => {
       return res.status(403).json({ message: 'This course is published and locked — Full Courses cannot be modified after publishing.' });
     }
 
+    let modulePrice = 0;
+    if (course.courseType === 'ongoing') {
+      modulePrice = Number(price);
+      if (!Number.isFinite(modulePrice) || modulePrice < 50 || modulePrice > 200) {
+        return res.status(400).json({ message: 'Ongoing course module price must be between 50 EGP and 200 EGP.' });
+      }
+    }
+
     const existingCount = await Module.countDocuments({ course: courseId });
 
     const module = await Module.create({
@@ -30,6 +38,7 @@ export const createModule = async (req, res) => {
       description: description || '',
       order: existingCount + 1,
       status: 'published',
+      price: modulePrice,
     });
 
     res.status(201).json({ module: { ...module.toObject(), lessons: [] } });
@@ -44,7 +53,12 @@ export const createModule = async (req, res) => {
 export const updateModule = async (req, res) => {
   try {
     const { courseId, moduleId } = req.params;
-    const { title, description } = req.body;
+    const { title, description, price } = req.body;
+
+    const course = await Course.findById(courseId).select('courseType status');
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
 
     const module = await Module.findOne({ _id: moduleId, course: courseId });
     if (!module) {
@@ -53,6 +67,14 @@ export const updateModule = async (req, res) => {
 
     if (title) module.title = title;
     if (description !== undefined) module.description = description;
+
+    if (course.courseType === 'ongoing' && price !== undefined) {
+      const modulePrice = Number(price);
+      if (!Number.isFinite(modulePrice) || modulePrice < 50 || modulePrice > 200) {
+        return res.status(400).json({ message: 'Ongoing course module price must be between 50 EGP and 200 EGP.' });
+      }
+      module.price = modulePrice;
+    }
 
     await module.save();
 

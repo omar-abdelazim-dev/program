@@ -1267,9 +1267,7 @@ export default function CoursePage({ user }) {
                 color: "var(--text-primary)",
               }}
             >
-              {course.price === 0
-                ? t("course_page.free")
-                : `${t("course_page.currency")} ${course.price}`}
+              {`${t("course_page.currency", "EGP")} ${course.price || 0}`}
             </h2>
           </div>
 
@@ -1417,9 +1415,7 @@ export default function CoursePage({ user }) {
                     {lesson.description}
                   </div>
                   <div style={{ fontWeight: 700 }}>
-                    {lesson.price > 0
-                      ? `EGP ${lesson.price}`
-                      : t("course_page.free", "Free")}
+                    EGP {lesson.price || 0}
                   </div>
                   <button
                     type="button"

@@ -19,6 +19,7 @@ import {
   suspendCourse,
   republishCourse,
   publishCourse,
+  submitCourseForReview,
   requestPriceChange,
   getPriceChangeRequests,
   approvePriceChange,
@@ -48,6 +49,7 @@ router.post('/', protect, authorize('instructor'), validateCreateCourse, createC
 router.get('/mine', protect, authorize('instructor'), getMyCourses);
 router.get('/stats', protect, authorize('instructor'), getInstructorStats);
 router.patch('/:id/request-delete', protect, authorize('instructor'), validateObjectId('id'), verifyOwnership(Course, 'id', 'instructor'), requestDeleteCourse);
+router.patch('/:id/submit-for-review', protect, authorize('instructor'), validateObjectId('id'), verifyOwnership(Course, 'id', 'instructor'), submitCourseForReview);
 router.patch('/:id/publish', protect, authorize('instructor'), validateObjectId('id'), verifyOwnership(Course, 'id', 'instructor'), publishCourse);
 router.post('/:id/request-price-change', protect, authorize('instructor'), validateObjectId('id'), verifyOwnership(Course, 'id', 'instructor'), validateRequestPriceChange, requestPriceChange);
 router.patch('/:id/convert-to-full', protect, authorize('instructor'), validateObjectId('id'), verifyOwnership(Course, 'id', 'instructor'), validateConvertToFull, convertOngoingToFull);

@@ -99,7 +99,7 @@ export default function CourseCard({ course, idx = 0, isLightMode = false }) {
         {/* 5. Price */}
         <div className="cc-price-row">
           <span className="cc-price-current">
-            {displayPrice == null || Number(displayPrice) === 0 ? t('common.free', 'Free') : `EGP ${Number(displayPrice).toLocaleString()}`}
+            EGP {Number(displayPrice ?? price ?? 0).toLocaleString()}
           </span>
           {hasDiscount && (
             <span className="cc-price-original">
