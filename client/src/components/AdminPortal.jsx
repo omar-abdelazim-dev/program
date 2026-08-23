@@ -1128,7 +1128,7 @@ export default function AdminPortal({
   return (
     <div
       className="student-layout-wrapper student-layout-topnav admin-portal"
-      data-role="admin"
+      data-role={user?.role}
       style={{
         display: "flex",
         flexDirection: "column",

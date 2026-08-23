@@ -12,6 +12,7 @@ export default function DiscountCodesPanel() {
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ code: '', discountPercentage: '', expiresAt: '' });
   const [submitting, setSubmitting] = useState(false);
+  const [togglingCodeId, setTogglingCodeId] = useState(null);
   const [filterTab, setFilterTab] = useState('all');
 
   // Edit Modal State
@@ -58,14 +59,18 @@ export default function DiscountCodesPanel() {
     }
   };
 
-  // Toggle Stop / Activate
+  // Set an explicit state so a duplicate request cannot reverse the intended action.
   const handleToggle = async (code) => {
+    const isActive = !code.isActive;
+    setTogglingCodeId(code._id);
     try {
-      const res = await api.patch(`/admin/discount-codes/${code._id}/toggle`);
-      notyf.success(res.data.message || 'Status updated');
+      await api.put(`/admin/discount-codes/${code._id}`, { isActive });
+      notyf.success(`Discount code ${isActive ? 'activated' : 'stopped'}`);
       load();
     } catch (err) {
-      notyf.error(err.response?.data?.message || 'Failed to toggle status');
+      notyf.error(err.response?.data?.message || 'Failed to update status');
+    } finally {
+      setTogglingCodeId(null);
     }
   };
 
@@ -384,6 +389,7 @@ export default function DiscountCodesPanel() {
                           {!isExpired && (
                             <button
                               onClick={() => handleToggle(code)}
+                              disabled={togglingCodeId === code._id}
                               title={isActive ? 'Stop this discount code' : 'Activate this discount code'}
                               style={{
                                 padding: '6px 14px',
@@ -398,7 +404,7 @@ export default function DiscountCodesPanel() {
                                 transition: 'all 0.2s',
                               }}
                             >
-                              {isActive ? 'Stop' : 'Activate'}
+                              {togglingCodeId === code._id ? 'Updating...' : isActive ? 'Stop' : 'Activate'}
                             </button>
                           )}
 
