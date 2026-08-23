@@ -59,16 +59,15 @@ export default function DiscountCodesPanel() {
     }
   };
 
-  // Set an explicit state so a duplicate request cannot reverse the intended action.
+  // Toggle Stop / Activate
   const handleToggle = async (code) => {
-    const isActive = !code.isActive;
     setTogglingCodeId(code._id);
     try {
-      await api.put(`/admin/discount-codes/${code._id}`, { isActive });
-      notyf.success(`Discount code ${isActive ? 'activated' : 'stopped'}`);
+      const res = await api.patch(`/admin/discount-codes/${code._id}/toggle`);
+      notyf.success(res.data.message || 'Status updated');
       load();
     } catch (err) {
-      notyf.error(err.response?.data?.message || 'Failed to update status');
+      notyf.error(err.response?.data?.message || 'Failed to toggle status');
     } finally {
       setTogglingCodeId(null);
     }
