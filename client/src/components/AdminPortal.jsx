@@ -2,15 +2,6 @@ import notyf from "../utils/notyf";
 import { lazy, Suspense, useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, Link } from "react-router-dom";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
 import api from "../api/axios";
 import logoDark from "../assets/logo-dark.png";
 import logoLight from "../assets/logo-light.png";
@@ -30,6 +21,7 @@ const WebsiteManagement = lazy(() => import("./WebsiteManagement/WebsiteManageme
 const SystemManagement = lazy(() => import("./SystemManagement"));
 const AdminLandingPageTab = lazy(() => import("./AdminLandingPageTab"));
 const AdminReportsTab = lazy(() => import("./AdminReportsTab"));
+const DiscountCodesPanel = lazy(() => import("./DiscountCodesPanel"));
 
 import FullPageLoader from "./FullPageLoader";
 import Pagination from "./common/Pagination";
@@ -244,6 +236,7 @@ export default function AdminPortal({
   isLightMode,
 }) {
   const navigate = useNavigate();
+  const isSuperAdmin = user?.role === "superadmin";
   const [activeTab, setActiveTabRaw] = useState("dashboard_overview");
   // Tracks which tabs have been visited at least once — components are only
   // mounted on first visit and kept alive forever after (no re-fetches).
@@ -790,6 +783,7 @@ export default function AdminPortal({
             items: [
               { id: "enrollment", label: "Enrollment Requests" },
               { id: "financial_payouts", label: "Payout Requests" },
+              { id: "financial_discount_codes", label: "Discount Codes" },
             ],
           },
           {
@@ -1133,8 +1127,8 @@ export default function AdminPortal({
 
   return (
     <div
+      className="student-layout-wrapper student-layout-topnav admin-portal"
       data-role={user?.role}
-      className="student-layout-wrapper student-layout-topnav"
       style={{
         display: "flex",
         flexDirection: "column",
@@ -1151,12 +1145,10 @@ export default function AdminPortal({
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          padding: "0 24px",
-          height: "70px",
-          backgroundColor: "var(--bg-surface)",
+          padding: "16px 36px",
+          backgroundColor: "transparent",
           borderBottom: "none",
-          boxShadow: mobileNavOpen ? "none" : undefined,
-          transition: "box-shadow 0.2s ease",
+          boxShadow: "none",
         }}
       >
         <div className="topnav-left">
@@ -1169,133 +1161,132 @@ export default function AdminPortal({
           </Link>
         </div>
 
-        {/* Desktop Navigation Links */}
+        {/* Desktop Navigation Links inside Floating Pill Capsule */}
         <div className="topnav-center">
-          <nav
-            className="topnav-links"
-            style={{
-              display: "flex",
-              gap: "4px",
-              flexWrap: "wrap",
-              justifyContent: "center",
-            }}
-          >
-            {menuGroups.map((group, idx) => {
-              const hasDropdown = group.items.length > 1;
-              return (
-                <div
-                  key={idx}
-                  style={{ position: "relative" }}
-                  onMouseEnter={() =>
-                    hasDropdown && setActiveDropdown(group.title)
-                  }
-                  onMouseLeave={() => hasDropdown && setActiveDropdown(null)}
-                >
-                  <button
-                    className={`topnav-link ${group.items.some((t) => isSidebarTabActive(t.id, activeTab)) ? "active" : ""}`}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "4px",
-                      padding: "8px 12px",
-                      fontSize: "0.9rem",
-                    }}
-                    onClick={() => {
-                      if (hasDropdown) {
-                        setActiveDropdown(
-                          activeDropdown === group.title ? null : group.title,
-                        );
-                      } else {
-                        handleSidebarTabClick(group.items[0].id, group.title);
-                        setActiveDropdown(null);
-                      }
-                    }}
+          <div className="topnav-pill-capsule">
+            <nav
+              className="topnav-links"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            >
+              {menuGroups.map((group, idx) => {
+                const hasDropdown = group.items.length > 1;
+                return (
+                  <div
+                    key={idx}
+                    style={{ position: "relative" }}
+                    onMouseEnter={() =>
+                      hasDropdown && setActiveDropdown(group.title)
+                    }
+                    onMouseLeave={() => hasDropdown && setActiveDropdown(null)}
                   >
-                    {group.title}
-                    {hasDropdown && (
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        style={{
-                          transform:
-                            activeDropdown === group.title
-                              ? "rotate(180deg)"
-                              : "rotate(0deg)",
-                          transition: "transform 0.2s",
-                        }}
-                      >
-                        <path d="M6 9l6 6 6-6" />
-                      </svg>
-                    )}
-                  </button>
-                  {hasDropdown && (
-                    <div
-                      className="profile-dropdown"
+                    <button
+                      className={`topnav-link ${group.items.some((t) => isSidebarTabActive(t.id, activeTab)) ? "active" : ""}`}
                       style={{
-                        position: "absolute",
-                        top: "calc(100% + 20px)",
-                        left: "50%",
-                        transformOrigin: "top center",
-                        transform:
-                          activeDropdown === group.title
-                            ? "translateX(-50%) scaleY(1)"
-                            : "translateX(-50%) scaleY(0)",
-                        opacity: activeDropdown === group.title ? 1 : 0,
-                        visibility:
-                          activeDropdown === group.title ? "visible" : "hidden",
-                        transition:
-                          "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease, visibility 0.4s",
-                        width: "max-content",
-                        minWidth: "200px",
-                        padding: "8px 0",
                         display: "flex",
-                        flexDirection: "column",
-                        zIndex: 1000,
+                        alignItems: "center",
+                        gap: "4px",
+                      }}
+                      onClick={() => {
+                        if (hasDropdown) {
+                          setActiveDropdown(
+                            activeDropdown === group.title ? null : group.title,
+                          );
+                        } else {
+                          handleSidebarTabClick(group.items[0].id, group.title);
+                          setActiveDropdown(null);
+                        }
                       }}
                     >
-                      {group.items.map((tab) => (
-                        <button
-                          key={tab.id}
-                          onClick={() => {
-                            handleSidebarTabClick(tab.id, group.title);
-                            setActiveDropdown(null);
-                          }}
+                      {group.title}
+                      {hasDropdown && (
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
                           style={{
-                            padding: "10px 16px",
-                            background: "transparent",
-                            border: "none",
-                            textAlign: "left",
-                            color: isSidebarTabActive(tab.id, activeTab)
-                              ? "var(--color-accent)"
-                              : "var(--text-main)",
-                            fontWeight: isSidebarTabActive(tab.id, activeTab)
-                              ? "600"
-                              : "400",
-                            cursor: "pointer",
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
+                            transform:
+                              activeDropdown === group.title
+                                ? "rotate(180deg)"
+                                : "rotate(0deg)",
+                            transition: "transform 0.2s",
                           }}
-                          className="hover-bg"
                         >
-                          {tab.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </nav>
+                          <path d="M6 9l6 6 6-6" />
+                        </svg>
+                      )}
+                    </button>
+                    {hasDropdown && (
+                      <div
+                        className="profile-dropdown"
+                        style={{
+                          position: "absolute",
+                          top: "calc(100% + 20px)",
+                          left: "50%",
+                          transformOrigin: "top center",
+                          transform:
+                            activeDropdown === group.title
+                              ? "translateX(-50%) scaleY(1)"
+                              : "translateX(-50%) scaleY(0)",
+                          opacity: activeDropdown === group.title ? 1 : 0,
+                          visibility:
+                            activeDropdown === group.title ? "visible" : "hidden",
+                          transition:
+                            "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease, visibility 0.4s",
+                          width: "max-content",
+                          minWidth: "200px",
+                          padding: "8px 0",
+                          display: "flex",
+                          flexDirection: "column",
+                          zIndex: 1000,
+                        }}
+                      >
+                        {group.items.map((tab) => (
+                          <button
+                            key={tab.id}
+                            onClick={() => {
+                              handleSidebarTabClick(tab.id, group.title);
+                              setActiveDropdown(null);
+                            }}
+                            style={{
+                              padding: "10px 16px",
+                              background: "transparent",
+                              border: "none",
+                              textAlign: "left",
+                              color: isSidebarTabActive(tab.id, activeTab)
+                                ? "var(--color-accent)"
+                                : "var(--text-main)",
+                              fontWeight: isSidebarTabActive(tab.id, activeTab)
+                                ? "600"
+                                : "400",
+                              cursor: "pointer",
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                            }}
+                            className="hover-bg"
+                          >
+                            {tab.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </nav>
+          </div>
         </div>
 
         <div
           className="topnav-right header-right"
-          style={{ display: "flex", alignItems: "center", gap: "8px" }}
+          style={{ display: "flex", alignItems: "center", gap: "14px" }}
         >
           {/* Hamburger Toggle (Mobile) */}
           <button
@@ -1352,7 +1343,7 @@ export default function AdminPortal({
           >
             <button
               type="button"
-              className="nav-icon-btn"
+              className="utility-icon-btn nav-icon-btn"
               onClick={() => setShowNotifications(!showNotifications)}
               style={{ position: "relative" }}
               aria-label="Notifications"
@@ -1761,6 +1752,8 @@ export default function AdminPortal({
           padding: "32px 48px",
           overflowY: "auto",
           minHeight: 0,
+          position: "relative",
+          zIndex: 1,
         }}
       >
         <Suspense fallback={<FullPageLoader />}>
@@ -2086,6 +2079,17 @@ export default function AdminPortal({
               }}
             >
               <AdminPayoutsTab />
+            </div>
+          )}
+
+          {isSuperAdmin && visitedTabs.has("financial_discount_codes") && (
+            <div
+              style={{
+                display:
+                  activeTab === "financial_discount_codes" ? "block" : "none",
+              }}
+            >
+              <DiscountCodesPanel />
             </div>
           )}
 

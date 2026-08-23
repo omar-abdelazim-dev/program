@@ -25,6 +25,7 @@ html {
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   line-height: 1.5;
   position: relative;
+  isolation: isolate;
 }
 
 .landing-page::before {
@@ -32,7 +33,7 @@ html {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 0;
+  z-index: -1;
   background-image: url('../assets/school-tools-pattern-dark.svg');
   background-repeat: repeat;
   background-size: 340px 340px;
@@ -161,23 +162,27 @@ html {
   box-shadow: none;
 }
 
-/* HERO SECTION (Split Layout) */
+/* HERO SECTION (Left-Aligned Layout) */
 .landing-hero {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-items: center;
-  gap: 60px;
-  min-height: calc(100vh - 80px);
-  padding: 60px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  text-align: left;
+  min-height: calc(85vh - 80px);
+  padding: 80px 0 60px;
 }
 
 .landing-hero__text {
-  max-width: 600px;
+  max-width: 860px;
+  margin: 0;
+  text-align: left;
 }
 
 .landing-eyebrow {
   display: inline-flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 10px;
   margin: 0 0 16px;
   font-size: 0.8rem;
@@ -199,12 +204,13 @@ html {
 }
 
 .landing-hero h1 {
-  font-size: clamp(3rem, 5vw, 4.5rem);
+  font-size: clamp(3rem, 5.5vw, 4.75rem);
   font-weight: 850;
   letter-spacing: -0.04em;
-  line-height: 1.05;
+  line-height: 1.08;
   margin: 0;
   color: var(--text-primary);
+  text-align: left;
 }
 
 .landing-hero h1 span {
@@ -214,20 +220,25 @@ html {
 }
 
 .landing-hero__copy {
+  max-width: 680px;
   margin: 24px 0 0;
   color: var(--text-secondary);
   font-size: clamp(1.1rem, 1.5vw, 1.25rem);
   line-height: 1.6;
+  text-align: left;
 }
 
 .landing-hero__actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-start;
   gap: 16px;
   margin-top: 40px;
 }
 
 .landing-button {
+  position: relative;
+  isolation: isolate;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -240,7 +251,23 @@ html {
   font-weight: 700;
   text-decoration: none;
   box-shadow: var(--shadow-subtle);
-  transition: transform 250ms ease, box-shadow 250ms ease;
+  border: 1.5px solid transparent;
+  background: transparent;
+  overflow: hidden;
+  transition: color 300ms cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 300ms cubic-bezier(0.4, 0, 0.2, 1),
+              transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.landing-button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 1;
+  transition: opacity 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .landing-button svg {
@@ -249,153 +276,45 @@ html {
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
+  transition: stroke 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.landing-button--student {
+.landing-button--student::before {
   background: linear-gradient(135deg, var(--color-student), var(--color-student-end));
 }
 
-.landing-button--instructor {
+.landing-button--instructor::before {
   background: linear-gradient(135deg, var(--color-instructor), var(--color-instructor-end));
 }
 
-.landing-button--community {
+.landing-button--community::before {
   background: var(--bg-surface);
+}
+
+.landing-button--community {
   color: var(--text-primary);
+}
+
+.landing-button:hover::before {
+  opacity: 0;
 }
 
 .landing-button:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-down);
+  box-shadow: none;
+  transform: none;
+  border-color: transparent;
 }
 
-.landing-hero__visual {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.landing-button--student:hover {
+  color: var(--color-student);
 }
 
-.hero-3d-placeholder {
-  width: 100%;
-  height: 100%;
-  background: var(--bg-surface);
-  border-radius: 40px;
-  border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-subtle);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden;
-  position: relative;
+.landing-button--instructor:hover {
+  color: var(--color-instructor);
 }
 
-.hero-3d-placeholder-inner {
-  width: 80%;
-  height: 80%;
-  position: relative;
-}
-
-.hero-3d-circle {
-  position: absolute;
-  top: 10%;
-  left: 10%;
-  width: 80%;
-  height: 80%;
-  border-radius: 50%;
-  background: var(--bg-main);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06), inset 0 4px 12px rgba(0, 0, 0, 0.03);
-  animation: pulse-circle 6s ease-in-out infinite;
-}
-
-.hero-illustration {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  height: 100%;
-}
-
-/* HERO ILLUSTRATION ANIMATIONS */
-@keyframes float-triangle {
-
-  0%,
-  100% {
-    transform: translate(0, 0) rotate(0deg);
-  }
-
-  50% {
-    transform: translate(0, -12px) rotate(4deg);
-  }
-}
-
-@keyframes float-square {
-
-  0%,
-  100% {
-    transform: translate(0, 0) rotate(0deg);
-  }
-
-  50% {
-    transform: translate(0, 10px) rotate(-3deg);
-  }
-}
-
-@keyframes pulse-circle {
-
-  0%,
-  100% {
-    transform: scale(1);
-  }
-
-  50% {
-    transform: scale(1.03);
-  }
-}
-
-.hero-illustration path {
-  animation: float-triangle 5s ease-in-out infinite;
-  transform-origin: center;
-  transform-box: fill-box;
-}
-
-.hero-illustration rect {
-  animation: float-square 4.5s ease-in-out infinite;
-  transform-origin: center;
-  transform-box: fill-box;
-}
-
-/* STATS SECTION */
-.landing-stats {
-  padding: 40px 0 80px;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 24px;
-}
-
-.stat-card {
-  text-align: center;
-  background: var(--bg-main);
-  padding: 40px 24px;
-  border-radius: var(--radius-card);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06), inset 0 4px 12px rgba(0, 0, 0, 0.03);
-}
-
-.stat-card h3 {
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.stat-card p {
-  color: var(--text-secondary);
-  font-weight: 600;
-  margin: 8px 0 0;
+.landing-button--community:hover {
+  color: #ffffff;
 }
 
 /* SECTION HEADING */
@@ -735,21 +654,9 @@ html {
 /* RESPONSIVE */
 @media (max-width: 1024px) {
   .landing-hero {
-    grid-template-columns: 1fr;
-    text-align: center;
-    gap: 40px;
-  }
-
-  .landing-hero__text {
-    margin: 0 auto;
-  }
-
-  .landing-eyebrow {
-    justify-content: center;
-  }
-
-  .landing-hero__actions {
-    justify-content: center;
+    min-height: auto;
+    padding: 60px 0 40px;
+    gap: 32px;
   }
 
   .landing-paths__grid {
@@ -760,14 +667,6 @@ html {
 @media (max-width: 640px) {
   .landing-nav__links a:not(:last-child) {
     display: none;
-  }
-
-  .hero-3d-placeholder {
-    aspect-ratio: 4/3;
-  }
-
-  .stats-grid {
-    grid-template-columns: 1fr 1fr;
   }
 }
 

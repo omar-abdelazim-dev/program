@@ -4,6 +4,7 @@ import {
   getStats, getRecentActivity, getRevenueAnalytics, getUsers, toggleBlockUser, changeUserRole,
   softDeleteUser, restoreUser, getTransactions, getPendingPayouts, getPayoutRevenueTrace, getAllLessons, approveLesson, rejectLesson, deleteLessonAdmin,
   manualEnroll, createPromoCode, getPromoCodes, togglePromoCode, createDiscountCode, getDiscountCodes,
+  updateDiscountCode, renewDiscountCode, deleteDiscountCode,
   approveEnrollment, rejectEnrollment,
   getInstructorViolations, getInstructorViolationSummary,
   getStudentAnalytics,
@@ -41,6 +42,9 @@ router.get('/promo-codes', getPromoCodes);
 router.patch('/promo-codes/:id/toggle', validateObjectId('id'), togglePromoCode);
 router.post('/discount-codes', authorize('superadmin'), createDiscountCode);
 router.get('/discount-codes', authorize('superadmin'), getDiscountCodes);
+router.put('/discount-codes/:id', authorize('superadmin'), validateObjectId('id'), updateDiscountCode);
+router.patch('/discount-codes/:id/renew', authorize('superadmin'), validateObjectId('id'), renewDiscountCode);
+router.delete('/discount-codes/:id', authorize('superadmin'), validateObjectId('id'), deleteDiscountCode);
 router.get('/lessons', getAllLessons);
 router.patch('/lessons/:id/approve', validateObjectId('id'), approveLesson);
 router.patch('/lessons/:id/reject', validateObjectId('id'), rejectLesson);

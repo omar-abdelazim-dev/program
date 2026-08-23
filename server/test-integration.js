@@ -51,6 +51,7 @@ const run = async () => {
 
   const agentInstructor = request.agent(app);
   const agentAdmin = request.agent(app);
+  const agentSuperAdmin = request.agent(app);
   const agentPublic = request.agent(app);
 
   // 1. Register an instructor (via the required pre-registration OTP flow)
@@ -168,6 +169,40 @@ const run = async () => {
   assert(res.status === 200, `Admin login failed: ${JSON.stringify(res.body)}`);
   const adminCsrf = getCsrfToken(res);
   console.log('✓ Admin logged in');
+
+  // 5b. Discount status updates must be explicit and idempotent for superadmins.
+  await User.create({
+    name: 'Super Admin User',
+    email: 'superadmin@example.com',
+    password: 'superadminpass123',
+    role: 'superadmin',
+    isVerified: true,
+  });
+  res = await agentSuperAdmin.post('/api/auth/login').send({
+    email: 'superadmin@example.com',
+    password: 'superadminpass123',
+  });
+  assert(res.status === 200, `Superadmin login failed: ${JSON.stringify(res.body)}`);
+  const superAdminCsrf = getCsrfToken(res);
+
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  res = await agentSuperAdmin.post('/api/admin/discount-codes').set('X-CSRF-Token', superAdminCsrf).send({
+    code: 'IDEMPOTENT20',
+    discountPercentage: 20,
+    expiresAt,
+  });
+  assert(res.status === 201, `Discount code creation failed: ${JSON.stringify(res.body)}`);
+  const discountCodeId = res.body.discountCode._id;
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    res = await agentSuperAdmin.put(`/api/admin/discount-codes/${discountCodeId}`).set('X-CSRF-Token', superAdminCsrf).send({ isActive: false });
+    assert(res.status === 200, `Discount status update failed: ${JSON.stringify(res.body)}`);
+    assert(res.body.discountCode.isActive === false, 'Repeated explicit stop requests must keep the code stopped');
+  }
+
+  res = await agentSuperAdmin.put(`/api/admin/discount-codes/${discountCodeId}`).set('X-CSRF-Token', superAdminCsrf).send({ isActive: 'false' });
+  assert(res.status === 400, 'Discount status must reject non-boolean input');
+  console.log('✓ Discount status update is explicit, idempotent, and type-safe');
 
   // 6. A non-admin (instructor) should be blocked from the pending-courses list
   res = await agentInstructor.get('/api/courses/pending');
