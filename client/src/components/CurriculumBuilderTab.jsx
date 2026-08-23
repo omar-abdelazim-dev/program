@@ -13,6 +13,7 @@ export default function CurriculumBuilderTab({
   onSelectCourse,
   onCreateCourse,
   onTogglePublish,
+  onSubmitForReview,
   onRepublish,
   onRequestPriceChange,
   onConvertCourse,
@@ -43,10 +44,14 @@ export default function CurriculumBuilderTab({
   const [collapsedModules, setCollapsedModules] = useState({});
   const [editingModuleId, setEditingModuleId] = useState(null);
   const [moduleTitleDraft, setModuleTitleDraft] = useState('');
+  const [modulePriceDraft, setModulePriceDraft] = useState('');
   const [addingModule, setAddingModule] = useState(false);
   const [newModuleTitle, setNewModuleTitle] = useState('');
+  const [newModulePrice, setNewModulePrice] = useState('');
   const [isAddModuleFocused, setIsAddModuleFocused] = useState(false);
+  const [isAddModulePriceFocused, setIsAddModulePriceFocused] = useState(false);
   const [isEditModuleFocused, setIsEditModuleFocused] = useState(false);
+  const [isEditModulePriceFocused, setIsEditModulePriceFocused] = useState(false);
   const [hoveredModuleId, setHoveredModuleId] = useState(null);
 
   const selectedCourse = courses.find(c => c._id === selectedCourseId);
@@ -69,16 +74,31 @@ export default function CurriculumBuilderTab({
 
   const handleAddModule = async () => {
     if (!selectedCourseId || !newModuleTitle.trim()) return;
+    const isOngoing = selectedCourse?.courseType === 'ongoing';
+    let priceVal = undefined;
+    if (isOngoing) {
+      const parsedPrice = Number(newModulePrice);
+      if (!Number.isFinite(parsedPrice) || parsedPrice < 50 || parsedPrice > 200) {
+        notyf.error(t('instructor.curriculum.ongoing_module_price_range', 'Ongoing course module price must be between 50 EGP and 200 EGP.'));
+        return;
+      }
+      priceVal = parsedPrice;
+    }
+
     try {
-      const { data } = await api.post(`/courses/${selectedCourseId}/modules`, { title: newModuleTitle.trim() });
+      const { data } = await api.post(`/courses/${selectedCourseId}/modules`, {
+        title: newModuleTitle.trim(),
+        ...(priceVal !== undefined && { price: priceVal }),
+      });
       setLocalModules(prev => [...prev, { ...data.module, lessons: [] }]);
       setCollapsedModules(prev => ({ ...prev, [data.module._id]: false }));
       setNewModuleTitle('');
+      setNewModulePrice('');
       setAddingModule(false);
       if (onAction) onAction();
     } catch (err) {
       console.error(err);
-      notyf.error(t('instructor.curriculum.module_add_failed', 'Failed to add module'));
+      notyf.error(err.response?.data?.message || t('instructor.curriculum.module_add_failed', 'Failed to add module'));
     }
   };
 
@@ -88,14 +108,28 @@ export default function CurriculumBuilderTab({
       return;
     }
     const title = moduleTitleDraft.trim();
-    setLocalModules(prev => prev.map(m => m._id === moduleId ? { ...m, title } : m));
+    const isOngoing = selectedCourse?.courseType === 'ongoing';
+    let priceVal = undefined;
+    if (isOngoing && modulePriceDraft !== '') {
+      const parsedPrice = Number(modulePriceDraft);
+      if (!Number.isFinite(parsedPrice) || parsedPrice < 50 || parsedPrice > 200) {
+        notyf.error(t('instructor.curriculum.ongoing_module_price_range', 'Ongoing course module price must be between 50 EGP and 200 EGP.'));
+        return;
+      }
+      priceVal = parsedPrice;
+    }
+
+    setLocalModules(prev => prev.map(m => m._id === moduleId ? { ...m, title, ...(priceVal !== undefined && { price: priceVal }) } : m));
     setEditingModuleId(null);
     try {
-      await api.put(`/courses/${selectedCourseId}/modules/${moduleId}`, { title });
+      await api.put(`/courses/${selectedCourseId}/modules/${moduleId}`, {
+        title,
+        ...(priceVal !== undefined && { price: priceVal }),
+      });
       if (onAction) onAction();
     } catch (err) {
       console.error(err);
-      notyf.error(t('instructor.curriculum.module_update_failed', 'Failed to rename module'));
+      notyf.error(err.response?.data?.message || t('instructor.curriculum.module_update_failed', 'Failed to update module'));
       setLocalModules(modulesByCourse[selectedCourseId] || []);
     }
   };
@@ -341,6 +375,7 @@ export default function CurriculumBuilderTab({
             courses.map(course => {
               const modules = modulesByCourse[course._id] || [];
               const lessonCount = modules.reduce((sum, m) => sum + (m.lessons?.length || 0), 0);
+              const isFullCourse = course.courseType !== 'ongoing';
               return (
                 <div
                   key={course._id}
@@ -383,39 +418,51 @@ export default function CurriculumBuilderTab({
                           style={{
                             width: '120px',
                             height: '80px',
-                            background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)',
+                            background: 'var(--bg-main)',
+                            boxShadow: 'var(--inner-shadow)',
                             borderRadius: '12px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'var(--c-sub)',
                             flexShrink: 0
                           }}
-                        />
+                        >
+                          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                        </div>
                       )}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <h3 style={{ fontSize: '1.25rem', margin: '0 0 6px 0', color: 'var(--text-h)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {course.title}
                         </h3>
                         <div style={{ color: 'var(--text)', fontSize: '0.9rem' }}>
-                          {t('instructor.dashboard.price')}: EGP {course.price} • {t('instructor.dashboard.category')}: {t(`categories.${course.category.replace(/\s+/g, '_').toLowerCase()}`, course.category)}
+                          {t('instructor.dashboard.price')}: EGP {course.price} • {t('instructor.dashboard.category')}: {t(`categories.${(course.category || '').replace(/\s+/g, '_').toLowerCase()}`, course.category || '')}
                         </div>
-                        {course.courseType === 'full' && (
-                          course.pendingPriceChange?.status === 'pending' ? (
-                            <div style={{ fontSize: '0.8rem', color: '#f59e0b', marginTop: '4px' }}>
-                              {t('instructor.dashboard.price_change.pending', 'Price change pending: EGP {{price}} awaiting admin approval', { price: course.pendingPriceChange.requestedPrice })}
-                            </div>
-                          ) : (
-                            onRequestPriceChange && (
-                              <button
-                                type="button"
-                                onClick={(e) => { e.stopPropagation(); onRequestPriceChange(course); }}
-                                style={{ background: 'none', border: 'none', color: '#3b82f6', textDecoration: 'underline', cursor: 'pointer', padding: 0, fontSize: '0.8rem', marginTop: '4px' }}
-                              >
-                                {t('instructor.dashboard.price_change.request', 'Request Price Change')}
-                              </button>
-                            )
-                          )
-                        )}
+
                         <div style={{ marginTop: '10px', display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                          {/* If in draft, show clickable Go Live button. If live (approved), show static LIVE label. */}
-                          {course.status === 'draft' && onTogglePublish ? (
+                          {/* If course in draft and not yet approved by admin, show "Submit for Review" button */}
+                          {course.status === 'draft' && !course.approvedBy ? (
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); onSubmitForReview && onSubmitForReview(course._id, e); }}
+                              style={{
+                                padding: '4px 12px',
+                                borderRadius: '12px',
+                                background: 'linear-gradient(135deg, #f97316 0%, #fbbf24 100%)',
+                                color: 'white',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontSize: '0.75rem',
+                                fontWeight: 'bold',
+                                boxShadow: '0 2px 8px rgba(249, 115, 22, 0.3)',
+                                transition: 'all 0.2s'
+                              }}
+                              onMouseOver={(e) => e.currentTarget.style.filter = 'brightness(1.1)'}
+                              onMouseOut={(e) => e.currentTarget.style.filter = 'none'}
+                            >
+                              {t('instructor.dashboard.submit_for_review', 'Submit for Review')}
+                            </button>
+                          ) : course.status === 'draft' && onTogglePublish ? (
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); onTogglePublish(course._id, e); }}
@@ -434,7 +481,7 @@ export default function CurriculumBuilderTab({
                               onMouseOver={(e) => e.currentTarget.style.filter = 'brightness(1.1)'}
                               onMouseOut={(e) => e.currentTarget.style.filter = 'none'}
                             >
-                              Go Live
+                              {t('instructor.dashboard.go_live', 'Go Live')}
                             </button>
                           ) : (
                             <span
@@ -466,30 +513,86 @@ export default function CurriculumBuilderTab({
                             </span>
                           )}
 
-                          {course.courseType && (
-                            <span
-                              style={{
-                                padding: '4px 10px',
-                                borderRadius: '12px',
-                                fontSize: '0.75rem',
-                                fontWeight: 'bold',
-                                boxShadow: 'var(--inner-shadow)',
-                                background: 'rgba(148, 163, 184, 0.15)',
-                                color: 'var(--text)',
-                              }}
-                            >
-                              {course.courseType === 'full'
-                                ? t('instructor.create_course.full_course_title', 'Full Course')
-                                : t('instructor.create_course.ongoing_course_title', 'Ongoing Course')}
-                              {course.courseType === 'full' && course.status === 'approved' && ` · ${t('instructor.curriculum.content_locked', 'Content Locked')}`}
-                            </span>
-                          )}
+                          <span
+                            style={{
+                              padding: '4px 10px',
+                              borderRadius: '12px',
+                              fontSize: '0.75rem',
+                              fontWeight: 'bold',
+                              boxShadow: 'var(--inner-shadow)',
+                              background: 'rgba(148, 163, 184, 0.15)',
+                              color: 'var(--text)',
+                            }}
+                          >
+                            {isFullCourse
+                              ? t('instructor.create_course.full_course_title', 'Full Course')
+                              : t('instructor.create_course.ongoing_course_title', 'Ongoing Course')}
+                            {isFullCourse && course.status === 'approved' && ` · ${t('instructor.curriculum.content_locked', 'Content Locked')}`}
+                          </span>
 
                           <span style={{ fontSize: '0.8rem', color: 'var(--text)' }}>
                             {lessonCount === 0
                               ? t('instructor.dashboard.status.no_lessons_yet')
                               : `${lessonCount} ${lessonCount === 1 ? t('instructor.dashboard.status.lesson') : t('instructor.dashboard.status.lessons')}`}
                           </span>
+
+                          {/* Request Price Change (Only for Live Full Courses) */}
+                          {isFullCourse && course.status === 'approved' && (
+                            course.pendingPriceChange?.status === 'pending' ? (
+                              <span
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  padding: '4px 12px',
+                                  borderRadius: '12px',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 600,
+                                  boxShadow: 'var(--inner-shadow)',
+                                  background: 'rgba(245, 158, 11, 0.15)',
+                                  color: '#d97706',
+                                  border: 'none',
+                                }}
+                              >
+                                {t('instructor.dashboard.price_change.pending', 'Price change pending: EGP {{price}}', {
+                                  price: course.pendingPriceChange.requestedPrice,
+                                })}
+                              </span>
+                            ) : (
+                              onRequestPriceChange && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onRequestPriceChange(course);
+                                  }}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    background: 'rgba(249, 115, 22, 0.1)',
+                                    border: 'none',
+                                    boxShadow: 'var(--inner-shadow)',
+                                    color: '#f97316',
+                                    cursor: 'pointer',
+                                    padding: '4px 12px',
+                                    borderRadius: '12px',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 600,
+                                    transition: 'all 0.2s ease-in-out',
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = 'rgba(249, 115, 22, 0.2)';
+                                    e.currentTarget.style.filter = 'brightness(1.1)';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = 'rgba(249, 115, 22, 0.1)';
+                                    e.currentTarget.style.filter = 'none';
+                                  }}
+                                >
+                                  {t('instructor.dashboard.price_change.request', 'Request Price Change')}
+                                </button>
+                              )
+                            )
+                          )}
                         </div>
 
                         {(course.status === 'rejected' || course.status === 'suspended') && course.rejectionReason && (
@@ -571,6 +674,10 @@ export default function CurriculumBuilderTab({
                             label: t('instructor.dashboard.actions.edit', 'Edit Course Details'),
                             action: () => onEditCourse && onEditCourse(course)
                           },
+                          ...(course.courseType !== 'ongoing' && course.status === 'approved' && onRequestPriceChange ? [{
+                            label: t('instructor.dashboard.price_change.request', 'Request Price Change'),
+                            action: () => onRequestPriceChange(course)
+                          }] : []),
                           ...(onOpenStandaloneLessons ? [{
                             label: t('instructor.curriculum.standalone.manage', 'Manage Standalone Lessons'),
                             action: () => onOpenStandaloneLessons(course)
@@ -648,7 +755,113 @@ export default function CurriculumBuilderTab({
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+          {selectedCourse?.status === 'draft' && !selectedCourse?.approvedBy && onSubmitForReview && (
+            <button
+              onClick={(e) => onSubmitForReview(selectedCourse._id, e)}
+              style={{
+                width: 'auto',
+                borderRadius: '12px',
+                padding: '10px 20px',
+                fontWeight: 700,
+                background: 'linear-gradient(135deg, #f97316 0%, #fbbf24 100%)',
+                color: 'white',
+                border: 'none',
+                boxShadow: '0 2px 8px rgba(249, 115, 22, 0.3)',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onMouseOver={(e) => (e.currentTarget.style.filter = 'brightness(1.1)')}
+              onMouseOut={(e) => (e.currentTarget.style.filter = 'none')}
+            >
+              {t('instructor.dashboard.submit_for_review', 'Submit for Review')}
+            </button>
+          )}
+          {selectedCourse?.status === 'pending' && (
+            <span
+              style={{
+                padding: '8px 16px',
+                borderRadius: '12px',
+                fontSize: '0.85rem',
+                fontWeight: 'bold',
+                boxShadow: 'var(--inner-shadow)',
+                background: 'rgba(245, 158, 11, 0.15)',
+                color: '#F59E0B',
+              }}
+            >
+              {t('instructor.dashboard.status.pending', 'Pending Review')}
+            </span>
+          )}
+          {selectedCourse?.status === 'draft' && selectedCourse?.approvedBy && onTogglePublish && (
+            <button
+              onClick={(e) => onTogglePublish(selectedCourse._id, e)}
+              style={{
+                width: 'auto',
+                borderRadius: '12px',
+                padding: '10px 20px',
+                fontWeight: 700,
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                color: 'white',
+                border: 'none',
+                boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onMouseOver={(e) => (e.currentTarget.style.filter = 'brightness(1.1)')}
+              onMouseOut={(e) => (e.currentTarget.style.filter = 'none')}
+            >
+              {t('instructor.dashboard.go_live', 'Go Live')}
+            </button>
+          )}
+          {selectedCourse?.courseType !== 'ongoing' && selectedCourse?.status === 'approved' && (
+            selectedCourse.pendingPriceChange?.status === 'pending' ? (
+              <span
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '12px',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  boxShadow: 'var(--inner-shadow)',
+                  background: 'rgba(245, 158, 11, 0.15)',
+                  color: '#f59e0b',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                }}
+              >
+                {t('instructor.dashboard.price_change.pending', 'Price change pending: EGP {{price}} awaiting admin approval', {
+                  price: selectedCourse.pendingPriceChange.requestedPrice,
+                })}
+              </span>
+            ) : onRequestPriceChange ? (
+              <button
+                onClick={() => onRequestPriceChange(selectedCourse)}
+                style={{
+                  width: 'auto',
+                  borderRadius: '12px',
+                  padding: '10px 20px',
+                  fontWeight: 600,
+                  background: 'rgba(249, 115, 22, 0.1)',
+                  color: '#f97316',
+                  border: 'none',
+                  boxShadow: 'var(--inner-shadow)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = 'rgba(249, 115, 22, 0.2)';
+                  e.currentTarget.style.filter = 'brightness(1.15)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = 'rgba(249, 115, 22, 0.1)';
+                  e.currentTarget.style.filter = 'none';
+                }}
+              >
+                {t('instructor.dashboard.price_change.request', 'Request Price Change')}
+              </button>
+            ) : null
+          )}
           {selectedCourse?.courseType === 'ongoing' && onConvertCourse && (
             <button
               onClick={() => onConvertCourse(selectedCourse)}
@@ -690,7 +903,7 @@ export default function CurriculumBuilderTab({
 
       {/* Add Module Input Field */}
       {!isLocked && addingModule && (
-        <div className="glass-card" style={{ padding: '16px', display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '24px' }}>
+        <div className="glass-card" style={{ padding: '16px', display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '24px' }}>
           <input
             autoFocus
             type="text"
@@ -699,10 +912,11 @@ export default function CurriculumBuilderTab({
             onChange={(e) => setNewModuleTitle(e.target.value)}
             onFocus={() => setIsAddModuleFocused(true)}
             onBlur={() => setIsAddModuleFocused(false)}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleAddModule(); if (e.key === 'Escape') { setAddingModule(false); setNewModuleTitle(''); } }}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleAddModule(); if (e.key === 'Escape') { setAddingModule(false); setNewModuleTitle(''); setNewModulePrice(''); } }}
             placeholder={t('instructor.curriculum.ph_module_title', 'Module title (e.g. "Introduction to Java")')}
             style={{
-              flex: 1,
+              flex: 2,
+              minWidth: '200px',
               background: 'var(--bg-main)',
               boxShadow: isAddModuleFocused ? '0 0 0 2px rgba(249, 115, 22, 0.3)' : 'var(--inner-shadow)',
               border: isAddModuleFocused ? '1px solid #f97316' : '1px solid transparent',
@@ -714,11 +928,38 @@ export default function CurriculumBuilderTab({
               transition: 'all 0.2s ease-in-out'
             }}
           />
+          {selectedCourse?.courseType === 'ongoing' && (
+            <input
+              type="number"
+              min="50"
+              max="200"
+              className="auth-input"
+              value={newModulePrice}
+              onChange={(e) => setNewModulePrice(e.target.value)}
+              onFocus={() => setIsAddModulePriceFocused(true)}
+              onBlur={() => setIsAddModulePriceFocused(false)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleAddModule(); if (e.key === 'Escape') { setAddingModule(false); setNewModuleTitle(''); setNewModulePrice(''); } }}
+              placeholder="Module Price (50 - 200 EGP) *"
+              style={{
+                flex: 1,
+                minWidth: '160px',
+                background: 'var(--bg-main)',
+                boxShadow: isAddModulePriceFocused ? '0 0 0 2px rgba(249, 115, 22, 0.3)' : 'var(--inner-shadow)',
+                border: isAddModulePriceFocused ? '1px solid #f97316' : '1px solid transparent',
+                color: 'var(--text-h)',
+                padding: '10px 16px',
+                borderRadius: '12px',
+                outline: 'none',
+                fontSize: '0.95rem',
+                transition: 'all 0.2s ease-in-out'
+              }}
+            />
+          )}
           <button onClick={handleAddModule} className="solid-btn" style={{ width: 'auto', padding: '10px 20px' }}>
             {t('instructor.curriculum.save_module', 'Save Module')}
           </button>
           <button
-            onClick={() => { setAddingModule(false); setNewModuleTitle(''); }}
+            onClick={() => { setAddingModule(false); setNewModuleTitle(''); setNewModulePrice(''); }}
             style={{
               width: 'auto',
               padding: '10px 20px',
@@ -754,24 +995,24 @@ export default function CurriculumBuilderTab({
                 {/* Module header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 20px', gap: '12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                       <button
+                        type="button"
                         className="reorder-arrow-btn"
                         onClick={() => handleReorderModule(mIndex, 'up')}
                         disabled={mIndex === 0}
-                        style={{ cursor: mIndex === 0 ? 'default' : 'pointer', color: mIndex === 0 ? 'var(--border)' : 'var(--c-sub)' }}
                         title="Move up"
                       >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
                       </button>
                       <button
+                        type="button"
                         className="reorder-arrow-btn"
                         onClick={() => handleReorderModule(mIndex, 'down')}
                         disabled={mIndex === localModules.length - 1}
-                        style={{ cursor: mIndex === localModules.length - 1 ? 'default' : 'pointer', color: mIndex === localModules.length - 1 ? 'var(--border)' : 'var(--c-sub)' }}
                         title="Move down"
                       >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                       </button>
                     </div>
 
@@ -799,32 +1040,108 @@ export default function CurriculumBuilderTab({
                     </button>
 
                     {editingModuleId === module._id ? (
-                      <input
-                        autoFocus
-                        type="text"
-                        className="auth-input"
-                        value={moduleTitleDraft}
-                        onChange={(e) => setModuleTitleDraft(e.target.value)}
-                        onFocus={() => setIsEditModuleFocused(true)}
-                        onBlur={() => { setIsEditModuleFocused(false); handleRenameModule(module._id); }}
-                        onKeyDown={(e) => { if (e.key === 'Enter') handleRenameModule(module._id); if (e.key === 'Escape') setEditingModuleId(null); }}
-                        style={{
-                          flex: 1,
-                          background: 'var(--bg-main)',
-                          boxShadow: isEditModuleFocused ? '0 0 0 2px rgba(249, 115, 22, 0.3)' : 'var(--inner-shadow)',
-                          border: isEditModuleFocused ? '1px solid #f97316' : '1px solid transparent',
-                          color: 'var(--text-h)',
-                          padding: '8px 14px',
-                          borderRadius: '12px',
-                          outline: 'none',
-                          fontSize: '1rem',
-                          fontWeight: 600,
-                          transition: 'all 0.2s ease-in-out'
-                        }}
-                      />
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flex: 1, flexWrap: 'wrap' }}>
+                        <input
+                          autoFocus
+                          type="text"
+                          className="auth-input"
+                          value={moduleTitleDraft}
+                          onChange={(e) => setModuleTitleDraft(e.target.value)}
+                          onFocus={() => setIsEditModuleFocused(true)}
+                          onBlur={() => setIsEditModuleFocused(false)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') handleRenameModule(module._id); if (e.key === 'Escape') setEditingModuleId(null); }}
+                          style={{
+                            flex: 2,
+                            minWidth: '180px',
+                            background: 'var(--bg-main)',
+                            boxShadow: isEditModuleFocused ? '0 0 0 2px rgba(249, 115, 22, 0.3)' : 'var(--inner-shadow)',
+                            border: isEditModuleFocused ? '1px solid #f97316' : '1px solid transparent',
+                            color: 'var(--text-h)',
+                            padding: '8px 14px',
+                            borderRadius: '12px',
+                            outline: 'none',
+                            fontSize: '0.95rem',
+                            fontWeight: 600,
+                            transition: 'all 0.2s ease-in-out'
+                          }}
+                        />
+                        {selectedCourse?.courseType === 'ongoing' && (
+                          <input
+                            type="number"
+                            min="50"
+                            max="200"
+                            className="auth-input"
+                            value={modulePriceDraft}
+                            onChange={(e) => setModulePriceDraft(e.target.value)}
+                            onFocus={() => setIsEditModulePriceFocused(true)}
+                            onBlur={() => setIsEditModulePriceFocused(false)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') handleRenameModule(module._id); if (e.key === 'Escape') setEditingModuleId(null); }}
+                            placeholder="Price (50 - 200 EGP)"
+                            style={{
+                              flex: 1,
+                              minWidth: '140px',
+                              background: 'var(--bg-main)',
+                              boxShadow: isEditModulePriceFocused ? '0 0 0 2px rgba(249, 115, 22, 0.3)' : 'var(--inner-shadow)',
+                              border: isEditModulePriceFocused ? '1px solid #f97316' : '1px solid transparent',
+                              color: 'var(--text-h)',
+                              padding: '8px 14px',
+                              borderRadius: '12px',
+                              outline: 'none',
+                              fontSize: '0.95rem',
+                              fontWeight: 600,
+                              transition: 'all 0.2s ease-in-out'
+                            }}
+                          />
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleRenameModule(module._id)}
+                          className="solid-btn"
+                          style={{ width: 'auto', padding: '6px 14px', fontSize: '0.85rem' }}
+                        >
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingModuleId(null)}
+                          style={{
+                            width: 'auto',
+                            padding: '6px 14px',
+                            background: 'var(--bg-main)',
+                            boxShadow: 'var(--inner-shadow)',
+                            borderRadius: '10px',
+                            border: 'none',
+                            color: 'var(--text-h)',
+                            fontWeight: 600,
+                            fontSize: '0.85rem',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     ) : (
-                      <div style={{ minWidth: 0 }}>
-                        <h4 style={{ margin: 0, fontSize: '1.05rem', color: 'var(--text-h)' }}>{t('instructor.curriculum.module_label', 'Module')} {mIndex + 1} — {module.title}</h4>
+                      <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <h4 style={{ margin: 0, fontSize: '1.05rem', color: 'var(--text-h)' }}>
+                            {t('instructor.curriculum.module_label', 'Module')} {mIndex + 1} — {module.title}
+                          </h4>
+                          {selectedCourse?.courseType === 'ongoing' && (
+                            <span
+                              style={{
+                                padding: '2px 8px',
+                                borderRadius: '6px',
+                                background: 'rgba(249, 115, 22, 0.12)',
+                                color: '#f97316',
+                                fontWeight: 700,
+                                fontSize: '0.8rem',
+                                boxShadow: 'var(--inner-shadow)',
+                              }}
+                            >
+                              {module.price ? `${module.price} EGP` : '50 EGP'}
+                            </span>
+                          )}
+                        </div>
                         <span style={{ fontSize: '0.8rem', color: 'var(--c-sub)' }}>
                           {lessons.length} {lessons.length === 1 ? t('instructor.dashboard.status.lesson') : t('instructor.dashboard.status.lessons')}
                         </span>
@@ -884,10 +1201,11 @@ export default function CurriculumBuilderTab({
                           action: () => handlePublishAllInModule(module)
                         }] : []),
                         {
-                          label: t('instructor.curriculum.rename_module', 'Rename Module'),
+                          label: selectedCourse?.courseType === 'ongoing' ? t('instructor.curriculum.edit_module', 'Edit Module & Price') : t('instructor.curriculum.rename_module', 'Rename Module'),
                           action: () => {
                             setEditingModuleId(module._id);
                             setModuleTitleDraft(module.title);
+                            setModulePriceDraft(module.price || '');
                           }
                         },
                         ...(!isLocked ? [{
@@ -928,24 +1246,24 @@ export default function CurriculumBuilderTab({
                             }}
                           >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                                 <button
+                                  type="button"
                                   className="reorder-arrow-btn"
                                   onClick={() => handleReorderLesson(module._id, lIndex, 'up')}
                                   disabled={lIndex === 0}
-                                  style={{ cursor: lIndex === 0 ? 'default' : 'pointer', color: lIndex === 0 ? 'var(--border)' : 'var(--c-sub)' }}
                                   title="Move up"
                                 >
-                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+                                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
                                 </button>
                                 <button
+                                  type="button"
                                   className="reorder-arrow-btn"
                                   onClick={() => handleReorderLesson(module._id, lIndex, 'down')}
                                   disabled={lIndex === lessons.length - 1}
-                                  style={{ cursor: lIndex === lessons.length - 1 ? 'default' : 'pointer', color: lIndex === lessons.length - 1 ? 'var(--border)' : 'var(--c-sub)' }}
                                   title="Move down"
                                 >
-                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                                 </button>
                               </div>
 

@@ -517,12 +517,19 @@
   border-color: var(--color-accent);
 }
 
+.coursera-info-col,
 .coursera-card-left {
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 8px;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 .provider-header {
@@ -572,12 +579,19 @@
   gap: 8px;
 }
 
+.coursera-action-col,
 .coursera-card-right {
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: 15px;
   flex-shrink: 0;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 .next-lesson-info {
@@ -624,12 +638,13 @@
     align-items: flex-start;
   }
 
+  .coursera-action-col,
   .coursera-card-right {
     width: 100%;
     justify-content: space-between;
     margin-top: 16px;
     padding-top: 16px;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--border) !important;
   }
 
   .next-lesson-info {

@@ -1144,6 +1144,24 @@ export const updateDiscountCode = async (req, res) => {
 };
 
 
+export const toggleDiscountCode = async (req, res) => {
+  try {
+    const discountCode = await DiscountCode.findById(req.params.id);
+    if (!discountCode) return res.status(404).json({ message: 'Discount code not found' });
+    discountCode.isActive = !discountCode.isActive;
+    await discountCode.save();
+    res.status(200).json({
+      message: `Discount code ${discountCode.isActive ? 'activated' : 'stopped'}`,
+      discountCode,
+    });
+  } catch (error) {
+    logger.error('Error toggling discount code', { error: error.message });
+    res.status(500).json({ message: 'Server error toggling discount code' });
+  }
+};
+
+
+
 export const renewDiscountCode = async (req, res) => {
   try {
     const discountCode = await DiscountCode.findById(req.params.id);

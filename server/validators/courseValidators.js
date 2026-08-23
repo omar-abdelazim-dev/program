@@ -35,9 +35,9 @@ export const validateCreateCourse = [
     .isLength({ min: 20 }).withMessage('Description must be at least 20 characters'),
 
   body('price')
-    .notEmpty().withMessage('Price is required')
-    .isFloat({ min: 1 }).withMessage('Price must be a positive number')
-    .custom(priceForType),
+    .if(body('courseType').equals('full'))
+    .notEmpty().withMessage('Price is required for full courses')
+    .isFloat({ min: 250, max: 5000 }).withMessage('Full course price must be between 250 EGP and 5000 EGP.'),
 
   body('category')
     .optional({ checkFalsy: true })
@@ -49,7 +49,13 @@ export const validateCreateCourse = [
 
   body('semester')
     .notEmpty().withMessage('Semester is required')
-    .isInt({ min: 1, max: 12 }).withMessage('Semester must be a valid number between 1 and 12'),
+    .isInt({ min: 1, max: 12 }).withMessage('Semester must be a valid number between 1 and 12')
+    .custom((val, { req }) => {
+      if (req.body.academicType === 'school' && Number(val) > 2) {
+        throw new Error('Semester must be 1 or 2 for school courses');
+      }
+      return true;
+    }),
 
   body('courseType')
     .notEmpty().withMessage('Course type is required')
@@ -62,7 +68,7 @@ export const validateCreateCourse = [
 export const validateRequestPriceChange = [
   body('requestedPrice')
     .notEmpty().withMessage('Requested price is required')
-    .isFloat({ min: 0 }).withMessage('Requested price must be a number greater than or equal to 0'),
+    .isFloat({ min: 250, max: 5000 }).withMessage('Full course price must be between 250 EGP and 5000 EGP.'),
 
   handleValidationErrors,
 ];
@@ -70,7 +76,7 @@ export const validateRequestPriceChange = [
 export const validateConvertToFull = [
   body('price')
     .notEmpty().withMessage('A full-course price is required')
-    .isFloat({ min: 0 }).withMessage('Price must be a number greater than or equal to 0'),
+    .isFloat({ min: 250, max: 5000 }).withMessage('Full course price must be between 250 EGP and 5000 EGP.'),
 
   handleValidationErrors,
 ];
@@ -94,7 +100,13 @@ export const validateUpdateCourse = [
 
   body('semester')
     .notEmpty().withMessage('Semester is required')
-    .isInt({ min: 1, max: 12 }).withMessage('Semester must be a valid number between 1 and 12'),
+    .isInt({ min: 1, max: 12 }).withMessage('Semester must be a valid number between 1 and 12')
+    .custom((val, { req }) => {
+      if (req.body.academicType === 'school' && Number(val) > 2) {
+        throw new Error('Semester must be 1 or 2 for school courses');
+      }
+      return true;
+    }),
 
   ...academicAudienceValidators,
   handleValidationErrors,
