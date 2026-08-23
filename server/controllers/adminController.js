@@ -1097,6 +1097,100 @@ export const getDiscountCodes = async (req, res) => {
   catch (error) { logger.error('Error fetching discount codes', { error: error.message }); res.status(500).json({ message: 'Server error fetching discount codes' }); }
 };
 
+export const updateDiscountCode = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const discountCode = await DiscountCode.findById(id);
+    if (!discountCode) return res.status(404).json({ message: 'Discount code not found' });
+
+    if (req.body.code) {
+      const code = String(req.body.code).trim().toUpperCase();
+      if (!/^[A-Z0-9_-]{3,40}$/.test(code)) {
+        return res.status(400).json({ message: 'Code must use 3-40 letters, numbers, hyphens, or underscores' });
+      }
+      discountCode.code = code;
+    }
+
+    if (req.body.discountPercentage !== undefined) {
+      const discountPercentage = Number(req.body.discountPercentage);
+      if (!Number.isFinite(discountPercentage) || discountPercentage < 1 || discountPercentage > 99) {
+        return res.status(400).json({ message: 'Discount percentage must be between 1 and 99' });
+      }
+      discountCode.discountPercentage = discountPercentage;
+    }
+
+    if (req.body.expiresAt) {
+      const expiresAt = new Date(req.body.expiresAt);
+      if (Number.isNaN(expiresAt.getTime())) {
+        return res.status(400).json({ message: 'Invalid expiration date' });
+      }
+      discountCode.expiresAt = expiresAt;
+    }
+
+    if (req.body.isActive !== undefined) {
+      discountCode.isActive = Boolean(req.body.isActive);
+    }
+
+    await discountCode.save();
+    res.status(200).json({ message: 'Discount code updated successfully', discountCode });
+  } catch (error) {
+    if (error.code === 11000) return res.status(409).json({ message: 'A discount code with this name already exists.' });
+    logger.error('Error updating discount code', { error: error.message });
+    res.status(500).json({ message: 'Server error updating discount code' });
+  }
+};
+
+export const toggleDiscountCode = async (req, res) => {
+  try {
+    const discountCode = await DiscountCode.findById(req.params.id);
+    if (!discountCode) return res.status(404).json({ message: 'Discount code not found' });
+    discountCode.isActive = !discountCode.isActive;
+    await discountCode.save();
+    res.status(200).json({
+      message: `Discount code ${discountCode.isActive ? 'activated' : 'stopped'}`,
+      discountCode,
+    });
+  } catch (error) {
+    logger.error('Error toggling discount code', { error: error.message });
+    res.status(500).json({ message: 'Server error toggling discount code' });
+  }
+};
+
+export const renewDiscountCode = async (req, res) => {
+  try {
+    const discountCode = await DiscountCode.findById(req.params.id);
+    if (!discountCode) return res.status(404).json({ message: 'Discount code not found' });
+    
+    const expiresAt = req.body.expiresAt ? new Date(req.body.expiresAt) : null;
+    if (!expiresAt || Number.isNaN(expiresAt.getTime()) || expiresAt <= new Date()) {
+      return res.status(400).json({ message: 'Renew expiration date must be in the future' });
+    }
+
+    discountCode.expiresAt = expiresAt;
+    discountCode.isActive = true;
+    await discountCode.save();
+
+    res.status(200).json({
+      message: 'Discount code renewed successfully',
+      discountCode,
+    });
+  } catch (error) {
+    logger.error('Error renewing discount code', { error: error.message });
+    res.status(500).json({ message: 'Server error renewing discount code' });
+  }
+};
+
+export const deleteDiscountCode = async (req, res) => {
+  try {
+    const discountCode = await DiscountCode.findByIdAndDelete(req.params.id);
+    if (!discountCode) return res.status(404).json({ message: 'Discount code not found' });
+    res.status(200).json({ message: 'Discount code deleted successfully' });
+  } catch (error) {
+    logger.error('Error deleting discount code', { error: error.message });
+    res.status(500).json({ message: 'Server error deleting discount code' });
+  }
+};
+
 // @route   PATCH /api/admin/promo-codes/:id/toggle
 // @access  Private (Admin/SuperAdmin)
 export const togglePromoCode = async (req, res) => {

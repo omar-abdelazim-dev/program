@@ -144,48 +144,6 @@ const instructorBenefits = [
   },
 ];
 
-function CountUp({ end, decimals = 0, suffix = '', duration = 2000 }) {
-  const [count, setCount] = useState(0);
-  const [hasAnimated, setHasAnimated] = useState(false);
-  const elementRef = useRef(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting && !hasAnimated) {
-        setHasAnimated(true);
-        let startTimestamp = null;
-        const step = (timestamp) => {
-          if (!startTimestamp) startTimestamp = timestamp;
-          const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-          // easeOutQuart
-          const easeProgress = 1 - Math.pow(1 - progress, 4);
-          setCount(easeProgress * end);
-          if (progress < 1) {
-            window.requestAnimationFrame(step);
-          }
-        };
-        window.requestAnimationFrame(step);
-      }
-    }, { threshold: 0.1 });
-
-    const currentElement = elementRef.current;
-    if (currentElement) {
-      observer.observe(currentElement);
-    }
-    return () => {
-      if (currentElement) observer.disconnect();
-    };
-  }, [end, duration, hasAnimated]);
-
-  const formattedNumber = decimals > 0 
-    ? count.toFixed(decimals) 
-    : Math.floor(count).toLocaleString();
-
-  return <span ref={elementRef}>{formattedNumber}{suffix}</span>;
-}
-
-
-
 function BenefitList({ benefits, variant }) {
   return (
     <ul className="landing-path-card__benefits">
@@ -297,39 +255,6 @@ export default function LandingPage() {
                 {c.hero.instructorCtaText} <ArrowIcon />
               </Link>
             </div>
-          </div>
-          <div className="landing-hero__visual reveal-right delay-200">
-            <div className="hero-3d-placeholder">
-              <div className="hero-3d-placeholder-inner">
-                <div className="hero-3d-circle"></div>
-                <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" className="hero-illustration">
-                  <path d="M120 70L80 130H150L120 70Z" fill="url(#paint1_linear)"/>
-                  <rect x="50" y="80" width="40" height="40" rx="8" fill="url(#paint2_linear)" />
-                  <defs>
-                    <linearGradient id="paint1_linear" x1="80" y1="70" x2="150" y2="130" gradientUnits="userSpaceOnUse">
-                      <stop stopColor="#f59e0b"/>
-                      <stop offset="1" stopColor="#ef4444"/>
-                    </linearGradient>
-                    <linearGradient id="paint2_linear" x1="50" y1="80" x2="90" y2="120" gradientUnits="userSpaceOnUse">
-                      <stop stopColor="#3b82f6"/>
-                      <stop offset="1" stopColor="#10b981"/>
-                    </linearGradient>
-                  </defs>
-                </svg>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* STATS SECTION */}
-        <section className="landing-stats landing-shell">
-          <div className="stats-grid reveal">
-            {(c.stats || []).map((stat, idx) => (
-              <div key={idx} className={`stat-card delay-${idx * 100}`}>
-                <h3><CountUp end={stat.value} suffix={stat.suffix || ''} decimals={stat.isFloat ? 1 : 0} /></h3>
-                <p>{stat.label}</p>
-              </div>
-            ))}
           </div>
         </section>
 

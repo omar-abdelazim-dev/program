@@ -10,7 +10,7 @@
 
 body.light-mode {
     --c-bg: #F3F4F6;
-    --c-card: rgba(255, 255, 255, 0.7);
+    --c-card: #FFFFFF;
     --c-light: #111827;
     --c-sub: #4B5563;
 }
@@ -378,7 +378,7 @@ input:focus {
 body.light-mode {
     --c-bg: #FAF7F2;
     /* Soft silver background */
-    --c-card: rgba(255, 255, 255, 0.7);
+    --c-card: #FFFFFF;
     --c-light: #1f2937;
     /* Dark text for contrast */
     --c-sub: #4b5563;
@@ -389,7 +389,7 @@ body.light-mode {
 body.light-mode .glass-card,
 body.light-mode .logo-icon,
 body.light-mode .profile-tooltip {
-    background-color: rgba(255, 255, 255, 0.95);
+    background-color: #FFFFFF !important;
     border-color: transparent !important;
     box-shadow: var(--shadow);
 }
