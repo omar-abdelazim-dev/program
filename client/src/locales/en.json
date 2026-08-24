@@ -167,6 +167,7 @@
     "home": {
       "set_college_prompt": "Set your college in Settings to personalize your home feed with courses for your program.",
       "courses_for_college": "Courses for {{college}}",
+      "courses_for_major": "Courses for {{major}}",
       "no_college_courses": "No {{college}} courses are available yet. Check back soon.",
       "welcome_name": "Welcome back, {{name}}",
       "subtitle_major": "Here's what's next in your {{major}} path.",
@@ -176,6 +177,9 @@
       "search_results_for": "Search results for \"{{query}}\"",
       "no_results_for": "No courses found for \"{{query}}\".",
       "semester_label": "{{major}} – Semester {{semester}}",
+      "semester_n": "Semester {{n}}",
+      "courses_for_you": "Courses For You",
+      "no_program_courses": "No courses found for your program yet. Check back soon or select a major above.",
       "no_major_courses": "No {{major}} courses are available yet. Check back soon.",
       "no_courses_available": "No courses available yet."
     },
@@ -185,6 +189,10 @@
       "instructors": "Instructors",
       "select_category": "Select Category",
       "select_college": "Select College",
+      "all_colleges": "All Colleges",
+      "filter_by_college": "Filter by college",
+      "all_majors": "All Majors",
+      "filter_by_major": "Filter by major",
       "no_instructors_for": "No instructors found for \"{{query}}\".",
       "no_instructors_yet": "No instructors yet.",
       "no_courses_search_category": "No courses found for \"{{query}}\" in {{category}}.",
@@ -953,6 +961,9 @@
     "go_to_course": "Go to Course",
     "enrolling": "Enrolling...",
     "enroll_now": "Enroll Now",
+    "buy_module": "Enroll (EGP {{price}})",
+    "module_purchased": "Module purchase submitted — awaiting approval.",
+    "module_already_purchased": "You already purchased this module.",
     "added_to_cart": "Added to Cart ✓",
     "add_to_cart": "Add to Cart"
   },

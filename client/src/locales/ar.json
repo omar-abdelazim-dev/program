@@ -167,6 +167,7 @@
     "home": {
       "set_college_prompt": "قم بتعيين كليتك في الإعدادات لتخصيص صفحتك الرئيسية بدورات مناسبة لبرنامجك.",
       "courses_for_college": "دورات {{college}}",
+      "courses_for_major": "دورات {{major}}",
       "no_college_courses": "لا توجد دورات لـ {{college}} متاحة بعد. تحقق مرة أخرى قريباً.",
       "welcome_name": "مرحبًا بعودتك، {{name}}",
       "subtitle_major": "إليك ما ينتظرك في مسار {{major}}.",
@@ -176,6 +177,9 @@
       "search_results_for": "نتائج البحث عن \"{{query}}\"",
       "no_results_for": "لم يتم العثور على مقررات لـ \"{{query}}\".",
       "semester_label": "{{major}} – الفصل الدراسي {{semester}}",
+      "semester_n": "الفصل الدراسي {{n}}",
+      "courses_for_you": "دورات تناسبك",
+      "no_program_courses": "لا توجد دورات متاحة لبرنامجك الدراسي بعد. يرجى المراجعة لاحقاً أو اختيار تخصص من القائمة بالأعلى.",
       "no_major_courses": "لا توجد مقررات لتخصص {{major}} بعد. يرجى المراجعة لاحقًا.",
       "no_courses_available": "لا توجد مقررات متاحة بعد."
     },
@@ -185,6 +189,10 @@
       "instructors": "المحاضرون",
       "select_category": "اختر الفئة",
       "select_college": "اختر الكلية",
+      "all_colleges": "جميع الكليات",
+      "filter_by_college": "تصفية حسب الكلية",
+      "all_majors": "جميع التخصصات",
+      "filter_by_major": "تصفية حسب التخصص",
       "no_instructors_for": "لم يتم العثور على محاضرين باسم \"{{query}}\".",
       "no_instructors_yet": "لا يوجد محاضرون بعد.",
       "no_courses_search_category": "لم يتم العثور على دورات باسم \"{{query}}\" في {{category}}.",
@@ -958,6 +966,9 @@
     "go_to_course": "الذهاب إلى الدورة",
     "enrolling": "جاري التسجيل...",
     "enroll_now": "سجل الآن",
+    "buy_module": "شراء الوحدة ({{price}} ج.م)",
+    "module_purchased": "تم إرسال طلب شراء الوحدة — بانتظار الموافقة.",
+    "module_already_purchased": "لقد قمت بشراء هذه الوحدة بالفعل.",
     "added_to_cart": "تمت الإضافة للسلة ✓",
     "add_to_cart": "أضف للسلة"
   },

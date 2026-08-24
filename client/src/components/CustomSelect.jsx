@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 
-const CustomSelect = ({ options, value, onChange, placeholder, icon, triggerClassName = "", triggerStyle = {}, disabled = false }) => {
+const CustomSelect = ({ options = [], value, onChange, placeholder, icon, triggerClassName = "", triggerStyle = {}, disabled = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef(null);
 
@@ -14,7 +14,21 @@ const CustomSelect = ({ options, value, onChange, placeholder, icon, triggerClas
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const selectedOption = options.find(o => o.value === value);
+  const safeOptions = Array.isArray(options) ? options : [];
+  const selectedOption = safeOptions.find(o => o?.value === value);
+  const hasEmptyOption = safeOptions.some(o => o?.value === '');
+  const optionsRef = useRef(null);
+
+  useEffect(() => {
+    if (isOpen && optionsRef.current) {
+      const selectedEl = optionsRef.current.querySelector('.custom-select-option.selected');
+      if (selectedEl) {
+        selectedEl.scrollIntoView({ block: 'nearest' });
+      } else {
+        optionsRef.current.scrollTop = 0;
+      }
+    }
+  }, [isOpen]);
 
   return (
     <div className={`custom-select-wrapper ${disabled ? 'disabled' : ''}`} ref={wrapperRef} style={{ zIndex: isOpen ? 100 : 1, opacity: disabled ? 0.6 : 1, pointerEvents: disabled ? 'none' : 'auto', cursor: disabled ? 'not-allowed' : 'pointer' }}>
@@ -35,9 +49,11 @@ const CustomSelect = ({ options, value, onChange, placeholder, icon, triggerClas
       
       
         <div className={`custom-select-dropdown ${isOpen ? 'open' : ''}`}>
-          <div className="custom-select-options">
-            <div className="custom-select-option disabled" title={placeholder}>{placeholder}</div>
-            {options.map(opt => (
+          <div className="custom-select-options" ref={optionsRef}>
+            {placeholder && !hasEmptyOption && (
+              <div className="custom-select-option disabled" title={placeholder}>{placeholder}</div>
+            )}
+            {safeOptions.map(opt => (
               <div 
                 key={opt.value}
                 className={`custom-select-option ${value === opt.value ? 'selected' : ''}`}

@@ -346,24 +346,36 @@ body.light-mode .student-layout-wrapper::before {
   display: inline-flex;
   align-items: center;
   background-color: var(--bg-surface);
-  box-shadow: none !important;
-  border: 1px solid transparent;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18) !important;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
   border-radius: var(--radius-card, 12px);
-  height: 36px;
-  padding: 0 4px 0 8px;
+  height: 38px;
+  padding: 0 4px 0 10px;
   position: relative;
   transition: all 0.25s ease;
   box-sizing: border-box;
 }
 
+body.light-mode .merged-search-filter-group {
+  background-color: #FFFFFF !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06) !important;
+}
+
 html[dir="rtl"] .merged-search-filter-group {
-  padding: 0 8px 0 4px;
+  padding: 0 10px 0 4px;
 }
 
 .merged-search-filter-group:hover,
 .merged-search-filter-group:focus-within {
-  box-shadow: none !important;
-  border-color: var(--color-accent, #f97316);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22) !important;
+  border-color: var(--color-accent, #f97316) !important;
+}
+
+body.light-mode .merged-search-filter-group:hover,
+body.light-mode .merged-search-filter-group:focus-within {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.09) !important;
+  border-color: var(--color-accent, #f97316) !important;
 }
 
 .merged-search-part {
@@ -457,9 +469,9 @@ html[dir="rtl"] .merged-filter-divider {
   top: calc(100% + 8px) !important;
   inset-inline-end: 0 !important;
   inset-inline-start: auto !important;
-  width: 230px !important;
-  min-width: 230px !important;
-  max-width: 230px !important;
+  width: 280px !important;
+  min-width: 280px !important;
+  max-width: 320px !important;
   border-radius: 12px !important;
   box-shadow: 0 14px 32px -4px rgba(0, 0, 0, 0.25), 0 8px 12px -6px rgba(0, 0, 0, 0.15) !important;
   background: var(--bg-surface) !important;
@@ -471,11 +483,13 @@ html[dir="rtl"] .merged-filter-divider {
 .merged-select-part .custom-select-options,
 .merged-search-filter-group .custom-select-options,
 .header-left .custom-select-wrapper .custom-select-options {
-  max-height: 280px !important;
+  max-height: 380px !important;
   display: flex !important;
   flex-direction: column !important;
   gap: 2px !important;
   overflow-y: auto !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(249, 115, 22, 0.4) transparent !important;
 }
 
 .merged-select-part .custom-select-option,
@@ -563,13 +577,13 @@ body.light-mode .utility-icon-btn:active {
 
 .notification-dot {
   position: absolute;
-  top: 8px;
-  inset-inline-end: 10px;
-  width: 8px;
-  height: 8px;
+  top: 7px;
+  inset-inline-end: 7px;
+  width: 7px;
+  height: 7px;
   background: #f97316 !important; /* Enforce orange */
   border-radius: 50%;
-  border: 2px solid var(--bg-surface);
+  border: 1.5px solid var(--bg-surface);
 }
 
 .cart-badge {
@@ -919,13 +933,14 @@ html[dir="rtl"] .sidebar-icon-btn[data-tooltip]:hover::after {
   display: inline-flex;
   align-items: center;
   background: var(--bg-surface, #1F1E2C);
-  border-radius: 9999px;
+  border-radius: 12px;
   padding: 8px 18px;
   min-height: 54px;
   box-sizing: border-box;
   border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
   box-shadow: 0 6px 25px -2px rgba(0, 0, 0, 0.28), 0 3px 10px -1px rgba(0, 0, 0, 0.18);
   transition: all 0.25s ease;
+  scale: 0.9;
 }
 
 body.light-mode .topnav-pill-capsule {
@@ -951,8 +966,8 @@ body.light-mode .topnav-pill-capsule {
   background: var(--bg-surface) !important;
   border: 1px solid var(--border, rgba(255, 255, 255, 0.08)) !important;
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2) !important;
-  width: 48px !important;
-  height: 48px !important;
+  width: 38px !important;
+  height: 38px !important;
 }
 
 body.light-mode .student-topnav-header .utility-icon-btn,

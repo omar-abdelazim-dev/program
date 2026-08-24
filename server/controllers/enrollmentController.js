@@ -13,7 +13,7 @@ import { getModulesWithLessons, computeModuleProgress } from '../utils/courseCon
 import { validateManualPaymentProof } from '../utils/manualPayment.js';
 
 const roundMoney = (amount) => Math.round((amount + Number.EPSILON) * 100) / 100;
-const getDiscountQuote = async (course, rawCode) => {
+export const getDiscountQuote = async (course, rawCode) => {
   const code = String(rawCode || '').trim().toUpperCase();
   if (!code) return { originalPrice: course.price, discountPercentage: 0, discountAmount: 0, finalPrice: course.price, code: '' };
   const discount = await DiscountCode.findOne({ code, isActive: true, expiresAt: { $gt: new Date() } });
@@ -25,8 +25,19 @@ const getDiscountQuote = async (course, rawCode) => {
 export const validateDiscountCode = async (req, res) => {
   try {
     const course = await Course.findById(req.params.courseId);
-    if (!course || course.status !== 'approved' || !Number.isFinite(course.price) || course.price <= 0) return res.status(400).json({ message: 'Code not valid' });
-    const quote = await getDiscountQuote(course, req.body.code);
+    if (!course || course.status !== 'approved') return res.status(400).json({ message: 'Code not valid' });
+    
+    let priceToUse = course.price;
+    if (req.body.moduleId) {
+      const { default: Module } = await import('../models/Module.js');
+      const module = await Module.findOne({ _id: req.body.moduleId, course: course._id });
+      if (!module) return res.status(404).json({ message: 'Module not found' });
+      priceToUse = module.price;
+    }
+
+    if (!Number.isFinite(priceToUse) || priceToUse <= 0) return res.status(400).json({ message: 'Code not valid' });
+
+    const quote = await getDiscountQuote({ price: priceToUse }, req.body.code);
     if (!quote) return res.status(400).json({ message: 'Code not valid' });
     res.json({ valid: true, ...quote });
   } catch (error) { logger.error('Discount validation failed', { error: error.message }); res.status(400).json({ message: 'Code not valid' }); }
@@ -229,8 +240,22 @@ export const getEnrollmentStatus = async (req, res) => {
   try {
     const { courseId } = req.params;
 
-    const enrollment = await Enrollment.findOne({ student: req.user.id, course: courseId });
+    let enrollment = await Enrollment.findOne({ student: req.user.id, course: courseId });
+    const course = await Course.findById(courseId);
+
     if (!enrollment) {
+      if (course && course.courseType === 'ongoing') {
+        const grouped = await getModulesWithLessons(courseId);
+        const totalLessons = grouped.reduce((sum, { lessons }) => sum + lessons.length, 0);
+        return res.status(200).json({
+          enrolled: true,
+          status: 'approved',
+          completedLessonIds: [],
+          totalLessons,
+          progressPercent: 0,
+          moduleProgress: computeModuleProgress(grouped, []),
+        });
+      }
       return res.status(200).json({ enrolled: false });
     }
 
@@ -259,9 +284,22 @@ export const markLessonComplete = async (req, res) => {
   try {
     const { courseId, lessonId } = req.params;
 
-    const enrollment = await Enrollment.findOne({ student: req.user.id, course: courseId });
+    let enrollment = await Enrollment.findOne({ student: req.user.id, course: courseId });
     if (!enrollment) {
-      return res.status(403).json({ message: 'You must enroll in this course first' });
+      const course = await Course.findById(courseId);
+      if (course && course.courseType === 'ongoing') {
+        enrollment = await Enrollment.create({
+          student: req.user.id,
+          course: courseId,
+          amountPaid: 0,
+          originalPrice: 0,
+          paymentMethod: 'none',
+          status: 'approved',
+          completedLessons: [],
+        });
+      } else {
+        return res.status(403).json({ message: 'You must enroll in this course first' });
+      }
     }
     if (enrollment.status !== 'approved') {
       return res.status(403).json({ message: 'Your enrollment is pending approval' });

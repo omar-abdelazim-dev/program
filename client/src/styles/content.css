@@ -743,18 +743,16 @@ body.light-mode .continue-card {
     flex-direction: column;
     overflow: hidden;
     cursor: pointer;
-    transition: transform 0.25s ease, scale 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    transition: box-shadow 0.25s ease, border-color 0.25s ease;
     height: 100%;
     background-color: var(--bg-surface);
     padding: 0;
     border-radius: 12px;
-    scale: 0.90;
     /* equal heights in grid row */
 }
 
 .cc-card:hover {
-    transform: translateY(-4px);
-    scale: 0.92;
+    transform: none !important;
     box-shadow: var(--outer-shadow);
 }
 

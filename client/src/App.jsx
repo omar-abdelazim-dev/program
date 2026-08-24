@@ -72,6 +72,7 @@ export default function App() {
   });
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedMajor, setSelectedMajor] = useState('');
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -253,10 +254,12 @@ export default function App() {
         toggleTheme={toggleTheme}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        selectedMajor={selectedMajor}
+        onMajorChange={setSelectedMajor}
       >
         <Routes>
         <Route path="/" element={<Navigate to="/student" replace />} />
-        <Route path="/student" element={<ExploreTab user={user} searchQuery={searchQuery} isLightMode={isLightMode} />} />
+        <Route path="/student" element={<ExploreTab user={user} searchQuery={searchQuery} selectedMajor={selectedMajor} isLightMode={isLightMode} />} />
         <Route path="/student/dashboard" element={<DashboardTab user={user} />} />
         <Route path="/student/explore" element={<Navigate to="/student" replace />} />
         <Route path="/student/settings" element={<SettingsPage user={user} setUser={setUser} isLightMode={isLightMode} toggleTheme={toggleTheme} onLogout={handleLogout} />} />

@@ -284,16 +284,78 @@ export const getInstructorStats = async (req, res) => {
 // courses; pending/rejected courses must never leak here.
 export const getApprovedCourses = async (req, res) => {
   try {
-    const { search, category, major, semester, college, academicType, academicGroup, page, limit } =
-      req.query;
+    const {
+      search,
+      category,
+      major,
+      semester,
+      college,
+      userCollege,
+      userMajor,
+      academicType,
+      academicGroup,
+      page,
+      limit,
+    } = req.query;
 
     const filter = { status: "approved" };
     if (category) filter.category = category;
-    if (major) filter.major = major;
     if (semester) filter.semester = parseInt(semester, 10);
-    if (college) filter.college = college;
     if (academicType) filter.academicType = academicType;
     if (academicGroup) filter.academicGroup = academicGroup;
+
+    const andConditions = [];
+
+    if (userCollege || userMajor) {
+      const userConditions = [];
+      if (userCollege) {
+        userConditions.push(
+          { college: { $regex: new RegExp(escapeRegex(userCollege), "i") } },
+          { academicGroup: { $regex: new RegExp(escapeRegex(userCollege), "i") } }
+        );
+      }
+      if (userMajor) {
+        const words = userMajor.split(/\s+/).filter((w) => w.length > 2);
+        const patterns = [userMajor, ...words].map(
+          (p) => new RegExp(escapeRegex(p), "i")
+        );
+        for (const pat of patterns) {
+          userConditions.push(
+            { major: pat },
+            { category: pat },
+            { title: pat }
+          );
+        }
+      }
+      if (userConditions.length > 0) {
+        andConditions.push({ $or: userConditions });
+      }
+    } else {
+      if (major) {
+        const words = major.split(/\s+/).filter((w) => w.length > 2);
+        const patterns = [major, ...words].map(
+          (p) => new RegExp(escapeRegex(p), "i")
+        );
+        const majorConditions = [];
+        for (const pat of patterns) {
+          majorConditions.push(
+            { major: pat },
+            { category: pat },
+            { title: pat },
+            { college: pat }
+          );
+        }
+        andConditions.push({ $or: majorConditions });
+      }
+      if (college) {
+        andConditions.push({
+          $or: [
+            { college: { $regex: new RegExp(escapeRegex(college), "i") } },
+            { academicGroup: { $regex: new RegExp(escapeRegex(college), "i") } },
+          ],
+        });
+      }
+    }
 
     if (search) {
       // Search course content and its assigned academic audience, as well as
@@ -304,15 +366,21 @@ export const getApprovedCourses = async (req, res) => {
         .model("User")
         .find({ name: regex })
         .select("_id");
-      filter.$or = [
-        { title: regex },
-        { description: regex },
-        { major: regex },
-        { college: regex },
-        { academicGroup: regex },
-        { category: regex },
-        { instructor: { $in: matchingInstructors.map((u) => u._id) } },
-      ];
+      andConditions.push({
+        $or: [
+          { title: regex },
+          { description: regex },
+          { major: regex },
+          { college: regex },
+          { academicGroup: regex },
+          { category: regex },
+          { instructor: { $in: matchingInstructors.map((u) => u._id) } },
+        ],
+      });
+    }
+
+    if (andConditions.length > 0) {
+      filter.$and = andConditions;
     }
 
     if (page === undefined && limit === undefined) {
@@ -371,7 +439,7 @@ export const getCourseById = async (req, res) => {
     }
 
     const isOwner =
-      req.user && course.instructor._id.toString() === req.user.id.toString();
+      req.user && course.instructor?._id?.toString() === req.user.id?.toString();
     const isAdmin =
       req.user && (req.user.role === "admin" || req.user.role === "superadmin");
     const isEnrolled = req.user
@@ -407,6 +475,7 @@ export const getCourseById = async (req, res) => {
       title: module.title,
       description: module.description,
       order: module.order,
+      price: module.price || 0,
       lessons,
     }));
 

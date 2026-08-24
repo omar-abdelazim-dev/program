@@ -5,7 +5,7 @@ import CustomSelect from './CustomSelect';
 import notyf from '../utils/notyf';
 import { useConfig } from '../context/ConfigContext';
 
-export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling }) {
+export default function PaymentModal({ course, courseId, courseTitle, module, onConfirm, onCancel, isEnrolling }) {
   const { t, i18n } = useTranslation();
   const { config } = useConfig();
   const isRTL = i18n.language === 'ar';
@@ -64,7 +64,12 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
     if (!code) return;
     setApplyingDiscount(true);
     try {
-      const res = await api.post(`/enrollments/${course._id}/discount-code`, { code });
+      const targetId = courseId || course?._id;
+      const body = { code };
+      if (module) {
+        body.moduleId = module._id;
+      }
+      const res = await api.post(`/enrollments/${targetId}/discount-code`, body);
       setDiscountQuote(res.data);
       setError('');
     } catch {
@@ -74,47 +79,57 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
 
 
 
+  const numericPrice = typeof course.price === 'number'
+    ? course.price
+    : Number.parseFloat(String(course.price || '').replace(/[^0-9.]/g, '')) || 0;
+  const totalAmount = Number(((discountQuote?.finalPrice ?? numericPrice) * 1.01).toFixed(2));
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    if (!paymentMethod || !paymentAccount || !transactionId || !screenshotFile) {
-      const msg = t('course_page.payment.all_fields_required', 'All fields are required.');
-      setError(msg);
-      notyf.error(msg);
-      return;
-    }
+    if (totalAmount > 0) {
+      if (!paymentMethod || !paymentAccount || !transactionId || !screenshotFile) {
+        const msg = t('course_page.payment.all_fields_required', 'All fields are required.');
+        setError(msg);
+        notyf.error(msg);
+        return;
+      }
 
-    if (paymentMethod === 'mobile_wallet' && !/^\+20\d{10}$/.test(paymentAccount)) {
-      const msg = t('course_page.payment.invalid_phone', 'Phone number must have exactly 10 digits after the +20 code.');
-      setError(msg);
-      notyf.error(msg);
-      return;
+      if (paymentMethod === 'mobile_wallet' && !/^\+20\d{10}$/.test(paymentAccount)) {
+        const msg = t('course_page.payment.invalid_phone', 'Phone number must have exactly 10 digits after the +20 code.');
+        setError(msg);
+        notyf.error(msg);
+        return;
+      }
     }
 
     setIsUploading(true);
     let screenshotUrl = '';
-    try {
-      const formData = new FormData();
-      formData.append('image', screenshotFile);
-      const uploadRes = await api.post('/uploads/image', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      screenshotUrl = uploadRes.data.url;
-    } catch (err) {
-      console.error('Image upload failed', err);
-      const msg = t('course_page.payment.upload_failed', 'Failed to upload screenshot. Please try again.');
-      setError(msg);
-      notyf.error(msg);
-      setIsUploading(false);
-      return;
+    
+    if (totalAmount > 0) {
+      try {
+        const formData = new FormData();
+        formData.append('image', screenshotFile);
+        const uploadRes = await api.post('/uploads/image', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        screenshotUrl = uploadRes.data.url;
+      } catch (err) {
+        console.error('Image upload failed', err);
+        const msg = t('course_page.payment.upload_failed', 'Failed to upload screenshot. Please try again.');
+        setError(msg);
+        notyf.error(msg);
+        setIsUploading(false);
+        return;
+      }
     }
 
     try {
       await onConfirm({
-        transactionId,
-        paymentAccount,
-        paymentMethod,
+        transactionId: totalAmount > 0 ? transactionId : 'FREE_DISCOUNT',
+        paymentAccount: totalAmount > 0 ? paymentAccount : 'FREE',
+        paymentMethod: totalAmount > 0 ? paymentMethod : 'free',
         screenshot: screenshotUrl,
         invoiceId,
         discountCode: discountQuote?.code || '',
@@ -178,7 +193,8 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
         width: '100%',
         maxWidth: '550px',
         boxShadow: 'var(--outer-shadow)',
-        border: '1px solid var(--border)'
+        border: '1px solid var(--border)',
+        transform: 'scale(0.8)',
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', direction: isRTL ? 'rtl' : 'ltr' }}>
           <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '700', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '1px' }}>
@@ -196,17 +212,28 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
         )}
 
         {(() => {
-          const numericPrice = typeof course.price === 'number'
-            ? course.price
-            : Number.parseFloat(String(course.price || '').replace(/[^0-9.]/g, '')) || 0;
-          const totalAmount = (discountQuote?.finalPrice ?? numericPrice).toFixed(2);
           const curr = paymentConfig.currency || t('currency', 'EGP');
           return (
             <div style={{ background: 'var(--bg-surface)', padding: '20px', borderRadius: '12px', marginBottom: '28px', fontSize: '0.95rem', direction: isRTL ? 'rtl' : 'ltr' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>{t('course_page.payment.course', 'Course')}:</span>
-                <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{course.title}</span>
-              </div>
+              {courseTitle ? (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>{t('course_page.payment.course', 'Course')}:</span>
+                    <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{courseTitle}</span>
+                  </div>
+                  {module && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>{t('course_page.module_label', 'Module')}:</span>
+                      <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{module.title}</span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <span style={{ color: 'var(--text-secondary)' }}>{t('course_page.payment.course', 'Course')}:</span>
+                  <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{course.title}</span>
+                </div>
+              )}
               <div style={{ marginBottom: '12px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: 700, color: 'var(--text-primary)' }}>Discount Code</label>
                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -230,25 +257,39 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
                 <span style={{ color: 'var(--text-secondary)' }}>{t('course_page.payment.price', 'Price')}:</span>
                 <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{numericPrice.toFixed(2)} {curr}</span>
               </div>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Company Fees (1%):</span>
+                <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{((discountQuote?.finalPrice ?? numericPrice) * 0.01).toFixed(2)} {curr}</span>
+              </div>
+
+              {recipientAccount && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <span style={{ color: 'var(--text-secondary)' }}>Receiver Number:</span>
+                  <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{recipientAccount}</span>
+                </div>
+              )}
+
               <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '12px', borderTop: '1px solid var(--border)', marginTop: '12px' }}>
                 <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{t('course_page.payment.total', 'Total')}:</span>
-                <span style={{ fontWeight: '800', color: '#10b981', fontSize: '1.1rem' }}>{totalAmount} {curr}</span>
+                <span style={{ fontWeight: '800', color: '#10b981', fontSize: '1.1rem' }}>{totalAmount.toFixed(2)} {curr}</span>
               </div>
             </div>
           );
         })()}
 
-        <div style={{ padding: '14px 16px', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.25)', borderRadius: '10px', marginBottom: '24px', color: 'var(--text-primary)', lineHeight: 1.5, fontSize: '0.9rem', direction: isRTL ? 'rtl' : 'ltr' }}>
+        <div style={{ padding: '14px 16px', background: 'rgba(245, 158, 11, 0.1)', border: 'none', boxShadow: 'var(--inner-shadow)', borderRadius: '10px', marginBottom: '24px', color: 'var(--text-primary)', lineHeight: 1.5, fontSize: '0.9rem', direction: isRTL ? 'rtl' : 'ltr', display: totalAmount > 0 ? 'block' : 'none' }}>
           {t('course_page.payment.manual_review_notice', 'Transfer the exact total outside the platform, then submit the receipt below. Access is granted only after an admin verifies the payment.')}
           {paymentConfig.manualPaymentInstructions && <div style={{ marginTop: '8px', fontWeight: 600 }}>{paymentConfig.manualPaymentInstructions}</div>}
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px', direction: isRTL ? 'rtl' : 'ltr' }}>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: window.innerWidth < 600 ? '1fr' : '1fr 1fr',
-            gap: '20px'
-          }}>
+          {totalAmount > 0 && (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: window.innerWidth < 600 ? '1fr' : '1fr 1fr',
+              gap: '20px'
+            }}>
             <div>
               <label style={{ display: 'block', marginBottom: '8px', fontWeight: '700', fontSize: '0.85rem', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '1px', textAlign: isRTL ? 'right' : 'left' }}>
                 {t('course_page.payment.payment_method', 'Payment Method')} <span style={{ color: '#ef4444' }}>*</span>
@@ -262,10 +303,25 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
               />
             </div>
             {paymentMethod && (
-              <div style={{ gridColumn: '1 / -1', padding: '12px 16px', borderRadius: '10px', background: recipientAccount ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: recipientAccount ? '#10b981' : '#ef4444', fontWeight: 600 }}>
-                {recipientAccount
-                  ? `${t('course_page.payment.transfer_to', 'Transfer to')}: ${recipientAccount}`
-                  : t('course_page.payment.destination_missing', 'This payment destination is not configured. Please contact support before transferring funds.')}
+              <div style={{
+                gridColumn: '1 / -1',
+                padding: '14px 16px',
+                borderRadius: '10px',
+                background: recipientAccount ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.1)',
+                boxShadow: 'var(--inner-shadow)',
+                color: recipientAccount ? 'var(--text-primary)' : '#ef4444',
+                fontWeight: 600
+              }}>
+                {recipientAccount ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <span style={{ fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#10b981', fontWeight: 700 }}>
+                      📲 Send Your Transfer To:
+                    </span>
+                    <span style={{ fontSize: '1.05rem', color: 'var(--text-primary)' }}>{recipientAccount}</span>
+                  </div>
+                ) : (
+                  t('course_page.payment.destination_missing', 'This payment destination is not configured. Please contact support before transferring funds.')
+                )}
               </div>
             )}
             <div>
@@ -324,8 +380,9 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
                   </span>
                 </div>
               </div>
+              </div>
             </div>
-          </div>
+          )}
 
           <div style={{ display: 'flex', gap: '16px', marginTop: '24px' }}>
             <button
@@ -339,11 +396,11 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
             </button>
             <button
               type="submit"
-              disabled={isEnrolling || isUploading || !recipientAccount}
+              disabled={isEnrolling || isUploading || (totalAmount > 0 && !recipientAccount)}
               className="solid-btn"
-              style={{ flex: 1, padding: '14px', borderRadius: '12px', textTransform: 'uppercase', letterSpacing: '1px', cursor: (isEnrolling || isUploading || !recipientAccount) ? 'not-allowed' : 'pointer', opacity: (isEnrolling || isUploading || !recipientAccount) ? 0.7 : 1 }}
+              style={{ flex: 1, padding: '14px', borderRadius: '12px', textTransform: 'uppercase', letterSpacing: '1px', cursor: (isEnrolling || isUploading || (totalAmount > 0 && !recipientAccount)) ? 'not-allowed' : 'pointer', opacity: (isEnrolling || isUploading || (totalAmount > 0 && !recipientAccount)) ? 0.7 : 1 }}
             >
-              {(isEnrolling || isUploading) ? t('course_page.payment.submitting', 'Submitting...') : t('course_page.payment.submit_payment', 'Submit Proof for Review')}
+              {(isEnrolling || isUploading) ? t('course_page.payment.submitting', 'Submitting...') : (totalAmount > 0 ? t('course_page.payment.submit_payment', 'Submit Proof for Review') : t('course_page.payment.complete_enrollment', 'Complete Enrollment'))}
             </button>
           </div>
         </form>

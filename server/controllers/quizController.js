@@ -18,9 +18,22 @@ export const submitQuiz = async (req, res) => {
     const { courseId, lessonId } = req.params;
     const { answers } = req.body;
 
-    const enrollment = await Enrollment.findOne({ student: req.user.id, course: courseId });
+    let enrollment = await Enrollment.findOne({ student: req.user.id, course: courseId });
     if (!enrollment) {
-      return res.status(403).json({ message: 'You must enroll in this course first' });
+      const course = await Course.findById(courseId);
+      if (course && course.courseType === 'ongoing') {
+        enrollment = await Enrollment.create({
+          student: req.user.id,
+          course: courseId,
+          amountPaid: 0,
+          originalPrice: 0,
+          paymentMethod: 'none',
+          status: 'approved',
+          completedLessons: [],
+        });
+      } else {
+        return res.status(403).json({ message: 'You must enroll in this course first' });
+      }
     }
     if (enrollment.status !== 'approved') {
       return res.status(403).json({ message: 'Your enrollment is pending approval' });
