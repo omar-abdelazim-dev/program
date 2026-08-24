@@ -392,7 +392,7 @@ export default function SystemManagement({ user }) {
     financial: { commission: 15, currency: 'EGP', refundWindow: 14, minWithdrawal: 50, instaPayEnabled: true, mobileWalletEnabled: true, instaPayAccount: '', mobileWalletNumber: '', manualPaymentInstructions: '' },
     registration: { studentRegistration: true, instructorRegistration: true, eduEmailOnly: false, emailVerification: true, phoneVerification: false, inviteOnly: false, autoApproveInstructors: false },
     security: { passwordPolicy: 'strong', sessionTimeout: 60, maxLoginAttempts: 5, twoFactorAuth: false, jwtExpiration: 7, allowedDomains: '', maintenanceLock: false },
-    storage: { provider: 'AWS S3', maxUploadSizeMb: 50, allowedFileTypes: '.mp4,.pdf,.zip,.jpg,.png', autoCompressImages: true, directUploads: false, bucketName: 'program-lms-media-storage', cdnDomain: 'https://cdn.program-lms.com' },
+    storage: { provider: 'Cloudinary', maxUploadSizeMb: 50, allowedFileTypes: '.mp4,.pdf,.zip,.jpg,.png' },
     email: { smtpHost: '', smtpPort: 587, smtpUser: '', smtpPass: '' },
     notifications: { studentEmails: true, instructorEmails: true, adminAlerts: true, marketingEmails: false, pushNotifications: false, systemAlerts: true },
     appearance: { platformLogo: '', favicon: '', defaultTheme: 'system', accentColor: '#3B82F6', landingBanner: '', footerInfo: '' },
@@ -419,6 +419,20 @@ export default function SystemManagement({ user }) {
     totalCapacityGb: 500,
     usagePercent: 0
   });
+  const [storageConnection, setStorageConnection] = useState({ checking: false });
+
+  const checkStorageConnection = async () => {
+    setStorageConnection({ checking: true });
+    try {
+      const { data } = await api.get('/system/config/storage/status');
+      setStorageConnection({ checking: false, ...data });
+      (data.connected ? notyf.success : notyf.error)(data.message);
+    } catch {
+      const message = 'Unable to check the storage connection.';
+      setStorageConnection({ checking: false, connected: false, message });
+      notyf.error(message);
+    }
+  };
 
   useEffect(() => {
     const fetchConfig = async () => {
@@ -496,6 +510,34 @@ export default function SystemManagement({ user }) {
     rejectionReason: '',
     status: 'idle' 
   });
+  const [emailConnection, setEmailConnection] = useState({
+    checking: true,
+    configured: false,
+    connected: false,
+    message: 'Checking SMTP connection…',
+  });
+
+  const checkEmailConnection = async (showNotification = false) => {
+    setEmailConnection((prev) => ({ ...prev, checking: true }));
+    try {
+      const { data } = await api.get('/system/config/email/status');
+      setEmailConnection({ checking: false, ...data });
+      if (showNotification) {
+        (data.connected ? notyf.success : notyf.error)(data.message);
+      }
+    } catch (error) {
+      const message = error.response?.data?.message
+        || (error.response?.status
+          ? `SMTP status endpoint returned HTTP ${error.response.status}.`
+          : 'Unable to reach the SMTP status endpoint.');
+      setEmailConnection({ checking: false, configured: false, connected: false, message });
+      if (showNotification) notyf.error(message);
+    }
+  };
+
+  useEffect(() => {
+    checkEmailConnection();
+  }, []);
 
   const handleFormatChange = (newFormat) => {
     const options = getContentOptions(newFormat);
@@ -509,6 +551,39 @@ export default function SystemManagement({ user }) {
   const handleChange = (category, field, value) => {
     setSettings(prev => ({ ...prev, [category]: { ...prev[category], [field]: value } }));
     setHasUnsavedChanges(true);
+  };
+
+  const downloadSettingsBackup = () => {
+    if (!isSuperAdmin) {
+      notyf.error("Super Admin permission required to download a settings backup.");
+      return;
+    }
+
+    const backup = {
+      exportedAt: new Date().toISOString(),
+      settings: {
+        general: settings.general,
+        financial: settings.financial,
+        registration: settings.registration,
+        security: settings.security,
+        storage: settings.storage,
+        notifications: settings.notifications,
+        appearance: settings.appearance,
+        maintenance: settings.maintenance,
+        backup: settings.backup,
+      },
+    };
+    const url = URL.createObjectURL(
+      new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" }),
+    );
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `program-system-settings-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    notyf.success("System settings backup downloaded");
   };
 
   const handleSaveInit = () => {
@@ -579,7 +654,6 @@ export default function SystemManagement({ user }) {
           <ToggleSwitch label="Require Email Verification" checked={settings.registration.emailVerification} onChange={e => handleChange('registration', 'emailVerification', e.target.checked)} disabled={isFieldRestricted('registration', 'emailVerification', isSuperAdmin)} />
           <ToggleSwitch label="Require Phone Verification" checked={settings.registration.phoneVerification} onChange={e => handleChange('registration', 'phoneVerification', e.target.checked)} disabled={isFieldRestricted('registration', 'phoneVerification', isSuperAdmin)} />
           <ToggleSwitch label="Invitation Only Mode" checked={settings.registration.inviteOnly} onChange={e => handleChange('registration', 'inviteOnly', e.target.checked)} disabled={isFieldRestricted('registration', 'inviteOnly', isSuperAdmin)} />
-          <ToggleSwitch label="Auto-Approve Instructors" checked={settings.registration.autoApproveInstructors} onChange={e => handleChange('registration', 'autoApproveInstructors', e.target.checked)} disabled={isFieldRestricted('registration', 'autoApproveInstructors', isSuperAdmin)} />
         </div>
       );
       // Security Tab
@@ -616,17 +690,13 @@ export default function SystemManagement({ user }) {
                 color: "var(--text-h)",
               }}
             >
-              Storage & Cloud Quota
+              Media Reference Overview
             </h3>
 
-            {/* Quota Progress Bar */}
             <div style={{ marginBottom: "24px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "0.85rem", color: "var(--c-sub)", fontWeight: 600 }}>
-                <span>Storage Utilization ({storageStats.usagePercent}%)</span>
-                <span>{storageStats.usedGb} GB / {storageStats.totalCapacityGb} GB</span>
-              </div>
-              <div style={{ width: "100%", height: "10px", background: "var(--bg-main)", borderRadius: "6px", overflow: "hidden", boxShadow: "var(--inner-shadow)" }}>
-                <div style={{ width: `${Math.max(2, storageStats.usagePercent)}%`, height: "100%", background: "linear-gradient(90deg, #3B82F6, #60A5FA)", borderRadius: "6px", transition: "width 0.5s ease" }} />
+                <span>Files referenced by the application database</span>
+                <span>Provider quota is available in Cloudinary</span>
               </div>
             </div>
 
@@ -642,13 +712,13 @@ export default function SystemManagement({ user }) {
                 }}
               >
                 <div style={{ fontSize: "0.8rem", color: "var(--c-sub)", textTransform: "uppercase", fontWeight: 600 }}>
-                  Used Storage
+                  Provider Storage
                 </div>
                 <div style={{ fontSize: "1.4rem", fontWeight: 700, color: "#3B82F6", marginTop: "4px" }}>
-                  {storageStats.usedGb} GB
+                  Managed by Cloudinary
                 </div>
                 <div style={{ fontSize: "0.75rem", color: "var(--c-sub)", marginTop: "2px" }}>
-                  ({storageStats.usedMb} MB estimated)
+                  Quota is not guessed by this dashboard
                 </div>
               </div>
 
@@ -665,10 +735,10 @@ export default function SystemManagement({ user }) {
                   Available Storage
                 </div>
                 <div style={{ fontSize: "1.4rem", fontWeight: 700, color: "#10B981", marginTop: "4px" }}>
-                  {storageStats.availableGb} GB
+                  {storageStats.availableGb ?? '—'}
                 </div>
                 <div style={{ fontSize: "0.75rem", color: "var(--c-sub)", marginTop: "2px" }}>
-                  (of {storageStats.totalCapacityGb} GB total)
+                  Provider quota is managed outside this application
                 </div>
               </div>
 
@@ -705,18 +775,17 @@ export default function SystemManagement({ user }) {
             >
               Cloud Storage Settings
             </h3>
+            <p style={{ margin: '0 0 20px', color: 'var(--c-sub)', fontSize: '0.9rem' }}>
+              Upload delivery is managed by Cloudinary. Credentials and upload rules are deployment settings, not dashboard controls.
+            </p>
 
             <SelectField
               label="Cloud Storage Provider"
-              value={settings.storage.provider || 'AWS S3'}
-              onChange={(e) => handleChange("storage", "provider", e.target.value)}
-              disabled={isFieldRestricted("storage", "provider", isSuperAdmin)}
+              value="Cloudinary"
+              onChange={() => {}}
+              disabled
               options={[
-                { value: 'AWS S3', label: 'Amazon Web Services (S3)' },
-                { value: 'Google Cloud Storage', label: 'Google Cloud Storage (GCS)' },
-                { value: 'Azure Blob', label: 'Microsoft Azure Blob Storage' },
                 { value: 'Cloudinary', label: 'Cloudinary Media CDN' },
-                { value: 'Local Disk', label: 'Local Server Storage' }
               ]}
             />
 
@@ -725,14 +794,14 @@ export default function SystemManagement({ user }) {
                 label="Bucket / Container Name"
                 value={settings.storage.bucketName || 'program-lms-media-storage'}
                 onChange={(e) => handleChange("storage", "bucketName", e.target.value)}
-                disabled={isFieldRestricted("storage", "bucketName", isSuperAdmin)}
+                disabled
                 placeholder="my-app-storage-bucket"
               />
               <InputField
                 label="CDN / Custom Domain URL"
                 value={settings.storage.cdnDomain || 'https://cdn.program-lms.com'}
                 onChange={(e) => handleChange("storage", "cdnDomain", e.target.value)}
-                disabled={isFieldRestricted("storage", "cdnDomain", isSuperAdmin)}
+                disabled
                 placeholder="https://cdn.example.com"
               />
             </div>
@@ -743,13 +812,13 @@ export default function SystemManagement({ user }) {
                 type="number"
                 value={settings.storage.maxUploadSizeMb}
                 onChange={(e) => handleChange("storage", "maxUploadSizeMb", Number(e.target.value))}
-                disabled={isFieldRestricted("storage", "maxUploadSizeMb", isSuperAdmin)}
+                disabled
               />
               <InputField
                 label="Allowed File Extensions"
                 value={settings.storage.allowedFileTypes}
                 onChange={(e) => handleChange("storage", "allowedFileTypes", e.target.value)}
-                disabled={isFieldRestricted("storage", "allowedFileTypes", isSuperAdmin)}
+                disabled
                 placeholder=".mp4,.pdf,.zip,.png,.jpg"
               />
             </div>
@@ -759,13 +828,13 @@ export default function SystemManagement({ user }) {
                 label="Auto-Compress Uploaded Images"
                 checked={settings.storage.autoCompressImages ?? true}
                 onChange={(e) => handleChange("storage", "autoCompressImages", e.target.checked)}
-                disabled={isFieldRestricted("storage", "autoCompressImages", isSuperAdmin)}
+                disabled
               />
               <ToggleSwitch
                 label="Direct Presigned Client Uploads"
                 checked={settings.storage.directUploads ?? false}
                 onChange={(e) => handleChange("storage", "directUploads", e.target.checked)}
-                disabled={isFieldRestricted("storage", "directUploads", isSuperAdmin)}
+                disabled
               />
             </div>
           </div>
@@ -784,40 +853,22 @@ export default function SystemManagement({ user }) {
             <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
               <button
                 type="button"
-                onClick={() => notyf.success(`Successfully verified connection to ${settings.storage.provider || 'Cloud Storage'}`)}
+                onClick={checkStorageConnection}
+                disabled={storageConnection.checking}
                 className="solid-input"
                 style={{
                   padding: "10px 20px",
                   borderRadius: "8px",
                   background: "var(--bg-main)",
                   color: "var(--text-h)",
-                  cursor: "pointer",
+                  cursor: storageConnection.checking ? "not-allowed" : "pointer",
                   fontWeight: 600,
                   fontSize: "0.85rem",
                   boxShadow: "var(--inner-shadow)",
                   border: "1px solid var(--c-border-subtle, rgba(255,255,255,0.1))"
                 }}
               >
-                ⚡ Test Provider Connection
-              </button>
-
-              <button
-                type="button"
-                onClick={() => notyf.success("Temporary storage cache purged (1.4 GB freed)")}
-                className="solid-input"
-                style={{
-                  padding: "10px 20px",
-                  borderRadius: "8px",
-                  background: "var(--bg-main)",
-                  color: "#F59E0B",
-                  cursor: "pointer",
-                  fontWeight: 600,
-                  fontSize: "0.85rem",
-                  boxShadow: "var(--inner-shadow)",
-                  border: "1px solid rgba(245,158,11,0.2)"
-                }}
-              >
-                🧹 Purge Temporary Cache
+                {storageConnection.checking ? 'Checking…' : '⚡ Test Provider Connection'}
               </button>
             </div>
           </div>
@@ -859,11 +910,14 @@ export default function SystemManagement({ user }) {
               )}
             </div>
             
-            <div className="light-inner-shadow" style={{ marginTop: '24px', padding: '16px', background: 'var(--c-bg-dark)', borderRadius: '8px', border: '1px solid var(--c-border-subtle)' }}>
+            <div className="light-inner-shadow" style={{ marginTop: '24px', padding: '16px', background: 'var(--bg-main)', borderRadius: '8px', border: '1px solid var(--c-border-subtle)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '0.85rem', color: 'var(--c-sub)' }}>SMTP Connection: <strong style={{ color: '#10B981' }}>Connected</strong></span>
-                <span style={{ fontSize: '0.85rem', color: 'var(--c-sub)' }}>Last Test: {new Date().toLocaleTimeString()}</span>
+                <span style={{ fontSize: '0.85rem', color: 'var(--c-sub)' }}>SMTP Connection: <strong style={{ color: emailConnection.connected ? '#10B981' : '#EF4444' }}>{emailConnection.checking ? 'Checking…' : emailConnection.connected ? 'Connected' : 'Unavailable'}</strong></span>
+                <button type="button" onClick={() => checkEmailConnection(true)} disabled={emailConnection.checking} className="glass-input" style={{ padding: '6px 10px', background: 'var(--bg-surface)', cursor: emailConnection.checking ? 'not-allowed' : 'pointer' }}>
+                  Check Connection
+                </button>
               </div>
+              <span style={{ fontSize: '0.8rem', color: 'var(--c-sub)' }}>{emailConnection.message}</span>
             </div>
           </div>
         </div>
@@ -883,13 +937,10 @@ export default function SystemManagement({ user }) {
       // Appearance Tab
       case 'appearance': return (
         <div className="glass-card" style={{ padding: '24px', animation: 'fadeIn 0.3s' }}>
-          <h3 style={{ scale:'5', marginTop: 0, marginBottom: '24px', color: 'var(--text-h)' }}>Platform Appearance</h3>
-          <InputField label="Platform Logo URL" value={settings.appearance.platformLogo} onChange={e => handleChange('appearance', 'platformLogo', e.target.value)} disabled={isFieldRestricted('appearance', 'platformLogo', isSuperAdmin)} />
+          <h3 style={{ marginTop: 0, marginBottom: '24px', color: 'var(--text-h)' }}>Platform Appearance</h3>
           <InputField label="Favicon URL" value={settings.appearance.favicon} onChange={e => handleChange('appearance', 'favicon', e.target.value)} disabled={isFieldRestricted('appearance', 'favicon', isSuperAdmin)} />
           <SelectField label="Default Theme" value={settings.appearance.defaultTheme} onChange={e => handleChange('appearance', 'defaultTheme', e.target.value)} disabled={isFieldRestricted('appearance', 'defaultTheme', isSuperAdmin)} options={[{ value: 'system', label: 'System Preference' }, { value: 'light', label: 'Light Mode' }, { value: 'dark', label: 'Dark Mode' }]} />
           <InputField label="Accent Color (HEX)" value={settings.appearance.accentColor} onChange={e => handleChange('appearance', 'accentColor', e.target.value)} disabled={isFieldRestricted('appearance', 'accentColor', isSuperAdmin)} />
-          <TextareaField label="Landing Page Banner Message" value={settings.appearance.landingBanner} onChange={e => handleChange('appearance', 'landingBanner', e.target.value)} disabled={isFieldRestricted('appearance', 'landingBanner', isSuperAdmin)} />
-          <InputField label="Footer Information" value={settings.appearance.footerInfo} onChange={e => handleChange('appearance', 'footerInfo', e.target.value)} disabled={isFieldRestricted('appearance', 'footerInfo', isSuperAdmin)} />
         </div>
       );
       // Maintenance Tab
@@ -908,24 +959,21 @@ export default function SystemManagement({ user }) {
       // Backup Tab
       case 'backup': return (
         <div className="glass-card" style={{ padding: '24px', animation: 'fadeIn 0.3s' }}>
-          <h3 style={{ marginTop: 0, marginBottom: '24px', color: 'var(--text-h)' }}>Database Backups</h3>
+          <h3 style={{ marginTop: 0, marginBottom: '24px', color: 'var(--text-h)' }}>System Settings Backups</h3>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: 'var(--c-bg-dark)', borderRadius: '8px', border: '1px solid var(--c-border-subtle)', marginBottom: '24px' }}>
             <div>
               <div style={{ fontSize: '0.85rem', color: 'var(--c-sub)', textTransform: 'uppercase', marginBottom: '4px' }}>Last Successful Backup</div>
               <div style={{ fontWeight: 600, color: 'var(--text-h)' }}>{new Date(settings.backup.lastBackup).toLocaleString()}</div>
             </div>
-            <button className="glass-input" style={{ padding: '8px 16px', cursor: isFieldRestricted('backup', 'execute', isSuperAdmin) ? 'not-allowed' : 'pointer' }} disabled={isFieldRestricted('backup', 'execute', isSuperAdmin)}>
-              Download Latest
+            <button onClick={downloadSettingsBackup} className="glass-input" style={{ padding: '8px 16px', cursor: isFieldRestricted('backup', 'execute', isSuperAdmin) ? 'not-allowed' : 'pointer' }} disabled={isFieldRestricted('backup', 'execute', isSuperAdmin)}>
+              Download Settings Backup
             </button>
           </div>
           <SelectField label="Automated Backup Frequency" value={settings.backup.frequency} onChange={e => handleChange('backup', 'frequency', e.target.value)} disabled={isFieldRestricted('backup', 'frequency', isSuperAdmin)} options={[{ value: 'hourly', label: 'Hourly' }, { value: 'daily', label: 'Daily' }, { value: 'weekly', label: 'Weekly' }]} />
           
           <div style={{ display: 'flex', gap: '16px', marginTop: '32px', paddingTop: '24px', borderTop: '1px solid var(--c-border-subtle)' }}>
-            <button className="glass-input" style={{ padding: '10px 20px', cursor: isFieldRestricted('backup', 'execute', isSuperAdmin) ? 'not-allowed' : 'pointer', background: 'rgba(59,130,246,0.1)', color: '#3B82F6', border: '1px solid rgba(59,130,246,0.3)' }} disabled={isFieldRestricted('backup', 'execute', isSuperAdmin)}>
-              Execute Manual Backup Now
-            </button>
-            <button className="glass-input" style={{ padding: '10px 20px', cursor: isFieldRestricted('backup', 'execute', isSuperAdmin) ? 'not-allowed' : 'pointer', background: 'rgba(239,68,68,0.1)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.3)' }} disabled={isFieldRestricted('backup', 'execute', isSuperAdmin)}>
-              Restore from Backup
+            <button onClick={downloadSettingsBackup} className="glass-input" style={{ padding: '10px 20px', cursor: isFieldRestricted('backup', 'execute', isSuperAdmin) ? 'not-allowed' : 'pointer', background: 'rgba(59,130,246,0.1)', color: '#3B82F6', border: '1px solid rgba(59,130,246,0.3)' }} disabled={isFieldRestricted('backup', 'execute', isSuperAdmin)}>
+              Create Settings Backup Now
             </button>
           </div>
         </div>

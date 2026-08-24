@@ -54,13 +54,28 @@ const systemConfigSchema = new mongoose.Schema(
     },
 
     storage: {
-      provider: { type: String, default: 'AWS S3' },
+      provider: { type: String, default: 'Cloudinary' },
       maxUploadSizeMb: { type: Number, default: 50 },
       allowedFileTypes: { type: String, default: '.mp4,.pdf,.zip,.jpg,.png' },
     },
 
-    // ADM-14: email (SMTP), notifications, and appearance sections removed —
-    // those System Management tabs are out of scope for this platform.
+    notifications: {
+      studentEmails: { type: Boolean, default: true },
+      instructorEmails: { type: Boolean, default: true },
+      adminAlerts: { type: Boolean, default: true },
+      marketingEmails: { type: Boolean, default: false },
+      pushNotifications: { type: Boolean, default: false },
+      systemAlerts: { type: Boolean, default: true },
+    },
+
+    appearance: {
+      platformLogo: { type: String, default: '', maxlength: 500 },
+      favicon: { type: String, default: '', maxlength: 500 },
+      defaultTheme: { type: String, enum: ['system', 'light', 'dark'], default: 'system' },
+      accentColor: { type: String, default: '#3B82F6', maxlength: 20 },
+      landingBanner: { type: String, default: '', maxlength: 500 },
+      footerInfo: { type: String, default: '', maxlength: 500 },
+    },
 
     landingPage: {
       hero: {

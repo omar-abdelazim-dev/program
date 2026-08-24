@@ -1,4 +1,6 @@
 import Report from '../models/Report.js';
+import User from '../models/User.js';
+import Notification from '../models/Notification.js';
 import { logAudit } from '../utils/auditLogger.js';
 import logger from '../utils/logger.js';
 
@@ -18,6 +20,30 @@ export const createReport = async (req, res) => {
       description,
       course: courseId || null,
     });
+
+    try {
+      const [student, admins] = await Promise.all([
+        User.findById(req.user.id).select('name'),
+        User.find({ role: { $in: ['admin', 'superadmin'] } }).select('_id'),
+      ]);
+      if (admins.length > 0) {
+        await Notification.insertMany(
+          admins.map((admin) => ({
+            user: admin._id,
+            title: 'New Student Report',
+            message: `${student?.name || 'A student'} submitted a ${category} report for admin review.`,
+            type: 'system',
+            link: '/admin',
+            refId: report._id,
+          })),
+        );
+      }
+    } catch (notificationError) {
+      logger.error('Failed to create admin notification for student report', {
+        error: notificationError.message,
+        stack: notificationError.stack,
+      });
+    }
 
     res.status(201).json({ message: 'Report submitted successfully', report });
   } catch (error) {

@@ -55,6 +55,30 @@ export default function App() {
   // Dark mode remains implemented, but is deliberately disabled until the
   // post-launch theme review. Ignore any previously persisted preference.
   const [isLightMode] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    api.get('/system/config/public').then(({ data }) => {
+      if (!active || !data.appearance) return;
+      const { accentColor, defaultTheme, favicon } = data.appearance;
+      if (/^#[0-9a-f]{6}$/i.test(accentColor || '')) {
+        document.documentElement.style.setProperty('--color-accent', accentColor);
+        document.documentElement.style.setProperty('--c-accent', accentColor);
+      }
+      if (defaultTheme === 'dark') document.body.classList.remove('light-mode');
+      if (defaultTheme === 'light') document.body.classList.add('light-mode');
+      if (favicon) {
+        let icon = document.querySelector("link[rel='icon']");
+        if (!icon) {
+          icon = document.createElement('link');
+          icon.rel = 'icon';
+          document.head.appendChild(icon);
+        }
+        icon.href = favicon;
+      }
+    }).catch(() => {});
+    return () => { active = false; };
+  }, []);
   
   
   const [notifications, setNotifications] = useState(() => {

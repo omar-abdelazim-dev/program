@@ -1321,7 +1321,7 @@ export default function AdminPortal({
                                 border: "none",
                                 textAlign: "left",
                                 color: isSidebarTabActive(tab.id, activeTab)
-                                  ? "var(--color-accent)"
+                                  ? "var(--c-orange, #f97316)"
                                   : "var(--text-main)",
                                 fontWeight: isSidebarTabActive(tab.id, activeTab)
                                   ? "600"
@@ -1851,7 +1851,7 @@ export default function AdminPortal({
                               ? "var(--color-accent-transparent, rgba(249,115,22,0.1))"
                               : "transparent",
                             color: isSidebarTabActive(tab.id, activeTab)
-                              ? "var(--color-accent)"
+                              ? "var(--c-orange, #f97316)"
                               : "var(--text-h)",
                             cursor: "pointer",
                             fontSize: "0.95rem",

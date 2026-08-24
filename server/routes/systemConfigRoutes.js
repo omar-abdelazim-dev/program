@@ -1,5 +1,5 @@
 import express from 'express';
-import { getConfig, updateConfigSection, previewFinancials, getPublicConfig, sendTestEmail, getStorageStats } from '../controllers/systemConfigController.js';
+import { getConfig, updateConfigSection, previewFinancials, getPublicConfig, sendTestEmail, getEmailStatus, getStorageStats, getStorageStatus } from '../controllers/systemConfigController.js';
 import { protect, authorizeDoor } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -18,11 +18,17 @@ router.route('/')
 router.route('/storage-stats')
   .get(getStorageStats);
 
+router.route('/storage/status')
+  .get(getStorageStatus);
+
 router.route('/financial/preview')
   .post(previewFinancials);
 
 router.route('/email/test')
   .post(sendTestEmail);
+
+router.route('/email/status')
+  .get(getEmailStatus);
 
 router.route('/:section')
   .patch(updateConfigSection);
