@@ -69,8 +69,8 @@ api.interceptors.response.use(
       } catch (err) {
         isRefreshing = false;
         processQueue(err, null);
-        if (!window.location.pathname.startsWith("/auth")) {
-          window.location.href = "/auth";
+        if (!window.location.pathname.startsWith("/auth") && !window.location.pathname.endsWith("/login")) {
+          window.location.href = window.location.pathname.startsWith("/superadmin") ? "/superadmin/login" : window.location.pathname.startsWith("/admin") ? "/admin/login" : "/auth";
         }
         return Promise.reject(err);
       }
@@ -79,9 +79,10 @@ api.interceptors.response.use(
     if (
       status === 401 &&
       !isAuthEndpoint &&
-      !window.location.pathname.startsWith("/auth")
+      !window.location.pathname.startsWith("/auth") &&
+      !window.location.pathname.endsWith("/login")
     ) {
-      window.location.href = "/auth";
+      window.location.href = window.location.pathname.startsWith("/superadmin") ? "/superadmin/login" : window.location.pathname.startsWith("/admin") ? "/admin/login" : "/auth";
     }
 
     return Promise.reject(error);

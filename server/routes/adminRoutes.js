@@ -10,19 +10,19 @@ import {
   getStudentAnalytics,
   getInstructorAnalytics
 } from '../controllers/adminController.js';
-import { protect, authorize } from '../middleware/authMiddleware.js';
+import { protect, authorizeDoor } from '../middleware/authMiddleware.js';
 import { validateObjectId } from '../middleware/validationMiddleware.js';
 import { validateUserIdParam, validateRoleChange } from '../validators/adminValidators.js';
 
 const router = express.Router();
 
 // Protect all routes in this file to admins and superadmins
-router.use(protect, authorize('admin', 'superadmin'));
+router.use(protect, authorizeDoor('admin', 'superadmin'));
 
 router.get('/stats', getStats);
 // Recent Activity is superadmin-only (ADM-02) — narrower than the router-wide
 // admin/superadmin gate above.
-router.get('/activity', authorize('superadmin'), getRecentActivity);
+router.get('/activity', authorizeDoor('superadmin'), getRecentActivity);
 router.get('/revenue-analytics', getRevenueAnalytics);
 router.get('/analytics', getStudentAnalytics);
 router.get('/instructor-analytics', getInstructorAnalytics);
@@ -40,12 +40,12 @@ router.post('/enroll', manualEnroll);
 router.post('/promo-codes', createPromoCode);
 router.get('/promo-codes', getPromoCodes);
 router.patch('/promo-codes/:id/toggle', validateObjectId('id'), togglePromoCode);
-router.post('/discount-codes', authorize('superadmin'), createDiscountCode);
-router.get('/discount-codes', authorize('superadmin'), getDiscountCodes);
-router.put('/discount-codes/:id', authorize('superadmin'), validateObjectId('id'), updateDiscountCode);
-router.patch('/discount-codes/:id/toggle', authorize('superadmin'), validateObjectId('id'), toggleDiscountCode);
-router.patch('/discount-codes/:id/renew', authorize('superadmin'), validateObjectId('id'), renewDiscountCode);
-router.delete('/discount-codes/:id', authorize('superadmin'), validateObjectId('id'), deleteDiscountCode);
+router.post('/discount-codes', authorizeDoor('superadmin'), createDiscountCode);
+router.get('/discount-codes', authorizeDoor('superadmin'), getDiscountCodes);
+router.put('/discount-codes/:id', authorizeDoor('superadmin'), validateObjectId('id'), updateDiscountCode);
+router.patch('/discount-codes/:id/toggle', authorizeDoor('superadmin'), validateObjectId('id'), toggleDiscountCode);
+router.patch('/discount-codes/:id/renew', authorizeDoor('superadmin'), validateObjectId('id'), renewDiscountCode);
+router.delete('/discount-codes/:id', authorizeDoor('superadmin'), validateObjectId('id'), deleteDiscountCode);
 router.get('/lessons', getAllLessons);
 router.patch('/lessons/:id/approve', validateObjectId('id'), approveLesson);
 router.patch('/lessons/:id/reject', validateObjectId('id'), rejectLesson);

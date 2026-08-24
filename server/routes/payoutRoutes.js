@@ -1,5 +1,5 @@
 import express from 'express';
-import { protect, authorize } from '../middleware/authMiddleware.js';
+import { protect, authorize, authorizeDoor, authorizeWithDoor } from '../middleware/authMiddleware.js';
 import { otpLimiter } from '../middleware/rateLimiter.js';
 import {
   requestOtp,
@@ -21,14 +21,14 @@ router.post('/:id/verify-otp', protect, authorize('instructor'), otpLimiter, ver
 
 // POST /api/payouts/:id/approve
 // Finance approver (admin/superadmin only). Self-approval blocked in controller.
-router.post('/:id/approve', protect, authorize('admin', 'superadmin'), approvePayout);
+router.post('/:id/approve', protect, authorizeDoor('admin', 'superadmin'), approvePayout);
 
 // POST /api/payouts/:id/execute
 // Admin-only. Idempotent — atomically claims the payout before calling provider.
-router.post('/:id/execute', protect, authorize('admin', 'superadmin'), executePayout);
+router.post('/:id/execute', protect, authorizeDoor('admin', 'superadmin'), executePayout);
 
 // GET /api/payouts/:id
 // Owner or admin/superadmin only (checked in controller).
-router.get('/:id', protect, getPayoutStatus);
+router.get('/:id', protect, authorizeWithDoor('student', 'instructor', 'admin', 'superadmin'), getPayoutStatus);
 
 export default router;
