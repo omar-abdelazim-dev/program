@@ -41,15 +41,7 @@ export default function AdminSupportTab() {
         <h2 style={{ fontSize: "1.5rem", fontWeight: "600", margin: 0, color: "var(--text-h)" }}>
           Student Issue Reports
         </h2>
-        <style>{`
-          .admin-filter-select {
-            background-color: var(--bg-surface) !important;
-            box-shadow: var(--outer-shadow) !important;
-          }
-          .admin-filter-select.focus {
-            box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2), var(--outer-shadow) !important;
-          }
-        `}</style>
+
         <div style={{ width: "200px" }}>
           <CustomSelect
             triggerClassName="admin-filter-select"

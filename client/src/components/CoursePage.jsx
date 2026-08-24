@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import api from "../api/axios";
@@ -10,6 +10,13 @@ import PaymentModal from "./PaymentModal";
 export default function CoursePage({ user }) {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.dir() === "rtl";
+
+  const [windowWidth, setWindowWidth] = useState(() => window.innerWidth);
+  useEffect(() => {
+    const onResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -443,7 +450,7 @@ export default function CoursePage({ user }) {
         <div
           style={{
             display: "flex",
-            flexDirection: window.innerWidth < 768 ? "column" : "row",
+            flexDirection: windowWidth < 768 ? "column" : "row",
             justifyContent: "space-between",
             alignItems: "flex-start",
             gap: "28px",
@@ -504,7 +511,7 @@ export default function CoursePage({ user }) {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: window.innerWidth < 900 ? "1fr" : "1fr 380px",
+          gridTemplateColumns: windowWidth < 900 ? "1fr" : "1fr 380px",
           gap: "32px",
           alignItems: "start",
         }}

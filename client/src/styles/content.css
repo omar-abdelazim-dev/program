@@ -3823,3 +3823,13 @@ body.light-mode [data-role="superadmin"] .header-search-input {
 .home-semester-section .cc-grid::-webkit-scrollbar-thumb:hover {
     background: var(--text-secondary);
 }
+
+/* Admin Support Tab — filter dropdown */
+.admin-filter-select {
+    background-color: var(--bg-surface) !important;
+    box-shadow: var(--outer-shadow) !important;
+}
+.admin-filter-select.focus {
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2), var(--outer-shadow) !important;
+}
+
