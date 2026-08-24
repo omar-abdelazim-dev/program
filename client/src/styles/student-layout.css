@@ -1046,12 +1046,17 @@ body.light-mode .topnav-link:hover {
 }
 
 /* Badge for notification counts on nav links */
+.topnav-badge,
+.nav-count-badge {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
 .topnav-badge {
   position: absolute;
   top: 2px;
   inset-inline-end: 2px;
   background-color: var(--color-accent, #f97316);
-  color: white;
   font-size: 0.65rem;
   font-weight: 700;
   min-width: 16px;
