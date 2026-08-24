@@ -155,6 +155,7 @@ export default function PaymentModal({ course, courseId, courseTitle, module, on
     boxShadow: 'var(--inner-shadow)',
     outline: 'none',
     fontSize: '0.95rem',
+    boxSizing: 'border-box',
   };
 
   return (
@@ -185,6 +186,16 @@ export default function PaymentModal({ course, courseId, courseTitle, module, on
         .payment-file-input::file-selector-button:hover {
           opacity: 0.9;
         }
+        .payment-form-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 20px;
+        }
+        @media (max-width: 600px) {
+          .payment-form-grid {
+            grid-template-columns: 1fr;
+          }
+        }
       `}</style>
       <div className="animate-entrance" style={{
         background: 'var(--bg-main)',
@@ -214,63 +225,57 @@ export default function PaymentModal({ course, courseId, courseTitle, module, on
         {(() => {
           const curr = paymentConfig.currency || t('currency', 'EGP');
           return (
-            <div style={{ background: 'var(--bg-surface)', padding: '20px', borderRadius: '12px', marginBottom: '28px', fontSize: '0.95rem', direction: isRTL ? 'rtl' : 'ltr' }}>
+            <div style={{ background: 'var(--bg-surface)', padding: '16px 20px', borderRadius: '12px', marginBottom: '24px', fontSize: '0.9rem', direction: isRTL ? 'rtl' : 'ltr' }}>
               {courseTitle ? (
                 <>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                     <span style={{ color: 'var(--text-secondary)' }}>{t('course_page.payment.course', 'Course')}:</span>
                     <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{courseTitle}</span>
                   </div>
                   {module && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                       <span style={{ color: 'var(--text-secondary)' }}>{t('course_page.module_label', 'Module')}:</span>
                       <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{module.title}</span>
                     </div>
                   )}
                 </>
               ) : (
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                   <span style={{ color: 'var(--text-secondary)' }}>{t('course_page.payment.course', 'Course')}:</span>
                   <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{course.title}</span>
                 </div>
               )}
-              <div style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 700, color: 'var(--text-primary)' }}>Discount Code</label>
+              <div style={{ marginBottom: '10px', marginTop: '10px' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.85rem' }}>Discount Code</label>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <input value={discountCode} onChange={(e) => { setDiscountCode(e.target.value.toUpperCase()); setDiscountQuote(null); }} placeholder="SUMMER20" style={{ ...inputStyle, padding: '10px 12px' }} />
-                  <button type="button" onClick={applyDiscount} disabled={applyingDiscount || !discountCode.trim()} className="solid-btn" style={{ padding: '0 16px', whiteSpace: 'nowrap', opacity: applyingDiscount || !discountCode.trim() ? .65 : 1 }}>{applyingDiscount ? 'Applying…' : 'Apply'}</button>
+                  <input value={discountCode} onChange={(e) => { setDiscountCode(e.target.value.toUpperCase()); setDiscountQuote(null); }} placeholder="SUMMER20" style={{ ...inputStyle, padding: '8px 12px' }} />
+                  <button type="button" onClick={applyDiscount} disabled={applyingDiscount || !discountCode.trim()} className="solid-btn" style={{ padding: '0 14px', whiteSpace: 'nowrap', opacity: applyingDiscount || !discountCode.trim() ? .65 : 1, fontSize: '0.85rem' }}>{applyingDiscount ? 'Applying…' : 'Apply'}</button>
                 </div>
               </div>
               {discountQuote && <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: '#10b981' }}><span>Discount ({discountQuote.discountPercentage}%)</span><span>-{discountQuote.discountAmount.toFixed(2)} {curr}</span></div>
-                <div style={{ fontSize: '.82rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>Code {discountQuote.code} applied</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', color: '#10b981' }}><span>Discount ({discountQuote.discountPercentage}%)</span><span>-{discountQuote.discountAmount.toFixed(2)} {curr}</span></div>
+                <div style={{ fontSize: '.82rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>Code {discountQuote.code} applied</div>
               </>}
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>{t('course_page.payment.instructor', 'Instructor')}:</span>
                 <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{course.instructor?.name || t('course_page.payment.instructor', 'Instructor')}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>{t('course_page.payment.invoice_id', 'Invoice ID')}:</span>
                 <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{invoiceId}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>{t('course_page.payment.price', 'Price')}:</span>
                 <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{numericPrice.toFixed(2)} {curr}</span>
               </div>
               
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>Company Fees (1%):</span>
                 <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{((discountQuote?.finalPrice ?? numericPrice) * 0.01).toFixed(2)} {curr}</span>
               </div>
 
-              {recipientAccount && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>Receiver Number:</span>
-                  <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{recipientAccount}</span>
-                </div>
-              )}
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '12px', borderTop: '1px solid var(--border)', marginTop: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '10px', borderTop: '1px solid var(--border)', marginTop: '8px' }}>
                 <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{t('course_page.payment.total', 'Total')}:</span>
                 <span style={{ fontWeight: '800', color: '#10b981', fontSize: '1.1rem' }}>{totalAmount.toFixed(2)} {curr}</span>
               </div>
@@ -285,11 +290,7 @@ export default function PaymentModal({ course, courseId, courseTitle, module, on
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px', direction: isRTL ? 'rtl' : 'ltr' }}>
           {totalAmount > 0 && (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: window.innerWidth < 600 ? '1fr' : '1fr 1fr',
-              gap: '20px'
-            }}>
+            <div className="payment-form-grid">
             <div>
               <label style={{ display: 'block', marginBottom: '8px', fontWeight: '700', fontSize: '0.85rem', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '1px', textAlign: isRTL ? 'right' : 'left' }}>
                 {t('course_page.payment.payment_method', 'Payment Method')} <span style={{ color: '#ef4444' }}>*</span>
@@ -303,25 +304,22 @@ export default function PaymentModal({ course, courseId, courseTitle, module, on
               />
             </div>
             {paymentMethod && (
-              <div style={{
-                gridColumn: '1 / -1',
-                padding: '14px 16px',
-                borderRadius: '10px',
-                background: recipientAccount ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.1)',
-                boxShadow: 'var(--inner-shadow)',
-                color: recipientAccount ? 'var(--text-primary)' : '#ef4444',
-                fontWeight: 600
-              }}>
-                {recipientAccount ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <span style={{ fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#10b981', fontWeight: 700 }}>
-                      📲 Send Your Transfer To:
-                    </span>
-                    <span style={{ fontSize: '1.05rem', color: 'var(--text-primary)' }}>{recipientAccount}</span>
-                  </div>
-                ) : (
-                  t('course_page.payment.destination_missing', 'This payment destination is not configured. Please contact support before transferring funds.')
-                )}
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '700', fontSize: '0.85rem', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '1px', textAlign: isRTL ? 'right' : 'left' }}>
+                  {t('course_page.payment.transfer_to', 'Transfer To')}
+                </label>
+                <div style={{
+                  padding: '12px 16px',
+                  background: 'var(--bg-body)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '10px',
+                  color: recipientAccount ? '#10b981' : '#ef4444',
+                  fontWeight: '700',
+                  fontSize: '1rem',
+                  boxSizing: 'border-box',
+                }}>
+                  {recipientAccount || t('course_page.payment.destination_missing', 'This payment destination is not configured.')}
+                </div>
               </div>
             )}
             <div>

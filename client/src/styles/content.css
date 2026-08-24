@@ -3790,3 +3790,36 @@ body.light-mode [data-role="superadmin"] .header-search-input {
     box-shadow: none !important;
     pointer-events: none !important;
 }
+
+
+/* Horizontal scrolling for grouped courses (Semester sections) */
+.home-semester-section .cc-grid {
+    display: flex !important;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
+    padding-bottom: 12px;
+    gap: 20px;
+}
+
+.home-semester-section .cc-grid > * {
+    flex: 0 0 calc(33.333% - 14px);
+    min-width: 270px;
+    max-width: 320px;
+    scroll-snap-align: start;
+}
+
+.home-semester-section .cc-grid::-webkit-scrollbar {
+    height: 8px;
+}
+.home-semester-section .cc-grid::-webkit-scrollbar-track {
+    background: transparent;
+}
+.home-semester-section .cc-grid::-webkit-scrollbar-thumb {
+    background: var(--c-border-active);
+    border-radius: 4px;
+}
+.home-semester-section .cc-grid::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}

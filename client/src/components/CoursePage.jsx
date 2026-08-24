@@ -37,14 +37,21 @@ export default function CoursePage({ user }) {
   const [purchasedStandaloneIds, setPurchasedStandaloneIds] = useState(
     new Set(),
   );
+  const [pendingStandaloneIds, setPendingStandaloneIds] = useState(new Set());
   const [purchasingStandaloneLesson, setPurchasingStandaloneLesson] =
     useState(null);
   const [isPurchasingStandalone, setIsPurchasingStandalone] = useState(false);
 
   // Module purchases for ongoing courses
   const [purchasedModuleIds, setPurchasedModuleIds] = useState(new Set());
+  const [pendingModuleIds, setPendingModuleIds] = useState(new Set());
   const [purchasingModule, setPurchasingModule] = useState(null);
   const [isPurchasingModule, setIsPurchasingModule] = useState(false);
+
+  const actuallyEnrolled =
+    course?.courseType === "ongoing"
+      ? purchasedModuleIds.size > 0 || purchasedStandaloneIds.size > 0
+      : isEnrolled && enrollStatus === "approved";
 
   const [reviews, setReviews] = useState([]);
   const [reviewRating, setReviewRating] = useState(5);
@@ -118,6 +125,11 @@ export default function CoursePage({ user }) {
               .filter((p) => p.status === "approved")
               .map((p) => p.lesson?._id);
             setPurchasedStandaloneIds(new Set(approvedIds));
+            
+            const pendingIds = (purchasedRes.data.purchases || [])
+              .filter((p) => p.status === "pending" || p.status === "under_review")
+              .map((p) => p.lesson?._id);
+            setPendingStandaloneIds(new Set(pendingIds));
           } catch (e) {
             // Ignore
           }
@@ -128,6 +140,7 @@ export default function CoursePage({ user }) {
               { signal: controller.signal },
             );
             setPurchasedModuleIds(new Set(purchasedModRes.data.purchasedModuleIds || []));
+            setPendingModuleIds(new Set(purchasedModRes.data.pendingModuleIds || []));
           } catch (e) {
             // Ignore
           }
@@ -645,6 +658,7 @@ export default function CoursePage({ user }) {
                     const isCollapsed = collapsedModules[module._id] !== false;
                     const moduleLessons = module.lessons || [];
                     const isModulePurchased = purchasedModuleIds.has(module._id);
+                    const isModulePending = pendingModuleIds.has(module._id);
 
                     return (
                       <div
@@ -706,7 +720,7 @@ export default function CoursePage({ user }) {
                             {isOngoing && userRole !== "instructor" && userRole !== "admin" && userRole !== "superadmin" && module.price > 0 && (
                               <button
                                 className="solid-btn"
-                                disabled={isModulePurchased || isPurchasingModule}
+                                disabled={isModulePurchased || isModulePending || isPurchasingModule}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleModuleClick(module);
@@ -717,19 +731,23 @@ export default function CoursePage({ user }) {
                                   fontSize: "0.85rem",
                                   fontWeight: "600",
                                   borderRadius: "8px",
-                                  background: isModulePurchased
+                                  background: isModulePurchased || isModulePending
                                     ? "var(--bg-surface)"
                                     : "linear-gradient(135deg, #f97316 0%, #fbbf24 100%)",
                                   color: isModulePurchased
                                     ? "var(--color-success, #10B981)"
+                                    : isModulePending
+                                    ? "var(--text-secondary)"
                                     : "#ffffff",
-                                  cursor: isModulePurchased ? "default" : "pointer",
-                                  border: isModulePurchased ? "1px solid var(--border)" : "none",
+                                  cursor: isModulePurchased || isModulePending ? "not-allowed" : "pointer",
+                                  border: isModulePurchased || isModulePending ? "1px solid var(--border)" : "none",
                                   boxShadow: "var(--inner-shadow, inset 0 2px 4px rgba(0, 0, 0, 0.2))",
                                 }}
                               >
                                 {isModulePurchased
                                   ? t("course_page.standalone.owned", "Purchased")
+                                  : isModulePending
+                                  ? t("course_page.payment.pending", "Pending")
                                   : t("course_page.buy_module", "Enroll (EGP {{price}})", { price: module.price })}
                               </button>
                             )}
@@ -983,7 +1001,7 @@ export default function CoursePage({ user }) {
                       </div>
                     </div>
 
-                    {isEnrolled && !hasReviewed && (
+                    {actuallyEnrolled && !hasReviewed && (
                       <div
                         style={{
                           padding: "24px",
@@ -1486,6 +1504,7 @@ export default function CoursePage({ user }) {
           >
             {standaloneLessons.map((lesson) => {
               const alreadyPurchased = purchasedStandaloneIds.has(lesson._id);
+              const isPending = pendingStandaloneIds.has(lesson._id);
               return (
                 <div
                   key={lesson._id}
@@ -1527,13 +1546,15 @@ export default function CoursePage({ user }) {
                   </div>
                   <button
                     type="button"
-                    disabled={alreadyPurchased || isPurchasingStandalone}
+                    disabled={alreadyPurchased || isPending || isPurchasingStandalone}
                     onClick={() => handleStandaloneLessonClick(lesson)}
                     className="solid-btn"
                     style={{ marginTop: "8px" }}
                   >
                     {alreadyPurchased
                       ? t("course_page.standalone.owned", "Purchased")
+                      : isPending
+                      ? t("course_page.payment.pending", "Pending")
                       : t("course_page.standalone.buy", "Purchase")}
                   </button>
                 </div>

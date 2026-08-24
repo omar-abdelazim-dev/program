@@ -176,10 +176,14 @@ export default function DashboardTab() {
   const closeReportModal = () =>
     setReportModalState({ isOpen: false, course: null });
 
-  const handleReportSubmit = (data) => {
-    console.log("Report submitted:", data);
-    notyf.success("Report submitted successfully! Thank you.");
-    closeReportModal();
+  const handleReportSubmit = async (data) => {
+    try {
+      await api.post("/reports", data);
+      notyf.success(t('common.report_success', "Report submitted successfully! Thank you."));
+      closeReportModal();
+    } catch (err) {
+      notyf.error(err.response?.data?.message || t('common.report_error', "Failed to submit report. Please try again."));
+    }
   };
 
   const [activeSubTab, setActiveSubTab] = useState("in_progress");
@@ -245,8 +249,9 @@ export default function DashboardTab() {
     (sum, e) => sum + e.completedLessons.length,
     0,
   );
-  const inProgress = enrollments.filter((e) => e.progressPercent < 100);
-  const completed = enrollments.filter((e) => e.progressPercent === 100);
+  const inProgress = enrollments.filter((e) => e.progressPercent < 100 && e.course?.courseType !== 'ongoing');
+  const completed = enrollments.filter((e) => e.progressPercent === 100 && e.course?.courseType !== 'ongoing');
+  const ongoing = enrollments.filter((e) => e.course?.courseType === 'ongoing');
 
   return (
     <>
@@ -312,6 +317,13 @@ export default function DashboardTab() {
               data-text={`${t('student.completed', 'Completed')} (${completed.length})`}
             >
               {t('student.completed', 'Completed')} ({completed.length})
+            </button>
+            <button
+              className={`dashboard-tab ${activeSubTab === "ongoing" ? "active" : ""}`}
+              onClick={() => setActiveSubTab("ongoing")}
+              data-text={`${t('course_page.course_type.ongoing', 'Ongoing Courses')} (${ongoing.length})`}
+            >
+              {t('course_page.course_type.ongoing', 'Ongoing Courses')} ({ongoing.length})
             </button>
           </div>
 
@@ -380,6 +392,37 @@ export default function DashboardTab() {
                   <div className="dash-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 480px), 1fr))', gap: '24px' }}>
                     {completed.map((enrollment) => (
                       <CompletedCard
+                        key={enrollment._id}
+                        enrollment={enrollment}
+                        onOpen={(courseId) => navigate(`/learn/${courseId}`)}
+                        onViewCourse={() =>
+                          navigate(`/course/${enrollment.course._id}`, { state: { from: 'dashboard' } })
+                        }
+                        openReportModal={openReportModal}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {activeSubTab === "ongoing" && (
+              <>
+                {ongoing.length === 0 ? (
+                  <div
+                    className="solid-card"
+                    style={{
+                      padding: "32px",
+                      textAlign: "center",
+                      color: "var(--text-secondary)",
+                    }}
+                  >
+                    <p>{t('student.no_ongoing_courses', "You aren't enrolled in any ongoing courses yet.")}</p>
+                  </div>
+                ) : (
+                  <div className="dash-row course-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 480px), 1fr))', gap: '24px' }}>
+                    {ongoing.map((enrollment) => (
+                      <InProgressCard
                         key={enrollment._id}
                         enrollment={enrollment}
                         onOpen={(courseId) => navigate(`/learn/${courseId}`)}

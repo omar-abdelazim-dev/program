@@ -245,10 +245,18 @@ export const getMyPurchasedModules = async (req, res) => {
     const purchases = await ModulePurchase.find({
       student: req.user.id,
       course: courseId,
-      status: 'approved',
-    }).select('module');
-    const purchasedModuleIds = purchases.map((p) => p.module.toString());
-    res.status(200).json({ purchasedModuleIds });
+      status: { $in: ['approved', 'pending', 'under_review'] },
+    }).select('module status');
+    
+    const purchasedModuleIds = purchases
+      .filter((p) => p.status === 'approved')
+      .map((p) => p.module.toString());
+      
+    const pendingModuleIds = purchases
+      .filter((p) => p.status === 'pending' || p.status === 'under_review')
+      .map((p) => p.module.toString());
+      
+    res.status(200).json({ purchasedModuleIds, pendingModuleIds });
   } catch (error) {
     logger.error('Server error fetching purchased modules', { error: error.message });
     res.status(500).json({ message: 'Server error fetching purchased modules' });

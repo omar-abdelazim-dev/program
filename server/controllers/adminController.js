@@ -31,7 +31,10 @@ export const getStats = async (req, res) => {
     const pendingModuleLessons = await Lesson.countDocuments({ lessonType: { $ne: "quiz" }, status: "pending" });
     const pendingStandaloneLessons = await StandaloneLesson.countDocuments({ status: "pending" });
     const pendingLessons = pendingModuleLessons + pendingStandaloneLessons;
-    const pendingEnrollments = await Enrollment.countDocuments({ status: { $in: ["pending", "under_review"] } });
+    const { default: ModulePurchase } = await import("../models/ModulePurchase.js");
+    const pendingCourseEnrolls = await Enrollment.countDocuments({ status: { $in: ["pending", "under_review"] } });
+    const pendingModuleEnrolls = await ModulePurchase.countDocuments({ status: { $in: ["pending", "under_review"] } });
+    const pendingEnrollments = pendingCourseEnrolls + pendingModuleEnrolls;
     const pendingPayouts = await Transaction.countDocuments({ type: "payout_request", status: "pending" });
 
     // Revenue total + per-category enrollment counts, computed in Mongo
@@ -783,7 +786,8 @@ export const getTransactions = async (req, res) => {
   try {
     const { page, limit } = req.query;
 
-    // If neither page nor limit provided, keep existing behavior
+    const { default: ModulePurchase } = await import("../models/ModulePurchase.js");
+
     if (page === undefined && limit === undefined) {
       const enrollments = await Enrollment.find()
         .populate("student", "name email phone")
@@ -792,9 +796,33 @@ export const getTransactions = async (req, res) => {
           select: "title price instructor",
           populate: { path: "instructor", select: "name" },
         })
-        .sort({ createdAt: -1 });
+        .lean();
+        
+      const modulePurchases = await ModulePurchase.find()
+        .populate("student", "name email phone")
+        .populate({
+          path: "course",
+          select: "title price instructor",
+          populate: { path: "instructor", select: "name" },
+        })
+        .populate("module", "title")
+        .lean();
+        
+      // For module purchases, we can optionally append the module title to the course title so the frontend knows what it is,
+      // or we can just send it as is and let the frontend handle it. Wait, the frontend just renders `t.course?.title`.
+      // Let's modify the course title for module purchases to include the module name for clarity in the UI.
+      const formattedModulePurchases = modulePurchases.map(mp => {
+        if (mp.course && mp.module) {
+          mp.course.title = `${mp.course.title} (${mp.module.title})`;
+        }
+        mp.isModulePurchase = true; // flag if needed
+        return mp;
+      });
 
-      return res.status(200).json({ transactions: enrollments });
+      let combined = [...enrollments, ...formattedModulePurchases];
+      combined.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      return res.status(200).json({ transactions: combined });
     }
 
     let pageNum = parseInt(page, 10);
@@ -803,24 +831,46 @@ export const getTransactions = async (req, res) => {
     if (Number.isNaN(limitNum) || limitNum < 1) limitNum = 10;
     const skip = (pageNum - 1) * limitNum;
 
-    const [totalItems, enrollments] = await Promise.all([
-      Enrollment.countDocuments(),
-      Enrollment.find()
+    // To properly paginate across two collections, we'd need to aggregate.
+    // For simplicity, since the frontend currently doesn't use page/limit for this endpoint anyway,
+    // we will just do it in memory.
+    const { default: MP } = await import("../models/ModulePurchase.js");
+    const allEnrollments = await Enrollment.find()
         .populate("student", "name email phone")
         .populate({
           path: "course",
           select: "title price instructor",
           populate: { path: "instructor", select: "name" },
         })
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limitNum),
-    ]);
-
+        .lean();
+    
+    const allModulePurchases = await MP.find()
+        .populate("student", "name email phone")
+        .populate({
+          path: "course",
+          select: "title price instructor",
+          populate: { path: "instructor", select: "name" },
+        })
+        .populate("module", "title")
+        .lean();
+        
+    const formattedMP = allModulePurchases.map(mp => {
+      if (mp.course && mp.module) {
+        mp.course.title = `${mp.course.title} (${mp.module.title})`;
+      }
+      mp.isModulePurchase = true;
+      return mp;
+    });
+    
+    let combined = [...allEnrollments, ...formattedMP];
+    combined.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    const totalItems = combined.length;
     const totalPages = Math.ceil(totalItems / limitNum) || 1;
+    const paginated = combined.slice(skip, skip + limitNum);
 
     res.status(200).json({
-      transactions: enrollments,
+      transactions: paginated,
       pagination: { page: pageNum, limit: limitNum, totalPages, totalItems },
     });
   } catch (error) {
@@ -1315,13 +1365,26 @@ export const approveEnrollment = async (req, res) => {
     // between two concurrent approve calls (e.g. a double-click) — only the
     // first one can ever flip status away from 'pending', so at most one
     // revenue-split Transaction is ever created per enrollment.
-    const enrollment = await Enrollment.findOneAndUpdate(
+    let isModulePurchase = false;
+    let enrollment = await Enrollment.findOneAndUpdate(
       { _id: req.params.id, status: "pending" },
       { status: "approved" },
       { new: true },
     );
+
     if (!enrollment) {
-      const existing = await Enrollment.findById(req.params.id);
+      const { default: ModulePurchase } = await import("../models/ModulePurchase.js");
+      enrollment = await ModulePurchase.findOneAndUpdate(
+        { _id: req.params.id, status: "pending" },
+        { status: "approved" },
+        { new: true }
+      );
+      if (enrollment) isModulePurchase = true;
+    }
+
+    if (!enrollment) {
+      const { default: ModulePurchase } = await import("../models/ModulePurchase.js");
+      const existing = await Enrollment.findById(req.params.id) || await ModulePurchase.findById(req.params.id);
       if (!existing)
         return res
           .status(404)
@@ -1331,9 +1394,9 @@ export const approveEnrollment = async (req, res) => {
         .json({ message: `Enrollment request already ${existing.status}` });
     }
 
-    // Generate revenue split transaction for the instructor (if course has price)
+    // Generate revenue split transaction for the instructor (if there was a payment)
     const course = await Course.findById(enrollment.course);
-    if (course && course.price > 0 && course.instructor) {
+    if (course && enrollment.amountPaid > 0 && course.instructor) {
       let platformCommission = enrollment.platformCommission;
       let instructorShare = enrollment.instructorShare;
       let commissionPercent = 15;
@@ -1343,7 +1406,7 @@ export const approveEnrollment = async (req, res) => {
         commissionPercent = 15;
       } else {
         commissionPercent =
-          Math.round((platformCommission / course.price) * 100) || 15;
+          Math.round((platformCommission / enrollment.amountPaid) * 100) || 15;
       }
 
       await Transaction.create({
@@ -1420,13 +1483,26 @@ export const rejectEnrollment = async (req, res) => {
   try {
     const { reason } = req.body;
     // Same atomic guard as approveEnrollment — see comment there.
-    const enrollment = await Enrollment.findOneAndUpdate(
+    let isModulePurchase = false;
+    let enrollment = await Enrollment.findOneAndUpdate(
       { _id: req.params.id, status: "pending" },
       { status: "rejected", rejectionReason: reason || "" },
       { new: true },
     );
+
     if (!enrollment) {
-      const existing = await Enrollment.findById(req.params.id);
+      const { default: ModulePurchase } = await import("../models/ModulePurchase.js");
+      enrollment = await ModulePurchase.findOneAndUpdate(
+        { _id: req.params.id, status: "pending" },
+        { status: "rejected", rejectionReason: reason || "" },
+        { new: true }
+      );
+      if (enrollment) isModulePurchase = true;
+    }
+
+    if (!enrollment) {
+      const { default: ModulePurchase } = await import("../models/ModulePurchase.js");
+      const existing = await Enrollment.findById(req.params.id) || await ModulePurchase.findById(req.params.id);
       if (!existing)
         return res
           .status(404)

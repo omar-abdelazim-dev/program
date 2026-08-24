@@ -254,11 +254,11 @@ export default function ExploreTab({ user, searchQuery = "", selectedMajor = "",
               {majorLoading ? skeletonGrid : <>
                 {Object.entries(coursesBySemester).sort(([a], [b]) => Number(a) - Number(b)).map(([semester, courses]) => (
                   <div key={semester} className="home-semester-section">
-                    <h2>
-                      {semester === 'Unassigned'
-                        ? t('student.home.courses', 'Courses')
-                        : t('student.home.semester_n', 'Semester {{n}}', { n: semester })}
-                    </h2>
+                    {semester !== 'Unassigned' ? (
+                      <h2>{t('student.home.semester_n', 'Semester {{n}}', { n: semester })}</h2>
+                    ) : Object.keys(coursesBySemester).length > 1 ? (
+                      <h2>{t('student.home.other_courses', 'Other Courses')}</h2>
+                    ) : null}
                     <div className="cc-grid">
                       {courses.map((course, idx) => (
                         <CourseCard key={course._id || idx} course={course} idx={idx} isLightMode={isLightMode} />
@@ -295,11 +295,11 @@ export default function ExploreTab({ user, searchQuery = "", selectedMajor = "",
               {homeLoading ? skeletonGrid : homeCourses.length > 0 ? (
                 Object.entries(coursesBySemester).sort(([a], [b]) => Number(a) - Number(b)).map(([semester, courses]) => (
                   <div key={semester} className="home-semester-section">
-                    <h2>
-                      {semester === 'Unassigned'
-                        ? t('student.home.courses', 'Courses')
-                        : t('student.home.semester_n', 'Semester {{n}}', { n: semester })}
-                    </h2>
+                    {semester !== 'Unassigned' ? (
+                      <h2>{t('student.home.semester_n', 'Semester {{n}}', { n: semester })}</h2>
+                    ) : Object.keys(coursesBySemester).length > 1 ? (
+                      <h2>{t('student.home.other_courses', 'Other Courses')}</h2>
+                    ) : null}
                     <div className="cc-grid">
                       {courses.map((course, idx) => (
                         <CourseCard key={course._id || idx} course={course} idx={idx} isLightMode={isLightMode} />

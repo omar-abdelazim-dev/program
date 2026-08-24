@@ -1,6 +1,8 @@
 import Review from '../models/Review.js';
 import Course from '../models/Course.js';
 import Enrollment from '../models/Enrollment.js';
+import ModulePurchase from '../models/ModulePurchase.js';
+import StandaloneLessonPurchase from '../models/StandaloneLessonPurchase.js';
 import logger from '../utils/logger.js';
 
 // @desc    Get all reviews for courses owned by the instructor

@@ -195,30 +195,59 @@ export const getMyEnrollments = async (req, res) => {
       })
       .sort({ updatedAt: -1 });
 
-    // Courses can be deleted while an enrollment still references them
-    // (deleteCourse intentionally leaves enrollments for history) — skip those
-    // rather than crashing on the null populated course.
-    const validEnrollments = enrollments.filter((enrollment) => enrollment.course);
+    const { default: ModulePurchase } = await import('../models/ModulePurchase.js');
+    const modulePurchases = await ModulePurchase.find({ 
+      student: req.user.id, 
+      status: { $in: ['approved', 'pending', 'under_review'] } 
+    }).populate({
+        path: 'course',
+        populate: { path: 'instructor', select: 'name avatar isProgramInstructor' }
+      });
 
-    // Attach a computed progress percentage to each enrollment so the
-    // frontend doesn't have to fetch lesson counts separately for every card.
+    const enrollmentCourseIds = new Set(enrollments.map(e => e.course?._id?.toString()).filter(Boolean));
+    const extraOngoingCoursesMap = new Map();
+    for (const mp of modulePurchases) {
+      if (!mp.course) continue;
+      const cId = mp.course._id.toString();
+      if (!enrollmentCourseIds.has(cId)) {
+        if (!extraOngoingCoursesMap.has(cId)) {
+          extraOngoingCoursesMap.set(cId, { course: mp.course, status: mp.status });
+        } else if (mp.status === 'approved') {
+          extraOngoingCoursesMap.get(cId).status = 'approved';
+        }
+      }
+    }
+
+    const virtualEnrollments = Array.from(extraOngoingCoursesMap.values()).map(({ course, status }) => ({
+      _id: `virtual-${course._id}`,
+      course,
+      completedLessons: [],
+      progressPercent: 0,
+      student: req.user.id,
+      status,
+      isVirtual: true,
+    }));
+
+    const validEnrollments = enrollments.filter((enrollment) => enrollment.course);
+    const allEnrollments = [...validEnrollments, ...virtualEnrollments];
+
     const withProgress = await Promise.all(
-      validEnrollments.map(async (enrollment) => {
-        // Fetch all lessons for the course (via its modules), in module -> lesson order
+      allEnrollments.map(async (enrollment) => {
+        const isVirtual = enrollment.isVirtual;
         const grouped = await getModulesWithLessons(enrollment.course._id);
         const allLessons = grouped.flatMap(({ lessons }) => lessons);
         const totalLessons = allLessons.length;
         
-        // Use completedLessons to calculate progress
         const completedCount = enrollment.completedLessons.length;
         const progressPercent = totalLessons === 0 ? 0 : Math.round((completedCount / totalLessons) * 100);
         
-        // Find current lesson: first lesson not in completedLessons
         const completedIds = enrollment.completedLessons.map(id => id.toString());
         const currentLesson = allLessons.find(lesson => !completedIds.includes(lesson._id.toString())) || null;
 
+        const baseObj = isVirtual ? enrollment : enrollment.toObject();
+
         return { 
-          ...enrollment.toObject(), 
+          ...baseObj, 
           totalLessons, 
           progressPercent,
           currentLesson: currentLesson ? { title: currentLesson.title, duration: currentLesson.duration || 10, _id: currentLesson._id } : null
