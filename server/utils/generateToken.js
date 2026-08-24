@@ -28,12 +28,14 @@ const generateTokenAndSetCookie = async (res, userId, req = null, doorScope = 'u
   const refreshToken = crypto.randomBytes(40).toString('hex');
   const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
 
-  // 3. Enforce Max Active Sessions (revoke oldest if over limit)
+  // 3. Enforce Max Active Sessions (revoke oldest if at or over limit)
   const activeSessions = await Session.find({ userId, revoked: false }).sort('issuedAt');
   if (activeSessions.length >= AUTH_CONFIG.MAX_ACTIVE_SESSIONS) {
-    // Revoke the oldest session
-    activeSessions[0].revoked = true;
-    await activeSessions[0].save();
+    const excess = activeSessions.length - AUTH_CONFIG.MAX_ACTIVE_SESSIONS + 1;
+    for (let i = 0; i < excess; i++) {
+      activeSessions[i].revoked = true;
+      await activeSessions[i].save();
+    }
   }
 
   // 4. Create New Session
