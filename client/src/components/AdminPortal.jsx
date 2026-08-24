@@ -1902,7 +1902,7 @@ export default function AdminPortal({
             width: "100%",
           }}
         >
-          {visitedTabs.has("dashboard_overview") && stats && (
+          {visitedTabs.has("dashboard_overview") && (
             <div
               style={{
                 display: activeTab === "dashboard_overview" ? "block" : "none",
@@ -1912,6 +1912,7 @@ export default function AdminPortal({
                 stats={stats}
                 user={user}
                 setActiveTab={setActiveTab}
+                loading={!stats || loading}
               />
             </div>
           )}

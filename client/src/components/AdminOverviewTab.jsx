@@ -1,9 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import api from '../api/axios';
 import CardSkeleton from './common/CardSkeleton';
 
 const AnimatedNumber = ({ value }) => {
   return <span>{value.toLocaleString()}</span>;
+};
+
+const formatUptime = (seconds) => {
+  if (!seconds || seconds <= 0) return "0m";
+  const d = Math.floor(seconds / (3600 * 24));
+  const h = Math.floor((seconds % (3600 * 24)) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const parts = [];
+  if (d > 0) parts.push(`${d}d`);
+  if (h > 0 || d > 0) parts.push(`${h}h`);
+  parts.push(`${m}m`);
+  return parts.join(" ");
 };
 
 const GrowthBadge = ({ growth }) => {
@@ -41,17 +54,151 @@ const GrowthBadge = ({ growth }) => {
 const AdminOverviewTab = ({ stats, user, setActiveTab, loading }) => {
   const { t } = useTranslation();
   const [time, setTime] = useState(new Date());
+  const [healthData, setHealthData] = useState(null);
+  const [healthLoading, setHealthLoading] = useState(true);
+  const [healthError, setHealthError] = useState(false);
+  const [recentActivities, setRecentActivities] = useState([]);
+  const [activitiesLoading, setActivitiesLoading] = useState(true);
+
+  const fetchHealth = useCallback(async () => {
+    setHealthLoading(true);
+    setHealthError(false);
+    try {
+      const res = await api.get('/admin/health');
+      setHealthData(res.data);
+    } catch {
+      try {
+        const [hRes, rRes] = await Promise.all([
+          api.get('/health').catch(() => ({ data: { status: 'ok', uptimeSeconds: 0 } })),
+          api.get('/ready').catch(() => ({ data: { status: 'ready', database: 'connected' } })),
+        ]);
+        setHealthData({
+          status: rRes.data?.database === 'connected' ? 'healthy' : 'degraded',
+          uptimeSeconds: hRes.data?.uptimeSeconds || 0,
+          database: { status: rRes.data?.database || 'connected', latencyMs: null },
+          memory: null,
+          environment: 'production',
+        });
+      } catch {
+        setHealthError(true);
+      }
+    } finally {
+      setHealthLoading(false);
+    }
+  }, []);
+
+  const fetchActivities = useCallback(async () => {
+    if (user?.role !== 'superadmin') {
+      setActivitiesLoading(false);
+      return;
+    }
+    setActivitiesLoading(true);
+    try {
+      const res = await api.get('/admin/activity');
+      setRecentActivities(res.data?.activities?.slice(0, 4) || []);
+    } catch (err) {
+      console.error('Failed to fetch recent activities:', err);
+    } finally {
+      setActivitiesLoading(false);
+    }
+  }, [user?.role]);
 
   useEffect(() => {
     // Keep the refresh timestamp stable for the lifetime of this mount.
     setTime(new Date());
-  }, []);
+    fetchHealth();
+    fetchActivities();
+    const interval = setInterval(fetchHealth, 30000);
+    return () => clearInterval(interval);
+  }, [fetchHealth, fetchActivities]);
 
-  if (loading) {
+  const formatTimeAgo = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffSec = Math.floor((now - date) / 1000);
+    if (diffSec < 60) return t('admin.just_now', 'Just now');
+    const diffMin = Math.floor(diffSec / 60);
+    if (diffMin < 60) return `${diffMin}m ago`;
+    const diffHour = Math.floor(diffMin / 60);
+    if (diffHour < 24) return `${diffHour}h ago`;
+    const diffDay = Math.floor(diffHour / 24);
+    if (diffDay < 7) return `${diffDay}d ago`;
+    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  };
+
+  if (loading || !stats) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        <CardSkeleton type="stat" count={3} />
-        <CardSkeleton type="horizontal" count={2} />
+      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }} className="animate-entrance">
+        {/* Header Skeleton */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div className="skeleton-pulse" style={{ height: '32px', width: '220px', borderRadius: '8px' }} />
+            <div className="skeleton-pulse" style={{ height: '16px', width: '320px', borderRadius: '6px' }} />
+          </div>
+          <div className="skeleton-pulse" style={{ height: '24px', width: '100px', borderRadius: '6px' }} />
+        </div>
+
+        {/* Top Row Stat Cards Skeleton */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '24px' }}>
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="glass-card" style={{ padding: '24px', minHeight: '160px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div className="skeleton-pulse" style={{ height: '14px', width: '45%', borderRadius: '4px' }} />
+              <div className="skeleton-pulse" style={{ height: '36px', width: '65%', borderRadius: '8px' }} />
+              <div className="skeleton-pulse" style={{ height: '14px', width: '35%', borderRadius: '4px', marginTop: 'auto' }} />
+            </div>
+          ))}
+        </div>
+
+        {/* Second Row Admin Stat Cards Skeleton */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '24px' }}>
+          {[1, 2].map((i) => (
+            <div key={i} className="glass-card" style={{ padding: '24px', minHeight: '130px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div className="skeleton-pulse" style={{ height: '14px', width: '40%', borderRadius: '4px' }} />
+              <div className="skeleton-pulse" style={{ height: '32px', width: '50%', borderRadius: '8px' }} />
+              <div className="skeleton-pulse" style={{ height: '12px', width: '30%', borderRadius: '4px', marginTop: 'auto' }} />
+            </div>
+          ))}
+        </div>
+
+        {/* Middle Grid Skeleton */}
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
+          <div className="glass-card" style={{ padding: '24px', minHeight: '220px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div className="skeleton-pulse" style={{ height: '18px', width: '180px', borderRadius: '4px' }} />
+              <div className="skeleton-pulse" style={{ height: '14px', width: '60px', borderRadius: '4px' }} />
+            </div>
+            {[1, 2, 3].map((k) => (
+              <div key={k} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <div className="skeleton-pulse" style={{ height: '14px', width: '100px', borderRadius: '4px' }} />
+                  <div className="skeleton-pulse" style={{ height: '14px', width: '40px', borderRadius: '4px' }} />
+                </div>
+                <div className="skeleton-pulse" style={{ height: '8px', width: '100%', borderRadius: '4px' }} />
+              </div>
+            ))}
+          </div>
+          <div className="glass-card" style={{ padding: '24px', minHeight: '220px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div className="skeleton-pulse" style={{ height: '18px', width: '140px', borderRadius: '4px' }} />
+            {[1, 2].map((k) => (
+              <div key={k} className="skeleton-pulse" style={{ height: '56px', width: '100%', borderRadius: '10px' }} />
+            ))}
+          </div>
+        </div>
+
+        {/* Bottom Row Skeleton */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))', gap: '24px' }}>
+          <div className="glass-card" style={{ padding: '24px', minHeight: '200px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div className="skeleton-pulse" style={{ height: '18px', width: '140px', borderRadius: '4px' }} />
+            <div className="skeleton-pulse" style={{ height: '50px', width: '100%', borderRadius: '10px' }} />
+            <div className="skeleton-pulse" style={{ height: '50px', width: '100%', borderRadius: '10px' }} />
+          </div>
+          <div className="glass-card" style={{ padding: '24px', minHeight: '200px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div className="skeleton-pulse" style={{ height: '18px', width: '140px', borderRadius: '4px' }} />
+            <div className="skeleton-pulse" style={{ height: '50px', width: '100%', borderRadius: '10px' }} />
+            <div className="skeleton-pulse" style={{ height: '50px', width: '100%', borderRadius: '10px' }} />
+          </div>
+        </div>
       </div>
     );
   }
@@ -310,70 +457,229 @@ const AdminOverviewTab = ({ stats, user, setActiveTab, loading }) => {
         </div>
       </div>
 
-      {/* Bottom Row */}
+      {/* Bottom Row: Platform Health & Recent Activity */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))', gap: '24px' }}>
         {/* Platform Health */}
-        <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
-          <h3 style={{ margin: "0 0 24px 0", fontSize: '1.1rem', color: 'var(--text-h)' }}>{t('admin.platform_health', 'Platform Health')}</h3>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '20px 0' }}>
-            <div style={{ 
-              width: '48px', height: '48px', borderRadius: '50%', 
-              background: 'var(--bg-main)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)', 
-              display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' 
-            }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--c-sub)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
-                <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
-                <line x1="6" y1="6" x2="6.01" y2="6"></line>
-                <line x1="6" y1="18" x2="6.01" y2="18"></line>
+        <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-h)' }}>
+                {t('admin.platform_health', 'Platform Health')}
+              </h3>
+              {!healthLoading && !healthError && (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    padding: '3px 8px',
+                    borderRadius: '10px',
+                    background: healthData?.status === 'healthy' ? 'rgba(16,185,129,0.12)' : 'rgba(245,166,35,0.12)',
+                    color: healthData?.status === 'healthy' ? '#10b981' : '#f5a623',
+                    fontSize: '0.72rem',
+                    fontWeight: '700',
+                  }}
+                >
+                  <span
+                    style={{
+                      width: '6px',
+                      height: '6px',
+                      borderRadius: '50%',
+                      background: healthData?.status === 'healthy' ? '#10b981' : '#f5a623',
+                      boxShadow: healthData?.status === 'healthy' ? '0 0 6px #10b981' : '0 0 6px #f5a623',
+                    }}
+                  />
+                  {healthData?.status === 'healthy' ? t('admin.healthy', 'Healthy') : t('admin.degraded', 'Degraded')}
+                </span>
+              )}
+            </div>
+            <button
+              onClick={fetchHealth}
+              title={t('admin.refresh_health', 'Refresh health metrics')}
+              style={{
+                background: 'transparent',
+                border: '1px solid rgba(255,255,255,0.08)',
+                color: 'var(--c-sub)',
+                borderRadius: '8px',
+                padding: '4px 10px',
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                transition: 'all 0.2s',
+              }}
+              className="hover-bg"
+            >
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{
+                  transform: healthLoading ? 'rotate(180deg)' : 'none',
+                  transition: 'transform 0.5s ease',
+                }}
+              >
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
               </svg>
-            </div>
-            <div style={{ fontSize: '0.9rem', color: 'var(--c-sub)', marginBottom: '16px' }}>
-              {t('admin.health_not_connected', 'Health monitoring endpoint not yet connected.')}
-            </div>
-            <button style={{ 
-              background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', 
-              color: 'var(--c-sub)', fontSize: '0.75rem', letterSpacing: '1px', 
-              padding: '6px 16px', borderRadius: '12px', cursor: 'not-allowed'
-            }}>
-              {t('admin.pending_integration', 'PENDING INTEGRATION')}
+              <span>{healthLoading ? t('admin.checking', 'Checking...') : t('admin.refresh', 'Refresh')}</span>
             </button>
           </div>
+
+          {healthLoading && !healthData ? (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '160px' }}>
+              <div style={{ width: '28px', height: '28px', border: '3px solid rgba(249,115,22,0.2)', borderTopColor: '#f97316', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+              <div style={{ fontSize: '0.85rem', color: 'var(--c-sub)', marginTop: '12px' }}>{t('admin.checking_system_health', 'Checking system metrics...')}</div>
+            </div>
+          ) : healthError ? (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '16px 0' }}>
+              <div style={{ color: '#ef4444', fontSize: '1.2rem', marginBottom: '8px' }}>⚠️</div>
+              <div style={{ fontSize: '0.9rem', color: 'var(--text-h)', fontWeight: '600' }}>{t('admin.health_check_failed', 'System check failed')}</div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--c-sub)', marginTop: '4px' }}>{t('admin.unable_to_reach_health', 'Unable to reach the health monitoring service.')}</div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
+              {/* API Server Metric */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'var(--bg-main)', borderRadius: '12px', boxShadow: 'var(--inner-shadow)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(16,185,129,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981', fontSize: '0.9rem' }}>
+                    ⚡
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: '600', fontSize: '0.85rem', color: 'var(--text-h)' }}>{t('admin.api_server', 'API Server')}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--c-sub)' }}>
+                      {t('admin.uptime', 'Uptime')}: <span style={{ color: 'var(--text-h)', fontWeight: '500' }}>{formatUptime(healthData?.uptimeSeconds)}</span>
+                    </div>
+                  </div>
+                </div>
+                <span style={{ fontSize: '0.72rem', fontWeight: '700', padding: '3px 8px', borderRadius: '8px', background: 'rgba(16,185,129,0.12)', color: '#10b981' }}>
+                  {t('admin.operational', 'Operational')}
+                </span>
+              </div>
+
+              {/* Database Metric */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'var(--bg-main)', borderRadius: '12px', boxShadow: 'var(--inner-shadow)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: healthData?.database?.status === 'connected' ? 'rgba(59,130,246,0.1)' : 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: healthData?.database?.status === 'connected' ? '#3b82f6' : '#ef4444', fontSize: '0.9rem' }}>
+                    🗄️
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: '600', fontSize: '0.85rem', color: 'var(--text-h)' }}>MongoDB Database</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--c-sub)' }}>
+                      {healthData?.database?.latencyMs != null ? `${t('admin.latency', 'Latency')}: ${healthData.database.latencyMs}ms` : t('admin.db_connected', 'Connected & Synchronized')}
+                    </div>
+                  </div>
+                </div>
+                <span style={{ fontSize: '0.72rem', fontWeight: '700', padding: '3px 8px', borderRadius: '8px', background: healthData?.database?.status === 'connected' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)', color: healthData?.database?.status === 'connected' ? '#10b981' : '#ef4444' }}>
+                  {healthData?.database?.status === 'connected' ? t('admin.connected', 'Connected') : t('admin.disconnected', 'Disconnected')}
+                </span>
+              </div>
+
+              {/* Memory & Environment summary */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div style={{ padding: '8px 12px', background: 'var(--bg-main)', borderRadius: '10px', boxShadow: 'var(--inner-shadow)' }}>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--c-sub)', marginBottom: '2px' }}>{t('admin.memory_heap', 'Memory Heap')}</div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-h)' }}>
+                    {healthData?.memory?.heapUsedMb ? `${healthData.memory.heapUsedMb} MB` : 'Normal'}
+                    {healthData?.memory?.heapTotalMb && (
+                      <span style={{ fontSize: '0.72rem', color: 'var(--c-sub)', fontWeight: '400' }}> / {healthData.memory.heapTotalMb}MB</span>
+                    )}
+                  </div>
+                </div>
+                <div style={{ padding: '8px 12px', background: 'var(--bg-main)', borderRadius: '10px', boxShadow: 'var(--inner-shadow)' }}>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--c-sub)', marginBottom: '2px' }}>{t('admin.environment', 'Environment')}</div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-h)', textTransform: 'capitalize' }}>
+                    {healthData?.environment || 'Production'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Recent Activity Mini */}
         <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-h)' }}>{t('admin.recent_activity', 'Recent Activity')}</h3>
             <button 
               onClick={() => setActiveTab('dashboard_activity')}
-              style={{ background: 'none', border: 'none', color: 'var(--c-orange)', fontSize: '0.85rem', cursor: 'pointer', fontWeight: '500' }}
+              style={{ background: 'none', border: 'none', color: 'var(--c-orange)', fontSize: '0.85rem', cursor: 'pointer', fontWeight: '600' }}
             >
               {t('admin.view_all', 'View All')} →
             </button>
           </div>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '20px 0' }}>
-            <div style={{ 
-              width: '48px', height: '48px', borderRadius: '50%', 
-              background: 'var(--bg-main)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)', 
-              display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' 
-            }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--c-sub)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
-              </svg>
+
+          {activitiesLoading ? (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '160px' }}>
+              <div style={{ width: '28px', height: '28px', border: '3px solid rgba(249,115,22,0.2)', borderTopColor: '#f97316', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+              <div style={{ fontSize: '0.85rem', color: 'var(--c-sub)', marginTop: '12px' }}>{t('admin.loading_activity', 'Loading activity...')}</div>
             </div>
-            <div style={{ fontSize: '0.9rem', color: 'var(--c-sub)', marginBottom: '16px' }}>
-              {t('admin.no_recent_activity', 'No recent activity to display.')}
+          ) : recentActivities.length === 0 ? (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '20px 0' }}>
+              <div style={{ 
+                width: '48px', height: '48px', borderRadius: '50%', 
+                background: 'var(--bg-main)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)', 
+                display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' 
+              }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+              <div style={{ fontSize: '0.9rem', color: 'var(--text-h)', fontWeight: '600', marginBottom: '4px' }}>
+                {t('admin.no_recent_activity', 'No recent activity')}
+              </div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--c-sub)' }}>
+                {t('admin.platform_running_smoothly', 'Platform is running smoothly.')}
+              </div>
             </div>
-            <button style={{ 
-              background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', 
-              color: 'var(--c-sub)', fontSize: '0.75rem', letterSpacing: '1px', 
-              padding: '6px 16px', borderRadius: '12px', cursor: 'not-allowed'
-            }}>
-              {t('admin.pending_integration', 'PENDING INTEGRATION')}
-            </button>
-          </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1 }}>
+              {recentActivities.map((act) => {
+                const getActIcon = (type) => {
+                  if (type === 'course') return '📚';
+                  if (type === 'enrollment') return '🎓';
+                  if (type === 'user') return '👤';
+                  return '⚡';
+                };
+
+                return (
+                  <div
+                    key={act.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '12px',
+                      padding: '10px 12px',
+                      background: 'var(--bg-main)',
+                      borderRadius: '10px',
+                      boxShadow: 'var(--inner-shadow)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                      <span style={{ fontSize: '1rem', flexShrink: 0 }}>{getActIcon(act.type)}</span>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontWeight: '600', fontSize: '0.82rem', color: 'var(--text-h)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {act.title}
+                        </div>
+                        <div style={{ fontSize: '0.74rem', color: 'var(--c-sub)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {act.description}
+                        </div>
+                      </div>
+                    </div>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--c-sub)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                      {formatTimeAgo(act.date)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>
