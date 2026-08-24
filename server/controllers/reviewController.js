@@ -90,13 +90,21 @@ export const createReview = async (req, res) => {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
-    // Verify student is enrolled
-    const enrollment = await Enrollment.findOne({
-      student: req.user.id,
-      course: courseId,
-    });
+    // Verify student is enrolled — supports standard, module-purchased, and standalone-lesson courses
+    const enrollment = await Enrollment.findOne({ student: req.user.id, course: courseId });
+    let isActuallyEnrolled = enrollment?.status === 'approved';
 
-    if (!enrollment) {
+    if (!isActuallyEnrolled) {
+      const modPurchase = await ModulePurchase.findOne({ student: req.user.id, course: courseId, status: 'approved' });
+      if (modPurchase) isActuallyEnrolled = true;
+    }
+
+    if (!isActuallyEnrolled) {
+      const standalonePurchase = await StandaloneLessonPurchase.findOne({ student: req.user.id, course: courseId, status: 'approved' });
+      if (standalonePurchase) isActuallyEnrolled = true;
+    }
+
+    if (!isActuallyEnrolled) {
       return res.status(403).json({ message: 'You must be enrolled in this course to leave a review' });
     }
 
