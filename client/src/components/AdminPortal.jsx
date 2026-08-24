@@ -869,6 +869,18 @@ export default function AdminPortal({
     pendingEnrollmentPage * 10,
   );
 
+  const pendingCoursesTotal =
+    (stats?.pendingCourses ?? pendingCourses?.length ?? 0) +
+    (stats?.pendingLessonsCount ?? pendingLessonsCount ?? 0) +
+    (stats?.pendingQuizzesCount ?? stats?.pendingQuizzes ?? 0);
+
+  const pendingPayoutsCount =
+    stats?.pendingPayouts ??
+    payouts.filter((p) => p.status === "pending" || p.status === "processing").length;
+
+  const pendingFinancialsTotal =
+    (pendingEnrollments?.length ?? 0) + (pendingPayoutsCount ?? 0);
+
   const renderEnrollmentTable = (txs, emptyMessage) => (
     <div
       className="glass-card"
@@ -1188,7 +1200,7 @@ export default function AdminPortal({
                       style={{
                         display: "flex",
                         alignItems: "center",
-                        gap: "4px",
+                        gap: "6px",
                       }}
                       onClick={() => {
                         if (hasDropdown) {
@@ -1201,7 +1213,45 @@ export default function AdminPortal({
                         }
                       }}
                     >
-                      {group.title}
+                      <span>{group.title}</span>
+                      {group.title === "Courses" && pendingCoursesTotal > 0 && (
+                        <span
+                          className="nav-count-badge"
+                          style={{
+                            padding: "2px 7px",
+                            fontSize: "0.72rem",
+                            fontWeight: "700",
+                            borderRadius: "10px",
+                            background: "linear-gradient(135deg, #f97316, #ea580c)",
+                            lineHeight: "1.2",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            boxShadow: "0 2px 4px rgba(249, 115, 22, 0.35)",
+                          }}
+                        >
+                          {pendingCoursesTotal}
+                        </span>
+                      )}
+                      {group.title === "Financials" && pendingFinancialsTotal > 0 && (
+                        <span
+                          className="nav-count-badge"
+                          style={{
+                            padding: "2px 7px",
+                            fontSize: "0.72rem",
+                            fontWeight: "700",
+                            borderRadius: "10px",
+                            background: "linear-gradient(135deg, #f97316, #ea580c)",
+                            lineHeight: "1.2",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            boxShadow: "0 2px 4px rgba(249, 115, 22, 0.35)",
+                          }}
+                        >
+                          {pendingFinancialsTotal}
+                        </span>
+                      )}
                       {hasDropdown && (
                         <svg
                           width="14"
@@ -1247,34 +1297,62 @@ export default function AdminPortal({
                           zIndex: 1000,
                         }}
                       >
-                        {group.items.map((tab) => (
-                          <button
-                            key={tab.id}
-                            onClick={() => {
-                              handleSidebarTabClick(tab.id, group.title);
-                              setActiveDropdown(null);
-                            }}
-                            style={{
-                              padding: "10px 16px",
-                              background: "transparent",
-                              border: "none",
-                              textAlign: "left",
-                              color: isSidebarTabActive(tab.id, activeTab)
-                                ? "var(--color-accent)"
-                                : "var(--text-main)",
-                              fontWeight: isSidebarTabActive(tab.id, activeTab)
-                                ? "600"
-                                : "400",
-                              cursor: "pointer",
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                            }}
-                            className="hover-bg"
-                          >
-                            {tab.label}
-                          </button>
-                        ))}
+                        {group.items.map((tab) => {
+                          const tabCount =
+                            tab.id === "enrollment"
+                              ? pendingEnrollments.length
+                              : tab.id === "financial_payouts"
+                              ? pendingPayoutsCount
+                              : 0;
+
+                          return (
+                            <button
+                              key={tab.id}
+                              onClick={() => {
+                                handleSidebarTabClick(tab.id, group.title);
+                                setActiveDropdown(null);
+                              }}
+                              style={{
+                                padding: "10px 16px",
+                                background: "transparent",
+                                border: "none",
+                                textAlign: "left",
+                                color: isSidebarTabActive(tab.id, activeTab)
+                                  ? "var(--color-accent)"
+                                  : "var(--text-main)",
+                                fontWeight: isSidebarTabActive(tab.id, activeTab)
+                                  ? "600"
+                                  : "400",
+                                cursor: "pointer",
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                gap: "12px",
+                              }}
+                              className="hover-bg"
+                            >
+                              <span>{tab.label}</span>
+                              {tabCount > 0 && (
+                                <span
+                                  className="nav-count-badge"
+                                  style={{
+                                    padding: "1px 6px",
+                                    fontSize: "0.7rem",
+                                    fontWeight: "700",
+                                    borderRadius: "8px",
+                                    background: "linear-gradient(135deg, #f97316, #ea580c)",
+                                    lineHeight: "1.2",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                  }}
+                                >
+                                  {tabCount}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -1630,9 +1708,26 @@ export default function AdminPortal({
                         WebkitBackgroundClip: isActive ? "text" : "border-box",
                         WebkitTextFillColor: isActive ? "transparent" : "inherit",
                         color: isActive ? "transparent" : "var(--text-secondary)",
-                        display: "inline-block"
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
                     }}>
                         {group.title}
+                        {group.title === "Courses" && pendingCoursesTotal > 0 && (
+                          <span
+                            className="nav-count-badge"
+                            style={{
+                              padding: "2px 7px",
+                              fontSize: "0.72rem",
+                              fontWeight: "700",
+                              borderRadius: "10px",
+                              background: "linear-gradient(135deg, #f97316, #ea580c)",
+                              lineHeight: "1.2",
+                            }}
+                          >
+                            {pendingCoursesTotal}
+                          </span>
+                        )}
                     </span>
                   </button>
                 </div>
@@ -1667,7 +1762,24 @@ export default function AdminPortal({
                     )
                   }
                 >
-                  {group.title}
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span>{group.title}</span>
+                    {group.title === "Financials" && pendingFinancialsTotal > 0 && (
+                      <span
+                        className="nav-count-badge"
+                        style={{
+                          padding: "2px 7px",
+                          fontSize: "0.72rem",
+                          fontWeight: "700",
+                          borderRadius: "10px",
+                          background: "linear-gradient(135deg, #f97316, #ea580c)",
+                          lineHeight: "1.2",
+                        }}
+                      >
+                        {pendingFinancialsTotal}
+                      </span>
+                    )}
+                  </div>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="14"
@@ -1710,33 +1822,60 @@ export default function AdminPortal({
                       transition: "opacity 0.3s ease",
                     }}
                   >
-                    {group.items.map((tab) => (
-                      <button
-                        key={tab.id}
-                        className={`topnav-mobile-link ${isSidebarTabActive(tab.id, activeTab) ? "active" : ""}`}
-                        onClick={() => {
-                          handleSidebarTabClick(tab.id, group.title);
-                          setMobileNavOpen(false);
-                        }}
-                        style={{
-                          width: "100%",
-                          textAlign: "left",
-                          padding: "10px 16px",
-                          borderRadius: "8px",
-                          border: "none",
-                          background: isSidebarTabActive(tab.id, activeTab)
-                            ? "var(--color-accent-transparent, rgba(249,115,22,0.1))"
-                            : "transparent",
-                          color: isSidebarTabActive(tab.id, activeTab)
-                            ? "var(--color-accent)"
-                            : "var(--text-h)",
-                          cursor: "pointer",
-                          fontSize: "0.95rem",
-                        }}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
+                    {group.items.map((tab) => {
+                      const tabCount =
+                        tab.id === "enrollment"
+                          ? pendingEnrollments.length
+                          : tab.id === "financial_payouts"
+                          ? pendingPayoutsCount
+                          : 0;
+
+                      return (
+                        <button
+                          key={tab.id}
+                          className={`topnav-mobile-link ${isSidebarTabActive(tab.id, activeTab) ? "active" : ""}`}
+                          onClick={() => {
+                            handleSidebarTabClick(tab.id, group.title);
+                            setMobileNavOpen(false);
+                          }}
+                          style={{
+                            width: "100%",
+                            textAlign: "left",
+                            padding: "10px 16px",
+                            borderRadius: "8px",
+                            border: "none",
+                            background: isSidebarTabActive(tab.id, activeTab)
+                              ? "var(--color-accent-transparent, rgba(249,115,22,0.1))"
+                              : "transparent",
+                            color: isSidebarTabActive(tab.id, activeTab)
+                              ? "var(--color-accent)"
+                              : "var(--text-h)",
+                            cursor: "pointer",
+                            fontSize: "0.95rem",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                          }}
+                        >
+                          <span>{tab.label}</span>
+                          {tabCount > 0 && (
+                            <span
+                              className="nav-count-badge"
+                              style={{
+                                padding: "1px 6px",
+                                fontSize: "0.7rem",
+                                fontWeight: "700",
+                                borderRadius: "8px",
+                                background: "linear-gradient(135deg, #f97316, #ea580c)",
+                                lineHeight: "1.2",
+                              }}
+                            >
+                              {tabCount}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
