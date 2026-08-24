@@ -1,7 +1,7 @@
 import express from 'express';
 import {
   toggleProgramInstructor,
-  getStats, getRecentActivity, getRevenueAnalytics, getUsers, toggleBlockUser, changeUserRole,
+  getStats, getRecentActivity, getSystemHealth, getRevenueAnalytics, getUsers, toggleBlockUser, changeUserRole,
   softDeleteUser, restoreUser, getTransactions, getPendingPayouts, getPayoutRevenueTrace, getAllLessons, approveLesson, rejectLesson, deleteLessonAdmin,
   manualEnroll, createPromoCode, getPromoCodes, togglePromoCode, createDiscountCode, getDiscountCodes,
   updateDiscountCode, toggleDiscountCode, renewDiscountCode, deleteDiscountCode,
@@ -20,6 +20,7 @@ const router = express.Router();
 router.use(protect, authorize('admin', 'superadmin'));
 
 router.get('/stats', getStats);
+router.get('/health', getSystemHealth);
 // Recent Activity is superadmin-only (ADM-02) — narrower than the router-wide
 // admin/superadmin gate above.
 router.get('/activity', authorize('superadmin'), getRecentActivity);
