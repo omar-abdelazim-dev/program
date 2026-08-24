@@ -993,6 +993,15 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
               <tr>
                 <th 
                   onClick={() => handleSort("title")}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleSort("title");
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-sort={sortBy === "title" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
                   style={{ 
                     padding: "12px 16px", 
                     color: sortBy === "title" ? "#f97316" : "var(--c-sub)", 
@@ -1013,6 +1022,15 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
                 </th>
                 <th 
                   onClick={() => handleSort("category")}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleSort("category");
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-sort={sortBy === "category" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
                   style={{ 
                     padding: "12px 8px", 
                     color: sortBy === "category" ? "#f97316" : "var(--c-sub)", 
@@ -1034,6 +1052,15 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
                 </th>
                 <th 
                   onClick={() => handleSort("price")}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleSort("price");
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-sort={sortBy === "price" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
                   style={{ 
                     padding: "12px 8px", 
                     color: sortBy === "price" ? "#f97316" : "var(--c-sub)", 
@@ -1055,6 +1082,15 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
                 </th>
                 <th 
                   onClick={() => handleSort("status")}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleSort("status");
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-sort={sortBy === "status" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
                   style={{ 
                     padding: "12px 8px", 
                     color: sortBy === "status" ? "#f97316" : "var(--c-sub)", 
@@ -1076,6 +1112,15 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
                 </th>
                 <th 
                   onClick={() => handleSort("courseType")}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleSort("courseType");
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-sort={sortBy === "courseType" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
                   style={{ 
                     padding: "12px 8px", 
                     color: sortBy === "courseType" ? "#f97316" : "var(--c-sub)", 
@@ -1098,6 +1143,15 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
                 <th style={{ padding: "12px 8px", color: "var(--c-sub)", fontWeight: "600", borderBottom: "1px solid var(--c-border-subtle)", textAlign: "center", whiteSpace: "nowrap" }}>LESSONS</th>
                 <th 
                   onClick={() => handleSort("updatedAt")}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleSort("updatedAt");
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-sort={sortBy === "updatedAt" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
                   style={{ 
                     padding: "12px 16px", 
                     color: sortBy === "updatedAt" ? "#f97316" : "var(--c-sub)", 
