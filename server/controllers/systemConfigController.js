@@ -109,6 +109,8 @@ export const getPublicConfig = async (req, res) => {
         instaPayAccount: config.financial?.instaPayAccount || '',
         mobileWalletNumber: config.financial?.mobileWalletNumber || '',
         manualPaymentInstructions: config.financial?.manualPaymentInstructions || '',
+        companyPhone: config.financial?.companyPhone || '',
+        companyInstaPayAccount: config.financial?.companyInstaPayAccount || '',
       },
       landingPage: config.landingPage
     });

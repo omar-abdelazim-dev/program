@@ -98,16 +98,17 @@ export default function LearningPortal({ user }) {
         const loadedModules = courseRes.data.modules || [];
         setModules(loadedModules);
 
+        const isOngoing = courseRes.data.course?.courseType === 'ongoing';
+        const isStaff = userId && (
+          userRole === 'admin' ||
+          userRole === 'superadmin' ||
+          (courseRes.data.course.instructor?._id || courseRes.data.course.instructor) === userId
+        );
+
         try {
           const enrollRes = await api.get(`/enrollments/${id}`, { signal: controller.signal });
           
-          const isStaff = userId && (
-            userRole === 'admin' ||
-            userRole === 'superadmin' ||
-            (courseRes.data.course.instructor?._id || courseRes.data.course.instructor) === userId
-          );
-
-          if (!isStaff && (!enrollRes.data?.enrolled || enrollRes.data?.status !== 'approved')) {
+          if (!isOngoing && !isStaff && (!enrollRes.data?.enrolled || enrollRes.data?.status !== 'approved')) {
             navigate(`/course/${id}`, { replace: true });
             return;
           }
@@ -118,12 +119,7 @@ export default function LearningPortal({ user }) {
             setModuleProgress(enrollRes.data.moduleProgress || []);
           }
         } catch(e) {
-          const isStaff = userId && (
-            userRole === 'admin' ||
-            userRole === 'superadmin' ||
-            (courseRes.data.course.instructor?._id || courseRes.data.course.instructor) === userId
-          );
-          if (!isStaff) {
+          if (!isOngoing && !isStaff) {
             navigate(`/course/${id}`, { replace: true });
             return;
           }

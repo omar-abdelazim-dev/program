@@ -48,5 +48,9 @@
   overflow: visible;
   scale: 1;
 }
+.dashboard-section .cc-card:hover {
+  transform: none !important;
+  scale: 1 !important;
+}
 .dashboard-section .cc-thumb-wrap { border-radius: 5px 5px 0 0; }
 .dashboard-section .cc-body { min-height: 0; }

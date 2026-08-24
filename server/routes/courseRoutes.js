@@ -27,7 +27,7 @@ import {
   convertOngoingToFull,
 } from '../controllers/courseController.js';
 import { addLesson, getLessonContent, updateLesson, deleteLesson, reorderLessons } from '../controllers/lessonController.js';
-import { createModule, updateModule, deleteModule, reorderModules } from '../controllers/moduleController.js';
+import { createModule, updateModule, deleteModule, reorderModules, purchaseModule, getMyPurchasedModules } from '../controllers/moduleController.js';
 import { protect, authorize, authorizeDoor, authorizeWithDoor, verifyOwnership } from '../middleware/authMiddleware.js';
 import { optionalAuth } from '../middleware/optionalAuth.js';
 import { validateObjectId } from '../middleware/validationMiddleware.js';
@@ -61,6 +61,8 @@ router.delete('/:courseId/modules/:moduleId', protect, authorize('instructor'), 
 router.put('/:courseId/modules-reorder', protect, authorize('instructor'), validateObjectId('courseId'), verifyOwnership(Course, 'courseId', 'instructor'), reorderModules);
 router.post('/:courseId/modules/:moduleId/lessons', protect, authorize('instructor'), validateObjectId('courseId', 'moduleId'), verifyOwnership(Course, 'courseId', 'instructor'), addLesson);
 router.put('/:courseId/modules/:moduleId/lessons-reorder', protect, authorize('instructor'), validateObjectId('courseId', 'moduleId'), verifyOwnership(Course, 'courseId', 'instructor'), reorderLessons);
+router.post('/:courseId/modules/:moduleId/purchase', protect, authorize('student'), validateObjectId('courseId', 'moduleId'), purchaseModule);
+router.get('/:courseId/modules/mine-purchased', protect, authorize('student'), validateObjectId('courseId'), getMyPurchasedModules);
 
 // --- Lessons (id is globally unique, no need for :moduleId in these paths) ---
 router.put('/:courseId/lessons/:lessonId', protect, authorize('instructor'), validateObjectId('courseId', 'lessonId'), verifyOwnership(Course, 'courseId', 'instructor'), updateLesson);

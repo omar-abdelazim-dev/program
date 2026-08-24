@@ -22,6 +22,7 @@ const SystemManagement = lazy(() => import("./SystemManagement"));
 const AdminLandingPageTab = lazy(() => import("./AdminLandingPageTab"));
 const AdminReportsTab = lazy(() => import("./AdminReportsTab"));
 const DiscountCodesPanel = lazy(() => import("./DiscountCodesPanel"));
+const AdminSupportTab = lazy(() => import("./AdminSupportTab"));
 
 import FullPageLoader from "./FullPageLoader";
 import Pagination from "./common/Pagination";
@@ -808,6 +809,7 @@ export default function AdminPortal({
               { id: "reports_students", label: "Student Progress" },
               { id: "reports_instructors", label: "Instructor Performance" },
               { id: "reports_export", label: "Export Data" },
+              { id: "support_issues", label: "Student Reports" },
             ],
           },
           {
@@ -850,6 +852,7 @@ export default function AdminPortal({
               { id: "reports_students", label: "Student Progress" },
               { id: "reports_instructors", label: "Instructor Performance" },
               { id: "reports_export", label: "Export Data" },
+              { id: "support_issues", label: "Student Reports" },
             ],
           },
         ];
@@ -2343,6 +2346,16 @@ export default function AdminPortal({
               }}
             >
               <AdminReportsTab user={user} subTab="export" />
+            </div>
+          )}
+
+          {visitedTabs.has("support_issues") && (
+            <div
+              style={{
+                display: activeTab === "support_issues" ? "block" : "none",
+              }}
+            >
+              <AdminSupportTab />
             </div>
           )}
 

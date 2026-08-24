@@ -1,6 +1,8 @@
 import Review from '../models/Review.js';
 import Course from '../models/Course.js';
 import Enrollment from '../models/Enrollment.js';
+import ModulePurchase from '../models/ModulePurchase.js';
+import StandaloneLessonPurchase from '../models/StandaloneLessonPurchase.js';
 import logger from '../utils/logger.js';
 
 // @desc    Get all reviews for courses owned by the instructor
@@ -88,13 +90,21 @@ export const createReview = async (req, res) => {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
-    // Verify student is enrolled
-    const enrollment = await Enrollment.findOne({
-      student: req.user.id,
-      course: courseId,
-    });
+    // Verify student is enrolled — supports standard, module-purchased, and standalone-lesson courses
+    const enrollment = await Enrollment.findOne({ student: req.user.id, course: courseId });
+    let isActuallyEnrolled = enrollment?.status === 'approved';
 
-    if (!enrollment) {
+    if (!isActuallyEnrolled) {
+      const modPurchase = await ModulePurchase.findOne({ student: req.user.id, course: courseId, status: 'approved' });
+      if (modPurchase) isActuallyEnrolled = true;
+    }
+
+    if (!isActuallyEnrolled) {
+      const standalonePurchase = await StandaloneLessonPurchase.findOne({ student: req.user.id, course: courseId, status: 'approved' });
+      if (standalonePurchase) isActuallyEnrolled = true;
+    }
+
+    if (!isActuallyEnrolled) {
       return res.status(403).json({ message: 'You must be enrolled in this course to leave a review' });
     }
 

@@ -2,6 +2,7 @@ import Lesson from '../models/Lesson.js';
 import Module from '../models/Module.js';
 import Course from '../models/Course.js';
 import Enrollment from '../models/Enrollment.js';
+import ModulePurchase from '../models/ModulePurchase.js';
 import logger from '../utils/logger.js';
 import { isCourseContentLocked } from '../utils/courseContent.js';
 
@@ -109,20 +110,34 @@ export const getLessonContent = async (req, res) => {
 
     const isOwner = course.instructor.toString() === req.user.id.toString();
     const isAdmin = req.user.role === 'admin' || req.user.role === 'superadmin';
-
-    if (!isOwner && !isAdmin) {
-      const enrollment = await Enrollment.findOne({ $or: [{ student: req.user.id }, { user: req.user.id }], course: courseId });
-      if (!enrollment) {
-        return res.status(403).json({ message: 'Enroll in this course to watch its lessons' });
-      }
-      if (enrollment.status !== 'approved') {
-        return res.status(403).json({ message: 'Your enrollment is pending approval' });
-      }
-    }
+    const isOngoing = course.courseType === 'ongoing';
 
     const lesson = await Lesson.findById(lessonId).populate('module');
     if (!lesson || !lesson.module || lesson.module.course.toString() !== courseId) {
       return res.status(404).json({ message: 'Lesson not found in this course' });
+    }
+
+    if (!isOwner && !isAdmin) {
+      if (isOngoing) {
+        if (lesson.module.price > 0) {
+          const purchase = await ModulePurchase.findOne({
+            student: req.user.id,
+            module: lesson.module._id,
+            status: 'approved',
+          });
+          if (!purchase) {
+            return res.status(403).json({ message: 'Purchase this module to watch its lessons' });
+          }
+        }
+      } else {
+        const enrollment = await Enrollment.findOne({ $or: [{ student: req.user.id }, { user: req.user.id }], course: courseId });
+        if (!enrollment) {
+          return res.status(403).json({ message: 'Enroll in this course to watch its lessons' });
+        }
+        if (enrollment.status !== 'approved') {
+          return res.status(403).json({ message: 'Your enrollment is pending approval' });
+        }
+      }
     }
 
     // A student taking the quiz must not learn the correct answer from the

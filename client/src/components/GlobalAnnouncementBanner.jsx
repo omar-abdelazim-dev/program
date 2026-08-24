@@ -42,17 +42,19 @@ export default function GlobalAnnouncementBanner() {
   if (loading || banners.length === 0) return null;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '16px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px', width: '100%' }}>
       {banners.map((banner) => {
-        // Map priority/type to colors if desired, or keep it consistent with the theme
         let bgColor = 'var(--bg-surface)';
+        let borderColor = 'var(--border, rgba(255,255,255,0.08))';
         let icon = '📢';
         
         if (banner.priority === 'Critical' || banner.type === 'Emergency') {
-          bgColor = 'rgba(239, 68, 68, 0.1)';
+          bgColor = 'rgba(239, 68, 68, 0.12)';
+          borderColor = 'rgba(239, 68, 68, 0.3)';
           icon = '🚨';
         } else if (banner.priority === 'High') {
-          bgColor = 'rgba(245, 158, 11, 0.1)';
+          bgColor = 'rgba(245, 158, 11, 0.12)';
+          borderColor = 'rgba(245, 158, 11, 0.3)';
           icon = '⚠️';
         }
 
@@ -63,18 +65,18 @@ export default function GlobalAnnouncementBanner() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              padding: '12px 20px',
+              padding: '14px 20px',
               backgroundColor: bgColor,
-              borderRadius: '12px',
-              boxShadow: 'var(--inner-shadow)',
-              border: 'none',
+              borderRadius: '14px',
+              boxShadow: 'var(--outer-shadow, 0 2px 8px rgba(0,0,0,0.08))',
+              border: `1px solid ${borderColor}`,
               animation: 'fadeInDown 0.3s ease-out'
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '1.25rem' }}>{icon}</span>
+              <span style={{ fontSize: '1.3rem' }}>{icon}</span>
               <div>
-                <strong style={{ color: 'var(--text-primary)', marginRight: '8px' }}>{banner.title}:</strong>
+                <strong style={{ color: 'var(--text-primary)', marginInlineEnd: '8px', fontWeight: '700' }}>{banner.title}:</strong>
                 <span style={{ color: 'var(--text-secondary)' }}>{banner.content}</span>
               </div>
             </div>
