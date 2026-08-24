@@ -68,7 +68,12 @@ export const protect = async (req, res, next) => {
       university: user.university,
       goalsText: user.goalsText,
       isProgramInstructor: user.isProgramInstructor, // Include Program instructor flag
+      doorScope: decoded.doorScope || null,
     };
+    req.authScope = decoded.doorScope || null;
+    if ((user.role === 'admin' && req.authScope !== 'admin') || (user.role === 'superadmin' && req.authScope !== 'superadmin')) {
+      return res.status(401).json({ message: 'Legacy or mismatched staff session. Please log in through the correct door.' });
+    }
 
     next();
   } catch (error) {
@@ -86,6 +91,38 @@ export const authorize = (...allowedRoles) => {
       return res.status(403).json({
         message: `Role '${req.user.role}' is not authorized to access this resource`,
       });
+    }
+    next();
+  };
+};
+
+// Staff routes must accept a token minted by the matching staff door.
+// Unscoped legacy tokens intentionally fail here and require re-login.
+export const authorizeDoor = (...allowedRoles) => {
+  const expectedScope = {
+    admin: 'admin',
+    superadmin: 'superadmin',
+  };
+
+  return (req, res, next) => {
+    const role = req.user?.role;
+    if (!allowedRoles.includes(role) || req.authScope !== expectedScope[role]) {
+      return res.status(403).json({ message: 'This session is not valid for this staff door' });
+    }
+    next();
+  };
+};
+
+// Mixed routes can retain ordinary role access while still requiring the
+// correct scoped door whenever the caller is staff.
+export const authorizeWithDoor = (...allowedRoles) => {
+  const staffRoles = ['admin', 'superadmin'];
+  return (req, res, next) => {
+    if (!allowedRoles.includes(req.user?.role)) {
+      return res.status(403).json({ message: `Role '${req.user?.role}' is not authorized to access this resource` });
+    }
+    if (staffRoles.includes(req.user.role)) {
+      return authorizeDoor(req.user.role)(req, res, next);
     }
     next();
   };

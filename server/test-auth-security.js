@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import request from 'supertest';
 import app from './app.js';
 import User from './models/User.js';
+import Session from './models/Session.js';
 
 process.env.JWT_SECRET = 'testsecret';
 // 'development' specifically — otpService only prints its dev-debug OTP log
@@ -239,6 +240,33 @@ const runTests = async () => {
     const res = await request(app).post('/api/auth/login').send({ email: 'unverified@test.com', password: 'wrong-password' });
     if (res.status !== 401) throw new Error(`An unverified account should get the same generic 401 as a wrong password, got ${res.status} (code: ${res.body.code})`);
     if (res.body.code === 'EMAIL_NOT_VERIFIED') throw new Error('Verification status leaked before the password was checked');
+  });
+
+  await test('Session Limit: strictly limits active devices/sessions to 2 via FIFO eviction', async () => {
+    // Reset all sessions for user
+    await Session.deleteMany({ userId });
+
+    // Device 1 login
+    const res1 = await request(app).post('/api/auth/login').send({ email: 'auth@test.com', password: 'Password2!' });
+    if (res1.status !== 200) throw new Error(`Device 1 login failed: ${res1.status}`);
+
+    // Device 2 login
+    const res2 = await request(app).post('/api/auth/login').send({ email: 'auth@test.com', password: 'Password2!' });
+    if (res2.status !== 200) throw new Error(`Device 2 login failed: ${res2.status}`);
+
+    let active = await Session.find({ userId, revoked: false }).sort('issuedAt');
+    if (active.length !== 2) throw new Error(`Expected 2 active sessions, found ${active.length}`);
+    const firstSessionId = active[0]._id.toString();
+
+    // Device 3 login (should evict Device 1)
+    const res3 = await request(app).post('/api/auth/login').send({ email: 'auth@test.com', password: 'Password2!' });
+    if (res3.status !== 200) throw new Error(`Device 3 login failed: ${res3.status}`);
+
+    active = await Session.find({ userId, revoked: false }).sort('issuedAt');
+    if (active.length !== 2) throw new Error(`Expected 2 active sessions after 3rd login, found ${active.length}`);
+
+    const oldestSession = await Session.findById(firstSessionId);
+    if (!oldestSession.revoked) throw new Error('Expected oldest session (Device 1) to be revoked upon 3rd login');
   });
 
   console.log('\nALL TARGETED SECURITY TESTS PASSED');

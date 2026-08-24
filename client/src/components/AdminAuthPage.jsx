@@ -4,7 +4,7 @@ import logoDark from '../assets/logo-dark.png';
 import logoLight from '../assets/logo-light.png';
 import api from '../api/axios';
 
-export default function AdminAuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
+export default function AdminAuthPage({ onLoginSuccess, isLightMode }) {
   const { i18n } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,13 +18,7 @@ export default function AdminAuthPage({ onLoginSuccess, isLightMode, toggleTheme
     setIsLoggingIn(true);
     
     try {
-      const response = await api.post('/auth/login', { email, password });
-      if (response.data.user.role !== 'admin') {
-        setAuthError('Unauthorized. Only Admins can log in here.');
-        setIsLoggingIn(false);
-        return;
-      }
-      localStorage.setItem('admin_token', response.data.token);
+      const response = await api.post('/auth/admin/login', { email, password });
       localStorage.setItem('admin_lang', i18n.language);
       onLoginSuccess(response.data.user);
     } catch (err) {

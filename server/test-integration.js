@@ -167,7 +167,7 @@ const run = async () => {
     role: 'admin',
     isVerified: true, // created directly, bypassing the OTP-gated register() flow
   });
-  res = await agentAdmin.post('/api/auth/login').send({
+  res = await agentAdmin.post('/api/auth/admin/login').send({
     email: 'admin@example.com',
     password: 'adminpass123',
   });
@@ -183,12 +183,28 @@ const run = async () => {
     role: 'superadmin',
     isVerified: true,
   });
-  res = await agentSuperAdmin.post('/api/auth/login').send({
+  res = await agentSuperAdmin.post('/api/auth/superadmin/login').send({
     email: 'superadmin@example.com',
     password: 'superadminpass123',
   });
   assert(res.status === 200, `Superadmin login failed: ${JSON.stringify(res.body)}`);
   const superAdminCsrf = getCsrfToken(res);
+
+  res = await agentAdmin.post('/api/auth/superadmin/login').send({
+    email: 'admin@example.com',
+    password: 'adminpass123',
+  });
+  assert(res.status === 403, 'Admin credentials must be rejected by the superadmin door');
+  res = await agentSuperAdmin.post('/api/auth/admin/login').send({
+    email: 'superadmin@example.com',
+    password: 'superadminpass123',
+  });
+  assert(res.status === 403, 'Superadmin credentials must be rejected by the admin door');
+  res = await agentAdmin.get('/api/admin/activity');
+  assert(res.status === 403, 'Admin-door session must be rejected by superadmin-only routes');
+  res = await agentAdmin.get('/api/admin/discount-codes');
+  assert(res.status === 403, 'Admin-door session must be rejected by superadmin-only discount routes');
+  console.log('✓ Cross-door login and route isolation enforced');
 
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
   res = await agentSuperAdmin.post('/api/admin/discount-codes').set('X-CSRF-Token', superAdminCsrf).send({

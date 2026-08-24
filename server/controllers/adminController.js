@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Transaction from "../models/Transaction.js";
 import User from "../models/User.js";
 import Course from "../models/Course.js";
@@ -459,6 +460,48 @@ export const getRecentActivity = async (req, res) => {
       stack: error.stack,
     });
     res.status(500).json({ message: "Server error fetching activity" });
+  }
+};
+
+// @route   GET /api/admin/health
+// @access  Private (Admin/SuperAdmin)
+export const getSystemHealth = async (req, res) => {
+  try {
+    const dbStart = Date.now();
+    let dbStatus = "disconnected";
+    let dbLatencyMs = null;
+
+    if (mongoose.connection.readyState === 1 && mongoose.connection.db) {
+      await mongoose.connection.db.admin().ping();
+      dbLatencyMs = Date.now() - dbStart;
+      dbStatus = "connected";
+    }
+
+    const mem = process.memoryUsage();
+
+    res.status(200).json({
+      status: dbStatus === "connected" ? "healthy" : "degraded",
+      uptimeSeconds: Math.floor(process.uptime()),
+      database: {
+        status: dbStatus,
+        latencyMs: dbLatencyMs,
+      },
+      memory: {
+        heapUsedMb: Math.round(mem.heapUsed / 1024 / 1024),
+        heapTotalMb: Math.round(mem.heapTotal / 1024 / 1024),
+        rssMb: Math.round(mem.rss / 1024 / 1024),
+      },
+      environment: process.env.NODE_ENV || "development",
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    logger.error("System health check error:", { error: error.message });
+    res.status(500).json({
+      status: "unhealthy",
+      uptimeSeconds: Math.floor(process.uptime()),
+      database: { status: "error", error: error.message },
+      error: error.message,
+    });
   }
 };
 

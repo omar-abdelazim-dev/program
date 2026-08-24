@@ -386,7 +386,7 @@ export const getApprovedCourses = async (req, res) => {
     if (page === undefined && limit === undefined) {
       const courses = await Course.find(filter)
         .populate("instructor", "name avatarUrl isProgramInstructor") // include instructor's name + avatar, nothing more sensitive
-        .sort({ createdAt: -1 });
+        .sort({ updatedAt: -1, createdAt: -1 });
 
       // Attach review stats to each course
       const coursesWithReviews = await attachReviewStats(courses);
@@ -403,7 +403,7 @@ export const getApprovedCourses = async (req, res) => {
       Course.countDocuments(filter),
       Course.find(filter)
         .populate("instructor", "name avatarUrl isProgramInstructor")
-        .sort({ createdAt: -1 })
+        .sort({ updatedAt: -1, createdAt: -1 })
         .skip(skip)
         .limit(limitNum),
     ]);
@@ -500,7 +500,7 @@ export const getPendingCourses = async (req, res) => {
     if (page === undefined && limit === undefined) {
       const courses = await Course.find(filter)
         .populate("instructor", "name email isProgramInstructor")
-        .sort({ createdAt: 1 }); // oldest first — first submitted, first reviewed
+        .sort({ updatedAt: -1, createdAt: -1 });
 
       return res.status(200).json({ courses });
     }
@@ -515,7 +515,7 @@ export const getPendingCourses = async (req, res) => {
       Course.countDocuments(filter),
       Course.find(filter)
         .populate("instructor", "name email isProgramInstructor")
-        .sort({ createdAt: 1 })
+        .sort({ updatedAt: -1, createdAt: -1 })
         .skip(skip)
         .limit(limitNum),
     ]);
