@@ -875,8 +875,8 @@ export default function CurriculumBuilderTab({
           <button
             onClick={() => onEditCourse && onEditCourse(selectedCourse)}
             style={{ width: 'auto', borderRadius: '12px', padding: '10px 20px', fontWeight: 600, background: 'rgba(249, 115, 22, 0.1)', color: '#f97316', border: 'none', boxShadow: 'var(--inner-shadow)', cursor: 'pointer', transition: 'all 0.2s' }}
-            onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
-            onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'; e.currentTarget.style.filter = 'none'; }}
+            onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(249, 115, 22, 0.2)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
+            onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(249, 115, 22, 0.1)'; e.currentTarget.style.filter = 'none'; }}
           >
             {t('instructor.dashboard.actions.edit')}
           </button>
