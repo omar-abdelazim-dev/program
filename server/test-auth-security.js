@@ -70,7 +70,12 @@ const runTests = async () => {
       name: 'Auth Test',
       email: 'auth@test.com',
       password: 'Password1!',
-      role: 'student'
+      role: 'student',
+      termsAccepted: true,
+      termsVersion: '2026-08-25',
+      privacyNoticeAcknowledged: true,
+      privacyNoticeVersion: '2026-08-25',
+      dateOfBirth: '2000-01-01'
     });
     if (res.status !== 201) throw new Error(`Expected 201, got ${res.status}: ${JSON.stringify(res.body)}`);
 

@@ -11,6 +11,7 @@ import Notification from '../models/Notification.js';
 import logger from '../utils/logger.js';
 import { getModulesWithLessons, computeModuleProgress } from '../utils/courseContent.js';
 import { validateManualPaymentProof } from '../utils/manualPayment.js';
+import { CHECKOUT_TERMS_VERSION } from '../config/legal.js';
 
 const roundMoney = (amount) => Math.round((amount + Number.EPSILON) * 100) / 100;
 export const getDiscountQuote = async (course, rawCode) => {
@@ -48,7 +49,7 @@ export const validateDiscountCode = async (req, res) => {
 export const enroll = async (req, res) => {
   try {
     const { courseId } = req.params;
-    const { promoCode, discountCode } = req.body;
+    const { promoCode, discountCode, checkoutTermsAccepted, checkoutTermsVersion } = req.body;
 
     const course = await Course.findById(courseId);
     if (!course) {
@@ -66,6 +67,9 @@ export const enroll = async (req, res) => {
 
     const validation = validateManualPaymentProof(req.body);
     if (validation.error) return res.status(400).json({ message: validation.error });
+    if (checkoutTermsAccepted !== true || checkoutTermsVersion !== CHECKOUT_TERMS_VERSION) {
+      return res.status(400).json({ message: 'Please acknowledge the current payment, refund, and cancellation terms.' });
+    }
     const paymentProof = validation.proof;
     const quote = await getDiscountQuote(course, discountCode);
     if (!quote) return res.status(400).json({ message: 'Code not valid' });
@@ -115,6 +119,8 @@ export const enroll = async (req, res) => {
       platformCommission,
       instructorShare,
       status,
+      checkoutTermsVersion,
+      checkoutTermsAcceptedAt: new Date(),
       ...paymentProof,
     });
 

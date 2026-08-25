@@ -30,6 +30,11 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [role, setRole] = useState(initialParams.get('role') === 'instructor' ? 'instructor' : 'student');
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [privacyNoticeAcknowledged, setPrivacyNoticeAcknowledged] = useState(false);
+  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [guardianEmail, setGuardianEmail] = useState('');
+  const [guardianAware, setGuardianAware] = useState(false);
   
   // Step 2 Fields
   const [college, setCollege] = useState('');
@@ -342,6 +347,15 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
           }
         }
 
+        if (!termsAccepted) {
+          setAuthError(t('auth.terms_required', 'Please accept the Terms of Service.'));
+          return;
+        }
+        if (!privacyNoticeAcknowledged) {
+          setAuthError(t('auth.privacy_required', 'Please acknowledge the Privacy Notice.'));
+          return;
+        }
+
         setIsCreatingAccount(true);
         try {
           const payload = {
@@ -356,7 +370,15 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
             linkedinUrl,
             socialUrl,
             goalsText,
-            selectedPills
+            selectedPills,
+            termsAccepted: true,
+            termsVersion: '2026-08-25',
+            privacyNoticeAcknowledged: true,
+            privacyNoticeVersion: '2026-08-25',
+            dateOfBirth,
+            guardianEmail,
+            guardianAware,
+            legalLocale: i18n.language,
           };
           const response = await api.post('/auth/register', payload);
           localStorage.setItem(`${response.data.user.role}_lang`, i18n.language);
@@ -492,6 +514,19 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
                           <label>{t('auth.last_name')}</label>
                           <input type="text" placeholder="Al-Rashidi" required={!isLogin} value={lastName} onChange={(e) => { if (/^[a-zA-Z\u0600-\u06FF\s\-']*$/.test(e.target.value)) setLastName(e.target.value); }} />
                         </div>
+                      </div>
+                      <div className="input-group">
+                        <label>{t('auth.date_of_birth', 'Date of birth')} *</label>
+                        <input
+                          type="date"
+                          value={dateOfBirth}
+                          onChange={(e) => setDateOfBirth(e.target.value)}
+                          required={!isLogin}
+                          max={new Date().toISOString().slice(0, 10)}
+                        />
+                        <small style={{ color: 'var(--c-sub, var(--text-secondary))', marginTop: '6px' }}>
+                          {t('auth.age_notice', 'Instructor accounts are for adults. Students under 15 need a guardian-verified account.')}
+                        </small>
                       </div>
                     </div>
                   )}
@@ -837,6 +872,29 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
                     {t('auth.remember_me')}
                   </label>
                   <a className="forgot-password" onClick={() => { setOtpEmail(email); setAuthError(''); setAuthView('forgot_request'); }} style={{ cursor: 'pointer' }}>{t('auth.forgot_password')}</a>
+                </div>
+              )}
+
+              {!isLogin && registerStep === (role === 'instructor' ? 2 : 3) && (
+                <div className="legal-consents">
+                  <label className="legal-consent">
+                    <input type="checkbox" checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} required />
+                    <span>{t('auth.terms_consent_prefix', 'I agree to the ')}<a href="/terms" target="_blank" rel="noreferrer">{t('footer.terms')}</a>.</span>
+                  </label>
+                  <label className="legal-consent">
+                    <input type="checkbox" checked={privacyNoticeAcknowledged} onChange={(e) => setPrivacyNoticeAcknowledged(e.target.checked)} required />
+                    <span>{t('auth.privacy_notice_prefix', 'I have read the ')}<a href="/privacy" target="_blank" rel="noreferrer">{t('footer.privacy')}</a>.</span>
+                  </label>
+                  {role === 'student' && dateOfBirth && (() => {
+                    const today = new Date();
+                    const dob = new Date(`${dateOfBirth}T00:00:00`);
+                    let age = today.getFullYear() - dob.getFullYear();
+                    if (today < new Date(today.getFullYear(), dob.getMonth(), dob.getDate())) age -= 1;
+                    return age >= 15 && age < 18 ? <>
+                      <label className="legal-consent"><span>{t('auth.guardian_email', 'Guardian email')}</span><input type="email" value={guardianEmail} onChange={(e) => setGuardianEmail(e.target.value)} required /></label>
+                      <label className="legal-consent"><input type="checkbox" checked={guardianAware} onChange={(e) => setGuardianAware(e.target.checked)} required /><span>{t('auth.guardian_aware', 'My parent or legal guardian knows about this account and the Privacy Notice.')}</span></label>
+                    </> : null;
+                  })()}
                 </div>
               )}
 

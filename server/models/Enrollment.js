@@ -47,6 +47,8 @@ const enrollmentSchema = new mongoose.Schema(
     paymentMethod: String,
     screenshot: String,
     invoiceId: String,
+    checkoutTermsVersion: { type: String, default: '' },
+    checkoutTermsAcceptedAt: { type: Date },
     rejectionReason: String,
   },
   { timestamps: true }

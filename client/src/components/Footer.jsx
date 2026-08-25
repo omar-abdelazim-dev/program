@@ -43,6 +43,7 @@ export default function Footer() {
           <h4>{t('footer.legal')}</h4>
           <Link to="/terms">{t('footer.terms')}</Link>
           <Link to="/privacy">{t('footer.privacy')}</Link>
+          <Link to="/refunds">{t('footer.refunds', 'Refunds & Cancellations')}</Link>
         </div>
 
         <div className="site-footer-col">
