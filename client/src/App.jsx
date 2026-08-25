@@ -21,6 +21,7 @@ const HelpPage = lazy(() => import('./components/HelpPage'));
 const PrivacyPage = lazy(() => import('./components/PrivacyPage'));
 const MobileAppPage = lazy(() => import('./components/MobileAppPage'));
 const TermsPage = lazy(() => import('./components/TermsPage'));
+const RefundPolicyPage = lazy(() => import('./components/RefundPolicyPage'));
 const StudentProfilePage = lazy(() => import('./components/StudentProfilePage'));
 
 const RouteFallback = () => (
@@ -178,6 +179,9 @@ export default function App() {
       <Suspense fallback={<RouteFallback />}>
         <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/refunds" element={<RefundPolicyPage />} />
         <Route
           path="/auth/admin"
           element={(
@@ -269,6 +273,7 @@ export default function App() {
         <Route path="/help" element={<HelpPage />} />
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/refunds" element={<RefundPolicyPage />} />
         <Route path="/mobile-app" element={<MobileAppPage />} />
         </Routes>
       </StudentLayout>

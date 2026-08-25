@@ -88,6 +88,22 @@ const userSchema = new mongoose.Schema(
     socialUrl: { type: String, default: '' },
     goalsText: { type: String, default: '' },
     selectedPills: { type: [String], default: [] },
+    // Date of birth is only used for the age safeguard at account creation.
+    // It is excluded from normal reads to avoid exposing it to the client.
+    dateOfBirth: { type: Date, select: false },
+    isMinor: { type: Boolean, default: false, select: false },
+    guardianEmail: { type: String, default: '', select: false },
+    guardianConsentAt: { type: Date, select: false },
+    termsAcceptedAt: { type: Date },
+    termsVersion: { type: String, default: '' },
+    legalAcceptances: [{
+      document: { type: String, enum: ['terms', 'privacy_notice'], required: true },
+      version: { type: String, required: true },
+      acceptedAt: { type: Date, required: true },
+      locale: { type: String, default: 'en' },
+      ipAddress: { type: String, default: '' },
+      userAgent: { type: String, default: '' },
+    }],
   },
   { timestamps: true }
 );

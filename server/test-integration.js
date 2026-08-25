@@ -36,7 +36,15 @@ const registerViaOtpFlow = async (agent, { name, email, password, role, ...profi
   const verifyRes = await agent.post('/api/auth/verify-registration-otp').send({ email, otp: capturedOtp });
   if (verifyRes.status !== 200) throw new Error(`verify-registration-otp failed: ${JSON.stringify(verifyRes.body)}`);
 
-  return agent.post('/api/auth/register').send({ name, email, password, role, ...profile });
+  return agent.post('/api/auth/register').send({
+    name, email, password, role,
+    termsAccepted: true,
+    termsVersion: '2026-08-25',
+    privacyNoticeAcknowledged: true,
+    privacyNoticeVersion: '2026-08-25',
+    dateOfBirth: role === 'instructor' ? '1990-01-01' : '2000-01-01',
+    ...profile,
+  });
 };
 
 const run = async () => {
@@ -337,6 +345,8 @@ const run = async () => {
     paymentMethod: 'mobile_wallet',
     screenshot: 'https://res.cloudinary.com/demo/image/upload/payment-course-1.jpg',
     invoiceId: 'INV-COURSE-1',
+    checkoutTermsAccepted: true,
+    checkoutTermsVersion: '2026-08-25',
   });
   assert(res.status === 201, `Enroll failed: ${JSON.stringify(res.body)}`);
   assert(res.body.enrollment.status === 'pending', `Paid enrollment should start pending: ${JSON.stringify(res.body)}`);

@@ -4,6 +4,7 @@ import api from '../api/axios';
 import CustomSelect from './CustomSelect';
 import notyf from '../utils/notyf';
 import { useConfig } from '../context/ConfigContext';
+import { Link } from 'react-router-dom';
 
 export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling }) {
   const { t, i18n } = useTranslation();
@@ -20,6 +21,7 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
   const [discountCode, setDiscountCode] = useState('');
   const [discountQuote, setDiscountQuote] = useState(null);
   const [applyingDiscount, setApplyingDiscount] = useState(false);
+  const [checkoutTermsAccepted, setCheckoutTermsAccepted] = useState(false);
 
   useEffect(() => {
     setInvoiceId(`INV-${Math.floor(Math.random() * 1000000)}`);
@@ -84,6 +86,12 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
       notyf.error(msg);
       return;
     }
+    if (!checkoutTermsAccepted) {
+      const msg = t('course_page.payment.terms_required', 'Please acknowledge the payment, cancellation, and refund terms.');
+      setError(msg);
+      notyf.error(msg);
+      return;
+    }
 
     if (paymentMethod === 'mobile_wallet' && !/^\+20\d{10}$/.test(paymentAccount)) {
       const msg = t('course_page.payment.invalid_phone', 'Phone number must have exactly 10 digits after the +20 code.');
@@ -118,6 +126,8 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
         screenshot: screenshotUrl,
         invoiceId,
         discountCode: discountQuote?.code || '',
+        checkoutTermsAccepted: true,
+        checkoutTermsVersion: '2026-08-25',
       });
     } finally {
       setIsUploading(false);
@@ -326,6 +336,17 @@ export default function PaymentModal({ course, onConfirm, onCancel, isEnrolling 
               </div>
             </div>
           </div>
+
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '0.86rem', lineHeight: 1.45, color: 'var(--text-secondary)', cursor: 'pointer' }}>
+            <input type="checkbox" checked={checkoutTermsAccepted} onChange={(e) => setCheckoutTermsAccepted(e.target.checked)} required style={{ marginTop: '3px' }} />
+            <span>
+              {t('course_page.payment.legal_acknowledgement_prefix', 'I confirm the course price and understand that access is granted after payment review. I have read the ')}
+              <Link to="/terms" target="_blank" rel="noreferrer" style={{ color: 'var(--color-accent, #f97316)' }}>{t('footer.terms', 'Terms of Service')}</Link>
+              {t('course_page.payment.legal_acknowledgement_middle', ' and the ')}
+              <Link to="/refunds" target="_blank" rel="noreferrer" style={{ color: 'var(--color-accent, #f97316)' }}>{t('footer.refunds', 'Refunds & Cancellations')}</Link>
+              {t('course_page.payment.legal_acknowledgement_suffix', '.')}
+            </span>
+          </label>
 
           <div style={{ display: 'flex', gap: '16px', marginTop: '24px' }}>
             <button

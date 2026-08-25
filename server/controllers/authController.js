@@ -19,6 +19,18 @@ import {
   NAME_PATTERN,
 } from "../validators/authValidators.js";
 import { BCRYPT_ROUNDS } from "../config/security.js";
+import { LEGAL_DOCUMENTS } from '../config/legal.js';
+
+const getAge = (dateOfBirth) => {
+  const dob = new Date(`${dateOfBirth}T00:00:00.000Z`);
+  if (Number.isNaN(dob.getTime()) || dob > new Date()) return null;
+  const today = new Date();
+  let age = today.getUTCFullYear() - dob.getUTCFullYear();
+  const beforeBirthday = today.getUTCMonth() < dob.getUTCMonth()
+    || (today.getUTCMonth() === dob.getUTCMonth() && today.getUTCDate() < dob.getUTCDate());
+  if (beforeBirthday) age -= 1;
+  return age;
+};
 
 const normalizeProvidedCourses = (providedCourses) => {
   const courses = Array.isArray(providedCourses)
@@ -67,6 +79,7 @@ export const sendRegistrationOtp = async (req, res) => {
         .status(400)
         .json({ message: "Name, email, and password are required" });
     }
+
     // This name gets emailed back as-is (see otpService's OTP email
     // template) before validateRegister ever runs on the real /register
     // call — an unauthenticated caller could otherwise put arbitrary
@@ -147,12 +160,47 @@ export const register = async (req, res) => {
       socialUrl,
       goalsText,
       selectedPills,
+      termsAccepted,
+      termsVersion,
+      privacyNoticeAcknowledged,
+      privacyNoticeVersion,
+      dateOfBirth,
+      guardianEmail,
+      guardianAware,
+      legalLocale,
     } = req.body;
 
     if (!name || !email || !password) {
       return res
         .status(400)
         .json({ message: "Name, email, and password are required" });
+    }
+
+    // Only allow student/instructor at public signup; never trust the client
+    // to choose an administrator role.
+    const safeRole = role === "instructor" ? "instructor" : "student";
+
+    if (termsAccepted !== true || termsVersion !== LEGAL_DOCUMENTS.terms) {
+      return res.status(400).json({
+        message: "You must accept the current Terms of Service.",
+      });
+    }
+    if (privacyNoticeAcknowledged !== true || privacyNoticeVersion !== LEGAL_DOCUMENTS.privacyNotice) {
+      return res.status(400).json({ message: 'You must acknowledge the current Privacy Notice.' });
+    }
+
+    const age = getAge(dateOfBirth);
+    if (age === null) return res.status(400).json({ message: 'Enter a valid date of birth.' });
+    if (safeRole === 'instructor' && age < 18) {
+      return res.status(400).json({ message: 'Instructor accounts are available only to adults.' });
+    }
+    // Do not accept an unverified parent checkbox for children under 15.
+    // A verified guardian workflow is required before this age group can join.
+    if (safeRole === 'student' && age < 15) {
+      return res.status(403).json({ message: 'Students under 15 need a guardian-verified account. Please contact support.' });
+    }
+    if (safeRole === 'student' && age < 18 && (!guardianAware || !guardianEmail)) {
+      return res.status(400).json({ message: 'Students under 18 need a guardian email and confirmation that their guardian is aware.' });
     }
 
     const existingUser = await User.findOne({ email });
@@ -179,11 +227,6 @@ export const register = async (req, res) => {
         message: "Verification expired. Please restart registration.",
       });
     }
-
-    // Only allow 'student' or 'instructor' at signup — nobody should be able
-    // to register themselves as 'admin' through a public form. Admins are
-    // created manually (e.g. directly in the DB or by another admin).
-    const safeRole = role === "instructor" ? "instructor" : "student";
 
     // Verify system configurations for registration
     const config = await getInternalConfig();
@@ -244,6 +287,16 @@ export const register = async (req, res) => {
       socialUrl,
       goalsText,
       selectedPills,
+      dateOfBirth: new Date(`${dateOfBirth}T00:00:00.000Z`),
+      isMinor: age < 18,
+      guardianEmail: age < 18 ? guardianEmail.trim().toLowerCase() : '',
+      guardianConsentAt: age < 18 ? new Date() : undefined,
+      termsAcceptedAt: new Date(),
+      termsVersion,
+      legalAcceptances: [
+        { document: 'terms', version: termsVersion, acceptedAt: new Date(), locale: legalLocale || 'en', ipAddress: req.ip || '', userAgent: req.get('user-agent') || '' },
+        { document: 'privacy_notice', version: privacyNoticeVersion, acceptedAt: new Date(), locale: legalLocale || 'en', ipAddress: req.ip || '', userAgent: req.get('user-agent') || '' },
+      ],
       isVerified: true,
     });
 

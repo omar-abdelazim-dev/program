@@ -78,6 +78,39 @@
     padding: 20px 0 60px;
 }
 
+.legal-page {
+    max-width: 900px;
+}
+
+.legal-consent {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    color: var(--c-sub, var(--text-secondary));
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+
+.legal-consent input {
+    margin-top: 3px;
+    flex: 0 0 auto;
+}
+
+.legal-consent a {
+    color: var(--color-accent, #f97316);
+    text-decoration: underline;
+}
+
+.legal-consents {
+    display: grid;
+    gap: 10px;
+}
+
+.legal-consent input[type="email"] {
+    flex: 1 1 180px;
+    min-width: 0;
+}
+
 .static-page-title {
     font-size: 2.2rem;
     font-weight: 700;
@@ -301,4 +334,3 @@
     flex-direction: column;
     gap: 12px;
 }
-

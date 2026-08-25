@@ -80,6 +80,13 @@ export const validateRegister = [
     .isString().withMessage('Role must be a string')
     .isIn(['student', 'instructor']).withMessage('Role must be student or instructor'),
 
+  body('dateOfBirth')
+    .isISO8601({ strict: true }).withMessage('Enter a valid date of birth.'),
+
+  body('guardianEmail')
+    .optional({ checkFalsy: true })
+    .isEmail().withMessage('Enter a valid guardian email address.'),
+
   body('instructorStatus')
     .if(body('role').equals('instructor'))
     .isString().withMessage('Instructor status is required')
