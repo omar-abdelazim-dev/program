@@ -72,7 +72,7 @@ export default function QuizPlayer({ courseId, lesson, onSubmitted }) {
         <div style={{
           marginBottom: '24px', padding: '16px 20px', borderRadius: '12px',
           background: isLocked ? 'rgba(16, 185, 129, 0.08)' : 'rgba(59, 130, 246, 0.08)',
-          color: isLocked ? '#10b981' : '#3b82f6', fontWeight: 600, fontSize: '0.92rem',
+          color: isLocked ? '#10b981' : '#f97316', fontWeight: 600, fontSize: '0.92rem',
         }}>
           {isLocked
             ? t('student.quiz.graded_banner', 'Graded — {{score}} / {{max}} points', { score: submission.autoScore + submission.answers.reduce((s, a) => s + (a.pointsAwarded || 0), 0), max: submission.maxScore })

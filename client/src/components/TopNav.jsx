@@ -110,7 +110,7 @@ export default function TopNav({
           <div className="profile-dropdown" style={{ width: '360px', right: isRTL ? 'auto' : 0, left: isRTL ? 0 : 'auto', padding: 0, borderRadius: '16px', overflow: 'hidden' }}>
             <div style={{ padding: 0, display: "flex", flexDirection: "column" }}>
               <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--c-border-subtle, rgba(255,255,255,0.08))', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-surface)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }}>
-                <span style={{ color: 'var(--color-accent, #f97316)', fontSize: '1.05rem' }}>{t('nav.notifications', 'Notifications')}</span>
+                <span style={{ fontSize: '1.05rem', fontWeight: 700, background: 'linear-gradient(135deg, #f97316 0%, #eab308 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{t('nav.notifications', 'Notifications')}</span>
                 {notifications.length > 0 && (
                   <button
                     onClick={handleClearAllNotifications}

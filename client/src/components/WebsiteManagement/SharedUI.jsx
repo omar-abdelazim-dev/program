@@ -5,7 +5,7 @@ import 'notyf/notyf.min.css';
 
 export const notyf = new Notyf({
   position: { x: 'right', y: 'bottom' },
-  types: [{ type: 'info', background: '#3B82F6', icon: false }]
+  types: [{ type: 'info', background: '#f97316', icon: false }]
 });
 export const InputField = ({ label, type = "text", value, onChange, disabled, placeholder, required }) => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }} data-tooltip={disabled ? "Super Admin permission required" : ""}>

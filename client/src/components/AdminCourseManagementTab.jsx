@@ -1631,7 +1631,7 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
                       </div>
                       <div style={{ background: "var(--bg-main)", padding: "14px 16px", borderRadius: "12px", boxShadow: "var(--inner-shadow)" }}>
                         <div style={{ fontSize: "0.72rem", color: "var(--c-sub)", fontWeight: "600", textTransform: "uppercase" }}>Modules</div>
-                        <div style={{ fontSize: "1.4rem", fontWeight: "700", color: "#3b82f6", marginTop: "4px" }}>{courseLessonsModal.modules.length}</div>
+                        <div style={{ fontSize: "1.4rem", fontWeight: "700", color: "#f97316", marginTop: "4px" }}>{courseLessonsModal.modules.length}</div>
                       </div>
                       <div style={{ background: "var(--bg-main)", padding: "14px 16px", borderRadius: "12px", boxShadow: "var(--inner-shadow)" }}>
                         <div style={{ fontSize: "0.72rem", color: "var(--c-sub)", fontWeight: "600", textTransform: "uppercase" }}>Approved</div>

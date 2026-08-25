@@ -72,7 +72,7 @@ const systemConfigSchema = new mongoose.Schema(
       platformLogo: { type: String, default: '', maxlength: 500 },
       favicon: { type: String, default: '', maxlength: 500 },
       defaultTheme: { type: String, enum: ['system', 'light', 'dark'], default: 'system' },
-      accentColor: { type: String, default: '#3B82F6', maxlength: 20 },
+      accentColor: { type: String, default: '#f97316', maxlength: 20 },
       landingBanner: { type: String, default: '', maxlength: 500 },
       footerInfo: { type: String, default: '', maxlength: 500 },
     },

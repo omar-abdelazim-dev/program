@@ -140,7 +140,7 @@ export default function TestimonialsManager({ user }) {
                 </td>
                 <td style={{ padding: '16px', verticalAlign: 'top', borderBottom: '1px solid var(--border)' }}>
                   <span className="status-badge" style={{
-                    color: item.status === 'approved' ? '#10b981' : item.status === 'featured' ? '#f97316' : item.status === 'rejected' ? '#ef4444' : item.status === 'hidden' ? '#f59e0b' : item.status === 'pending' ? '#3b82f6' : 'var(--text-primary)',
+                    color: item.status === 'approved' ? '#10b981' : item.status === 'featured' ? '#f97316' : item.status === 'rejected' ? '#ef4444' : item.status === 'hidden' ? '#f59e0b' : item.status === 'pending' ? '#f97316' : 'var(--text-primary)',
                     textTransform: 'capitalize'
                   }}>
                     {item.status}

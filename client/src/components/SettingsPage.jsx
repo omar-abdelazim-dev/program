@@ -1012,7 +1012,7 @@ function AccountSection({ user, setUser, onLogout }) {
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: passwordResendCooldown > 0 ? 'var(--text-secondary)' : '#3b82f6',
+                    color: passwordResendCooldown > 0 ? 'var(--text-secondary)' : '#f97316',
                     fontSize: '0.8rem',
                     fontWeight: 600,
                     cursor: passwordResendCooldown > 0 ? 'not-allowed' : 'pointer',

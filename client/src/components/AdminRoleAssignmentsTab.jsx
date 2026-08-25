@@ -24,7 +24,7 @@ const badge = (color) => ({
   fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em',
 });
 
-const ROLE_COLORS = { superadmin: '#ef4444', admin: '#f97316', instructor: '#3b82f6', student: '#22c55e' };
+const ROLE_COLORS = { superadmin: '#ef4444', admin: '#f97316', instructor: '#f59e0b', student: '#22c55e' };
 
 // ─── Spinner ──────────────────────────────────────────────────────────────────
 const Spinner = () => (

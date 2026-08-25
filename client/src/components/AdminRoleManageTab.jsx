@@ -86,10 +86,10 @@ const SYSTEM_IDS = ['superadmin', 'admin', 'instructor', 'student'];
 const DEFAULT_ROLES = [
   { id: 'superadmin', name: 'Super Admin', description: 'Full platform control — unrestricted access to all features and settings.', color: '#ef4444', usersCount: 3 },
   { id: 'admin',      name: 'Admin',       description: 'Platform management including users, courses, and financial oversight.',    color: '#f97316', usersCount: 8 },
-  { id: 'instructor', name: 'Instructor',  description: 'Course creation & management with limited platform access.',               color: '#3b82f6', usersCount: 24 },
+  { id: 'instructor', name: 'Instructor',  description: 'Course creation & management with limited platform access.',               color: '#f59e0b', usersCount: 24 },
   { id: 'student',    name: 'Student',     description: 'Learning platform access — enroll, watch, and interact with courses.',     color: '#22c55e', usersCount: 1240 },
 ];
-const PRESETS = ['#f97316', '#3b82f6', '#8b5cf6', '#22c55e', '#ec4899'];
+const PRESETS = ['#f97316', '#f59e0b', '#8b5cf6', '#22c55e', '#ec4899'];
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function AdminRoleManageTab() {

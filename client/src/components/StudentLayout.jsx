@@ -309,8 +309,11 @@ export default function StudentLayout({
                   >
                     <span
                       style={{
-                        color: "var(--color-accent, #f97316)",
                         fontSize: "1.05rem",
+                        fontWeight: 700,
+                        background: "linear-gradient(135deg, #f97316 0%, #eab308 100%)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
                       }}
                     >
                       {t("nav.notifications", "Notifications")}

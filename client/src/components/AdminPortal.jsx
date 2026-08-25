@@ -1016,8 +1016,8 @@ export default function AdminPortal({
                   },
                   under_review: {
                     label: "Under Review",
-                    bg: "rgba(59, 130, 246, 0.12)",
-                    color: "#60a5fa",
+                    bg: "rgba(249, 115, 22, 0.12)",
+                    color: "#f97316",
                   },
                   approved: {
                     label: "Approved",
@@ -1500,8 +1500,11 @@ export default function AdminPortal({
                 >
                   <span
                     style={{
-                      color: "var(--color-accent, #f97316)",
                       fontSize: "1.05rem",
+                      fontWeight: 700,
+                      background: "linear-gradient(135deg, #f97316 0%, #eab308 100%)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
                     }}
                   >
                     {t("nav.notifications", "Notifications")}

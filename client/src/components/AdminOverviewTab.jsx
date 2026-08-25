@@ -222,7 +222,7 @@ const AdminOverviewTab = ({ stats, user, setActiveTab, loading }) => {
   
   const totalEnrollments = Object.values(categoryCounts).reduce((a, b) => a + b, 0);
 
-  const colors = ["#f97316", "#8b5cf6", "#3b82f6", "#ec4899", "#10b981", "#eab308"];
+  const colors = ["#f97316", "#8b5cf6", "#ea580c", "#ec4899", "#10b981", "#eab308"];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }} className="animate-entrance">
@@ -396,7 +396,7 @@ const AdminOverviewTab = ({ stats, user, setActiveTab, loading }) => {
                   </div>
                   <button 
                     onClick={() => setActiveTab('enrollment')}
-                    style={{ padding: '6px 14px', borderRadius: '8px', background: 'rgba(59,130,246,0.15)', color: '#3b82f6', border: 'none', fontWeight: 600, fontSize: '0.78rem', cursor: 'pointer', transition: 'all 0.2s' }}
+                    style={{ padding: '6px 14px', borderRadius: '8px', background: 'rgba(249,115,22,0.15)', color: '#f97316', border: 'none', fontWeight: 600, fontSize: '0.78rem', cursor: 'pointer', transition: 'all 0.2s' }}
                   >
                     Review
                   </button>
@@ -565,7 +565,7 @@ const AdminOverviewTab = ({ stats, user, setActiveTab, loading }) => {
               {/* Database Metric */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'var(--bg-main)', borderRadius: '12px', boxShadow: 'var(--inner-shadow)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: healthData?.database?.status === 'connected' ? 'rgba(59,130,246,0.1)' : 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: healthData?.database?.status === 'connected' ? '#3b82f6' : '#ef4444', fontSize: '0.9rem' }}>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: healthData?.database?.status === 'connected' ? 'rgba(249,115,22,0.1)' : 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: healthData?.database?.status === 'connected' ? '#f97316' : '#ef4444', fontSize: '0.9rem' }}>
                     🗄️
                   </div>
                   <div>

@@ -5,7 +5,7 @@ import api from '../api/axios';
 
 const notyf = new Notyf({
   position: { x: 'right', y: 'top' },
-  types: [{ type: 'info', background: '#3B82F6', icon: false }]
+  types: [{ type: 'info', background: '#f97316', icon: false }]
 });
 
 const systemTabStyles = `
@@ -395,7 +395,7 @@ export default function SystemManagement({ user }) {
     storage: { provider: 'Cloudinary', maxUploadSizeMb: 50, allowedFileTypes: '.mp4,.pdf,.zip,.jpg,.png' },
     email: { smtpHost: '', smtpPort: 587, smtpUser: '', smtpPass: '' },
     notifications: { studentEmails: true, instructorEmails: true, adminAlerts: true, marketingEmails: false, pushNotifications: false, systemAlerts: true },
-    appearance: { platformLogo: '', favicon: '', defaultTheme: 'system', accentColor: '#3B82F6', landingBanner: '', footerInfo: '' },
+    appearance: { platformLogo: '', favicon: '', defaultTheme: 'system', accentColor: '#f97316', landingBanner: '', footerInfo: '' },
     maintenance: { isMaintenanceMode: false, message: '', estimatedCompletion: '', whitelist: '' },
     backup: { lastBackup: '', frequency: 'daily' },
     logs: { retentionDays: 30 },
@@ -705,16 +705,16 @@ export default function SystemManagement({ user }) {
               <div
                 style={{
                   boxShadow: "var(--inner-shadow)",
-                  background: "rgba(59,130,246,0.1)",
+                  background: "rgba(249,115,22,0.1)",
                   padding: "16px",
                   borderRadius: "12px",
-                  border: "1px solid rgba(59,130,246,0.25)",
+                  border: "1px solid rgba(249,115,22,0.25)",
                 }}
               >
                 <div style={{ fontSize: "0.8rem", color: "var(--c-sub)", textTransform: "uppercase", fontWeight: 600 }}>
                   Provider Storage
                 </div>
-                <div style={{ fontSize: "1.4rem", fontWeight: 700, color: "#3B82F6", marginTop: "4px" }}>
+                <div style={{ fontSize: "1.4rem", fontWeight: 700, color: "var(--c-orange, #f97316)", marginTop: "4px" }}>
                   Managed by Cloudinary
                 </div>
                 <div style={{ fontSize: "0.75rem", color: "var(--c-sub)", marginTop: "2px" }}>
@@ -898,7 +898,7 @@ export default function SystemManagement({ user }) {
               <button 
                 onClick={handleTestEmail} 
                 disabled={emailTest.status === 'loading' || isFieldRestricted('email', 'test_utility', isSuperAdmin)}
-                style={{ padding: '10px 24px', background: '#3B82F6', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: emailTest.status === 'loading' || isFieldRestricted('email', 'test_utility', isSuperAdmin) ? 'not-allowed' : 'pointer', opacity: emailTest.status === 'loading' ? 0.7 : 1 }}
+                style={{ padding: '10px 24px', background: 'linear-gradient(135deg, #f97316, #ea580c)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: emailTest.status === 'loading' || isFieldRestricted('email', 'test_utility', isSuperAdmin) ? 'not-allowed' : 'pointer', opacity: emailTest.status === 'loading' ? 0.7 : 1 }}
               >
                 {emailTest.status === 'loading' ? 'Sending...' : 'Send Test Email'}
               </button>
@@ -972,7 +972,7 @@ export default function SystemManagement({ user }) {
           <SelectField label="Automated Backup Frequency" value={settings.backup.frequency} onChange={e => handleChange('backup', 'frequency', e.target.value)} disabled={isFieldRestricted('backup', 'frequency', isSuperAdmin)} options={[{ value: 'hourly', label: 'Hourly' }, { value: 'daily', label: 'Daily' }, { value: 'weekly', label: 'Weekly' }]} />
           
           <div style={{ display: 'flex', gap: '16px', marginTop: '32px', paddingTop: '24px', borderTop: '1px solid var(--c-border-subtle)' }}>
-            <button onClick={downloadSettingsBackup} className="glass-input" style={{ padding: '10px 20px', cursor: isFieldRestricted('backup', 'execute', isSuperAdmin) ? 'not-allowed' : 'pointer', background: 'rgba(59,130,246,0.1)', color: '#3B82F6', border: '1px solid rgba(59,130,246,0.3)' }} disabled={isFieldRestricted('backup', 'execute', isSuperAdmin)}>
+            <button onClick={downloadSettingsBackup} className="glass-input" style={{ padding: '10px 20px', cursor: isFieldRestricted('backup', 'execute', isSuperAdmin) ? 'not-allowed' : 'pointer', background: 'rgba(249,115,22,0.1)', color: '#f97316', border: '1px solid rgba(249,115,22,0.3)' }} disabled={isFieldRestricted('backup', 'execute', isSuperAdmin)}>
               Create Settings Backup Now
             </button>
           </div>
@@ -1014,12 +1014,12 @@ export default function SystemManagement({ user }) {
             className=""
             style={{
               padding: '10px 24px', 
-              background: '#3B82F6', 
+              background: 'linear-gradient(135deg, #f97316, #ea580c)', 
               color: '#fff', 
               border: 'none', 
               borderRadius: '8px', fontWeight: 600, 
               cursor: (!hasUnsavedChanges || saving || loadingConfig) ? 'not-allowed' : 'pointer', 
-              boxShadow: hasUnsavedChanges ? '0 4px 14px rgba(59,130,246,0.3)' : 'none',
+              boxShadow: hasUnsavedChanges ? '0 4px 14px rgba(249,115,22,0.35)' : 'none',
               opacity: (!hasUnsavedChanges || saving || loadingConfig) ? 0.5 : 1,
               transition: 'all 0.2s',
               display: 'flex', alignItems: 'center', gap: '8px'
@@ -1094,7 +1094,7 @@ export default function SystemManagement({ user }) {
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', padding: '12px', background: commissionApplyScope === 'future' ? 'rgba(59,130,246,0.1)' : 'var(--c-bg-dark)', border: commissionApplyScope === 'future' ? '1px solid #3B82F6' : '1px solid var(--c-border-subtle)', borderRadius: '8px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', padding: '12px', background: commissionApplyScope === 'future' ? 'rgba(249,115,22,0.1)' : 'var(--c-bg-dark)', border: commissionApplyScope === 'future' ? '1px solid #f97316' : '1px solid var(--c-border-subtle)', borderRadius: '8px' }}>
                 <input type="radio" name="scope" value="future" checked={commissionApplyScope === 'future'} onChange={() => setCommissionApplyScope('future')} />
                 <div>
                   <div style={{ fontWeight: 600, color: 'var(--text-h)' }}>Future Enrollments Only (Recommended)</div>
@@ -1102,7 +1102,7 @@ export default function SystemManagement({ user }) {
                 </div>
               </label>
               
-              <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', padding: '12px', background: commissionApplyScope === 'existing' ? 'rgba(59,130,246,0.1)' : 'var(--c-bg-dark)', border: commissionApplyScope === 'existing' ? '1px solid #3B82F6' : '1px solid var(--c-border-subtle)', borderRadius: '8px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', padding: '12px', background: commissionApplyScope === 'existing' ? 'rgba(249,115,22,0.1)' : 'var(--c-bg-dark)', border: commissionApplyScope === 'existing' ? '1px solid #f97316' : '1px solid var(--c-border-subtle)', borderRadius: '8px' }}>
                 <input type="radio" name="scope" value="existing" checked={commissionApplyScope === 'existing'} onChange={() => setCommissionApplyScope('existing')} />
                 <div>
                   <div style={{ fontWeight: 600, color: 'var(--text-h)' }}>Existing Enrollments</div>
@@ -1110,7 +1110,7 @@ export default function SystemManagement({ user }) {
                 </div>
               </label>
 
-              <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', padding: '12px', background: commissionApplyScope === 'platform' ? 'rgba(59,130,246,0.1)' : 'var(--c-bg-dark)', border: commissionApplyScope === 'platform' ? '1px solid #3B82F6' : '1px solid var(--c-border-subtle)', borderRadius: '8px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', padding: '12px', background: commissionApplyScope === 'platform' ? 'rgba(249,115,22,0.1)' : 'var(--c-bg-dark)', border: commissionApplyScope === 'platform' ? '1px solid #f97316' : '1px solid var(--c-border-subtle)', borderRadius: '8px' }}>
                 <input type="radio" name="scope" value="platform" checked={commissionApplyScope === 'platform'} onChange={() => setCommissionApplyScope('platform')} />
                 <div>
                   <div style={{ fontWeight: 600, color: 'var(--text-h)' }}>Entire Platform</div>

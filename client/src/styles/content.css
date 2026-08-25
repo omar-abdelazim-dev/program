@@ -8,9 +8,9 @@
     --c-bg-subtle: rgba(255, 255, 255, 0.02);
     --c-bg-hover: rgba(255, 255, 255, 0.1);
     --c-input-bg: rgba(255, 255, 255, 0.03);
-    --c-primary: #4f46e5;
-    --c-primary-bg: rgba(79, 70, 229, 0.1);
-    --c-orange: #FB923C;
+    --c-primary: #f97316;
+    --c-primary-bg: rgba(249, 115, 22, 0.1);
+    --c-orange: #f97316;
     --c-purple: #8B5CF6;
     --c-yellow: #FBBF24;
     --c-red: #EF4444;
@@ -2660,8 +2660,8 @@ body.light-mode .changeRole {
 }
 
 .theme-admin {
-    --accent: #3B82F6;
-    --accent-glow: rgba(59, 130, 246, 0.35);
+    --accent: #f97316;
+    --accent-glow: rgba(249, 115, 22, 0.35);
 }
 
 .theme-certificates {
@@ -2940,8 +2940,8 @@ label,
 
 [data-role="admin"],
 .admin-portal {
-    --accent: #3B82F6;
-    --accent-glow: rgba(59, 130, 246, 0.35);
+    --accent: #f97316;
+    --accent-glow: rgba(249, 115, 22, 0.35);
 }
 
 [data-role="instructor"],
