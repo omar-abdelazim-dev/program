@@ -1,20 +1,23 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 
 export default function ConfirmModal({ isOpen, title, message, onConfirm, onCancel, confirmText = "Confirm", cancelText = "Cancel", intent = "danger" }) {
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div style={{
       position: 'fixed',
       top: 0,
       left: 0,
       width: '100vw',
       height: '100vh',
-      backgroundColor: 'rgba(0,0,0,0.8)',
+      backgroundColor: 'rgba(0,0,0,0.55)',
+      backdropFilter: 'blur(6px)',
+      WebkitBackdropFilter: 'blur(6px)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      zIndex: 9999
+      zIndex: 999999
     }}>
       <div className="glass-card animate-entrance" style={{
         padding: '32px',
@@ -23,7 +26,9 @@ export default function ConfirmModal({ isOpen, title, message, onConfirm, onCanc
         textAlign: 'center',
         display: 'flex',
         flexDirection: 'column',
-        gap: '24px'
+        gap: '24px',
+        borderRadius: '16px',
+        boxShadow: 'var(--outer-shadow)'
       }}>
         <div>
           <h2 style={{ margin: '0 0 12px 0', fontSize: '1.5rem', color: 'var(--text-h)' }}>{title}</h2>
@@ -62,6 +67,7 @@ export default function ConfirmModal({ isOpen, title, message, onConfirm, onCanc
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

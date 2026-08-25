@@ -7,6 +7,12 @@ const sessionSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    doorScope: {
+      type: String,
+      enum: ['user', 'admin', 'superadmin'],
+      required: true,
+      default: 'user',
+    },
     refreshTokenHash: {
       type: String,
       required: true,

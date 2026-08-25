@@ -44,7 +44,7 @@ body.light-mode {
     --c-bg-hover: rgba(0, 0, 0, 0.05);
     --c-input-bg: rgba(0, 0, 0, 0.03);
     --c-bg: #FAF7F2;
-    --c-card: rgba(255, 255, 255, 0.7);
+    --c-card: #FFFFFF;
     --c-light: #1f2937;
     --c-sub: #4b5563;
 
@@ -743,18 +743,16 @@ body.light-mode .continue-card {
     flex-direction: column;
     overflow: hidden;
     cursor: pointer;
-    transition: transform 0.25s ease, scale 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    transition: box-shadow 0.25s ease, border-color 0.25s ease;
     height: 100%;
     background-color: var(--bg-surface);
     padding: 0;
     border-radius: 12px;
-    scale: 0.90;
     /* equal heights in grid row */
 }
 
 .cc-card:hover {
-    transform: translateY(-4px);
-    scale: 0.92;
+    transform: none !important;
     box-shadow: var(--outer-shadow);
 }
 
@@ -2377,7 +2375,7 @@ body.light-mode .custom-select-value.placeholder {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
-    align-items: flex-end;
+    align-items: flex-start;
 }
 
 .input-group {
@@ -2686,19 +2684,30 @@ body.light-mode .changeRole {
    unconditionally with !important and painted every card grey by
    compositing a 50%-opaque near-black over the light background). */
 body:not(.light-mode) .glass-card,
+body:not(.light-mode) .solid-card,
 body:not(.light-mode) .dash-card,
 body:not(.light-mode) .course-card,
+body:not(.light-mode) .stat-card,
+body:not(.light-mode) .instructor-card,
+body:not(.light-mode) .side-card,
+body:not(.light-mode) .path-card,
+body:not(.light-mode) .continue-card,
 body:not(.light-mode) .admin-card,
 body:not(.light-mode) .table-card,
 body:not(.light-mode) .analytics-card,
-body:not(.light-mode) .cc-card {
+body:not(.light-mode) .cc-card,
+body:not(.light-mode) .settings-section,
+body:not(.light-mode) .auth-card,
+body:not(.light-mode) [class*="-card"],
+body:not(.light-mode) [class*="__card"] {
+    background-color: #1F1E2C !important;
+    background: #1F1E2C !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
     border-radius: 12px !important;
-    backdrop-filter: blur(20px) !important;
-    -webkit-backdrop-filter: blur(20px) !important;
     border: none !important;
     box-shadow: var(--outer-shadow) !important;
     transition: all 0.7s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
-    /* Standardize internal padding */
 }
 
 /* Inner panels get 18px radius */
@@ -3007,6 +3016,7 @@ label,
 
 /* 2 & 3. Container Compatibility, Borders, and Shadows */
 body.light-mode .glass-card,
+body.light-mode .solid-card,
 body.light-mode .dash-card,
 body.light-mode .course-card,
 body.light-mode .stat-card,
@@ -3014,8 +3024,18 @@ body.light-mode .instructor-card,
 body.light-mode .side-card,
 body.light-mode .path-card,
 body.light-mode .continue-card,
-body.light-mode .cc-card {
-    background-color: rgba(255, 255, 255, 0.7) !important;
+body.light-mode .cc-card,
+body.light-mode .admin-card,
+body.light-mode .table-card,
+body.light-mode .analytics-card,
+body.light-mode .settings-section,
+body.light-mode .auth-card,
+body.light-mode [class*="-card"],
+body.light-mode [class*="__card"] {
+    background-color: #FFFFFF !important;
+    background: #FFFFFF !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
     border: 1px solid transparent !important;
     box-shadow: var(--outer-shadow) !important;
     border-radius: 12px !important;
@@ -3033,7 +3053,7 @@ body.light-mode {
 
 /* --- Light Mode Overrides for Admin Sidebar --- */
 body.light-mode .admin-sidebar {
-    background: rgba(255, 255, 255, 0.7);
+    background: #FFFFFF;
     border-right: 1px solid rgba(0, 0, 0, 0.08);
     box-shadow: var(--outer-shadow) !important;
 }
@@ -3594,15 +3614,22 @@ body.light-mode .solid-input {
     box-shadow: var(--inner-shadow) !important;
     color: var(--text-h) !important;
     background: var(--bg-main) !important;
+    border: 1.5px solid transparent !important;
+    outline: none !important;
 }
 
-body.light-mode .solid-input:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15), inset var(--outer-shadow) !important;
+body.light-mode .solid-input:focus,
+body.light-mode .solid-input:focus-visible {
+    outline: none !important;
+    border-color: #f97316 !important;
+    border: 1.5px solid #f97316 !important;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2), var(--inner-shadow) !important;
 }
 
-body.light-mode .solid-input:read-only:focus {
-    border-color: transparent;
+body.light-mode .solid-input:read-only:focus,
+body.light-mode .solid-input:read-only:focus-visible {
+    outline: none !important;
+    border-color: transparent !important;
     box-shadow: var(--inner-shadow) !important;
 }
 
@@ -3715,10 +3742,6 @@ body [data-role="admin"] .profile-dropdown,
 body [data-role="superadmin"] .profile-dropdown,
 body.light-mode [data-role="admin"] .profile-dropdown,
 body.light-mode [data-role="superadmin"] .profile-dropdown,
-body [data-role="admin"] .settings-section,
-body [data-role="superadmin"] .settings-section,
-body.light-mode [data-role="admin"] .settings-section,
-body.light-mode [data-role="superadmin"] .settings-section,
 body [data-role="admin"] .dash-header,
 body [data-role="superadmin"] .dash-header,
 body.light-mode [data-role="admin"] .dash-header,
@@ -3738,3 +3761,75 @@ body.light-mode [data-role="superadmin"] .header-search-input {
 [data-role="superadmin"] {
     --radius-card: 12px;
 }
+
+/* Reorder Arrow Buttons in Curriculum Builder */
+.reorder-arrow-btn {
+    width: 24px;
+    height: 20px;
+    background: var(--bg-main) !important;
+    border: 1px solid transparent !important;
+    border-radius: 6px !important;
+    box-shadow: var(--inner-shadow) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: var(--c-sub) !important;
+    cursor: pointer;
+    padding: 0 !important;
+    transition: all 0.2s ease !important;
+}
+
+.reorder-arrow-btn:hover:not(:disabled) {
+    color: #f97316 !important;
+    filter: brightness(1.05);
+}
+
+.reorder-arrow-btn:disabled {
+    opacity: 0.25 !important;
+    cursor: default !important;
+    box-shadow: none !important;
+    pointer-events: none !important;
+}
+
+
+/* Horizontal scrolling for grouped courses (Semester sections) */
+.home-semester-section .cc-grid {
+    display: flex !important;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
+    padding-bottom: 12px;
+    gap: 20px;
+}
+
+.home-semester-section .cc-grid > * {
+    flex: 0 0 calc(33.333% - 14px);
+    min-width: 270px;
+    max-width: 320px;
+    scroll-snap-align: start;
+}
+
+.home-semester-section .cc-grid::-webkit-scrollbar {
+    height: 8px;
+}
+.home-semester-section .cc-grid::-webkit-scrollbar-track {
+    background: transparent;
+}
+.home-semester-section .cc-grid::-webkit-scrollbar-thumb {
+    background: var(--c-border-active);
+    border-radius: 4px;
+}
+.home-semester-section .cc-grid::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+/* Admin Support Tab — filter dropdown */
+.admin-filter-select {
+    background-color: var(--bg-surface) !important;
+    box-shadow: var(--outer-shadow) !important;
+}
+.admin-filter-select.focus {
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2), var(--outer-shadow) !important;
+}
+

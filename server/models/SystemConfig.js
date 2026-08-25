@@ -25,6 +25,9 @@ const systemConfigSchema = new mongoose.Schema(
       instaPayAccount: { type: String, default: '', maxlength: 120 },
       mobileWalletNumber: { type: String, default: '', maxlength: 30 },
       manualPaymentInstructions: { type: String, default: '', maxlength: 500 },
+      // Company contact info shown on the payment notice (superadmin only)
+      companyPhone: { type: String, default: '', maxlength: 30 },
+      companyInstaPayAccount: { type: String, default: '', maxlength: 120 },
     },
 
     registration: {

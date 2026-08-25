@@ -13,10 +13,15 @@ const courseSchema = new mongoose.Schema(
     },
     price: {
       type: Number,
-      required: [true, 'Price is required'],
-      min: 0,
-      // Paid access uses the manual transfer-proof review flow. There is no
-      // card processor or automated gateway settlement.
+      default: 0,
+      min: [0, 'Course price cannot be negative'],
+      validate: {
+        validator: function (v) {
+          if (this.courseType === 'full' && (v < 250 || v > 5000)) return false;
+          return true;
+        },
+        message: 'Full course price must be between 250 EGP and 5000 EGP',
+      },
     },
     // INS-03: de-required in favor of College-based tagging — kept (rather
     // than dropped) so existing courses and category-based analytics/filters
@@ -144,6 +149,8 @@ const courseSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+courseSchema.index({ status: 1, updatedAt: -1, createdAt: -1 });
 
 const Course = mongoose.model('Course', courseSchema);
 

@@ -14,7 +14,7 @@ import { validateManualPaymentProof } from '../utils/manualPayment.js';
 import { CHECKOUT_TERMS_VERSION } from '../config/legal.js';
 
 const roundMoney = (amount) => Math.round((amount + Number.EPSILON) * 100) / 100;
-const getDiscountQuote = async (course, rawCode) => {
+export const getDiscountQuote = async (course, rawCode) => {
   const code = String(rawCode || '').trim().toUpperCase();
   if (!code) return { originalPrice: course.price, discountPercentage: 0, discountAmount: 0, finalPrice: course.price, code: '' };
   const discount = await DiscountCode.findOne({ code, isActive: true, expiresAt: { $gt: new Date() } });
@@ -26,8 +26,19 @@ const getDiscountQuote = async (course, rawCode) => {
 export const validateDiscountCode = async (req, res) => {
   try {
     const course = await Course.findById(req.params.courseId);
-    if (!course || course.status !== 'approved' || !Number.isFinite(course.price) || course.price <= 0) return res.status(400).json({ message: 'Code not valid' });
-    const quote = await getDiscountQuote(course, req.body.code);
+    if (!course || course.status !== 'approved') return res.status(400).json({ message: 'Code not valid' });
+    
+    let priceToUse = course.price;
+    if (req.body.moduleId) {
+      const { default: Module } = await import('../models/Module.js');
+      const module = await Module.findOne({ _id: req.body.moduleId, course: course._id });
+      if (!module) return res.status(404).json({ message: 'Module not found' });
+      priceToUse = module.price;
+    }
+
+    if (!Number.isFinite(priceToUse) || priceToUse <= 0) return res.status(400).json({ message: 'Code not valid' });
+
+    const quote = await getDiscountQuote({ price: priceToUse }, req.body.code);
     if (!quote) return res.status(400).json({ message: 'Code not valid' });
     res.json({ valid: true, ...quote });
   } catch (error) { logger.error('Discount validation failed', { error: error.message }); res.status(400).json({ message: 'Code not valid' }); }
@@ -190,30 +201,59 @@ export const getMyEnrollments = async (req, res) => {
       })
       .sort({ updatedAt: -1 });
 
-    // Courses can be deleted while an enrollment still references them
-    // (deleteCourse intentionally leaves enrollments for history) — skip those
-    // rather than crashing on the null populated course.
-    const validEnrollments = enrollments.filter((enrollment) => enrollment.course);
+    const { default: ModulePurchase } = await import('../models/ModulePurchase.js');
+    const modulePurchases = await ModulePurchase.find({ 
+      student: req.user.id, 
+      status: { $in: ['approved', 'pending', 'under_review'] } 
+    }).populate({
+        path: 'course',
+        populate: { path: 'instructor', select: 'name avatar isProgramInstructor' }
+      });
 
-    // Attach a computed progress percentage to each enrollment so the
-    // frontend doesn't have to fetch lesson counts separately for every card.
+    const enrollmentCourseIds = new Set(enrollments.map(e => e.course?._id?.toString()).filter(Boolean));
+    const extraOngoingCoursesMap = new Map();
+    for (const mp of modulePurchases) {
+      if (!mp.course) continue;
+      const cId = mp.course._id.toString();
+      if (!enrollmentCourseIds.has(cId)) {
+        if (!extraOngoingCoursesMap.has(cId)) {
+          extraOngoingCoursesMap.set(cId, { course: mp.course, status: mp.status });
+        } else if (mp.status === 'approved') {
+          extraOngoingCoursesMap.get(cId).status = 'approved';
+        }
+      }
+    }
+
+    const virtualEnrollments = Array.from(extraOngoingCoursesMap.values()).map(({ course, status }) => ({
+      _id: `virtual-${course._id}`,
+      course,
+      completedLessons: [],
+      progressPercent: 0,
+      student: req.user.id,
+      status,
+      isVirtual: true,
+    }));
+
+    const validEnrollments = enrollments.filter((enrollment) => enrollment.course);
+    const allEnrollments = [...validEnrollments, ...virtualEnrollments];
+
     const withProgress = await Promise.all(
-      validEnrollments.map(async (enrollment) => {
-        // Fetch all lessons for the course (via its modules), in module -> lesson order
+      allEnrollments.map(async (enrollment) => {
+        const isVirtual = enrollment.isVirtual;
         const grouped = await getModulesWithLessons(enrollment.course._id);
         const allLessons = grouped.flatMap(({ lessons }) => lessons);
         const totalLessons = allLessons.length;
         
-        // Use completedLessons to calculate progress
         const completedCount = enrollment.completedLessons.length;
         const progressPercent = totalLessons === 0 ? 0 : Math.round((completedCount / totalLessons) * 100);
         
-        // Find current lesson: first lesson not in completedLessons
         const completedIds = enrollment.completedLessons.map(id => id.toString());
         const currentLesson = allLessons.find(lesson => !completedIds.includes(lesson._id.toString())) || null;
 
+        const baseObj = isVirtual ? enrollment : enrollment.toObject();
+
         return { 
-          ...enrollment.toObject(), 
+          ...baseObj, 
           totalLessons, 
           progressPercent,
           currentLesson: currentLesson ? { title: currentLesson.title, duration: currentLesson.duration || 10, _id: currentLesson._id } : null
@@ -235,8 +275,22 @@ export const getEnrollmentStatus = async (req, res) => {
   try {
     const { courseId } = req.params;
 
-    const enrollment = await Enrollment.findOne({ student: req.user.id, course: courseId });
+    let enrollment = await Enrollment.findOne({ student: req.user.id, course: courseId });
+    const course = await Course.findById(courseId);
+
     if (!enrollment) {
+      if (course && course.courseType === 'ongoing') {
+        const grouped = await getModulesWithLessons(courseId);
+        const totalLessons = grouped.reduce((sum, { lessons }) => sum + lessons.length, 0);
+        return res.status(200).json({
+          enrolled: true,
+          status: 'approved',
+          completedLessonIds: [],
+          totalLessons,
+          progressPercent: 0,
+          moduleProgress: computeModuleProgress(grouped, []),
+        });
+      }
       return res.status(200).json({ enrolled: false });
     }
 
@@ -265,9 +319,22 @@ export const markLessonComplete = async (req, res) => {
   try {
     const { courseId, lessonId } = req.params;
 
-    const enrollment = await Enrollment.findOne({ student: req.user.id, course: courseId });
+    let enrollment = await Enrollment.findOne({ student: req.user.id, course: courseId });
     if (!enrollment) {
-      return res.status(403).json({ message: 'You must enroll in this course first' });
+      const course = await Course.findById(courseId);
+      if (course && course.courseType === 'ongoing') {
+        enrollment = await Enrollment.create({
+          student: req.user.id,
+          course: courseId,
+          amountPaid: 0,
+          originalPrice: 0,
+          paymentMethod: 'none',
+          status: 'approved',
+          completedLessons: [],
+        });
+      } else {
+        return res.status(403).json({ message: 'You must enroll in this course first' });
+      }
     }
     if (enrollment.status !== 'approved') {
       return res.status(403).json({ message: 'Your enrollment is pending approval' });

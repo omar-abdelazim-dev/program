@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import api from "../api/axios";
@@ -10,6 +10,13 @@ import PaymentModal from "./PaymentModal";
 export default function CoursePage({ user }) {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.dir() === "rtl";
+
+  const [windowWidth, setWindowWidth] = useState(() => window.innerWidth);
+  useEffect(() => {
+    const onResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -19,6 +26,7 @@ export default function CoursePage({ user }) {
   const [activeTab, setActiveTab] = useState("syllabus");
 
   const [course, setCourse] = useState(null);
+  const isOngoing = course?.courseType === "ongoing";
   const [modules, setModules] = useState([]);
   const [collapsedModules, setCollapsedModules] = useState({});
   const [loading, setLoading] = useState(true);
@@ -36,9 +44,21 @@ export default function CoursePage({ user }) {
   const [purchasedStandaloneIds, setPurchasedStandaloneIds] = useState(
     new Set(),
   );
+  const [pendingStandaloneIds, setPendingStandaloneIds] = useState(new Set());
   const [purchasingStandaloneLesson, setPurchasingStandaloneLesson] =
     useState(null);
   const [isPurchasingStandalone, setIsPurchasingStandalone] = useState(false);
+
+  // Module purchases for ongoing courses
+  const [purchasedModuleIds, setPurchasedModuleIds] = useState(new Set());
+  const [pendingModuleIds, setPendingModuleIds] = useState(new Set());
+  const [purchasingModule, setPurchasingModule] = useState(null);
+  const [isPurchasingModule, setIsPurchasingModule] = useState(false);
+
+  const actuallyEnrolled =
+    course?.courseType === "ongoing"
+      ? purchasedModuleIds.size > 0 || purchasedStandaloneIds.size > 0
+      : isEnrolled && enrollStatus === "approved";
 
   const [reviews, setReviews] = useState([]);
   const [reviewRating, setReviewRating] = useState(5);
@@ -112,6 +132,22 @@ export default function CoursePage({ user }) {
               .filter((p) => p.status === "approved")
               .map((p) => p.lesson?._id);
             setPurchasedStandaloneIds(new Set(approvedIds));
+            
+            const pendingIds = (purchasedRes.data.purchases || [])
+              .filter((p) => p.status === "pending" || p.status === "under_review")
+              .map((p) => p.lesson?._id);
+            setPendingStandaloneIds(new Set(pendingIds));
+          } catch (e) {
+            // Ignore
+          }
+
+          try {
+            const purchasedModRes = await api.get(
+              `/courses/${id}/modules/mine-purchased`,
+              { signal: controller.signal },
+            );
+            setPurchasedModuleIds(new Set(purchasedModRes.data.purchasedModuleIds || []));
+            setPendingModuleIds(new Set(purchasedModRes.data.pendingModuleIds || []));
           } catch (e) {
             // Ignore
           }
@@ -216,6 +252,41 @@ export default function CoursePage({ user }) {
       }
     } finally {
       setIsPurchasingStandalone(false);
+    }
+  };
+
+  const handleModuleClick = (module) => {
+    if (!user) {
+      navigate("/auth", { state: { from: location.pathname } });
+      return;
+    }
+    if (module.price > 0) {
+      setPurchasingModule(module);
+    } else {
+      handlePurchaseModule(module, {});
+    }
+  };
+
+  const handlePurchaseModule = async (module, paymentDetails = {}) => {
+    setIsPurchasingModule(true);
+    setPurchasingModule(null);
+    try {
+      await api.post(`/courses/${id}/modules/${module._id}/purchase`, paymentDetails);
+      notyf.success(
+        t("course_page.module_purchased", "Module purchase submitted — awaiting admin approval.")
+      );
+    } catch (err) {
+      if (err.response?.status === 409) {
+        notyf.error(
+          t("course_page.module_already_purchased", "You already purchased this module.")
+        );
+      } else {
+        notyf.error(
+          err.response?.data?.message || t("course_page.enroll_error")
+        );
+      }
+    } finally {
+      setIsPurchasingModule(false);
     }
   };
 
@@ -376,56 +447,71 @@ export default function CoursePage({ user }) {
             : t("course_page.back_explore")}
         </button>
 
-        <span
+        <div
           style={{
-            display: "inline-flex",
-            padding: "6px 14px",
-            background: "rgba(249, 115, 22, 0.1)",
-            color: "var(--color-accent)",
-            borderRadius: "20px",
-            fontSize: "0.8rem",
-            fontWeight: "700",
-            textTransform: "uppercase",
-            letterSpacing: "1px",
-            marginBottom: "16px",
-            boxShadow: "var(--inner-shadow)",
+            display: "flex",
+            flexDirection: windowWidth < 768 ? "column" : "row",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            gap: "28px",
+            width: "100%",
           }}
         >
-          {t(
-            `categories.${course.category.replace(/\s+/g, "_").toLowerCase()}`,
-            t(course.category, course.category),
-          )}
-        </span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {course.category && (
+              <span
+                style={{
+                  display: "inline-flex",
+                  padding: "6px 14px",
+                  background: "rgba(249, 115, 22, 0.1)",
+                  color: "var(--color-accent)",
+                  borderRadius: "20px",
+                  fontSize: "0.8rem",
+                  fontWeight: "700",
+                  textTransform: "uppercase",
+                  letterSpacing: "1px",
+                  marginBottom: "16px",
+                  boxShadow: "var(--inner-shadow)",
+                }}
+              >
+                {t(
+                  `categories.${course.category.replace(/\s+/g, "_").toLowerCase()}`,
+                  t(course.category, course.category),
+                )}
+              </span>
+            )}
 
-        <h1
-          style={{
-            fontSize: "2.5rem",
-            fontWeight: "800",
-            color: "var(--text-primary)",
-            marginBottom: "16px",
-            lineHeight: "1.2",
-          }}
-        >
-          {course.title}
-        </h1>
-        <p
-          style={{
-            fontSize: "1.1rem",
-            color: "var(--text-secondary)",
-            maxWidth: "800px",
-            lineHeight: "1.6",
-            margin: "0",
-          }}
-        >
-          {course.description}
-        </p>
+            <h1
+              style={{
+                fontSize: "2.5rem",
+                fontWeight: "800",
+                color: "var(--text-primary)",
+                marginBottom: "16px",
+                lineHeight: "1.2",
+              }}
+            >
+              {course.title}
+            </h1>
+            <p
+              style={{
+                fontSize: "1.1rem",
+                color: "var(--text-secondary)",
+                maxWidth: "800px",
+                lineHeight: "1.6",
+                margin: "0",
+              }}
+            >
+              {course.description}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Main Grid: Left Column (Syllabus/Instructor) & Right Column (Sidebar) */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: window.innerWidth < 900 ? "1fr" : "1fr 380px",
+          gridTemplateColumns: windowWidth < 900 ? "1fr" : "1fr 380px",
           gap: "32px",
           alignItems: "start",
         }}
@@ -578,6 +664,9 @@ export default function CoursePage({ user }) {
                   modules.map((module, mIndex) => {
                     const isCollapsed = collapsedModules[module._id] !== false;
                     const moduleLessons = module.lessons || [];
+                    const isModulePurchased = purchasedModuleIds.has(module._id);
+                    const isModulePending = pendingModuleIds.has(module._id);
+
                     return (
                       <div
                         key={module._id}
@@ -588,7 +677,7 @@ export default function CoursePage({ user }) {
                           overflow: "hidden",
                         }}
                       >
-                        <button
+                        <div
                           onClick={() =>
                             setCollapsedModules((prev) => ({
                               ...prev,
@@ -601,28 +690,30 @@ export default function CoursePage({ user }) {
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "space-between",
-                            background: "transparent",
-                            border: "none",
+                            gap: "16px",
                             cursor: "pointer",
-                            textAlign: "start",
                           }}
                         >
-                          <div>
-                            <h4
-                              style={{
-                                margin: 0,
-                                fontSize: "1.05rem",
-                                fontWeight: "700",
-                                color: "var(--text-primary)",
-                              }}
-                            >
-                              {t("course_page.module_label", "Module")}{" "}
-                              {mIndex + 1} — {module.title}
-                            </h4>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                              <h4
+                                style={{
+                                  margin: 0,
+                                  fontSize: "1.05rem",
+                                  fontWeight: "700",
+                                  color: "var(--text-primary)",
+                                }}
+                              >
+                                {t("course_page.module_label", "Module")}{" "}
+                                {mIndex + 1} — {module.title}
+                              </h4>
+                            </div>
                             <span
                               style={{
                                 fontSize: "0.85rem",
                                 color: "var(--text-secondary)",
+                                marginTop: "2px",
+                                display: "block",
                               }}
                             >
                               {moduleLessons.length}{" "}
@@ -631,27 +722,65 @@ export default function CoursePage({ user }) {
                                 : t("course_page.lesson_plural")}
                             </span>
                           </div>
-                          <svg
-                            width="18"
-                            height="18"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            style={{
-                              transition: "transform 0.25s",
-                              transform: isCollapsed
-                                ? "rotate(-90deg)"
-                                : "rotate(0deg)",
-                              flexShrink: 0,
-                              color: "var(--text-secondary)",
-                            }}
-                          >
-                            <polyline points="6 9 12 15 18 9" />
-                          </svg>
-                        </button>
+
+                          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                            {isOngoing && userRole !== "instructor" && userRole !== "admin" && userRole !== "superadmin" && module.price > 0 && (
+                              <button
+                                className="solid-btn"
+                                disabled={isModulePurchased || isModulePending || isPurchasingModule}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleModuleClick(module);
+                                }}
+                                style={{
+                                  height: "36px",
+                                  padding: "0 14px",
+                                  fontSize: "0.85rem",
+                                  fontWeight: "600",
+                                  borderRadius: "8px",
+                                  background: isModulePurchased || isModulePending
+                                    ? "var(--bg-surface)"
+                                    : "linear-gradient(135deg, #f97316 0%, #fbbf24 100%)",
+                                  color: isModulePurchased
+                                    ? "var(--color-success, #10B981)"
+                                    : isModulePending
+                                    ? "var(--text-secondary)"
+                                    : "#ffffff",
+                                  cursor: isModulePurchased || isModulePending ? "not-allowed" : "pointer",
+                                  border: isModulePurchased || isModulePending ? "1px solid var(--border)" : "none",
+                                  boxShadow: "var(--inner-shadow, inset 0 2px 4px rgba(0, 0, 0, 0.2))",
+                                }}
+                              >
+                                {isModulePurchased
+                                  ? t("course_page.standalone.owned", "Purchased")
+                                  : isModulePending
+                                  ? t("course_page.payment.pending", "Pending")
+                                  : t("course_page.buy_module", "Enroll (EGP {{price}})", { price: module.price })}
+                              </button>
+                            )}
+
+                            <svg
+                              width="18"
+                              height="18"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              style={{
+                                transition: "transform 0.25s",
+                                transform: isCollapsed
+                                  ? "rotate(-90deg)"
+                                  : "rotate(0deg)",
+                                flexShrink: 0,
+                                color: "var(--text-secondary)",
+                              }}
+                            >
+                              <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                          </div>
+                        </div>
 
                         <div
                           className={`expandable-section ${!isCollapsed ? "expanded" : ""}`}
@@ -674,6 +803,7 @@ export default function CoursePage({ user }) {
                                     padding: "16px 20px",
                                     background: "var(--bg-surface)",
                                     borderRadius: "10px",
+                                    boxShadow: "var(--outer-shadow, 0 2px 8px rgba(0, 0, 0, 0.08))",
                                     display: "flex",
                                     alignItems: "center",
                                     gap: "16px",
@@ -691,7 +821,7 @@ export default function CoursePage({ user }) {
                                       justifyContent: "center",
                                       fontWeight: "700",
                                       fontSize: "0.85rem",
-                                      boxShadow: "var(--outer-shadow)",
+                                      boxShadow: "var(--inner-shadow, inset 0 2px 4px rgba(0, 0, 0, 0.08))",
                                       flexShrink: 0,
                                     }}
                                   >
@@ -878,7 +1008,7 @@ export default function CoursePage({ user }) {
                       </div>
                     </div>
 
-                    {isEnrolled && !hasReviewed && (
+                    {actuallyEnrolled && !hasReviewed && (
                       <div
                         style={{
                           padding: "24px",
@@ -1234,121 +1364,122 @@ export default function CoursePage({ user }) {
             top: "24px",
           }}
         >
-          {course.thumbnailUrl && (
-            <div
-              style={{
-                width: "100%",
-                aspectRatio: "16/9",
-                background: "var(--bg-main)",
-                borderRadius: "12px",
-                overflow: "hidden",
-              }}
-            >
-              <img
-                src={course.thumbnailUrl}
-                alt={course.title}
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
-            </div>
-          )}
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "baseline",
-              marginTop: "4px",
-            }}
-          >
-            <h2
-              style={{
-                fontSize: "2.2rem",
-                fontWeight: "800",
-                margin: 0,
-                color: "var(--text-primary)",
-              }}
-            >
-              {course.price === 0
-                ? t("course_page.free")
-                : `${t("course_page.currency")} ${course.price}`}
-            </h2>
-          </div>
-
-          {enrollError && (
-            <div
-              style={{
-                color: "#ef4444",
-                fontSize: "0.9rem",
-                padding: "12px",
-                background: "rgba(239, 68, 68, 0.1)",
-                borderRadius: "8px",
-                fontWeight: "500",
-              }}
-            >
-              {enrollError}
-            </div>
-          )}
-
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "12px",
-              marginTop: "8px",
-            }}
-          >
-            {isEnrolled ? (
-              enrollStatus === "pending" ? (
-                <button
-                  className="solid-btn"
-                  style={{
-                    width: "100%",
-                    height: "54px",
-                    fontSize: "1.05rem",
-                    background: "var(--bg-surface)",
-                    color: "var(--text-secondary)",
-                    cursor: "not-allowed",
-                  }}
-                  disabled
-                >
-                  {t("admin.pending_approval", "Pending Approval")}
-                </button>
-              ) : (
-                <button
-                  onClick={() => navigate(`/learn/${course._id}`)}
-                  className="solid-btn"
-                  style={{
-                    width: "100%",
-                    height: "54px",
-                    fontSize: "1.05rem",
-                    background:
-                      "linear-gradient(135deg, #10B981 0%, #059669 100%)",
-                    boxShadow: "var(--inner-shadow)",
-                  }}
-                >
-                  {t("course_page.go_to_course")}
-                </button>
-              )
-            ) : (
-              <button
-                onClick={handleEnrollClick}
-                disabled={isEnrolling}
-                className="solid-btn"
+            {course.thumbnailUrl && (
+              <div
                 style={{
                   width: "100%",
-                  height: "54px",
-                  fontSize: "1.05rem",
-                  opacity: isEnrolling ? 0.7 : 1,
-                  cursor: isEnrolling ? "not-allowed" : "pointer",
+                  aspectRatio: "16/9",
+                  background: "var(--bg-main)",
+                  borderRadius: "12px",
+                  overflow: "hidden",
                 }}
               >
-                {isEnrolling
-                  ? t("course_page.enrolling")
-                  : t("course_page.enroll_now")}
-              </button>
+                <img
+                  src={course.thumbnailUrl}
+                  alt={course.title}
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              </div>
             )}
 
+            {!isOngoing && (
+              <>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "baseline",
+                    marginTop: "4px",
+                  }}
+                >
+                  <h2
+                    style={{
+                      fontSize: "2.2rem",
+                      fontWeight: "800",
+                      margin: 0,
+                      color: "var(--text-primary)",
+                    }}
+                  >
+                    {`${t("course_page.currency", "EGP")} ${course.price || 0}`}
+                  </h2>
+                </div>
+
+                {enrollError && (
+                  <div
+                    style={{
+                      color: "#ef4444",
+                      fontSize: "0.9rem",
+                      padding: "12px",
+                      background: "rgba(239, 68, 68, 0.1)",
+                      borderRadius: "8px",
+                      fontWeight: "500",
+                    }}
+                  >
+                    {enrollError}
+                  </div>
+                )}
+
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "12px",
+                    marginTop: "8px",
+                  }}
+                >
+                  {isEnrolled ? (
+                    enrollStatus === "pending" ? (
+                      <button
+                        className="solid-btn"
+                        style={{
+                          width: "100%",
+                          height: "54px",
+                          fontSize: "1.05rem",
+                          background: "var(--bg-surface)",
+                          color: "var(--text-secondary)",
+                          cursor: "not-allowed",
+                        }}
+                        disabled
+                      >
+                        {t("admin.pending_approval", "Pending Approval")}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => navigate(`/learn/${course._id}`)}
+                        className="solid-btn"
+                        style={{
+                          width: "100%",
+                          height: "54px",
+                          fontSize: "1.05rem",
+                          background:
+                            "linear-gradient(135deg, #10B981 0%, #059669 100%)",
+                          boxShadow: "var(--inner-shadow)",
+                        }}
+                      >
+                        {t("course_page.go_to_course")}
+                      </button>
+                    )
+                  ) : (
+                    <button
+                      onClick={handleEnrollClick}
+                      disabled={isEnrolling}
+                      className="solid-btn"
+                      style={{
+                        width: "100%",
+                        height: "54px",
+                        fontSize: "1.05rem",
+                        opacity: isEnrolling ? 0.7 : 1,
+                        cursor: isEnrolling ? "not-allowed" : "pointer",
+                      }}
+                    >
+                      {isEnrolling
+                        ? t("course_page.enrolling")
+                        : t("course_page.enroll_now")}
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
           </div>
-        </div>
       </div>
 
       {standaloneLessons.length > 0 && (
@@ -1380,6 +1511,7 @@ export default function CoursePage({ user }) {
           >
             {standaloneLessons.map((lesson) => {
               const alreadyPurchased = purchasedStandaloneIds.has(lesson._id);
+              const isPending = pendingStandaloneIds.has(lesson._id);
               return (
                 <div
                   key={lesson._id}
@@ -1417,19 +1549,19 @@ export default function CoursePage({ user }) {
                     {lesson.description}
                   </div>
                   <div style={{ fontWeight: 700 }}>
-                    {lesson.price > 0
-                      ? `EGP ${lesson.price}`
-                      : t("course_page.free", "Free")}
+                    EGP {lesson.price || 0}
                   </div>
                   <button
                     type="button"
-                    disabled={alreadyPurchased || isPurchasingStandalone}
+                    disabled={alreadyPurchased || isPending || isPurchasingStandalone}
                     onClick={() => handleStandaloneLessonClick(lesson)}
                     className="solid-btn"
                     style={{ marginTop: "8px" }}
                   >
                     {alreadyPurchased
                       ? t("course_page.standalone.owned", "Purchased")
+                      : isPending
+                      ? t("course_page.payment.pending", "Pending")
                       : t("course_page.standalone.buy", "Purchase")}
                   </button>
                 </div>
@@ -1459,6 +1591,25 @@ export default function CoursePage({ user }) {
             )
           }
           onCancel={() => setPurchasingStandaloneLesson(null)}
+        />
+      )}
+
+      {purchasingModule && (
+        <PaymentModal
+          course={{
+            _id: course._id,
+            title: course.title,
+            price: purchasingModule.price,
+            instructor: course.instructor,
+          }}
+          courseId={course._id}
+          courseTitle={course.title}
+          module={purchasingModule}
+          isEnrolling={isPurchasingModule}
+          onConfirm={(paymentDetails) =>
+            handlePurchaseModule(purchasingModule, paymentDetails)
+          }
+          onCancel={() => setPurchasingModule(null)}
         />
       )}
     </div>

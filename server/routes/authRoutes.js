@@ -2,6 +2,8 @@ import express from "express";
 import {
   register,
   login,
+  adminLogin,
+  superadminLogin,
   logout,
   getMe,
   checkEmail,
@@ -54,6 +56,8 @@ router.post("/resend-verification", authLimiter, resendVerification);
 
 // loginLimiter: 5 attempts/15 min — hardest protection against brute-force
 router.post("/login", loginLimiter, validateLogin, login);
+router.post("/admin/login", loginLimiter, validateLogin, adminLogin);
+router.post("/superadmin/login", loginLimiter, validateLogin, superadminLogin);
 router.post("/logout", logout);
 router.post("/refresh", authLimiter, refresh); // Protect refresh against brute-force
 router.get("/me", protect, getMe); // protect runs first — if it fails, getMe never runs

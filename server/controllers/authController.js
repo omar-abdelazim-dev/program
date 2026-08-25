@@ -303,7 +303,7 @@ export const register = async (req, res) => {
     // Cleanup OTP record
     await EmailOTP.deleteOne({ _id: otpRecord._id });
 
-    await generateTokenAndSetCookie(res, user._id, req);
+    await generateTokenAndSetCookie(res, user._id, req, "user");
 
     res.status(201).json({
       user: {
@@ -326,7 +326,7 @@ export const register = async (req, res) => {
 
 // @route   POST /api/auth/login
 // @access  Public
-export const login = async (req, res) => {
+const loginWithDoor = async (req, res, doorScope = "user", requiredRole = null) => {
   try {
     const { email, password, rememberMe } = req.body;
 
@@ -432,6 +432,15 @@ export const login = async (req, res) => {
       });
     }
 
+    if (requiredRole ? user.role !== requiredRole : ["admin", "superadmin"].includes(user.role)) {
+      return res.status(403).json({
+        message: requiredRole
+          ? `Only ${requiredRole === "superadmin" ? "Super Admins" : "Admins"} can use this login door.`
+          : "Staff accounts must use their dedicated login door.",
+        code: "INVALID_LOGIN_DOOR",
+      });
+    }
+
     if (user.isBlocked) {
       await logAudit({
         action: "LOGIN_BLOCKED",
@@ -455,7 +464,7 @@ export const login = async (req, res) => {
       });
     }
 
-    await generateTokenAndSetCookie(res, user._id, req);
+    await generateTokenAndSetCookie(res, user._id, req, doorScope);
 
     // Audit successful login
     await logAudit({
@@ -478,6 +487,7 @@ export const login = async (req, res) => {
         role: user.role,
         avatarUrl: user.avatarUrl,
         isProgramInstructor: user.isProgramInstructor, // Include Program instructor flag
+        doorScope,
       },
     });
   } catch (error) {
@@ -488,6 +498,10 @@ export const login = async (req, res) => {
     res.status(500).json({ message: "Server error during login" });
   }
 };
+
+export const login = (req, res) => loginWithDoor(req, res, "user");
+export const adminLogin = (req, res) => loginWithDoor(req, res, "admin", "admin");
+export const superadminLogin = (req, res) => loginWithDoor(req, res, "superadmin", "superadmin");
 
 // @route   POST /api/auth/logout
 // @access  Private
@@ -992,6 +1006,11 @@ export const refresh = async (req, res) => {
     if (!user || user.isBlocked) {
       return res.status(401).json({ message: "User invalid or blocked" });
     }
+    if ((user.role === "admin" || user.role === "superadmin") && !session.doorScope) {
+      session.revoked = true;
+      await session.save();
+      return res.status(401).json({ message: "Legacy staff session expired. Please log in through the correct door." });
+    }
 
     // Mark current session as revoked so it can't be used again (Rotation)
     // We allow a small grace period for concurrent requests?
@@ -1000,7 +1019,7 @@ export const refresh = async (req, res) => {
     await session.save();
 
     // Create new session via generateTokenAndSetCookie
-    await generateTokenAndSetCookie(res, user._id, req);
+    await generateTokenAndSetCookie(res, user._id, req, session.doorScope || "user");
 
     await logAudit({
       action: "TOKEN_ROTATED",

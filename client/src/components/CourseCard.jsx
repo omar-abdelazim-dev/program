@@ -19,8 +19,10 @@ export default function CourseCard({ course, idx = 0, isLightMode = false }) {
     averageRating,
     reviewsCount,
     category,
+    courseType,
   } = course;
 
+  const isOngoing = courseType === 'ongoing';
   const hasDiscount = discountedPrice != null && discountedPrice < price;
   const displayPrice = hasDiscount ? discountedPrice : price;
   const isProgramCourse = instructor?.isProgramInstructor === true;
@@ -96,17 +98,38 @@ export default function CourseCard({ course, idx = 0, isLightMode = false }) {
           ) : <span className="cc-no-reviews">{t('common.no_reviews_yet', 'No reviews yet')}</span>}
         </div>
 
-        {/* 5. Price */}
-        <div className="cc-price-row">
-          <span className="cc-price-current">
-            {displayPrice == null || Number(displayPrice) === 0 ? t('common.free', 'Free') : `EGP ${Number(displayPrice).toLocaleString()}`}
-          </span>
-          {hasDiscount && (
-            <span className="cc-price-original">
-              EGP {Number(price).toLocaleString()}
+        {/* 5. Price / Ongoing badge */}
+        {isOngoing ? (
+          <div className="cc-price-row">
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                fontSize: '0.82rem',
+                fontWeight: '700',
+                color: 'var(--color-accent, #f97316)',
+                background: 'rgba(249, 115, 22, 0.1)',
+                padding: '4px 12px',
+                borderRadius: '8px',
+                border: 'none',
+                boxShadow: 'var(--inner-shadow)',
+              }}
+            >
+              {t('instructor.create_course.ongoing_course_title', 'Ongoing Course')}
             </span>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="cc-price-row">
+            <span className="cc-price-current">
+              EGP {Number(displayPrice ?? price ?? 0).toLocaleString()}
+            </span>
+            {hasDiscount && (
+              <span className="cc-price-original">
+                EGP {Number(price).toLocaleString()}
+              </span>
+            )}
+          </div>
+        )}
 
         {/* 6. Category tag + Program logo box */}
         {(category || isProgramCourse) && (

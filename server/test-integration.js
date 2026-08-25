@@ -59,6 +59,7 @@ const run = async () => {
 
   const agentInstructor = request.agent(app);
   const agentAdmin = request.agent(app);
+  const agentSuperAdmin = request.agent(app);
   const agentPublic = request.agent(app);
 
   // 1. Register an instructor (via the required pre-registration OTP flow)
@@ -86,9 +87,9 @@ const run = async () => {
     courseType: 'full',
   });
   assert(res.status === 201, `Create course failed: ${JSON.stringify(res.body)}`);
-  assert(res.body.course.status === 'pending', 'New course should default to pending');
+  assert(res.body.course.status === 'draft', 'New course should default to draft');
   const courseId = res.body.course._id;
-  console.log('✓ Instructor created course (status: pending)');
+  console.log('✓ Instructor created course (status: draft)');
 
   // 2b. courseType is required on creation
   res = await agentInstructor.post('/api/courses').set('X-CSRF-Token', instructorCsrf).send({
@@ -154,6 +155,11 @@ const run = async () => {
   assert(res.status === 200, `Delete second lesson failed: ${JSON.stringify(res.body)}`);
   console.log('✓ Cleaned up extra module/lesson used for reorder testing');
 
+  // 3d. Submit for review after building module + lesson
+  res = await agentInstructor.patch(`/api/courses/${courseId}/submit-for-review`).set('X-CSRF-Token', instructorCsrf);
+  assert(res.status === 200 && res.body.course.status === 'pending', `Submit course for review failed: ${JSON.stringify(res.body)}`);
+  console.log('✓ Instructor submitted course for admin review (status: pending)');
+
   // 4. Public catalog should NOT show the pending course yet
   res = await agentPublic.get('/api/courses');
   assert(res.status === 200, 'Public catalog request failed');
@@ -169,13 +175,63 @@ const run = async () => {
     role: 'admin',
     isVerified: true, // created directly, bypassing the OTP-gated register() flow
   });
-  res = await agentAdmin.post('/api/auth/login').send({
+  res = await agentAdmin.post('/api/auth/admin/login').send({
     email: 'admin@example.com',
     password: 'adminpass123',
   });
   assert(res.status === 200, `Admin login failed: ${JSON.stringify(res.body)}`);
   const adminCsrf = getCsrfToken(res);
   console.log('✓ Admin logged in');
+
+  // 5b. Discount status updates must be explicit and idempotent for superadmins.
+  await User.create({
+    name: 'Super Admin User',
+    email: 'superadmin@example.com',
+    password: 'superadminpass123',
+    role: 'superadmin',
+    isVerified: true,
+  });
+  res = await agentSuperAdmin.post('/api/auth/superadmin/login').send({
+    email: 'superadmin@example.com',
+    password: 'superadminpass123',
+  });
+  assert(res.status === 200, `Superadmin login failed: ${JSON.stringify(res.body)}`);
+  const superAdminCsrf = getCsrfToken(res);
+
+  res = await agentAdmin.post('/api/auth/superadmin/login').send({
+    email: 'admin@example.com',
+    password: 'adminpass123',
+  });
+  assert(res.status === 403, 'Admin credentials must be rejected by the superadmin door');
+  res = await agentSuperAdmin.post('/api/auth/admin/login').send({
+    email: 'superadmin@example.com',
+    password: 'superadminpass123',
+  });
+  assert(res.status === 403, 'Superadmin credentials must be rejected by the admin door');
+  res = await agentAdmin.get('/api/admin/activity');
+  assert(res.status === 403, 'Admin-door session must be rejected by superadmin-only routes');
+  res = await agentAdmin.get('/api/admin/discount-codes');
+  assert(res.status === 403, 'Admin-door session must be rejected by superadmin-only discount routes');
+  console.log('✓ Cross-door login and route isolation enforced');
+
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  res = await agentSuperAdmin.post('/api/admin/discount-codes').set('X-CSRF-Token', superAdminCsrf).send({
+    code: 'IDEMPOTENT20',
+    discountPercentage: 20,
+    expiresAt,
+  });
+  assert(res.status === 201, `Discount code creation failed: ${JSON.stringify(res.body)}`);
+  const discountCodeId = res.body.discountCode._id;
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    res = await agentSuperAdmin.put(`/api/admin/discount-codes/${discountCodeId}`).set('X-CSRF-Token', superAdminCsrf).send({ isActive: false });
+    assert(res.status === 200, `Discount status update failed: ${JSON.stringify(res.body)}`);
+    assert(res.body.discountCode.isActive === false, 'Repeated explicit stop requests must keep the code stopped');
+  }
+
+  res = await agentSuperAdmin.put(`/api/admin/discount-codes/${discountCodeId}`).set('X-CSRF-Token', superAdminCsrf).send({ isActive: 'false' });
+  assert(res.status === 400, 'Discount status must reject non-boolean input');
+  console.log('✓ Discount status update is explicit, idempotent, and type-safe');
 
   // 6. A non-admin (instructor) should be blocked from the pending-courses list
   res = await agentInstructor.get('/api/courses/pending');
@@ -288,7 +344,7 @@ const run = async () => {
   assert(res.body.course.price === 250, `Rejected price change must leave the price unchanged: ${JSON.stringify(res.body.course)}`);
   console.log('✓ Admin rejected a price change; price correctly left unchanged');
 
-  // 9b. Publish gate: a course with zero lessons cannot be published live
+  // 9b. Submit and Publish gate: a course with zero modules/lessons cannot be submitted or published
   res = await agentInstructor.post('/api/courses').set('X-CSRF-Token', instructorCsrf).send({
     title: 'Empty Course',
     description: 'Has no modules or lessons yet.',
@@ -297,13 +353,13 @@ const run = async () => {
     semester: 1,
     courseType: 'full',
   });
-  assert(res.status === 201, `Create empty course failed: ${JSON.stringify(res.body)}`);
+  assert(res.status === 201 && res.body.course.status === 'draft', `Create empty course failed: ${JSON.stringify(res.body)}`);
   const emptyCourseId = res.body.course._id;
-  res = await agentAdmin.patch(`/api/courses/${emptyCourseId}/approve`).set('X-CSRF-Token', adminCsrf);
-  assert(res.status === 200 && res.body.course.status === 'draft', `Approve empty course failed: ${JSON.stringify(res.body)}`);
+  res = await agentInstructor.patch(`/api/courses/${emptyCourseId}/submit-for-review`).set('X-CSRF-Token', instructorCsrf);
+  assert(res.status === 400, 'Submitting a course with zero modules/lessons should be rejected (400)');
   res = await agentInstructor.patch(`/api/courses/${emptyCourseId}/publish`).set('X-CSRF-Token', instructorCsrf);
-  assert(res.status === 400, 'Publishing a course with zero lessons should be rejected');
-  console.log('✓ Course with no lessons correctly blocked from publishing');
+  assert(res.status === 400, 'Publishing an unapproved course should be rejected (400)');
+  console.log('✓ Course with no lessons correctly blocked from review submission and publishing');
 
   // 10. Course details endpoint returns modules with nested lessons
   res = await agentPublic.get(`/api/courses/${courseId}`);
@@ -518,21 +574,42 @@ const run = async () => {
     semester: 1,
     courseType: 'ongoing',
   });
-  assert(res.status === 201 && res.body.course.courseType === 'ongoing', `Create ongoing course failed: ${JSON.stringify(res.body)}`);
+  assert(res.status === 201 && res.body.course.courseType === 'ongoing' && res.body.course.status === 'draft', `Create ongoing course should default to draft: ${JSON.stringify(res.body)}`);
   const ongoingCourseId = res.body.course._id;
 
-  res = await agentInstructor.post(`/api/courses/${ongoingCourseId}/modules`).set('X-CSRF-Token', instructorCsrf).send({ title: 'Week 1' });
+  // Submitting empty ongoing course should fail (needs module + lesson)
+  res = await agentInstructor.patch(`/api/courses/${ongoingCourseId}/submit-for-review`).set('X-CSRF-Token', instructorCsrf);
+  assert(res.status === 400, 'Submitting empty ongoing course should be rejected (400)');
+
+  // Ongoing module price must be between 50 and 200 EGP
+  res = await agentInstructor.post(`/api/courses/${ongoingCourseId}/modules`).set('X-CSRF-Token', instructorCsrf).send({ title: 'Invalid Price > 200', price: 250 });
+  assert(res.status === 400, 'Module price exceeding 200 EGP should be rejected (400)');
+
+  res = await agentInstructor.post(`/api/courses/${ongoingCourseId}/modules`).set('X-CSRF-Token', instructorCsrf).send({ title: 'Week 1', price: 100 });
+  assert(res.status === 201, `Valid module creation failed: ${JSON.stringify(res.body)}`);
   const ongoingModuleId = res.body.module._id;
+
+  // Submitting ongoing course with module but 0 lessons should fail
+  res = await agentInstructor.patch(`/api/courses/${ongoingCourseId}/submit-for-review`).set('X-CSRF-Token', instructorCsrf);
+  assert(res.status === 400, 'Submitting ongoing course without lessons should be rejected (400)');
+
   res = await agentInstructor.post(`/api/courses/${ongoingCourseId}/modules/${ongoingModuleId}/lessons`).set('X-CSRF-Token', instructorCsrf).send({
     title: 'Lesson 1', videoUrl: 'https://res.cloudinary.com/demo/video/upload/ongoing1.mp4',
   });
   const ongoingLessonId = res.body.lesson._id;
 
-  await Course.findByIdAndUpdate(ongoingCourseId, { status: 'draft' }); // simulate admin approval
+  // Submitting with at least 1 module and 1 lesson should succeed (becomes pending)
+  res = await agentInstructor.patch(`/api/courses/${ongoingCourseId}/submit-for-review`).set('X-CSRF-Token', instructorCsrf);
+  assert(res.status === 200 && res.body.course.status === 'pending', `Submitting ongoing course with content should succeed: ${JSON.stringify(res.body)}`);
+
+  // Admin approves the ongoing course
+  res = await agentAdmin.patch(`/api/courses/${ongoingCourseId}/approve`).set('X-CSRF-Token', adminCsrf);
+  assert(res.status === 200 && res.body.course.status === 'draft', `Admin approval failed: ${JSON.stringify(res.body)}`);
+
   res = await agentInstructor.patch(`/api/courses/${ongoingCourseId}/publish`).set('X-CSRF-Token', instructorCsrf);
   assert(res.status === 200 && res.body.course.status === 'approved', `Publishing ongoing course failed: ${JSON.stringify(res.body)}`);
   assert(res.body.course.lastPublishedContentAt, 'Publishing an ongoing course should stamp lastPublishedContentAt even with no lesson explicitly published yet');
-  console.log('✓ Ongoing course created and published; activity clock started on publish');
+  console.log('✓ Ongoing course created in draft, validated for module+lesson, submitted for review, approved by admin, and published');
 
   // Publishing an actual lesson also stamps the timestamp (and would reactivate a dormant course)
   res = await agentInstructor.put(`/api/courses/${ongoingCourseId}/lessons/${ongoingLessonId}`).set('X-CSRF-Token', instructorCsrf).send({ status: 'published' });
@@ -609,7 +686,7 @@ const run = async () => {
     courseType: 'ongoing',
   });
   const convertCourseId = res.body.course._id;
-  res = await agentInstructor.post(`/api/courses/${convertCourseId}/modules`).set('X-CSRF-Token', instructorCsrf).send({ title: 'Week 1' });
+  res = await agentInstructor.post(`/api/courses/${convertCourseId}/modules`).set('X-CSRF-Token', instructorCsrf).send({ title: 'Week 1', price: 100 });
   const convertModuleId = res.body.module._id;
   await agentInstructor.post(`/api/courses/${convertCourseId}/modules/${convertModuleId}/lessons`).set('X-CSRF-Token', instructorCsrf).send({
     title: 'Lesson 1', videoUrl: 'https://res.cloudinary.com/demo/video/upload/convert1.mp4',
@@ -677,7 +754,7 @@ const run = async () => {
   const { default: StandaloneLesson } = await import('./models/StandaloneLesson.js');
   const otherInstructor = await User.create({ name: 'Other Instructor', email: 'other-instructor@example.com', password: 'Password123!', role: 'instructor' });
   const otherCourse = await Course.create({
-    title: "Other Instructor's Course", description: 'Not owned by nora.', price: 10,
+    title: "Other Instructor's Course", description: 'Not owned by nora.', price: 300,
     college: 'College of Computer Science and Information Technology', semester: 1,
     instructor: otherInstructor._id, status: 'approved', courseType: 'full',
   });

@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Transaction from "../models/Transaction.js";
 import User from "../models/User.js";
 import Course from "../models/Course.js";
@@ -30,7 +31,10 @@ export const getStats = async (req, res) => {
     const pendingModuleLessons = await Lesson.countDocuments({ lessonType: { $ne: "quiz" }, status: "pending" });
     const pendingStandaloneLessons = await StandaloneLesson.countDocuments({ status: "pending" });
     const pendingLessons = pendingModuleLessons + pendingStandaloneLessons;
-    const pendingEnrollments = await Enrollment.countDocuments({ status: { $in: ["pending", "under_review"] } });
+    const { default: ModulePurchase } = await import("../models/ModulePurchase.js");
+    const pendingCourseEnrolls = await Enrollment.countDocuments({ status: { $in: ["pending", "under_review"] } });
+    const pendingModuleEnrolls = await ModulePurchase.countDocuments({ status: { $in: ["pending", "under_review"] } });
+    const pendingEnrollments = pendingCourseEnrolls + pendingModuleEnrolls;
     const pendingPayouts = await Transaction.countDocuments({ type: "payout_request", status: "pending" });
 
     // Revenue total + per-category enrollment counts, computed in Mongo
@@ -462,6 +466,48 @@ export const getRecentActivity = async (req, res) => {
   }
 };
 
+// @route   GET /api/admin/health
+// @access  Private (Admin/SuperAdmin)
+export const getSystemHealth = async (req, res) => {
+  try {
+    const dbStart = Date.now();
+    let dbStatus = "disconnected";
+    let dbLatencyMs = null;
+
+    if (mongoose.connection.readyState === 1 && mongoose.connection.db) {
+      await mongoose.connection.db.admin().ping();
+      dbLatencyMs = Date.now() - dbStart;
+      dbStatus = "connected";
+    }
+
+    const mem = process.memoryUsage();
+
+    res.status(200).json({
+      status: dbStatus === "connected" ? "healthy" : "degraded",
+      uptimeSeconds: Math.floor(process.uptime()),
+      database: {
+        status: dbStatus,
+        latencyMs: dbLatencyMs,
+      },
+      memory: {
+        heapUsedMb: Math.round(mem.heapUsed / 1024 / 1024),
+        heapTotalMb: Math.round(mem.heapTotal / 1024 / 1024),
+        rssMb: Math.round(mem.rss / 1024 / 1024),
+      },
+      environment: process.env.NODE_ENV || "development",
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    logger.error("System health check error:", { error: error.message });
+    res.status(500).json({
+      status: "unhealthy",
+      uptimeSeconds: Math.floor(process.uptime()),
+      database: { status: "error", error: error.message },
+      error: error.message,
+    });
+  }
+};
+
 // @route   GET /api/admin/users
 // @access  Private (Admin)
 export const getUsers = async (req, res) => {
@@ -740,7 +786,8 @@ export const getTransactions = async (req, res) => {
   try {
     const { page, limit } = req.query;
 
-    // If neither page nor limit provided, keep existing behavior
+    const { default: ModulePurchase } = await import("../models/ModulePurchase.js");
+
     if (page === undefined && limit === undefined) {
       const enrollments = await Enrollment.find()
         .populate("student", "name email phone")
@@ -749,9 +796,33 @@ export const getTransactions = async (req, res) => {
           select: "title price instructor",
           populate: { path: "instructor", select: "name" },
         })
-        .sort({ createdAt: -1 });
+        .lean();
+        
+      const modulePurchases = await ModulePurchase.find()
+        .populate("student", "name email phone")
+        .populate({
+          path: "course",
+          select: "title price instructor",
+          populate: { path: "instructor", select: "name" },
+        })
+        .populate("module", "title")
+        .lean();
+        
+      // For module purchases, we can optionally append the module title to the course title so the frontend knows what it is,
+      // or we can just send it as is and let the frontend handle it. Wait, the frontend just renders `t.course?.title`.
+      // Let's modify the course title for module purchases to include the module name for clarity in the UI.
+      const formattedModulePurchases = modulePurchases.map(mp => {
+        if (mp.course && mp.module) {
+          mp.course.title = `${mp.course.title} (${mp.module.title})`;
+        }
+        mp.isModulePurchase = true; // flag if needed
+        return mp;
+      });
 
-      return res.status(200).json({ transactions: enrollments });
+      let combined = [...enrollments, ...formattedModulePurchases];
+      combined.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      return res.status(200).json({ transactions: combined });
     }
 
     let pageNum = parseInt(page, 10);
@@ -760,24 +831,46 @@ export const getTransactions = async (req, res) => {
     if (Number.isNaN(limitNum) || limitNum < 1) limitNum = 10;
     const skip = (pageNum - 1) * limitNum;
 
-    const [totalItems, enrollments] = await Promise.all([
-      Enrollment.countDocuments(),
-      Enrollment.find()
+    // To properly paginate across two collections, we'd need to aggregate.
+    // For simplicity, since the frontend currently doesn't use page/limit for this endpoint anyway,
+    // we will just do it in memory.
+    const { default: MP } = await import("../models/ModulePurchase.js");
+    const allEnrollments = await Enrollment.find()
         .populate("student", "name email phone")
         .populate({
           path: "course",
           select: "title price instructor",
           populate: { path: "instructor", select: "name" },
         })
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limitNum),
-    ]);
-
+        .lean();
+    
+    const allModulePurchases = await MP.find()
+        .populate("student", "name email phone")
+        .populate({
+          path: "course",
+          select: "title price instructor",
+          populate: { path: "instructor", select: "name" },
+        })
+        .populate("module", "title")
+        .lean();
+        
+    const formattedMP = allModulePurchases.map(mp => {
+      if (mp.course && mp.module) {
+        mp.course.title = `${mp.course.title} (${mp.module.title})`;
+      }
+      mp.isModulePurchase = true;
+      return mp;
+    });
+    
+    let combined = [...allEnrollments, ...formattedMP];
+    combined.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    const totalItems = combined.length;
     const totalPages = Math.ceil(totalItems / limitNum) || 1;
+    const paginated = combined.slice(skip, skip + limitNum);
 
     res.status(200).json({
-      transactions: enrollments,
+      transactions: paginated,
       pagination: { page: pageNum, limit: limitNum, totalPages, totalItems },
     });
   } catch (error) {
@@ -1097,6 +1190,106 @@ export const getDiscountCodes = async (req, res) => {
   catch (error) { logger.error('Error fetching discount codes', { error: error.message }); res.status(500).json({ message: 'Server error fetching discount codes' }); }
 };
 
+export const updateDiscountCode = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const discountCode = await DiscountCode.findById(id);
+    if (!discountCode) return res.status(404).json({ message: 'Discount code not found' });
+
+    if (req.body.code) {
+      const code = String(req.body.code).trim().toUpperCase();
+      if (!/^[A-Z0-9_-]{3,40}$/.test(code)) {
+        return res.status(400).json({ message: 'Code must use 3-40 letters, numbers, hyphens, or underscores' });
+      }
+      discountCode.code = code;
+    }
+
+    if (req.body.discountPercentage !== undefined) {
+      const discountPercentage = Number(req.body.discountPercentage);
+      if (!Number.isFinite(discountPercentage) || discountPercentage < 1 || discountPercentage > 99) {
+        return res.status(400).json({ message: 'Discount percentage must be between 1 and 99' });
+      }
+      discountCode.discountPercentage = discountPercentage;
+    }
+
+    if (req.body.expiresAt) {
+      const expiresAt = new Date(req.body.expiresAt);
+      if (Number.isNaN(expiresAt.getTime())) {
+        return res.status(400).json({ message: 'Invalid expiration date' });
+      }
+      discountCode.expiresAt = expiresAt;
+    }
+
+    if (req.body.isActive !== undefined) {
+      if (typeof req.body.isActive !== 'boolean') {
+        return res.status(400).json({ message: 'Active status must be a boolean' });
+      }
+      discountCode.isActive = req.body.isActive;
+    }
+
+    await discountCode.save();
+    res.status(200).json({ message: 'Discount code updated successfully', discountCode });
+  } catch (error) {
+    if (error.code === 11000) return res.status(409).json({ message: 'A discount code with this name already exists.' });
+    logger.error('Error updating discount code', { error: error.message });
+    res.status(500).json({ message: 'Server error updating discount code' });
+  }
+};
+
+
+export const toggleDiscountCode = async (req, res) => {
+  try {
+    const discountCode = await DiscountCode.findById(req.params.id);
+    if (!discountCode) return res.status(404).json({ message: 'Discount code not found' });
+    discountCode.isActive = !discountCode.isActive;
+    await discountCode.save();
+    res.status(200).json({
+      message: `Discount code ${discountCode.isActive ? 'activated' : 'stopped'}`,
+      discountCode,
+    });
+  } catch (error) {
+    logger.error('Error toggling discount code', { error: error.message });
+    res.status(500).json({ message: 'Server error toggling discount code' });
+  }
+};
+
+
+
+export const renewDiscountCode = async (req, res) => {
+  try {
+    const discountCode = await DiscountCode.findById(req.params.id);
+    if (!discountCode) return res.status(404).json({ message: 'Discount code not found' });
+    
+    const expiresAt = req.body.expiresAt ? new Date(req.body.expiresAt) : null;
+    if (!expiresAt || Number.isNaN(expiresAt.getTime()) || expiresAt <= new Date()) {
+      return res.status(400).json({ message: 'Renew expiration date must be in the future' });
+    }
+
+    discountCode.expiresAt = expiresAt;
+    discountCode.isActive = true;
+    await discountCode.save();
+
+    res.status(200).json({
+      message: 'Discount code renewed successfully',
+      discountCode,
+    });
+  } catch (error) {
+    logger.error('Error renewing discount code', { error: error.message });
+    res.status(500).json({ message: 'Server error renewing discount code' });
+  }
+};
+
+export const deleteDiscountCode = async (req, res) => {
+  try {
+    const discountCode = await DiscountCode.findByIdAndDelete(req.params.id);
+    if (!discountCode) return res.status(404).json({ message: 'Discount code not found' });
+    res.status(200).json({ message: 'Discount code deleted successfully' });
+  } catch (error) {
+    logger.error('Error deleting discount code', { error: error.message });
+    res.status(500).json({ message: 'Server error deleting discount code' });
+  }
+};
+
 // @route   PATCH /api/admin/promo-codes/:id/toggle
 // @access  Private (Admin/SuperAdmin)
 export const togglePromoCode = async (req, res) => {
@@ -1172,13 +1365,26 @@ export const approveEnrollment = async (req, res) => {
     // between two concurrent approve calls (e.g. a double-click) — only the
     // first one can ever flip status away from 'pending', so at most one
     // revenue-split Transaction is ever created per enrollment.
-    const enrollment = await Enrollment.findOneAndUpdate(
+    let isModulePurchase = false;
+    let enrollment = await Enrollment.findOneAndUpdate(
       { _id: req.params.id, status: "pending" },
       { status: "approved" },
       { new: true },
     );
+
     if (!enrollment) {
-      const existing = await Enrollment.findById(req.params.id);
+      const { default: ModulePurchase } = await import("../models/ModulePurchase.js");
+      enrollment = await ModulePurchase.findOneAndUpdate(
+        { _id: req.params.id, status: "pending" },
+        { status: "approved" },
+        { new: true }
+      );
+      if (enrollment) isModulePurchase = true;
+    }
+
+    if (!enrollment) {
+      const { default: ModulePurchase } = await import("../models/ModulePurchase.js");
+      const existing = await Enrollment.findById(req.params.id) || await ModulePurchase.findById(req.params.id);
       if (!existing)
         return res
           .status(404)
@@ -1188,9 +1394,9 @@ export const approveEnrollment = async (req, res) => {
         .json({ message: `Enrollment request already ${existing.status}` });
     }
 
-    // Generate revenue split transaction for the instructor (if course has price)
+    // Generate revenue split transaction for the instructor (if there was a payment)
     const course = await Course.findById(enrollment.course);
-    if (course && course.price > 0 && course.instructor) {
+    if (course && enrollment.amountPaid > 0 && course.instructor) {
       let platformCommission = enrollment.platformCommission;
       let instructorShare = enrollment.instructorShare;
       let commissionPercent = 15;
@@ -1200,7 +1406,7 @@ export const approveEnrollment = async (req, res) => {
         commissionPercent = 15;
       } else {
         commissionPercent =
-          Math.round((platformCommission / course.price) * 100) || 15;
+          Math.round((platformCommission / enrollment.amountPaid) * 100) || 15;
       }
 
       await Transaction.create({
@@ -1277,13 +1483,26 @@ export const rejectEnrollment = async (req, res) => {
   try {
     const { reason } = req.body;
     // Same atomic guard as approveEnrollment — see comment there.
-    const enrollment = await Enrollment.findOneAndUpdate(
+    let isModulePurchase = false;
+    let enrollment = await Enrollment.findOneAndUpdate(
       { _id: req.params.id, status: "pending" },
       { status: "rejected", rejectionReason: reason || "" },
       { new: true },
     );
+
     if (!enrollment) {
-      const existing = await Enrollment.findById(req.params.id);
+      const { default: ModulePurchase } = await import("../models/ModulePurchase.js");
+      enrollment = await ModulePurchase.findOneAndUpdate(
+        { _id: req.params.id, status: "pending" },
+        { status: "rejected", rejectionReason: reason || "" },
+        { new: true }
+      );
+      if (enrollment) isModulePurchase = true;
+    }
+
+    if (!enrollment) {
+      const { default: ModulePurchase } = await import("../models/ModulePurchase.js");
+      const existing = await Enrollment.findById(req.params.id) || await ModulePurchase.findById(req.params.id);
       if (!existing)
         return res
           .status(404)

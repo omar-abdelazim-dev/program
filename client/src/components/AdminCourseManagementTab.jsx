@@ -127,7 +127,7 @@ const CustomDropdown = ({ value, options, onChange, disabled, width = "100%" }) 
   );
 };
 
-export default function AdminCourseManagementTab({ currentUser, onDashboardUpdate }) {
+export default function AdminCourseManagementTab({ currentUser, onDashboardUpdate, activeStatusFilter }) {
   const { t } = useTranslation();
 
   
@@ -136,9 +136,15 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
   
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [activeStatus, setActiveStatus] = useState("all");
+  const [activeStatus, setActiveStatus] = useState(activeStatusFilter || "all");
   const [categoryFilter, setCategoryFilter] = useState("All Categories");
   const [showFilters, setShowFilters] = useState(false);
+
+  useEffect(() => {
+    if (activeStatusFilter) {
+      setActiveStatus(activeStatusFilter);
+    }
+  }, [activeStatusFilter]);
 
   const [sidePanelCourseId, setSidePanelCourseId] = useState(null);
   const sidePanelCourse = courses.find(c => c._id === sidePanelCourseId);
@@ -155,6 +161,7 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
     isLoading: false,
   });
   const [coursesWithPendingLessons, setCoursesWithPendingLessons] = useState(new Set());
+  const [coursesWithPendingQuizzes, setCoursesWithPendingQuizzes] = useState(new Set());
 
   const updatePendingCourseSet = (courseId, updatedModules, updatedStandalone) => {
     if (!courseId) return;
@@ -164,9 +171,25 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
       ) ||
       (updatedStandalone || []).some((l) => l.status === "pending");
 
+    const hasRemainingPendingQuiz =
+      (updatedModules || []).some((m) =>
+        (m.lessons || []).some((l) => (l.status === "pending" || l.status === "draft") && l.lessonType === "quiz"),
+      ) ||
+      (updatedStandalone || []).some((l) => l.status === "pending" && l.lessonType === "quiz");
+
     setCoursesWithPendingLessons((prev) => {
       const next = new Set(prev);
       if (hasRemainingPending) {
+        next.add(courseId.toString());
+      } else {
+        next.delete(courseId.toString());
+      }
+      return next;
+    });
+
+    setCoursesWithPendingQuizzes((prev) => {
+      const next = new Set(prev);
+      if (hasRemainingPendingQuiz) {
         next.add(courseId.toString());
       } else {
         next.delete(courseId.toString());
@@ -408,6 +431,18 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
+  const [sortBy, setSortBy] = useState("updatedAt");
+  const [sortOrder, setSortOrder] = useState("desc");
+
+  const handleSort = (field) => {
+    if (sortBy === field) {
+      setSortOrder(prev => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortBy(field);
+      setSortOrder(field === "updatedAt" || field === "createdAt" ? "desc" : "asc");
+    }
+    setCurrentPage(1);
+  };
 
   const [stats, setStats] = useState({ totalCourses: 0, pendingCourses: 0, pendingLessonsCount: 0, pendingQuizzesCount: 0 });
 
@@ -499,13 +534,24 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
             });
         }
         
+        allCourses.sort((a, b) => {
+          const timeA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+          const timeB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+          return timeB - timeA;
+        });
+
         setCourses(allCourses);
 
         const pendingCourseIdSet = new Set();
+        const pendingQuizCourseIdSet = new Set();
         const allModuleLessons = adminLessonsRes.data?.lessons || [];
         allModuleLessons.forEach((l) => {
           if ((l.status === 'pending' || l.status === 'draft') && l.module?.course?._id) {
-            pendingCourseIdSet.add(l.module.course._id.toString());
+            const cId = l.module.course._id.toString();
+            pendingCourseIdSet.add(cId);
+            if (l.lessonType === 'quiz') {
+              pendingQuizCourseIdSet.add(cId);
+            }
           }
         });
 
@@ -513,11 +559,16 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
         allPendingStandalone.forEach((l) => {
           const cId = l.relatedCourse?._id || l.relatedCourse;
           if (cId) {
-            pendingCourseIdSet.add(cId.toString());
+            const courseIdStr = cId.toString();
+            pendingCourseIdSet.add(courseIdStr);
+            if (l.lessonType === 'quiz') {
+              pendingQuizCourseIdSet.add(courseIdStr);
+            }
           }
         });
 
         setCoursesWithPendingLessons(pendingCourseIdSet);
+        setCoursesWithPendingQuizzes(pendingQuizCourseIdSet);
 
         if (statsRes.data) {
           setStats({
@@ -636,30 +687,56 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
     }
   };
 
-  // Filtering
-  let visibleCourses = courses.filter(c => {
-    // Basic search: title, ID, category
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      const matchesTitle = c.title?.toLowerCase().includes(q);
-      const matchesId = c._id?.toLowerCase().includes(q);
-      const matchesCategory = c.category?.toLowerCase().includes(q);
-      if (!matchesTitle && !matchesId && !matchesCategory) return false;
-    }
-    
-    // Status Filter
-    if (activeStatus !== "all" && c.status?.toLowerCase() !== activeStatus) return false;
+  // Filtering & Sorting (defaults to latest updated first)
+  let visibleCourses = courses
+    .filter(c => {
+      // Basic search: title, ID, category
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const matchesTitle = c.title?.toLowerCase().includes(q);
+        const matchesId = c._id?.toLowerCase().includes(q);
+        const matchesCategory = c.category?.toLowerCase().includes(q);
+        if (!matchesTitle && !matchesId && !matchesCategory) return false;
+      }
+      
+      // Status Filter
+      if (activeStatus === "pending_lessons") {
+        if (!coursesWithPendingLessons.has(c._id?.toString())) return false;
+      } else if (activeStatus === "pending_quizzes") {
+        if (!coursesWithPendingQuizzes.has(c._id?.toString())) return false;
+      } else if (activeStatus !== "all" && c.status?.toLowerCase() !== activeStatus) {
+        return false;
+      }
 
-    // Category Filter
-    if (categoryFilter !== "All Categories" && c.category !== categoryFilter) return false;
+      // Category Filter
+      if (categoryFilter !== "All Categories" && c.category !== categoryFilter) return false;
 
-    return true;
-  });
+      return true;
+    })
+    .sort((a, b) => {
+      let comparison = 0;
+      if (sortBy === "updatedAt") {
+        const timeA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+        const timeB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+        comparison = timeA - timeB;
+      } else if (sortBy === "title") {
+        comparison = (a.title || "").localeCompare(b.title || "");
+      } else if (sortBy === "category") {
+        comparison = (a.category || "").localeCompare(b.category || "");
+      } else if (sortBy === "price") {
+        comparison = (Number(a.price) || 0) - (Number(b.price) || 0);
+      } else if (sortBy === "status") {
+        comparison = (a.status || "").localeCompare(b.status || "");
+      } else if (sortBy === "courseType") {
+        comparison = (a.courseType || "").localeCompare(b.courseType || "");
+      }
+      return sortOrder === "desc" ? -comparison : comparison;
+    });
 
-  // Reset page to 1 when filters change
+  // Reset page to 1 when filters or sort change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, activeStatus, categoryFilter]);
+  }, [searchQuery, activeStatus, categoryFilter, sortBy, sortOrder]);
 
   // Pagination Logic
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -718,7 +795,9 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
               tabs={[
                 { id: "all", label: "All Courses" },
                 { id: "approved", label: "Approved" },
-                { id: "pending", label: "Pending Review" },
+                { id: "pending", label: "Pending Courses" },
+                { id: "pending_lessons", label: "Pending Lessons" },
+                { id: "pending_quizzes", label: "Pending Quizzes" },
               ]}
               activeTab={activeStatus}
               onChange={setActiveStatus}
@@ -912,13 +991,186 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
           <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
             <thead>
               <tr>
-                <th style={{ padding: "12px 16px", color: "var(--c-sub)", fontWeight: "600", borderBottom: "1px solid var(--c-border-subtle)", whiteSpace: "nowrap" }}>COURSE</th>
-                <th style={{ padding: "12px 8px", color: "var(--c-sub)", fontWeight: "600", borderBottom: "1px solid var(--c-border-subtle)", textAlign: "center", whiteSpace: "nowrap" }}>CATEGORY</th>
-                <th style={{ padding: "12px 8px", color: "var(--c-sub)", fontWeight: "600", borderBottom: "1px solid var(--c-border-subtle)", textAlign: "center", whiteSpace: "nowrap" }}>PRICE</th>
-                <th style={{ padding: "12px 8px", color: "var(--c-sub)", fontWeight: "600", borderBottom: "1px solid var(--c-border-subtle)", textAlign: "center", whiteSpace: "nowrap" }}>STATUS</th>
-                <th style={{ padding: "12px 8px", color: "var(--c-sub)", fontWeight: "600", borderBottom: "1px solid var(--c-border-subtle)", textAlign: "center", whiteSpace: "nowrap" }}>TYPE</th>
+                <th 
+                  onClick={() => handleSort("title")}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleSort("title");
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-sort={sortBy === "title" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
+                  style={{ 
+                    padding: "12px 16px", 
+                    color: sortBy === "title" ? "#f97316" : "var(--c-sub)", 
+                    fontWeight: "600", 
+                    borderBottom: "1px solid var(--c-border-subtle)", 
+                    whiteSpace: "nowrap",
+                    cursor: "pointer",
+                    userSelect: "none"
+                  }}
+                  title="Sort by Course Name"
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span>COURSE</span>
+                    {sortBy === "title" && (
+                      <span style={{ fontSize: "0.75rem" }}>{sortOrder === "desc" ? "▼" : "▲"}</span>
+                    )}
+                  </div>
+                </th>
+                <th 
+                  onClick={() => handleSort("category")}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleSort("category");
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-sort={sortBy === "category" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
+                  style={{ 
+                    padding: "12px 8px", 
+                    color: sortBy === "category" ? "#f97316" : "var(--c-sub)", 
+                    fontWeight: "600", 
+                    borderBottom: "1px solid var(--c-border-subtle)", 
+                    textAlign: "center", 
+                    whiteSpace: "nowrap",
+                    cursor: "pointer",
+                    userSelect: "none"
+                  }}
+                  title="Sort by Category"
+                >
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                    <span>CATEGORY</span>
+                    {sortBy === "category" && (
+                      <span style={{ fontSize: "0.75rem" }}>{sortOrder === "desc" ? "▼" : "▲"}</span>
+                    )}
+                  </div>
+                </th>
+                <th 
+                  onClick={() => handleSort("price")}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleSort("price");
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-sort={sortBy === "price" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
+                  style={{ 
+                    padding: "12px 8px", 
+                    color: sortBy === "price" ? "#f97316" : "var(--c-sub)", 
+                    fontWeight: "600", 
+                    borderBottom: "1px solid var(--c-border-subtle)", 
+                    textAlign: "center", 
+                    whiteSpace: "nowrap",
+                    cursor: "pointer",
+                    userSelect: "none"
+                  }}
+                  title="Sort by Price"
+                >
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                    <span>PRICE</span>
+                    {sortBy === "price" && (
+                      <span style={{ fontSize: "0.75rem" }}>{sortOrder === "desc" ? "▼" : "▲"}</span>
+                    )}
+                  </div>
+                </th>
+                <th 
+                  onClick={() => handleSort("status")}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleSort("status");
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-sort={sortBy === "status" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
+                  style={{ 
+                    padding: "12px 8px", 
+                    color: sortBy === "status" ? "#f97316" : "var(--c-sub)", 
+                    fontWeight: "600", 
+                    borderBottom: "1px solid var(--c-border-subtle)", 
+                    textAlign: "center", 
+                    whiteSpace: "nowrap",
+                    cursor: "pointer",
+                    userSelect: "none"
+                  }}
+                  title="Sort by Status"
+                >
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                    <span>STATUS</span>
+                    {sortBy === "status" && (
+                      <span style={{ fontSize: "0.75rem" }}>{sortOrder === "desc" ? "▼" : "▲"}</span>
+                    )}
+                  </div>
+                </th>
+                <th 
+                  onClick={() => handleSort("courseType")}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleSort("courseType");
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-sort={sortBy === "courseType" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
+                  style={{ 
+                    padding: "12px 8px", 
+                    color: sortBy === "courseType" ? "#f97316" : "var(--c-sub)", 
+                    fontWeight: "600", 
+                    borderBottom: "1px solid var(--c-border-subtle)", 
+                    textAlign: "center", 
+                    whiteSpace: "nowrap",
+                    cursor: "pointer",
+                    userSelect: "none"
+                  }}
+                  title="Sort by Type"
+                >
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                    <span>TYPE</span>
+                    {sortBy === "courseType" && (
+                      <span style={{ fontSize: "0.75rem" }}>{sortOrder === "desc" ? "▼" : "▲"}</span>
+                    )}
+                  </div>
+                </th>
                 <th style={{ padding: "12px 8px", color: "var(--c-sub)", fontWeight: "600", borderBottom: "1px solid var(--c-border-subtle)", textAlign: "center", whiteSpace: "nowrap" }}>LESSONS</th>
-                <th style={{ padding: "12px 16px", color: "var(--c-sub)", fontWeight: "600", borderBottom: "1px solid var(--c-border-subtle)", textAlign: "center", whiteSpace: "nowrap" }}>LAST UPDATED</th>
+                <th 
+                  onClick={() => handleSort("updatedAt")}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleSort("updatedAt");
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-sort={sortBy === "updatedAt" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
+                  style={{ 
+                    padding: "12px 16px", 
+                    color: sortBy === "updatedAt" ? "#f97316" : "var(--c-sub)", 
+                    fontWeight: "600", 
+                    borderBottom: "1px solid var(--c-border-subtle)", 
+                    textAlign: "center", 
+                    whiteSpace: "nowrap",
+                    cursor: "pointer",
+                    userSelect: "none"
+                  }}
+                  title="Sort by Last Updated"
+                >
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                    <span>LAST UPDATED</span>
+                    {sortBy === "updatedAt" && (
+                      <span style={{ fontSize: "0.75rem" }}>{sortOrder === "desc" ? "▼" : "▲"}</span>
+                    )}
+                  </div>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -1096,8 +1348,8 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
                 {sidePanelCourse.thumbnailUrl ? (
                     <img src={sidePanelCourse.thumbnailUrl} alt="Cover" style={{ width: "120px", height: "80px", objectFit: "cover", borderRadius: "12px", flexShrink: 0 }} />
                 ) : (
-                    <div style={{ width: "120px", height: "80px", background: "rgba(255,255,255,0.05)", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--c-sub)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    <div style={{ width: "120px", height: "80px", background: "var(--bg-main)", boxShadow: "var(--inner-shadow)", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--c-sub)", flexShrink: 0 }}>
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
                     </div>
                 )}
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>

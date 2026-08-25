@@ -8,6 +8,8 @@ import "../styles/static-pages.css";
 import { useTranslation } from 'react-i18next';
 import { formatNotificationTitle, formatNotificationMessage } from "../utils/notificationFormatter";
 import api from "../api/axios";
+import CustomSelect from "./CustomSelect";
+import { MAJORS } from "../data/majors";
 
 export default function StudentLayout({
   user,
@@ -19,7 +21,10 @@ export default function StudentLayout({
   setNotifications,
   searchQuery,
   onSearchChange,
+  selectedMajor,
+  selectedCollege,
   exploreCollege,
+  onMajorChange,
   onCollegeChange,
 }) {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -170,6 +175,23 @@ export default function StudentLayout({
                   )}
                 </div>
 
+                <div className="merged-filter-divider" />
+
+                <div className="merged-select-part">
+                  <CustomSelect
+                    value={selectedMajor ?? selectedCollege ?? exploreCollege ?? ""}
+                    onChange={(val) => (onMajorChange || onCollegeChange)?.(val)}
+                    placeholder={t("student.explore.filter_by_major", "Filter by major")}
+                    triggerClassName="merged-custom-select-trigger"
+                    options={[
+                      { value: "", label: t("student.explore.all_majors", "All Majors") },
+                      ...MAJORS.map((m) => ({
+                        value: m.id,
+                        label: t(`majors.${m.id}`, m.label),
+                      }))
+                    ]}
+                  />
+                </div>
               </div>
             )}
 
@@ -219,8 +241,8 @@ export default function StudentLayout({
                 {notifications && notifications.length > 0 ? (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
+                    width="18"
+                    height="18"
                     fill="currentColor"
                     viewBox="0 0 24 24"
                   >
@@ -229,8 +251,8 @@ export default function StudentLayout({
                 ) : (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
+                    width="18"
+                    height="18"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"

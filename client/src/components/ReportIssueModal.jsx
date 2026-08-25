@@ -114,20 +114,24 @@ export default function ReportIssueModal({ isOpen, course, onClose, onSubmit }) 
               style={{ 
                 position: 'relative',
                 display: 'flex', 
-                gap: '8px'
+                background: 'var(--bg-main)',
+                boxShadow: 'var(--inner-shadow)',
+                borderRadius: '16px',
+                padding: '4px'
               }}
             >
               <div
                 style={{
                   position: 'absolute',
-                  top: 0,
-                  bottom: 0,
+                  top: '4px',
+                  bottom: '4px',
                   left: `${tabIndicatorStyle.left}px`,
                   width: `${tabIndicatorStyle.width}px`,
                   opacity: tabIndicatorStyle.opacity,
-                  background: '#131219',
+                  background: 'var(--bg-surface)',
                   borderRadius: '12px',
-                  boxShadow: 'var(--inner-shadow)',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+                  border: '1px solid var(--border)',
                   transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
                   zIndex: 0
                 }}
