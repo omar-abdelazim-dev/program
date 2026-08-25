@@ -719,7 +719,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                                     display: 'inline-block'
                                   };
                                 }
-                                // 5. New Comment -> blue gradient
+                                // 5. New Comment -> warm gradient
                                 if (titleLower.includes('comment') || titleLower.includes('question') || titleLower.includes('reply') || typeLower.startsWith('qa_')) {
                                   return {
                                     background: 'linear-gradient(135deg, #f97316 0%, #eab308 100%)',
