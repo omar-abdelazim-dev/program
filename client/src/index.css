@@ -13,7 +13,6 @@
   --c-yellow: #facc15;
   --c-purple: #8b5cf6;
   --c-pink: #ec4899;
-  --c-blue: #f97316;
   --shadow:
     0 4px 25px rgba(251, 146, 60, 0.15), 0 8px 10px rgba(251, 146, 60, 0.05);
 
@@ -57,7 +56,6 @@
   --c-yellow: #facc15;
   --c-purple: #8b5cf6;
   --c-pink: #ec4899;
-  --c-blue: #f97316;
   --color-accent: #f97316;
   --shadow: 0 4px 25px rgba(251, 146, 60, 0.2), 0 8px 10px rgba(251, 146, 60, 0.1);
 }
@@ -128,7 +126,6 @@ body.light-mode {
   --c-yellow: #facc15;
   --c-purple: #8b5cf6;
   --c-pink: #ec4899;
-  --c-blue: #f97316;
   --shadow:
     0 4px 25px rgba(251, 146, 60, 0.15), 0 8px 10px rgba(251, 146, 60, 0.05);
 }

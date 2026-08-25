@@ -719,7 +719,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                                     display: 'inline-block'
                                   };
                                 }
-                                // 5. New Comment -> blue gradient
+                                // 5. New Comment -> warm gradient
                                 if (titleLower.includes('comment') || titleLower.includes('question') || titleLower.includes('reply') || typeLower.startsWith('qa_')) {
                                   return {
                                     background: 'linear-gradient(135deg, #f97316 0%, #eab308 100%)',
@@ -1256,7 +1256,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                                 fontSize: '0.75rem',
                                 fontWeight: 'bold',
                                 boxShadow: 'var(--inner-shadow)',
-                                background: course.status === 'approved' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(59, 130, 246, 0.2)',
+                                background: course.status === 'approved' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(249, 115, 22, 0.2)',
                                 color: course.status === 'approved' ? '#10B981' : '#f97316'
                               }}
                             >

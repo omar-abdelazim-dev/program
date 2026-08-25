@@ -71,7 +71,7 @@ export default function QuizPlayer({ courseId, lesson, onSubmitted }) {
       {submission && (
         <div style={{
           marginBottom: '24px', padding: '16px 20px', borderRadius: '12px',
-          background: isLocked ? 'rgba(16, 185, 129, 0.08)' : 'rgba(59, 130, 246, 0.08)',
+          background: isLocked ? 'rgba(16, 185, 129, 0.08)' : 'rgba(249, 115, 22, 0.08)',
           color: isLocked ? '#10b981' : '#f97316', fontWeight: 600, fontSize: '0.92rem',
         }}>
           {isLocked

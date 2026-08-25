@@ -569,7 +569,7 @@ export default function InstructorFinancialsTab({ user }) {
                       fontSize: '0.75rem',
                       fontWeight: 'bold',
                       color: isCleared ? '#10b981' : isProcessing ? '#f97316' : selectedTxForDetails.status === 'rejected' ? '#ef4444' : '#f59e0b',
-                      background: isCleared ? 'rgba(16, 185, 129, 0.15)' : isProcessing ? 'rgba(59, 130, 246, 0.15)' : selectedTxForDetails.status === 'rejected' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)'
+                      background: isCleared ? 'rgba(16, 185, 129, 0.15)' : isProcessing ? 'rgba(249, 115, 22, 0.15)' : selectedTxForDetails.status === 'rejected' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)'
                     }}>
                       {isCleared 
                         ? (selectedTxForDetails.type === 'course_sale' ? (t('instructor.financials.status_received') || 'RECEIVED') : (t('instructor.financials.status_paid') || 'PAID')) : 

@@ -368,6 +368,6 @@ This is the platform's core architectural uniqueness. A `data-role` attribute in
 ## 30. Future Expansion
 
 To scale this design system natively:
-- **Community / Forums**: Build upon the `LearningPortal.jsx` Q&A tab styling. Use `data-role="student"` for user posts to give a unified blue/slate tint.
+- **Community / Forums**: Build upon the `LearningPortal.jsx` Q&A tab styling. Use `data-role="student"` for user posts to preserve the neutral slate tint.
 - **Certificates**: A dedicated `/certificates` route utilizing the `.completed-variant` card design from the dashboard, expanding into full-page PDF rendering glass-views.
 - **Dark Mode Optimizations**: Extract the specific hardcoded alpha channels in `content.css` into `--alpha-low`, `--alpha-high` tokens to reduce media-query bloat.

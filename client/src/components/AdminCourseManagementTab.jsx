@@ -773,7 +773,7 @@ export default function AdminCourseManagementTab({ currentUser, onDashboardUpdat
             <div style={{ color: 'var(--c-sub)', fontSize: '0.85rem', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '8px' }}>Pending Lessons</div>
             <div style={{ color: 'var(--text-h)', fontSize: '2rem', fontWeight: '700', margin: '0' }}>{stats.pendingLessonsCount ?? stats.pendingLessons ?? 0}</div>
           </div>
-          <div className="glass-card stat-card overview-stat-blue" style={{ padding: '24px', display: 'flex', flexDirection: 'column', transition: 'all 0.2s ease' }}>
+          <div className="glass-card stat-card overview-stat-yellow" style={{ padding: '24px', display: 'flex', flexDirection: 'column', transition: 'all 0.2s ease' }}>
             <div style={{ color: 'var(--c-sub)', fontSize: '0.85rem', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '8px' }}>Pending Quizzes</div>
             <div style={{ color: 'var(--text-h)', fontSize: '2rem', fontWeight: '700', margin: '0' }}>{stats.pendingQuizzesCount ?? stats.pendingQuizzes ?? 0}</div>
           </div>
