@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import nodemailer from 'nodemailer';
 import handlebars from 'handlebars';
 import logger from './logger.js';
+import { getInternalConfig } from './configFetcher.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,6 +19,34 @@ const transporter = nodemailer.createTransport({
 });
 
 const cache = {};
+
+const notificationSettingForTemplate = {
+  'admin-new-request': 'adminAlerts',
+  'instructor-course-approved': 'instructorEmails',
+  'instructor-course-rejected': 'instructorEmails',
+  'instructor-payout-approved': 'instructorEmails',
+  'instructor-payout-rejected': 'instructorEmails',
+  'student-enroll-approved': 'studentEmails',
+  'student-enroll-rejected': 'studentEmails',
+};
+
+export const getEmailDeliveryStatus = async () => {
+  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+    return {
+      configured: false,
+      connected: false,
+      message: 'SMTP credentials are not configured on the server.',
+    };
+  }
+
+  try {
+    await transporter.verify();
+    return { configured: true, connected: true, message: 'SMTP connection verified.' };
+  } catch (error) {
+    logger.warn('SMTP connection check failed', { error: error.message });
+    return { configured: true, connected: false, message: 'SMTP connection could not be verified.' };
+  }
+};
 
 /**
  * Helper to compile and cache handlebars templates
@@ -46,6 +75,18 @@ const sendMailSafe = async (options) => {
   if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
     logger.warn('Email not sent — GMAIL_USER/GMAIL_APP_PASSWORD not configured', { template: options.templateName, to: options.to });
     return;
+  }
+
+  const notificationSetting = notificationSettingForTemplate[options.templateName];
+  if (notificationSetting) {
+    const config = await getInternalConfig();
+    if (config.notifications?.[notificationSetting] === false) {
+      logger.info('Email skipped by notification preference', {
+        template: options.templateName,
+        notificationSetting,
+      });
+      return;
+    }
   }
   
   try {

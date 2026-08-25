@@ -4,16 +4,16 @@
   --bg: #fff;
   --border: #e5e4e7;
   --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
+  --accent: #f97316;
+  --accent-bg: rgba(249, 115, 22, 0.1);
+  --accent-border: rgba(249, 115, 22, 0.5);
   --social-bg: rgba(244, 243, 236, 0.5);
   --c-sub: #64748b;
   --c-orange: #f97316;
   --c-yellow: #facc15;
   --c-purple: #8b5cf6;
   --c-pink: #ec4899;
-  --c-blue: #3b82f6;
+  --c-blue: #f97316;
   --shadow:
     0 4px 25px rgba(251, 146, 60, 0.15), 0 8px 10px rgba(251, 146, 60, 0.05);
 
@@ -45,19 +45,19 @@
   --bg-surface: #2e303a;
   --border: #2e303a;
   --code-bg: #1f2028;
-  --accent: #c084fc;
+  --accent: #f97316;
   --z-dropdown: 10000;
   --z-modal: 11000;
   --z-toast: 12000;
-  --accent-bg: rgba(192, 132, 252, 0.15);
-  --accent-border: rgba(192, 132, 252, 0.5);
+  --accent-bg: rgba(249, 115, 22, 0.15);
+  --accent-border: rgba(249, 115, 22, 0.5);
   --social-bg: rgba(47, 48, 58, 0.5);
   --c-sub: #9ca3af;
   --c-orange: #f97316;
   --c-yellow: #facc15;
   --c-purple: #8b5cf6;
   --c-pink: #ec4899;
-  --c-blue: #3b82f6;
+  --c-blue: #f97316;
   --color-accent: #f97316;
   --shadow: 0 4px 25px rgba(251, 146, 60, 0.2), 0 8px 10px rgba(251, 146, 60, 0.1);
 }
@@ -84,8 +84,8 @@ body[data-role="student"], body[data-role="instructor"] {
 
 body[data-role="admin"], body[data-role="superadmin"] { 
   --bg-main: #15141E;
-  --color-accent: #6B5DD3; 
-  --accent: #6B5DD3; 
+  --color-accent: #f97316; 
+  --accent: #f97316; 
 }
 
 /* Force single-layer layout for Admin portal (no floating card boxes) */
@@ -128,7 +128,7 @@ body.light-mode {
   --c-yellow: #facc15;
   --c-purple: #8b5cf6;
   --c-pink: #ec4899;
-  --c-blue: #3b82f6;
+  --c-blue: #f97316;
   --shadow:
     0 4px 25px rgba(251, 146, 60, 0.15), 0 8px 10px rgba(251, 146, 60, 0.05);
 }

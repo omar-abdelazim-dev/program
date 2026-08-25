@@ -845,7 +845,7 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
                           style={{
                             background: 'none',
                             border: 'none',
-                            color: resendCooldown > 0 ? 'var(--c-sub)' : 'var(--c-primary, #3b82f6)',
+                            color: resendCooldown > 0 ? 'var(--c-sub)' : 'var(--c-primary, #f97316)',
                             fontSize: '0.8rem',
                             fontWeight: 600,
                             cursor: resendCooldown > 0 ? 'not-allowed' : 'pointer',
@@ -1018,7 +1018,7 @@ export default function AuthPage({ onLoginSuccess, isLightMode, toggleTheme }) {
                         style={{
                           background: 'none',
                           border: 'none',
-                          color: forgotResendCooldown > 0 ? 'var(--c-sub)' : 'var(--c-primary, #3b82f6)',
+                          color: forgotResendCooldown > 0 ? 'var(--c-sub)' : 'var(--c-primary, #f97316)',
                           fontSize: '0.8rem',
                           fontWeight: 600,
                           cursor: forgotResendCooldown > 0 ? 'not-allowed' : 'pointer',

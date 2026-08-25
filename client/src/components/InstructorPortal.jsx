@@ -652,7 +652,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                     }}
                   >
                     <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-surface-hover)' }}>
-                      <span style={{ color: 'var(--color-accent)', fontSize: '1.1rem' }}>{t('nav.notifications', 'Notifications')}</span>
+                      <span style={{ fontSize: '1.1rem', fontWeight: 700, background: 'linear-gradient(135deg, #f97316 0%, #eab308 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{t('nav.notifications', 'Notifications')}</span>
                       {notifications.length > 0 && (
                         <button 
                           onClick={clearAllNotifications}
@@ -722,7 +722,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                                 // 5. New Comment -> blue gradient
                                 if (titleLower.includes('comment') || titleLower.includes('question') || titleLower.includes('reply') || typeLower.startsWith('qa_')) {
                                   return {
-                                    background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)',
+                                    background: 'linear-gradient(135deg, #f97316 0%, #eab308 100%)',
                                     WebkitBackgroundClip: 'text',
                                     WebkitTextFillColor: 'transparent',
                                     fontWeight: 700,
@@ -1257,7 +1257,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                                 fontWeight: 'bold',
                                 boxShadow: 'var(--inner-shadow)',
                                 background: course.status === 'approved' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(59, 130, 246, 0.2)',
-                                color: course.status === 'approved' ? '#10B981' : '#3B82F6'
+                                color: course.status === 'approved' ? '#10B981' : '#f97316'
                               }}
                             >
                               {course.status === 'approved' ? t('instructor.dashboard.status.live', 'LIVE') : t('instructor.dashboard.status.draft', 'DRAFT')}
@@ -1736,7 +1736,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                   {submitting && videoFile && (
                     <div style={{ marginTop: '8px' }}>
                       <div style={{ height: '6px', borderRadius: '12px', background: 'var(--c-border, rgba(255,255,255,0.1))', overflow: 'hidden' }}>
-                        <div style={{ width: `${videoUploadProgress}%`, height: '100%', background: 'var(--color-accent, #6B5DD3)', transition: 'width 0.2s ease' }} />
+                        <div style={{ width: `${videoUploadProgress}%`, height: '100%', background: 'var(--color-accent, #f97316)', transition: 'width 0.2s ease' }} />
                       </div>
                       <div className="input-hint" style={{ marginTop: '4px' }}>
                         {videoUploadProgress < 100
@@ -1759,7 +1759,7 @@ export default function InstructorPortal({ user, setUser, onLogout, toggleTheme,
                       href={lessonData.attachmentUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ fontSize: '0.8rem', color: '#3b82f6', textDecoration: 'underline' }}
+                      style={{ fontSize: '0.8rem', color: '#f97316', textDecoration: 'underline' }}
                     >
                       {t('instructor.curriculum.view_current_pdf', 'View current PDF')} ↗
                     </a>

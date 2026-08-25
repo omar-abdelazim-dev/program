@@ -637,7 +637,7 @@ export default function CurriculumBuilderTab({
                                 boxShadow: 'var(--inner-shadow)',
                                 marginTop: '8px',
                                 padding: '6px 14px',
-                                background: 'rgba(59, 130, 246, 0.15)',
+                                background: 'rgba(249, 115, 22, 0.15)',
                                 borderRadius: '12px',
                                 fontSize: '0.8rem',
                                 color: 'var(--text)',
@@ -652,7 +652,7 @@ export default function CurriculumBuilderTab({
                                 <button
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); onConvertCourse(course); }}
-                                  style={{ marginTop: '8px', background: 'none', border: 'none', color: '#3b82f6', textDecoration: 'underline', cursor: 'pointer', padding: 0, fontSize: '0.8rem' }}
+                                  style={{ marginTop: '8px', background: 'none', border: 'none', color: '#f97316', textDecoration: 'underline', cursor: 'pointer', padding: 0, fontSize: '0.8rem' }}
                                 >
                                   {t('instructor.dashboard.convert.button', 'Convert to Full Course')}
                                 </button>
@@ -874,7 +874,7 @@ export default function CurriculumBuilderTab({
           )}
           <button
             onClick={() => onEditCourse && onEditCourse(selectedCourse)}
-            style={{ width: 'auto', borderRadius: '12px', padding: '10px 20px', fontWeight: 600, background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: 'none', boxShadow: 'var(--inner-shadow)', cursor: 'pointer', transition: 'all 0.2s' }}
+            style={{ width: 'auto', borderRadius: '12px', padding: '10px 20px', fontWeight: 600, background: 'rgba(249, 115, 22, 0.1)', color: '#f97316', border: 'none', boxShadow: 'var(--inner-shadow)', cursor: 'pointer', transition: 'all 0.2s' }}
             onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
             onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'; e.currentTarget.style.filter = 'none'; }}
           >
@@ -1406,7 +1406,7 @@ export default function CurriculumBuilderTab({
                 <button
                   type="button"
                   onClick={() => window.open(previewLesson.attachmentUrl, '_blank', 'noopener,noreferrer')}
-                  style={{ width: 'auto', padding: '6px 16px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', border: 'none', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}
+                  style={{ width: 'auto', padding: '6px 16px', borderRadius: '12px', background: 'rgba(249, 115, 22, 0.15)', color: '#f97316', border: 'none', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}
                 >
                   {t('instructor.curriculum.review_pdf', 'Open PDF / File')} {i18n.language === 'ar' ? '←' : '→'}
                 </button>

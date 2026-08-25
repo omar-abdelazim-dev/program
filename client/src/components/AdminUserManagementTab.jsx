@@ -729,7 +729,7 @@ export default function AdminUserManagementTab({
                       cursor: "pointer",
                       width: "16px",
                       height: "16px",
-                      accentColor: "#4f46e5",
+                      accentColor: "var(--color-accent, #f97316)",
                     }}
                   />
                 </th>
@@ -816,7 +816,7 @@ export default function AdminUserManagementTab({
                           cursor: "pointer",
                           width: "16px",
                           height: "16px",
-                          accentColor: "#4f46e5",
+                          accentColor: "var(--color-accent, #f97316)",
                         }}
                       />
                     </td>

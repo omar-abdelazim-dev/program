@@ -190,7 +190,7 @@ export default function ReportIssueModal({ isOpen, course, onClose, onSubmit }) 
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  color: "#3b82f6",
+                  color: "#f97316",
                 }}
               >
                 <svg
@@ -211,7 +211,7 @@ export default function ReportIssueModal({ isOpen, course, onClose, onSubmit }) 
                 <div
                   style={{
                     fontSize: "0.8rem",
-                    color: "#3b82f6",
+                    color: "#f97316",
                     textTransform: "uppercase",
                     fontWeight: "600",
                     letterSpacing: "0.5px",

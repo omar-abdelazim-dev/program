@@ -10,6 +10,7 @@ import { getInternalConfig, clearConfigCache } from '../utils/configFetcher.js';
 import logger from '../utils/logger.js';
 import * as emailService from '../utils/emailService.js';
 import { normalizeLandingPageSocial } from '../utils/socialUrlValidation.js';
+import cloudinary from '../config/cloudinary.js';
 
 // Helper to get or create the global config
 const getGlobalConfig = async () => {
@@ -50,37 +51,20 @@ export const getStorageStats = async (req, res) => {
 
     const realMediaFiles = videoCount + thumbnailCount + avatarCount + attachmentCount;
 
-    // Estimate storage usage in MB:
-    // Videos ~120 MB each, Thumbnails ~1.2 MB each, Avatars ~0.5 MB each, Attachments ~15 MB each
-    const calculatedMb = (videoCount * 120) + (thumbnailCount * 1.2) + (avatarCount * 0.5) + (attachmentCount * 15);
-    
-    // Provide realistic system storage metrics based on database content + platform assets
-    const effectiveVideoCount = Math.max(videoCount, 14);
-    const effectiveThumbnailCount = Math.max(thumbnailCount, 22);
-    const effectiveAvatarCount = Math.max(avatarCount, 38);
-    const effectiveMediaFiles = effectiveVideoCount + effectiveThumbnailCount + effectiveAvatarCount;
-
-    const effectiveUsedMb = Math.max(calculatedMb, (effectiveVideoCount * 120) + (effectiveThumbnailCount * 1.2) + (effectiveAvatarCount * 0.5));
-    const usedGb = (effectiveUsedMb / 1024);
-
     const config = await getGlobalConfig();
     const maxUploadMb = config.storage?.maxUploadSizeMb || 50;
-    const provider = config.storage?.provider || 'AWS S3';
-    const totalCapacityGb = 500;
-    const availableGb = Math.max(0, totalCapacityGb - usedGb);
-    const usagePercent = Math.min(100, Math.round((usedGb / totalCapacityGb) * 100));
 
     res.json({
-      videoCount: effectiveVideoCount,
-      thumbnailCount: effectiveThumbnailCount,
-      avatarCount: effectiveAvatarCount,
-      totalMediaFiles: effectiveMediaFiles,
-      usedMb: Math.round(effectiveUsedMb),
-      usedGb: usedGb.toFixed(2),
-      availableGb: availableGb.toFixed(2),
-      totalCapacityGb,
-      usagePercent,
-      provider,
+      videoCount,
+      thumbnailCount,
+      avatarCount,
+      totalMediaFiles: realMediaFiles,
+      usedMb: null,
+      usedGb: null,
+      availableGb: null,
+      totalCapacityGb: null,
+      usagePercent: null,
+      provider: 'Cloudinary',
       maxUploadMb
     });
   } catch (err) {
@@ -97,6 +81,7 @@ export const getPublicConfig = async (req, res) => {
     // Only send safe frontend configuration settings
     res.json({
       general: config.general,
+      appearance: config.appearance,
       features: config.features,
       registration: {
         studentRegistration: config.registration?.studentRegistration ?? true,
@@ -136,9 +121,19 @@ export const updateConfigSection = async (req, res) => {
 
     const config = await getGlobalConfig();
 
-    // Initialize section if missing but valid in schema
-    // (ADM-14: email/notifications/appearance removed — those tabs no longer exist)
-    const validSections = ['general', 'financial', 'registration', 'security', 'storage', 'landingPage'];
+    // Only expose persisted sections that have a corresponding schema and UI.
+    const validSections = [
+      'general',
+      'financial',
+      'registration',
+      'security',
+      'storage',
+      'notifications',
+      'appearance',
+      'maintenance',
+      'backup',
+      'landingPage',
+    ];
     if (!config.get(section) && validSections.includes(section)) {
         config.set(section, {});
     }
@@ -150,6 +145,24 @@ export const updateConfigSection = async (req, res) => {
     // Keep old values for audit logging
     const sectionData = config.get(section);
     const oldValues = { ...(sectionData.toObject ? sectionData.toObject() : sectionData) };
+
+    // Mirror the UI's standard-admin permissions on the server. Client-side
+    // disabled controls are not an authorization boundary.
+    const adminWritableFields = {
+      general: ['contactEmail', 'supportEmail', 'homepageAnnouncement'],
+      storage: [],
+      notifications: ['studentEmails', 'instructorEmails', 'adminAlerts', 'marketingEmails'],
+      appearance: ['defaultTheme', 'accentColor', 'landingBanner', 'footerInfo'],
+    };
+    if (req.user.role === 'admin') {
+      const allowedFields = adminWritableFields[section] || [];
+      const forbiddenField = Object.keys(updates).find(
+        (field) => !allowedFields.includes(field),
+      );
+      if (forbiddenField) {
+        return res.status(403).json({ message: 'Super Admin permission required to modify this setting.' });
+      }
+    }
     
     // Apply updates
     // For nested schema structures like 'landingPage' which contain multiple nested objects,
@@ -235,7 +248,34 @@ export const previewFinancials = async (req, res) => {
   }
 };
 
-import nodemailer from 'nodemailer';
+// @route   GET /api/system/config/storage/status
+// @access  Private (Admin / Super Admin)
+export const getStorageStatus = async (req, res) => {
+  const config = await getGlobalConfig();
+  const provider = 'Cloudinary';
+
+  if (provider !== 'Cloudinary') {
+    return res.json({ connected: false, provider, message: `${provider} is not configured by this deployment.` });
+  }
+  if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+    return res.json({ connected: false, provider, message: 'Cloudinary credentials are not configured on the server.' });
+  }
+
+  try {
+    await cloudinary.api.ping();
+    res.json({ connected: true, provider, message: 'Cloudinary connection verified.' });
+  } catch (error) {
+    logger.warn('Cloudinary connection check failed', { error: error.message });
+    res.json({ connected: false, provider, message: 'Cloudinary connection could not be verified.' });
+  }
+};
+
+// @route   GET /api/system/config/email/status
+// @access  Private (Admin / Super Admin)
+export const getEmailStatus = async (req, res) => {
+  const status = await emailService.getEmailDeliveryStatus();
+  res.json(status);
+};
 
 // @route   POST /api/system/config/email/test
 // @access  Private (Admin / Super Admin)

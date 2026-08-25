@@ -412,7 +412,7 @@ export default function AdminPayoutsTab() {
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem' }}>
                       <span style={{ color: 'var(--c-sub)' }}>Invoice Code / Ref:</span>
-                      <strong style={{ color: '#3b82f6', fontFamily: 'monospace', fontSize: '0.95rem' }}>
+                      <strong style={{ color: '#f97316', fontFamily: 'monospace', fontSize: '0.95rem' }}>
                         {selectedPayout.referenceId || 'N/A'}
                       </strong>
                     </div>

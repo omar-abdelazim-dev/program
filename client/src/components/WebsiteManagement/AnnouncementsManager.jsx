@@ -124,7 +124,7 @@ export default function AnnouncementsManager({ user }) {
                 <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{item.audience}</td>
                 <td style={{ padding: '14px 16px' }}>
                   <span className="status-badge" style={{
-                    color: item.priority === 'Critical' ? '#ef4444' : item.priority === 'High' ? '#f59e0b' : item.priority === 'Medium' ? '#3b82f6' : 'var(--text-secondary)'
+                    color: item.priority === 'Critical' ? '#ef4444' : item.priority === 'High' ? '#ea580c' : item.priority === 'Medium' ? '#f97316' : 'var(--text-secondary)'
                   }}>
                     {item.priority}
                   </span>

@@ -1046,15 +1046,25 @@ body.light-mode .topnav-link:hover {
 }
 
 .topnav-link.active {
-  color: var(--color-accent, #f97316) !important;
-  -webkit-text-fill-color: var(--color-accent, #f97316) !important;
+  color: var(--c-orange, #f97316) !important;
+  -webkit-text-fill-color: var(--c-orange, #f97316) !important;
   font-weight: 600;
   box-shadow: none !important;
 }
 
+.topnav-link.active > span,
+.topnav-link.active:hover > span,
+.topnav-link.active:not(:has(> span)) {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  background-image: linear-gradient(135deg, #f97316 0%, #eab308 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+}
+
 .topnav-link.active:hover {
-  color: var(--color-accent, #f97316) !important;
-  -webkit-text-fill-color: var(--color-accent, #f97316) !important;
+  color: var(--c-orange, #f97316) !important;
+  -webkit-text-fill-color: var(--c-orange, #f97316) !important;
   background: var(--bg-main) !important;
   background-color: var(--bg-main) !important;
   box-shadow: var(--inner-shadow) !important;
@@ -1181,10 +1191,19 @@ body.light-mode .topnav-link:hover {
 
 .topnav-mobile-link.active {
   background: transparent !important;
-  color: var(--color-accent, #f97316) !important;
-  -webkit-text-fill-color: var(--color-accent, #f97316) !important;
+  color: var(--c-orange, #f97316) !important;
+  -webkit-text-fill-color: var(--c-orange, #f97316) !important;
   font-weight: 600;
   box-shadow: none !important;
+}
+
+.topnav-mobile-link.active > span,
+.topnav-mobile-link.active:not(:has(> span)) {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  background-image: linear-gradient(135deg, #f97316 0%, #eab308 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
 }
 
 /* Responsive: show hamburger and hide nav links on small/medium screens */

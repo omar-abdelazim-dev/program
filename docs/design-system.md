@@ -33,7 +33,6 @@ The application relies heavily on CSS variables to manage its color tokens. All 
 - `--c-yellow`: `#facc15` (Used in primary gradients `linear-gradient(135deg, var(--c-orange), var(--c-yellow))`)
 - `--c-purple`: `#8b5cf6` (Used in admin roles, marketplace category tags)
 - `--c-pink`: `#ec4899`
-- `--c-blue`: `#3b82f6`
 - `--c-red`: `#ef4444` (Used for errors, destructive actions, super admin role)
 
 ### Component Color Tokens (`content.css`)

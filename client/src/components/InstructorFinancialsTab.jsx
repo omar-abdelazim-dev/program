@@ -240,7 +240,7 @@ export default function InstructorFinancialsTab({ user }) {
                         const isProcessing = ['processing', 'otp_verified', 'approved'].includes(tx.status);
                         return (
                           <span className="status-badge" style={{
-                            color: isCleared ? '#10b981' : isProcessing ? '#3b82f6' : tx.status === 'rejected' ? '#ef4444' : '#f59e0b',
+                            color: isCleared ? '#10b981' : isProcessing ? '#f97316' : tx.status === 'rejected' ? '#ef4444' : '#f59e0b',
                           }}>
                             {isCleared 
                               ? (tx.type === 'course_sale' ? (t('instructor.financials.status_received') || 'Received') : (t('instructor.financials.status_paid') || 'Paid')) 
@@ -394,7 +394,7 @@ export default function InstructorFinancialsTab({ user }) {
               <div style={{ padding: '14px 16px', borderRadius: '16px', background: 'var(--bg-main)', boxShadow: 'var(--inner-shadow, inset 0 2px 6px rgba(0, 0, 0, 0.5))', border: '1px solid var(--border)', fontSize: '0.88rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                   <span style={{ color: 'var(--c-sub)' }}>{t('instructor.financials.invoice_code')}</span>
-                  <strong style={{ color: '#3b82f6', letterSpacing: '0.5px', fontFamily: 'monospace' }}>{invoiceCode}</strong>
+                  <strong style={{ color: '#f97316', letterSpacing: '0.5px', fontFamily: 'monospace' }}>{invoiceCode}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                   <span style={{ color: 'var(--c-sub)' }}>{t('instructor.financials.available_cash')}</span>
@@ -568,7 +568,7 @@ export default function InstructorFinancialsTab({ user }) {
                       borderRadius: '12px',
                       fontSize: '0.75rem',
                       fontWeight: 'bold',
-                      color: isCleared ? '#10b981' : isProcessing ? '#3b82f6' : selectedTxForDetails.status === 'rejected' ? '#ef4444' : '#f59e0b',
+                      color: isCleared ? '#10b981' : isProcessing ? '#f97316' : selectedTxForDetails.status === 'rejected' ? '#ef4444' : '#f59e0b',
                       background: isCleared ? 'rgba(16, 185, 129, 0.15)' : isProcessing ? 'rgba(59, 130, 246, 0.15)' : selectedTxForDetails.status === 'rejected' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)'
                     }}>
                       {isCleared 
@@ -610,7 +610,7 @@ export default function InstructorFinancialsTab({ user }) {
               {selectedTxForDetails.referenceId && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem' }}>
                   <span style={{ color: 'var(--c-sub)' }}>{t('instructor.financials.invoice_code')}</span>
-                  <strong style={{ color: '#3b82f6', fontFamily: 'monospace', fontSize: '0.95rem' }}>
+                  <strong style={{ color: '#f97316', fontFamily: 'monospace', fontSize: '0.95rem' }}>
                     {selectedTxForDetails.referenceId}
                   </strong>
                 </div>

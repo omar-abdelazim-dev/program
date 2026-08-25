@@ -633,6 +633,22 @@ export const submitCourseForReview = async (req, res) => {
         role: { $in: ["admin", "superadmin"] },
       }).select("email name");
       const instructor = await User.findById(req.user.id).select("name");
+      try {
+        await Notification.insertMany(
+          admins.map((admin) => ({
+            user: admin._id,
+            title: "New Course Review Request",
+            message: `${instructor?.name || "An instructor"} submitted "${course.title}" for admin review.`,
+            type: "system",
+            link: "/admin",
+            refId: course._id,
+          })),
+        );
+      } catch (notificationError) {
+        logger.error("Failed to create admin notification for course submission", {
+          err: notificationError.message,
+        });
+      }
       await emailService.sendAdminNewRequestEmail({
         adminEmails: admins,
         request_id: course._id,
